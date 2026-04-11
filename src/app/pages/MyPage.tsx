@@ -27,6 +27,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
+import { isAppAdmin } from '../../lib/appAdmin';
 
 export function MyPage() {
   const navigate = useNavigate();
@@ -67,11 +68,19 @@ export function MyPage() {
     }
   }, []);
 
-  const menuItems = [
+  const menuItems: Array<{
+    icon: typeof User;
+    label: string;
+    to: string;
+    disabled?: boolean;
+    replace?: boolean;
+  }> = [
     { icon: User, label: '프로필 수정', to: '/profile/edit' },
-    { icon: Shield, label: '관리자 페이지', to: '/admin' },
+    ...(user && isAppAdmin(user)
+      ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
+      : []),
     { icon: Settings, label: '설정', to: '#', disabled: true },
-    { icon: Bell, label: '알림', to: '/notifications' },
+    { icon: Bell, label: '알림', to: '/notifications', replace: true },
   ];
 
   const supportItems = [
@@ -329,7 +338,12 @@ export function MyPage() {
         {/* 설정 메뉴 */}
         <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           {menuItems.map((item, index) => (
-            <Link key={item.label} to={item.to} className={`w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group ${index !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}>
+            <Link
+              key={item.label}
+              to={item.to}
+              replace={item.replace === true}
+              className={`w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group ${index !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}
+            >
               <div className="flex items-center gap-3">
                 <item.icon className="w-5 h-5 text-slate-400 group-hover:text-orange-600 transition-colors" />
                 <span className="text-slate-700 font-bold text-sm">{item.label}</span>

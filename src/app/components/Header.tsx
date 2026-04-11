@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { MapPin, Shield, ChevronDown, Bell } from 'lucide-react';
 import { useUserLocation } from '../../contexts/UserLocationContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from './LocationPickerModal';
 
 export function Header() {
+  const { user } = useAuth();
   const { shortLabel, fullLabel, locationBasedEnabled } = useUserLocation();
   const [locationOpen, setLocationOpen] = useState(false);
 
@@ -52,9 +55,15 @@ export function Header() {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
             </button>
             
-            <Link to="/admin" className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all">
-              <Shield className="w-5 h-5" />
-            </Link>
+            {user && isAppAdmin(user) && (
+              <Link
+                to="/admin"
+                className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all"
+                aria-label="관리자"
+              >
+                <Shield className="w-5 h-5" />
+              </Link>
+            )}
           </div>
 
         </div>

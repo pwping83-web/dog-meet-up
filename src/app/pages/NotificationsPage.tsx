@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Bell, X, Smartphone, Zap } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -87,6 +87,7 @@ const mockNotifications: Notification[] = [
 ];
 
 export function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
@@ -141,9 +142,14 @@ export function NotificationsPage() {
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-10">
         <div className="px-4 h-14 flex items-center justify-between max-w-screen-md mx-auto">
           <div className="flex items-center gap-2">
-            <Link to="/explore" className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="메인으로">
+            <button
+              type="button"
+              onClick={() => navigate('/explore', { replace: true })}
+              className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+              aria-label="홈으로"
+            >
               <ArrowLeft className="w-6 h-6" />
-            </Link>
+            </button>
             <h1 className="text-lg font-extrabold text-slate-800">알림</h1>
             {unreadCount > 0 && (
               <span className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs px-2.5 py-1 rounded-full font-black shadow-sm shadow-orange-500/20">

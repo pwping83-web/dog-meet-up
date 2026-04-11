@@ -30,7 +30,7 @@ import { CreateRequestPage } from './pages/CreateRequestPage';
 import { DogSitterProfilePage } from './pages/DogSitterProfilePage';
 import { MeetupDetailPage } from './pages/MeetupDetailPage';
 import { MyPage } from './pages/MyPage';
-import { AdminPage } from './pages/AdminPage';
+import { AdminGatePage } from './pages/AdminGatePage';
 import { BecomeDogSitterPage } from './pages/BecomeDogSitterPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
@@ -65,7 +65,7 @@ export const router = createBrowserRouter([
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration
       { path: 'dog-mbti-test', Component: DogMbtiTestPage },      // Dog MBTI test
       { path: 'billing', Component: BillingPage },               // Stripe billing / premium
-      { path: 'admin', Component: AdminPage },                    // Admin dashboard
+      { path: 'admin', Component: AdminGatePage },                 // Admin (Kakao + 지정 이메일만)
       { path: 'become-sitter', Component: BecomeDogSitterPage },  // Register as dog sitter
       { path: 'login', Component: LoginPage },                    // Login
       { path: 'signup', Component: SignupPage },                   // Sign up

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { Menu, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../../contexts/AuthContext';
+import { isAppAdmin } from '../../lib/appAdmin';
 
 interface PageInfo {
   path: string;
@@ -46,8 +48,13 @@ export function DevPageNavigator() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading } = useAuth();
 
   if (!import.meta.env.DEV) {
+    return null;
+  }
+
+  if (loading || !user || !isAppAdmin(user)) {
     return null;
   }
 
