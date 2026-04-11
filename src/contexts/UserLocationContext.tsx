@@ -190,7 +190,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     const shortLabel = locationBasedEnabled ? regionShortLabel : '전국';
     const fullLabel = locationBasedEnabled
       ? regionFullLabel
-      : '위치 기반 꺼짐 · 동네·GPS 기반 추천을 쓰지 않아요';
+      : '위치 기반 꺼짐 · 전국 기준';
 
     return {
       location,

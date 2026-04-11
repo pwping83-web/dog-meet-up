@@ -196,9 +196,9 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-orange-100 bg-orange-50/60 px-4 py-3">
             <div className="min-w-0">
-              <p className="text-sm font-extrabold text-slate-900">위치 기반 서비스</p>
+              <p className="text-sm font-extrabold text-slate-900">위치 기반</p>
               <p className="mt-0.5 text-[11px] font-medium leading-snug text-slate-600">
-                켜면 GPS·지도·시·구 저장으로 동네 맞춤을 씁니다. 끄면 전국 기준으로 보여요.
+                켜면 우리 동네 기준, 끄면 전국이에요.
               </p>
             </div>
             <button
@@ -223,7 +223,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
           {!locationBasedEnabled && (
             <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-600">
-              위치 기반이 꺼져 있어요. 스위치를 켠 뒤 GPS·지도·시·구 저장을 사용할 수 있어요.
+              꺼져 있어요. 켜면 동네 설정을 쓸 수 있어요.
             </p>
           )}
 

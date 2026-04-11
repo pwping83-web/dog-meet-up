@@ -134,7 +134,7 @@ export function MyPage() {
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
                   <div className="min-w-0">
                     <p className="text-xs font-extrabold text-slate-800">위치 기반</p>
-                    <p className="text-[10px] font-medium text-slate-500">GPS·동네 맞춤</p>
+                    <p className="text-[10px] font-medium text-slate-500">우리 동네 기준</p>
                   </div>
                   <button
                     type="button"
@@ -173,9 +173,7 @@ export function MyPage() {
                   </p>
                 )}
                 <p className="mt-1.5 text-[11px] font-medium text-slate-400">
-                  {locationBasedEnabled
-                    ? '탭해서 지도·시·구로 동네를 바꿀 수 있어요'
-                    : '위치 기반을 켜면 동네·GPS 설정을 쓸 수 있어요'}
+                  {locationBasedEnabled ? '탭해서 동네를 바꿀 수 있어요' : '켜면 동네·GPS를 쓸 수 있어요'}
                 </p>
                 {locationBasedEnabled &&
                   userLoc.lat != null &&
