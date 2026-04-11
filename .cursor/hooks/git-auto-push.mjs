@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 /**
- * Cursor 훅 (`stop` | `subagentStop` | `sessionEnd`): 변경이 있으면 커밋 + 푸시합니다.
- * - `stop`: 에이전트 턴 종료
- * - `subagentStop`: 서브에이전트(Task) 종료
- * - `sessionEnd`: 채팅 세션 종료(창 닫기 등)
+ * Cursor 훅: 변경이 있으면 커밋 + 푸시합니다.
+ * - `stop` / `afterAgentResponse` / `subagentStop` / `sessionEnd`
+ * - `afterAgentResponse`: 응답 직후에도 한 번 더 시도(승인 전에 올리고 싶을 때 유리)
  * 비활성화: 프로젝트 루트에 빈 파일 `.cursor/disable-auto-push` 생성
  * 또는 환경 변수 CURSOR_DISABLE_AUTO_PUSH=1
  *

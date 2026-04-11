@@ -18,6 +18,12 @@
         "command": "node .cursor/hooks/git-auto-push.mjs",
         "timeout": 120
       }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "node .cursor/hooks/git-auto-push.mjs",
+        "timeout": 120
+      }
     ]
   }
 }
