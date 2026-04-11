@@ -1,15 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="댕댕마켓">
   <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    <linearGradient id="daengGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="100%" stop-color="#eab308"/>
     </linearGradient>
   </defs>
-  <rect width="32" height="32" rx="8" fill="url(#grad)"/>
-  <g transform="translate(8, 8)">
-    <path d="M14.7 6.3a1 1 0 0 0 0-1.4l-1.6-1.6a1 1 0 0 0-1.4 0l-7 7 3 3m-3-3L1 14" 
-          stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M8 15l-4 1 1-4" 
-          fill="white" opacity="0.8"/>
+  <rect width="32" height="32" rx="8" fill="url(#daengGrad)"/>
+  <!-- 큰 발바닥 + 3개 발가락 — 16px에서도 실루엣이 분명히 보이도록 -->
+  <g fill="#ffffff" transform="translate(16 17.5)">
+    <ellipse cx="-5.2" cy="-5" rx="2.6" ry="3.1" transform="rotate(-18 -5.2 -5)"/>
+    <ellipse cx="0" cy="-6.8" rx="2.7" ry="3.2"/>
+    <ellipse cx="5.2" cy="-5" rx="2.6" ry="3.1" transform="rotate(18 5.2 -5)"/>
+    <path d="M0-0.5c-4.8 0-8.6 2.8-9.2 7.2-.35 2.6 1.4 5.2 3.8 5.9 1.9.5 3.6-.2 4.2-2.1.4 1.7 2.1 2.7 3.8 2.3 2.4-.5 4-2.8 3.6-5.4C8.6 2.3 4.8-0.5 0-0.5z"/>
   </g>
 </svg>

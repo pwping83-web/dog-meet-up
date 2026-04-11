@@ -232,13 +232,13 @@ export function SearchPage() {
           </Link>
           
           {/* Central write button */}
-          <Link to="/create-meetup" className="flex flex-col items-center -mt-6 group">
+          <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
             <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 group-active:scale-95 transition-all">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <span className="text-[10px] font-bold text-slate-500 mt-1.5">글쓰기</span>
+            <span className="text-[10px] font-bold text-slate-500 mt-1">글쓰기</span>
           </Link>
           
           <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">

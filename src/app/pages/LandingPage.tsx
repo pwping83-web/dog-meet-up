@@ -593,7 +593,7 @@ export function LandingPage() {
             <MapPin className="w-5 h-5" />
             <span className="text-[9px]" style={{ fontWeight: 800 }}>위치</span>
           </button>
-          <Link to="/create-meetup" className="flex flex-col items-center -mt-5 group">
+          <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-400 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-400/40 group-active:scale-90 transition-all border-[3px] border-white">
               <PlusCircle className="w-6 h-6 text-white" />
             </div>

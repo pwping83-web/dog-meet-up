@@ -19,58 +19,9 @@ export function Root() {
   const isExplorePage = location.pathname === '/explore';
   const hasOwnNav = isHomePage || isExplorePage; // 자체 네비게이션을 가진 페이지
 
-  // 페이지 타이틀 설정
+  // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
   useEffect(() => {
     document.title = '댕댕마켓 - 우리 동네 댕친 찾기';
-    
-    // 기존 파비콘 제거
-    const existingLinks = document.querySelectorAll("link[rel*='icon']");
-    existingLinks.forEach(link => link.remove());
-    
-    // 오렌지/옐로우 그라데이션 배경에 흰색 발자국 SVG
-    const faviconSVG = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-        <defs>
-          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#F97316;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#EAB308;stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="32" height="32" rx="8" fill="url(#grad)"/>
-        <g transform="translate(6,6)" fill="white">
-          <ellipse cx="7" cy="4.5" rx="2.5" ry="3"/>
-          <ellipse cx="13" cy="4.5" rx="2.5" ry="3"/>
-          <ellipse cx="3.5" cy="10" rx="2" ry="2.5"/>
-          <ellipse cx="16.5" cy="10" rx="2" ry="2.5"/>
-          <path d="M10 10c-3 0-5.5 2-6 5-.3 2 .5 4 3 4.5 1.5.3 3-.5 3-2 0 1.5 1.5 2.3 3 2 2.5-.5 3.3-2.5 3-4.5-.5-3-3-5-6-5z"/>
-        </g>
-      </svg>
-    `;
-    const faviconURL = 'data:image/svg+xml,' + encodeURIComponent(faviconSVG);
-    
-    // SVG 파비콘 (모던 브라우저)
-    const svgLink = document.createElement('link');
-    svgLink.type = 'image/svg+xml';
-    svgLink.rel = 'icon';
-    svgLink.href = faviconURL;
-    svgLink.setAttribute('data-app-favicon', '1');
-    document.head.appendChild(svgLink);
-
-    const appleLink = document.createElement('link');
-    appleLink.rel = 'apple-touch-icon';
-    appleLink.href = faviconURL;
-    appleLink.setAttribute('data-app-favicon', '1');
-    document.head.appendChild(appleLink);
-
-    const shortcutLink = document.createElement('link');
-    shortcutLink.rel = 'shortcut icon';
-    shortcutLink.href = faviconURL;
-    shortcutLink.setAttribute('data-app-favicon', '1');
-    document.head.appendChild(shortcutLink);
-
-    return () => {
-      document.querySelectorAll('link[data-app-favicon="1"]').forEach((el) => el.remove());
-    };
   }, []);
 
   // 하단 네비게이션이 필요없는 페이지들 (LandingPage가 자체 네비게이션 포함)

@@ -225,11 +225,18 @@ export function LocationPickerModal({ open, onClose }: Props) {
           )}
 
           {!hasKey && (
-            <p className="text-sm leading-relaxed text-slate-600">
-              <strong className="text-slate-800">카카오맵</strong> 앱 키(
-              <code className="rounded bg-slate-100 px-1 text-xs">VITE_KAKAO_MAP_APP_KEY</code>)가 없으면
-              지도·자동 주소 변환은 비활성입니다. 아래에서 시·구를 직접 선택할 수 있습니다.
-            </p>
+            <div className="rounded-2xl border border-amber-100 bg-amber-50/90 px-3 py-2.5 text-xs font-medium leading-relaxed text-slate-700">
+              <p>
+                지도와 GPS로 시·구를 자동 맞추는 기능은 준비되어 있지 않을 때 꺼져 있어요. 아래 목록에서
+                시·도와 구·군을 골라 <strong className="text-slate-900">선택한 시·구만 저장</strong>하면 됩니다.
+              </p>
+              {import.meta.env.DEV && (
+                <p className="mt-2 border-t border-amber-200/70 pt-2 text-[11px] text-slate-600">
+                  로컬에서 지도·역지오코딩을 쓰려면 <code className="rounded bg-white/90 px-1">.env</code>에{' '}
+                  <code className="rounded bg-white/90 px-1">VITE_KAKAO_MAP_APP_KEY</code>를 넣어 주세요.
+                </p>
+              )}
+            </div>
           )}
 
           {hasKey && (
@@ -278,20 +285,16 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
           <div className={`border-t border-slate-100 pt-4 ${!locationBasedEnabled ? 'opacity-50' : ''}`}>
             <p className="mb-2 text-xs font-bold text-slate-500">또는 시·구 선택</p>
-            <button
-              type="button"
-              disabled={busy !== null || !locationBasedEnabled}
-              onClick={() => void handleFindMyLocation()}
-              className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.99] disabled:opacity-50"
-            >
-              <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
-              {busy === 'findMe' ? '내 위치 확인 중…' : '내 위치 찾기'}
-            </button>
-            {!hasKey && locationBasedEnabled && (
-              <p className="mb-3 text-[11px] font-medium leading-relaxed text-slate-500">
-                자동으로 시·구를 채우려면 <code className="rounded bg-slate-100 px-1">VITE_KAKAO_MAP_APP_KEY</code>가
-                필요해요. 키가 없으면 아래에서 직접 선택해 주세요.
-              </p>
+            {hasKey && (
+              <button
+                type="button"
+                disabled={busy !== null || !locationBasedEnabled}
+                onClick={() => void handleFindMyLocation()}
+                className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.99] disabled:opacity-50"
+              >
+                <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
+                {busy === 'findMe' ? '내 위치 확인 중…' : '내 위치 찾기'}
+              </button>
             )}
             <RegionSelector
               layout="modal"
