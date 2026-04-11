@@ -14,6 +14,8 @@ interface ImportMetaEnv {
   readonly VITE_KAKAO_AUTH_SCOPES?: string;
   /** Google Play 앱 페이지 전체 URL */
   readonly VITE_PLAY_STORE_URL?: string;
+  /** true/1 이면 PWA·스토어 설치 유도 UI 표시 (출시 전에는 비워두기) */
+  readonly VITE_SHOW_APP_INSTALL?: string;
 }
 
 interface ImportMeta {

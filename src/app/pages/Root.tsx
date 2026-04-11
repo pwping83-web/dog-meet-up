@@ -6,6 +6,11 @@ import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
 import { InstallPwaFab } from '../components/InstallPwaFab';
 
+/** 나중에 스토어/PWA 출시 시 .env 에 VITE_SHOW_APP_INSTALL=true 설정 */
+const showAppInstallPromo =
+  import.meta.env.VITE_SHOW_APP_INSTALL === 'true' ||
+  import.meta.env.VITE_SHOW_APP_INSTALL === '1';
+
 export function Root() {
   const location = useLocation();
 
@@ -125,11 +130,16 @@ export function Root() {
           )}
         </div>
 
-        <InstallPwaFab hidden={isAdminPage} />
-        <PlayStoreInstallBar
-          hidden={isAdminPage}
-          reserveSpaceForBottomNav={showPrimaryNav}
-        />
+        {showAppInstallPromo && (
+          <>
+            <InstallPwaFab hidden={isAdminPage} />
+            <PlayStoreInstallBar
+              hidden={isAdminPage}
+              reserveSpaceForBottomNav={showPrimaryNav}
+            />
+          </>
+        )}
+
         <DevPageNavigator />
       </div>
     </div>
