@@ -12,7 +12,7 @@ export function Header() {
   const [locationOpen, setLocationOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all">
+    <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/90 shadow-[0_2px_12px_rgba(94,67,255,0.06)] backdrop-blur-xl transition-all">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
       <div className="mx-auto w-full max-w-[min(100%,480px)] px-4 pt-[env(safe-area-inset-top)]">
         <div className="relative flex min-h-[56px] items-center justify-between py-1">
@@ -30,7 +30,7 @@ export function Header() {
               }`}
             >
               <MapPin
-                className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-orange-600' : 'text-slate-500'}`}
+                className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-[#5E43FF]' : 'text-slate-500'}`}
               />
               <span className="truncate text-sm font-extrabold tracking-tight text-slate-800">
                 {shortLabel}
@@ -41,7 +41,7 @@ export function Header() {
 
           {/* 중앙: 앱 타이틀 (절대 위치로 정중앙 고정) */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <h1 className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-yellow-600 tracking-tight">
+            <h1 className="bg-gradient-to-r from-[#5E43FF] to-violet-600 bg-clip-text text-lg font-black tracking-tight text-transparent">
               댕댕마켓
             </h1>
           </div>
@@ -50,7 +50,7 @@ export function Header() {
           <div className="flex items-center gap-1">
             <Link
               to="/notifications"
-              className="relative rounded-full p-2 text-slate-400 transition-all hover:bg-orange-50 hover:text-orange-600"
+              className="relative rounded-full p-2 text-slate-400 transition-all hover:bg-violet-50 hover:text-[#5E43FF]"
               aria-label="알림 설정"
             >
               <Bell className="h-5 w-5" aria-hidden />
@@ -60,7 +60,7 @@ export function Header() {
             {user && isAppAdmin(user) && (
               <Link
                 to="/admin"
-                className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all"
+                className="rounded-full p-2 text-slate-400 transition-all hover:bg-violet-50 hover:text-[#5E43FF]"
                 aria-label="관리자"
               >
                 <Shield className="w-5 h-5" />

@@ -1,4 +1,4 @@
-/** 하단 탭 등 — 댕집사·반려견 메뉴용 (수리마켓 렌치 대체) */
+/** 하단 탭 — 모이자·만나자 + 유료 강아지 돌봄(댕집사) 메뉴 */
 export function PawTabIcon({ className }: { className?: string }) {
   return (
     <svg

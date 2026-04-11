@@ -36,9 +36,9 @@ export function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-[#F5F5F7] pb-24">
       {/* 글래스모피즘 헤더 & 검색창 */}
-      <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-50">
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
         <div className="px-3 py-3 flex items-center gap-3 max-w-screen-md mx-auto">
           <Link to="/explore" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="메인으로">
             <ArrowLeft className="w-6 h-6" />
@@ -51,7 +51,7 @@ export function SearchPage() {
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="어떤 댕친을 찾으시나요? 🐾"
-              className="w-full pl-11 pr-10 h-12 bg-slate-50/80 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl focus:ring-4 focus:ring-orange-500/10 transition-all text-slate-900 font-bold placeholder:text-slate-400 placeholder:font-medium"
+              className="h-12 w-full rounded-2xl border-transparent bg-slate-50/80 pl-11 pr-10 font-bold text-slate-900 transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/15"
               autoFocus
             />
             {searchQuery && (
@@ -69,7 +69,9 @@ export function SearchPage() {
           <div className="p-5">
             <div className="mb-5 flex items-center gap-2">
               <span className="text-sm font-bold text-slate-800">검색 결과</span>
-              <span className="text-sm font-extrabold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-lg">{filteredRequests.length}건</span>
+              <span className="rounded-lg bg-violet-50 px-2 py-0.5 text-sm font-extrabold text-[#5E43FF]">
+                {filteredRequests.length}건
+              </span>
             </div>
 
             {filteredRequests.length === 0 ? (
@@ -84,7 +86,7 @@ export function SearchPage() {
               <div className="space-y-4">
                 {filteredRequests.map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
-                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-100 active:scale-[0.98]">
+                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-violet-200 active:scale-[0.98]">
                       {request.images && request.images.length > 0 ? (
                         <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
                           <img src={request.images[0]} alt={request.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -95,11 +97,11 @@ export function SearchPage() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0 py-1">
-                        <h3 className="font-extrabold text-base text-slate-800 mb-1.5 line-clamp-2 group-hover:text-orange-600 transition-colors">
+                        <h3 className="font-extrabold text-base text-slate-800 mb-1.5 line-clamp-2 group-hover:text-[#5E43FF] transition-colors">
                           {request.title}
                         </h3>
                         <p className="text-xs font-medium text-slate-500 mb-2.5">{request.district}</p>
-                        <p className="font-black text-lg text-orange-600 tracking-tight">
+                        <p className="font-black text-lg text-[#5E43FF] tracking-tight">
                           {request.estimatedCost || '참여 모집중'}
                         </p>
                       </div>
@@ -121,7 +123,7 @@ export function SearchPage() {
                 <div className="flex flex-wrap gap-2">
                   {recentSearches.map((term, index) => (
                     <div key={index} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:bg-slate-100 transition-colors">
-                      <button onClick={() => handleSearch(term)} className="text-sm font-bold text-slate-600 group-hover:text-orange-600 transition-colors">
+                      <button onClick={() => handleSearch(term)} className="text-sm font-bold text-slate-600 group-hover:text-[#5E43FF] transition-colors">
                         {term}
                       </button>
                       <button className="p-1 text-slate-300 hover:text-slate-500 rounded-full">
@@ -138,7 +140,11 @@ export function SearchPage() {
               <h2 className="font-extrabold text-lg text-slate-900 mb-4 px-1">🔥 인기 검색어</h2>
               <div className="flex flex-wrap gap-2.5">
                 {popularSearches.map((term, index) => (
-                  <button key={index} onClick={() => handleSearch(term)} className="px-4 py-2 bg-orange-50/50 border border-orange-100 text-orange-700 rounded-xl text-sm font-bold hover:bg-orange-100 hover:text-orange-800 transition-colors">
+                  <button
+                    key={index}
+                    onClick={() => handleSearch(term)}
+                    className="rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-2 text-sm font-bold text-violet-800 transition-colors hover:bg-violet-100 hover:text-violet-900"
+                  >
                     {term}
                   </button>
                 ))}
@@ -158,9 +164,9 @@ export function SearchPage() {
                   { name: '사회화', emoji: '🤝', count: 28 },
                   { name: '놀이', emoji: '⚽', count: 23 },
                 ].map((category) => (
-                  <button key={category.name} onClick={() => handleSearch(category.name)} className="flex flex-col items-center justify-center p-5 bg-white border border-slate-100 rounded-3xl hover:border-orange-200 hover:shadow-md transition-all duration-200 active:scale-95 group">
+                  <button key={category.name} onClick={() => handleSearch(category.name)} className="flex flex-col items-center justify-center p-5 bg-white border border-slate-100 rounded-3xl hover:border-violet-200 hover:shadow-md transition-all duration-200 active:scale-95 group">
                     <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.emoji}</div>
-                    <div className="text-sm font-extrabold text-slate-800 mb-1 group-hover:text-orange-600">{category.name}</div>
+                    <div className="text-sm font-extrabold text-slate-800 mb-1 group-hover:text-[#5E43FF]">{category.name}</div>
                     <div className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">{category.count}건</div>
                   </button>
                 ))}
@@ -170,13 +176,13 @@ export function SearchPage() {
             {/* 실시간 모임 */}
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4 px-1">
-                <h2 className="font-extrabold text-lg text-slate-900">🐾 동네 댕친 모임</h2>
-                <Link to="/explore" className="text-xs font-bold text-orange-600 hover:underline">더보기</Link>
+                <h2 className="text-lg font-extrabold text-slate-900">🙌 모이자 · 만나자</h2>
+                <Link to="/explore" className="text-xs font-bold text-[#5E43FF] hover:underline">더보기</Link>
               </div>
               <div className="space-y-3">
                 {mockRequests.slice(0, 4).map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
-                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-100 active:scale-[0.98]">
+                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-violet-200 active:scale-[0.98]">
                       {request.images && request.images.length > 0 ? (
                         <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
                           <img src={request.images[0]} alt={request.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -195,12 +201,12 @@ export function SearchPage() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0 py-1">
-                        <h3 className="font-bold text-sm text-slate-800 mb-1 line-clamp-1 group-hover:text-orange-600 transition-colors">
+                        <h3 className="font-bold text-sm text-slate-800 mb-1 line-clamp-1 group-hover:text-[#5E43FF] transition-colors">
                           {request.title}
                         </h3>
                         <p className="text-xs font-medium text-slate-500 mb-2">{request.district} · 방금 전</p>
                         {request.estimatedCost && (
-                          <p className="font-extrabold text-base text-orange-600 tracking-tight">
+                          <p className="font-extrabold text-base text-[#5E43FF] tracking-tight">
                             {request.estimatedCost}
                           </p>
                         )}
@@ -220,20 +226,20 @@ export function SearchPage() {
           <Link
             to="/explore"
             className={`flex flex-col items-center gap-1 transition-colors ${
-              location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400 hover:text-orange-600'
+              location.pathname === '/explore' ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-[#5E43FF]'
             }`}
           >
             <Home className="w-6 h-6" />
             <span className="text-[10px] font-bold">홈</span>
           </Link>
-          <Link to="/search" className="flex flex-col items-center gap-1 text-orange-600">
+          <Link to="/search" className="flex flex-col items-center gap-1 text-[#5E43FF]">
             <Search className="w-6 h-6" />
             <span className="text-[10px] font-bold">검색</span>
           </Link>
           
           {/* Central write button */}
           <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
-            <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 group-active:scale-95 transition-all">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5E43FF] to-violet-600 shadow-lg shadow-violet-500/35 transition-all group-active:scale-95 group-hover:shadow-violet-500/45">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
@@ -241,11 +247,11 @@ export function SearchPage() {
             <span className="text-[10px] font-bold text-slate-500 mt-1">글쓰기</span>
           </Link>
           
-          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">
+          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#5E43FF] transition-colors">
             <MessageCircle className="w-6 h-6" />
             <span className="text-[10px] font-bold">채팅</span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">
+          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#5E43FF] transition-colors">
             <User className="w-6 h-6" />
             <span className="text-[10px] font-bold">내댕댕</span>
           </Link>

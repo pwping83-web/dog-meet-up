@@ -46,7 +46,7 @@ export function CreateRequestPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert('🐾 모임이 등록되었습니다!\n동네 댕친들이 곧 찾아올 거예요');
+    alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
     navigate('/explore');
   };
 
@@ -58,7 +58,7 @@ export function CreateRequestPage() {
           <button type="button" onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="닫기">
             <X className="w-6 h-6" />
           </button>
-          <h1 className="font-bold text-slate-800 text-lg">모임 만들기 🐾</h1>
+          <h1 className="text-lg font-bold text-slate-800">모이자 · 만나자 🐾</h1>
           <div className="w-6" />
         </div>
       </div>
@@ -67,20 +67,16 @@ export function CreateRequestPage() {
         {/* 메인 메시지 */}
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🐾</div>
-          <h2 className="text-2xl font-extrabold mb-3 text-slate-900">
-            어떤 모임을 만들까요?
-          </h2>
-          <p className="text-slate-500 text-base font-medium">
-            우리 동네 댕친들이 함께해요 🐕
+          <h2 className="mb-3 text-2xl font-extrabold text-slate-900">어디서, 언제 모일까요?</h2>
+          <p className="text-base font-medium text-slate-500">
+            만나서 산책·놀이할 댕친을 부르는 글이에요 (유료 맡기기는 댕집사·보호맘 탭)
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 카테고리 선택 */}
           <div>
-            <p className="text-sm font-bold text-slate-700 mb-3 px-1">
-              어떤 모임인가요? 🐾
-            </p>
+            <p className="mb-3 px-1 text-sm font-bold text-slate-700">주제 골라요 🐾</p>
             <div className="grid grid-cols-3 gap-2">
               {categories.map((cat) => (
                 <button
@@ -111,7 +107,7 @@ export function CreateRequestPage() {
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="예: 🐕 주말 아침 한강공원 산책 모임"
+              placeholder="예: 주말 오전 한강에서 산책 같이 해요 🐕"
               className="w-full px-5 py-4 border-2 border-slate-200 rounded-2xl text-base focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all font-medium placeholder:text-slate-400"
             />
           </div>
@@ -122,7 +118,7 @@ export function CreateRequestPage() {
               required
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="모임 내용을 자유롭게 적어주세요 🐶"
+              placeholder="몇 시에 어디서 만날지, 견종·성향 등 자유롭게 적어 주세요 🐶"
               rows={4}
               className="w-full px-5 py-4 border-2 border-slate-200 rounded-2xl text-base focus:outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all resize-none font-medium placeholder:text-slate-400"
             />
@@ -183,8 +179,8 @@ export function CreateRequestPage() {
           </div>
 
           {/* 안내 */}
-          <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-4 text-sm text-orange-700 text-center font-bold">
-            🐾 가까운 댕친들에게 먼저 공유돼요
+          <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 text-center text-sm font-bold text-violet-900">
+            🐾 가까운 동네 댕친에게 먼저 보여요
           </div>
 
           {/* 제출 버튼 */}
@@ -192,7 +188,7 @@ export function CreateRequestPage() {
             type="submit"
             className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-5 rounded-2xl text-lg font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
           >
-            모임 만들기 🚀
+            올리기 · 모이자 🚀
           </button>
         </form>
       </div>

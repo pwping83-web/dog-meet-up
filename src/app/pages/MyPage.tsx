@@ -21,6 +21,7 @@ import {
   Navigation,
   Loader2,
   CheckCircle2,
+  Settings,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
@@ -112,23 +113,29 @@ export function MyPage() {
   const profileName = user ? displayNameFromUser(user) : '로그인 후 이용';
 
   return (
-    <div className="min-h-screen bg-slate-50/80 pb-24">
+    <div className="min-h-screen bg-[#F5F5F7] pb-24">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
-      {/* 헤더 */}
-      <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
-        <div className="px-4 h-14 flex items-center justify-center max-w-screen-md mx-auto">
-          <h1 className="text-lg font-extrabold text-slate-800">내댕댕</h1>
+      <header className="sticky top-0 z-50 bg-[#5E43FF] shadow-md">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
+          <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
+          <Link
+            to="/notifications"
+            className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
+            aria-label="알림 설정"
+          >
+            <Settings className="h-6 w-6" />
+          </Link>
         </div>
       </header>
 
-      <div className="max-w-screen-md mx-auto px-4 py-6 space-y-5">
+      <div className="mx-auto max-w-screen-md space-y-5 px-4 py-6">
         
         {/* 프로필 섹션 · 동네 = UserLocation (헤더와 동일 저장소) */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-5">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-yellow-50 border border-slate-100 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
-              <User className="w-7 h-7 text-orange-600" />
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-100 to-indigo-50 shadow-inner">
+              <User className="h-7 w-7 text-[#5E43FF]" />
             </div>
             <div className="flex-1 min-w-0 space-y-3">
               <div>
@@ -147,8 +154,9 @@ export function MyPage() {
                       setLocationBasedEnabled(!locationBasedEnabled);
                     }}
                     className={`relative z-10 h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-300 ${
-                      locationBasedEnabled ? 'bg-orange-600 shadow-inner' : 'bg-slate-300'
+                      locationBasedEnabled ? 'shadow-inner' : 'bg-slate-300'
                     }`}
+                    style={locationBasedEnabled ? { backgroundColor: '#5E43FF' } : undefined}
                   >
                     <span
                       className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
@@ -164,7 +172,7 @@ export function MyPage() {
                   className="flex w-full max-w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
                 >
                   <MapPin
-                    className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-orange-600' : 'text-slate-400'}`}
+                    className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-[#5E43FF]' : 'text-slate-400'}`}
                   />
                   <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{fullLabel}</span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
@@ -191,7 +199,7 @@ export function MyPage() {
                 type="button"
                 disabled={gpsBusy || !locationBasedEnabled}
                 onClick={() => void handleGpsRefresh()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 py-3 text-sm font-extrabold text-orange-800 transition-colors hover:bg-orange-100 disabled:pointer-events-none disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 py-3 text-sm font-extrabold text-[#5E43FF] transition-colors hover:bg-violet-100 disabled:pointer-events-none disabled:opacity-50"
               >
                 {gpsBusy ? (
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -206,20 +214,20 @@ export function MyPage() {
 
         {/* 강아지 MBTI 섹션 */}
         {dogMbtiType ? (
-          <div className="bg-gradient-to-br from-orange-50 via-yellow-50 to-orange-50 rounded-3xl p-6 border-2 border-orange-200 shadow-lg">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-3xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-white to-indigo-50 p-6 shadow-md">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="text-4xl">{dogMbtiResults[dogMbtiType].emoji}</div>
                 <div>
-                  <h3 className="font-black text-lg text-slate-900">{dogMbtiResults[dogMbtiType].name}</h3>
-                  <p className="text-sm font-bold text-orange-600">{dogMbtiType.toUpperCase()} 타입</p>
+                  <h3 className="text-lg font-black text-slate-900">{dogMbtiResults[dogMbtiType].name}</h3>
+                  <p className="text-sm font-bold text-[#5E43FF]">{dogMbtiType.toUpperCase()} 타입</p>
                 </div>
               </div>
               <Link
                 to="/dog-mbti-test"
-                className="p-2 bg-white/50 rounded-xl hover:bg-white transition-colors"
+                className="rounded-xl bg-white/60 p-2 transition-colors hover:bg-white"
               >
-                <Sparkles className="w-5 h-5 text-orange-500" />
+                <Sparkles className="h-5 w-5 text-[#5E43FF]" />
               </Link>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed mb-4">
@@ -227,20 +235,23 @@ export function MyPage() {
             </p>
             <div className="flex flex-wrap gap-2 mb-4">
               {dogMbtiResults[dogMbtiType].traits.map((trait) => (
-                <span key={trait} className="px-3 py-1.5 bg-white text-orange-600 rounded-lg text-xs font-bold">
+                <span
+                  key={trait}
+                  className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#5E43FF]"
+                >
                   {trait}
                 </span>
               ))}
             </div>
             <Link
               to="/create-dog"
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-3 rounded-xl font-bold text-sm text-center block hover:shadow-lg transition-all"
+              className="block w-full rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 py-3 text-center text-sm font-bold text-white shadow-md transition-all hover:shadow-lg"
             >
               프로필 업데이트하기 🐾
             </Link>
           </div>
         ) : (
-          <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-3xl p-6 border-2 border-dashed border-orange-200 text-center">
+          <div className="rounded-3xl border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-6 text-center">
             <div className="text-5xl mb-4">🐕</div>
             <h3 className="font-black text-lg text-slate-900 mb-2">우리 강아지 성격은?</h3>
             <p className="text-sm text-slate-600 mb-5">
@@ -249,25 +260,27 @@ export function MyPage() {
             </p>
             <Link
               to="/dog-mbti-test"
-              className="inline-block bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg active:scale-95 transition-all"
+              className="inline-block rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all active:scale-95"
             >
               강아지 MBTI 테스트 시작 🎯
             </Link>
           </div>
         )}
 
-        {/* 댕집사 활동 상태 (댕집사일 경우) */}
+        {/* 유료 돌봄(댕집사): 강아지 돌봄 의뢰 수락 — 모임 글과 무관 */}
         {isRepairer && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-            <div className="flex items-center justify-between mb-5">
+          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
-                  <Heart className="w-6 h-6 text-orange-600 fill-orange-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100">
+                  <Heart className="h-6 w-6 fill-[#5E43FF] text-[#5E43FF]" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-base text-slate-800">댕집사 활동</h3>
-                  <p className="text-xs font-bold text-slate-500 mt-0.5">
-                    {isActive ? '모임 요청을 받고 있어요' : '현재 휴식 중입니다'}
+                  <h3 className="text-base font-extrabold text-slate-800">유료 돌봄(댕집사)</h3>
+                  <p className="mt-0.5 text-xs font-bold text-slate-500">
+                    {isActive
+                      ? '강아지 돌봄·산책 의뢰를 받고 있어요'
+                      : '돌봄 의뢰 받기를 쉬는 중이에요'}
                   </p>
                 </div>
               </div>
@@ -275,7 +288,8 @@ export function MyPage() {
               {/* iOS 스타일 토글 스위치 */}
               <button
                 onClick={handleToggleActive}
-                className={`relative w-14 h-8 rounded-full transition-all duration-300 ${isActive ? 'bg-orange-600 shadow-inner' : 'bg-slate-200'}`}
+                className={`relative h-8 w-14 rounded-full transition-all duration-300 ${isActive ? 'shadow-inner' : 'bg-slate-200'}`}
+                style={isActive ? { backgroundColor: '#5E43FF' } : undefined}
               >
                 <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
               </button>
@@ -287,7 +301,7 @@ export function MyPage() {
                 <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
                 <div>
                   <p className={`font-bold ${isActive ? 'text-emerald-800' : 'text-slate-600'}`}>
-                    {isActive ? '지금 활동중이에요! 🎉' : '휴식중이에요 😴'}
+                    {isActive ? '지금 돌봄 의뢰를 받을 수 있어요 🐕' : '돌봄 접수를 잠시 멈췄어요'}
                   </p>
                 </div>
               </div>
@@ -296,12 +310,12 @@ export function MyPage() {
             {/* 통계 그리드 */}
             <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100">
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-orange-600">12</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">받은 요청</p>
+                <p className="text-xl font-black text-[#5E43FF]">12</p>
+                <p className="mt-1 text-[10px] font-bold text-slate-400">들어온 돌봄</p>
               </div>
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
                 <p className="text-xl font-black text-emerald-600">8</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">완료 모임</p>
+                <p className="mt-1 text-[10px] font-bold text-slate-400">완료 돌봄</p>
               </div>
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
                 <p className="text-xl font-black text-amber-500">4.8</p>
@@ -311,76 +325,126 @@ export function MyPage() {
 
             <Link
               to="/sitter/r1"
-              className="mt-4 block w-full rounded-2xl border-2 border-orange-300 bg-orange-50 py-3.5 text-center text-sm font-bold text-orange-700 shadow-sm transition-colors hover:border-orange-400 hover:bg-orange-100 underline decoration-orange-600 decoration-2 underline-offset-4"
+              className="mt-4 block w-full rounded-2xl border-2 border-violet-300 bg-violet-50 py-3.5 text-center text-sm font-bold text-[#5E43FF] shadow-sm underline decoration-[#5E43FF] decoration-2 underline-offset-4 transition-colors hover:border-violet-400 hover:bg-violet-100"
             >
               내 프로필 미리보기
             </Link>
           </div>
         )}
 
-        {/* 내 활동 메뉴 */}
-        <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100">
-            <h3 className="font-bold text-sm text-slate-500">내 활동</h3>
-          </div>
-          <Link to="/my/meetups" className="flex items-center justify-between p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all"><FileText className="w-4 h-4 text-slate-600" /></div>
-              <span className="text-slate-800 font-bold text-sm">내 모임</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md font-bold">3건</span>
-              <ChevronRight className="w-4 h-4 text-slate-300" />
-            </div>
-          </Link>
-          <Link to="/my/join-requests" className="flex items-center justify-between p-5 border-b border-slate-50 hover:bg-slate-50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all"><MessageCircle className="w-4 h-4 text-slate-600" /></div>
-              <span className="text-slate-800 font-bold text-sm">받은 참여 신청</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md font-bold">5건</span>
-              <ChevronRight className="w-4 h-4 text-slate-300" />
-            </div>
-          </Link>
-          <Link to="/billing" className="flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-white group-hover:shadow-sm transition-all"><CreditCard className="w-4 h-4 text-slate-600" /></div>
-              <span className="text-slate-800 font-bold text-sm">결제 · 프리미엄 (Stripe)</span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-300" />
-          </Link>
-        </div>
-
-        {/* 설정 메뉴 */}
-        <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          {menuItems.map((item, index) => (
+        <div>
+          <p className="mb-2 px-1 text-xs font-extrabold text-slate-500">내 활동</p>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
             <Link
-              key={item.label}
-              to={item.to}
-              replace={item.replace === true}
-              className={`w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group ${index !== menuItems.length - 1 ? 'border-b border-slate-50' : ''}`}
+              to="/my/meetups"
+              className="group flex items-center justify-between border-b border-slate-100 p-4 transition-colors hover:bg-slate-50"
             >
               <div className="flex items-center gap-3">
-                <item.icon className="w-5 h-5 text-slate-400 group-hover:text-orange-600 transition-colors" />
-                <span className="text-slate-700 font-bold text-sm">{item.label}</span>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 transition-all group-hover:bg-violet-200/80">
+                  <FileText className="h-[18px] w-[18px] text-[#5E43FF]" />
+                </div>
+                <span className="text-sm font-bold text-slate-900">모이자·만나자 글</span>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-300" />
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-[#5E43FF]">
+                  3건
+                </span>
+                <ChevronRight className="h-4 w-4 text-slate-300" />
+              </div>
             </Link>
-          ))}
+            <Link
+              to="/my/join-requests"
+              className="group flex items-center justify-between border-b border-slate-100 p-4 transition-colors hover:bg-slate-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 transition-all group-hover:bg-violet-200/80">
+                  <MessageCircle className="h-[18px] w-[18px] text-[#5E43FF]" />
+                </div>
+                <span className="text-sm font-bold text-slate-900">받은 참여 신청</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-[#5E43FF]">
+                  5건
+                </span>
+                <ChevronRight className="h-4 w-4 text-slate-300" />
+              </div>
+            </Link>
+            <Link
+              to="/billing"
+              className="group flex items-center justify-between p-4 transition-colors hover:bg-slate-50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 transition-all group-hover:bg-slate-200/80">
+                  <CreditCard className="h-[18px] w-[18px] text-slate-600" />
+                </div>
+                <span className="text-sm font-bold text-slate-900">결제 · 프리미엄</span>
+              </div>
+              <ChevronRight className="h-4 w-4 text-slate-300" />
+            </Link>
+          </div>
         </div>
 
-        {/* 지원/탈퇴 메뉴 */}
-        <div className="bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          {supportItems.map((item, index) => (
-            <Link key={item.label} to={item.to} className={`w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors group ${index !== supportItems.length - 1 ? 'border-b border-slate-50' : ''}`}>
-              <div className="flex items-center gap-3">
-                <item.icon className={`w-5 h-5 ${item.label === '회원 탈퇴' ? 'text-red-400 group-hover:text-red-600' : 'text-slate-400 group-hover:text-orange-600'} transition-colors`} />
-                <span className={`font-bold text-sm ${item.label === '회원 탈퇴' ? 'text-red-500' : 'text-slate-700'}`}>{item.label}</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-300" />
-            </Link>
-          ))}
+        <div>
+          <p className="mb-2 px-1 text-xs font-extrabold text-slate-500">설정</p>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            {menuItems.map((item, index) => (
+              <Link
+                key={item.label}
+                to={item.to}
+                replace={item.replace === true}
+                className={`group flex w-full items-center justify-between p-4 transition-colors hover:bg-slate-50 ${
+                  index !== menuItems.length - 1 ? 'border-b border-slate-100' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 transition-all group-hover:bg-violet-100">
+                    <item.icon className="h-[18px] w-[18px] text-slate-600 transition-colors group-hover:text-[#5E43FF]" />
+                  </div>
+                  <span className="text-sm font-bold text-slate-900">{item.label}</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300" />
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="mb-2 px-1 text-xs font-extrabold text-slate-500">고객지원</p>
+          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+            {supportItems.map((item, index) => (
+              <Link
+                key={item.label}
+                to={item.to}
+                className={`group flex w-full items-center justify-between p-4 transition-colors hover:bg-slate-50 ${
+                  index !== supportItems.length - 1 ? 'border-b border-slate-100' : ''
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      item.label === '회원 탈퇴' ? 'bg-red-50' : 'bg-slate-100 group-hover:bg-violet-100'
+                    }`}
+                  >
+                    <item.icon
+                      className={`h-[18px] w-[18px] ${
+                        item.label === '회원 탈퇴'
+                          ? 'text-red-500'
+                          : 'text-slate-600 group-hover:text-[#5E43FF]'
+                      } transition-colors`}
+                    />
+                  </div>
+                  <span
+                    className={`text-sm font-bold ${
+                      item.label === '회원 탈퇴' ? 'text-red-500' : 'text-slate-900'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-300" />
+              </Link>
+            ))}
+          </div>
         </div>
 
         {user && (
@@ -395,17 +459,20 @@ export function MyPage() {
           </button>
         )}
 
-        {/* 댕집사 신청 배너 (아닐 때만 노출) */}
+        {/* 유료 돌봄(댕집사) 등록 배너 */}
         {!isRepairer && (
-          <Link to="/become-sitter" className="block relative overflow-hidden bg-gradient-to-br from-orange-500 to-yellow-500 rounded-3xl p-6 text-white active:scale-95 transition-all shadow-lg shadow-orange-500/30 group">
+          <Link
+            to="/become-sitter"
+            className="group relative block overflow-hidden rounded-3xl bg-gradient-to-br from-[#5E43FF] to-violet-700 p-6 text-white shadow-lg shadow-violet-500/25 transition-all active:scale-[0.99]"
+          >
             <div className="relative z-10">
-              <h3 className="font-extrabold text-xl mb-1.5 flex items-center gap-2">
-                댕집사로 활동하기 <Play className="w-4 h-4 fill-white" />
+              <h3 className="mb-1.5 flex items-center gap-2 text-xl font-extrabold">
+                유료 돌봄(댕집사)로 활동하기 <Play className="h-4 w-4 fill-white" />
               </h3>
-              <p className="text-sm font-medium text-orange-50 mb-5">
-                이웃 댕댕이들과 즐거운 시간을 함께하세요.
+              <p className="mb-5 text-sm font-medium text-white/85">
+                돈 받고 산책·돌봄을 제공하는 돌보미로 등록해 보세요.
               </p>
-              <div className="bg-white/20 backdrop-blur-md text-white px-5 py-2.5 rounded-xl font-bold inline-block group-hover:bg-white group-hover:text-orange-600 transition-colors text-sm">
+              <div className="inline-block rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md transition-colors group-hover:bg-white group-hover:text-[#5E43FF]">
                 지금 1분 만에 신청하기
               </div>
             </div>
@@ -417,38 +484,47 @@ export function MyPage() {
       </div>
 
       {/* Bottom tab navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-orange-50 z-50 pb-safe max-w-[430px] mx-auto">
-        <div className="flex items-center justify-around h-16 max-w-screen-md mx-auto px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[430px] border-t border-slate-200/80 bg-white/95 pb-safe backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-screen-md items-center justify-around px-2">
           <Link
             to="/explore"
             className={`flex flex-col items-center gap-1 transition-colors ${
-              location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400 hover:text-orange-600'
+              location.pathname === '/explore' ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-violet-500'
             }`}
           >
-            <Home className="w-6 h-6" />
+            <Home className="h-6 w-6" />
             <span className="text-[10px] font-bold">홈</span>
           </Link>
-          <Link to="/search" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">
-            <Search className="w-6 h-6" />
+          <Link
+            to="/search"
+            className={`flex flex-col items-center gap-1 transition-colors ${
+              location.pathname === '/search' ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-violet-500'
+            }`}
+          >
+            <Search className="h-6 w-6" />
             <span className="text-[10px] font-bold">검색</span>
           </Link>
-          
-          {/* Central write button */}
-          <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
-            <div className="w-14 h-14 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:shadow-orange-500/50 group-active:scale-95 transition-all">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+          <Link to="/create-meetup" className="-mt-2 flex flex-col items-center group">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5E43FF] to-violet-600 shadow-lg shadow-violet-500/35 transition-all group-active:scale-95 group-hover:shadow-violet-500/45">
+              <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <span className="text-[10px] font-bold text-slate-500 mt-1">글쓰기</span>
+            <span className="mt-1 text-[10px] font-bold text-slate-500">글쓰기</span>
           </Link>
-          
-          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">
-            <MessageCircle className="w-6 h-6" />
+
+          <Link
+            to="/chats"
+            className={`flex flex-col items-center gap-1 transition-colors ${
+              location.pathname.startsWith('/chat') ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-violet-500'
+            }`}
+          >
+            <MessageCircle className="h-6 w-6" />
             <span className="text-[10px] font-bold">채팅</span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-orange-600">
-            <User className="w-6 h-6" />
+          <Link to="/my" className="flex flex-col items-center gap-1 text-[#5E43FF]">
+            <User className="h-6 w-6" />
             <span className="text-[10px] font-bold">내댕댕</span>
           </Link>
         </div>

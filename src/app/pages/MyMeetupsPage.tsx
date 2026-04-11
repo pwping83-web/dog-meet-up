@@ -34,7 +34,7 @@ export function MyMeetupsPage() {
           <Link to="/my" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>내 모임</h1>
+          <h1 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>모이자·만나자</h1>
         </div>
       </header>
 
@@ -63,10 +63,12 @@ export function MyMeetupsPage() {
             <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-5">
               <MessageCircle className="w-10 h-10 text-slate-300" />
             </div>
-            <p className="text-slate-600 text-lg mb-2" style={{ fontWeight: 700 }}>작성한 모임이 없어요</p>
-            <p className="text-sm text-slate-400 mb-6" style={{ fontWeight: 500 }}>우리 동네 댕친 모임을 만들어보세요</p>
+            <p className="mb-2 text-lg text-slate-600" style={{ fontWeight: 700 }}>올린 만남 글이 없어요</p>
+            <p className="mb-6 text-sm text-slate-400" style={{ fontWeight: 500 }}>
+              모이자·만나자로 같이 놀 댕친을 불러보세요
+            </p>
             <Link to="/create-meetup" className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-6 py-3 rounded-2xl text-sm shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all" style={{ fontWeight: 700 }}>
-              모임 만들기
+              글 올리기
             </Link>
           </div>
         ) : (

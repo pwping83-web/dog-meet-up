@@ -14,13 +14,13 @@ export const BILLING_PRODUCTS: {
   {
     key: 'premium_month',
     title: '댕댕 프리미엄 (월)',
-    description: '댕집사 노출 우선, 모임 상단 부스트 등 혜택(Stripe 구독으로 실제 과금)',
+    description: '유료 돌봄(댕집사) 노출 우선, 만남 글 부스트 등 혜택(Stripe 구독)',
     badge: '구독',
   },
   {
     key: 'meetup_boost',
-    title: '모임 부스트 (1회)',
-    description: '내 모임을 탐색·검색 상단에 더 자주 노출(Stripe 일회 결제)',
+    title: '만남 글 부스트 (1회)',
+    description: '모이자·만나자 글을 탐색·검색 상단에 더 자주 노출(Stripe 일회 결제)',
     badge: '1회',
   },
   {

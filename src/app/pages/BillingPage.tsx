@@ -18,7 +18,7 @@ type OrderRow = {
 function orderProductLabel(key: string): string {
   const map: Record<string, string> = {
     premium_month: '댕댕 프리미엄 (월)',
-    meetup_boost: '모임 부스트 (1회)',
+    meetup_boost: '만남 글 부스트 (1회)',
     guard_mom_listing_7d: '보호맘 란 노출 (7일)',
     guard_mom_care_day: '보호맘 돌봄 예약',
   };
@@ -106,17 +106,17 @@ export function BillingPage() {
     premiumUntil != null && !Number.isNaN(Date.parse(premiumUntil)) && new Date(premiumUntil) > new Date();
 
   return (
-    <div className="min-h-full bg-slate-50 pb-28">
-      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
+    <div className="min-h-full bg-[#F5F5F7] pb-28">
+      <header className="sticky top-0 z-40 bg-[#5E43FF] shadow-sm">
+        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-3">
           <Link
             to="/my"
-            className="rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-orange-600"
+            className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
             aria-label="뒤로"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-lg font-extrabold text-slate-800">결제 · 프리미엄</h1>
+          <h1 className="text-lg font-extrabold text-white">결제 · 프리미엄</h1>
         </div>
       </header>
 
@@ -138,9 +138,9 @@ export function BillingPage() {
           </div>
         )}
 
-        <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="mb-3 flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-orange-500" />
+            <ShieldCheck className="h-5 w-5 text-[#5E43FF]" />
             <h2 className="text-base font-extrabold text-slate-800">실제 과금 안내</h2>
           </div>
           <p className="text-sm leading-relaxed text-slate-600">
@@ -157,24 +157,24 @@ export function BillingPage() {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : !user ? (
-          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-sm">
             <p className="mb-4 text-sm font-medium text-slate-600">결제하려면 로그인이 필요합니다.</p>
             <Link
               to="/login"
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 text-sm font-bold text-white shadow-md"
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-md"
             >
               로그인하기
             </Link>
           </div>
         ) : (
           <>
-            <div className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 p-5 shadow-sm">
+            <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/90 p-5 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-inner">
-                  <Crown className="h-6 w-6 text-amber-500" />
+                  <Crown className="h-6 w-6 text-[#5E43FF]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-orange-700/80">프리미엄 상태</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-violet-700/90">프리미엄 상태</p>
                   <p className="mt-1 text-lg font-black text-slate-900">
                     {isPremium ? '이용 중' : '미가입'}
                   </p>
@@ -189,11 +189,11 @@ export function BillingPage() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="px-1 text-sm font-extrabold text-slate-500">상품</h3>
+              <h3 className="px-1 text-xs font-extrabold text-slate-500">상품</h3>
               {BILLING_PRODUCTS.map((p) => (
                 <div
                   key={p.key}
-                  className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm"
+                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"
                 >
                   <div className="mb-3 flex items-start justify-between gap-3">
                     <div>
@@ -213,7 +213,7 @@ export function BillingPage() {
                     type="button"
                     disabled={checkoutLoading !== null}
                     onClick={() => void handlePay(p.key)}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-3.5 text-sm font-bold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#5E43FF] to-violet-600 py-3.5 text-sm font-bold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
                   >
                     {checkoutLoading === p.key ? (
                       <>
@@ -228,8 +228,8 @@ export function BillingPage() {
               ))}
             </div>
 
-            <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 text-sm font-extrabold text-slate-500">최근 결제 시도</h3>
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+              <h3 className="mb-3 text-xs font-extrabold text-slate-500">최근 결제 시도</h3>
               {listLoading ? (
                 <div className="flex justify-center py-8 text-slate-400">
                   <Loader2 className="h-6 w-6 animate-spin" />

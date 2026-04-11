@@ -15,7 +15,7 @@ export function ProfileEditPage() {
     city: '서울',
     district: '강남구',
     avatarTheme: 'default',
-    specialty: '산책 · 돌봄', // 댕집사 모드용
+    specialty: '산책 · 방문 돌봄', // 유료 돌봄(댕집사) 모드
   });
 
   /** 프로필 테마 — 댕댕마켓용 강아지 캐릭터 (이전 수리마켓 킥보드·드론·렌치 제거) */
@@ -55,7 +55,7 @@ export function ProfileEditPage() {
 
       <div className="max-w-screen-md mx-auto p-4 space-y-4">
         
-        {/* 일반 / 댕집사 모드 탭 */}
+        {/* 일반 / 유료 돌봄(댕집사) 탭 */}
         <div className="bg-slate-100 p-1 rounded-2xl flex relative mb-6">
           <button
             type="button"
@@ -69,7 +69,7 @@ export function ProfileEditPage() {
             onClick={() => setProfileMode('repairer')}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all z-10 ${profileMode === 'repairer' ? 'text-orange-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
-            댕집사
+            유료 돌봄
           </button>
           {/* 토글 애니메이션 배경 */}
           <div className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl transition-transform duration-300 shadow-sm ${profileMode === 'repairer' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`} />

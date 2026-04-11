@@ -91,17 +91,17 @@ export function GuardMomRegisterPage() {
     row?.listing_visible_until != null && new Date(row.listing_visible_until).getTime() > Date.now();
 
   return (
-    <div className="min-h-screen bg-slate-50/80 pb-28">
-      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-4">
+    <div className="min-h-screen bg-[#F5F5F7] pb-28">
+      <header className="sticky top-0 z-40 bg-[#5E43FF] shadow-sm">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <Link
             to="/guard-moms"
-            className="-ml-2 rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-100"
+            className="-ml-1 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
             aria-label="뒤로"
           >
             <ArrowLeft className="h-6 w-6" />
           </Link>
-          <h1 className="text-lg font-extrabold text-slate-800">보호맘 프로필</h1>
+          <h1 className="text-lg font-extrabold text-white">보호맘 프로필</h1>
         </div>
       </header>
 
@@ -115,27 +115,27 @@ export function GuardMomRegisterPage() {
             <p className="text-sm font-semibold text-slate-600">로그인 후 등록할 수 있어요.</p>
             <Link
               to="/login"
-              className="mt-4 inline-block rounded-xl bg-gradient-to-r from-orange-500 to-amber-400 px-6 py-3 text-sm font-extrabold text-white"
+              className="mt-4 inline-block rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 px-6 py-3 text-sm font-extrabold text-white shadow-md"
             >
               로그인
             </Link>
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-xs font-medium leading-relaxed text-amber-950">
+            <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-4 py-3 text-xs font-medium leading-relaxed text-violet-950">
               <strong>인증</strong>은 운영자가 Supabase에서 <code className="rounded bg-white/80 px-1">certified_at</code>{' '}
               을 넣어 드린 뒤에 가능해요. 인증 전에는 「7일 노출」 결제만 막히고, 프로필 저장은 해두면 됩니다.
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
-                <Baby className="h-5 w-5 text-rose-500" />
+                <Baby className="h-5 w-5 text-[#5E43FF]" />
                 <h2 className="text-sm font-extrabold text-slate-800">상태</h2>
               </div>
               <ul className="space-y-2 text-xs font-semibold text-slate-600">
                 <li>
                   인증:{' '}
-                  <span className={certified ? 'text-emerald-600' : 'text-amber-600'}>
+                  <span className={certified ? 'text-emerald-600' : 'text-violet-600'}>
                     {certified ? '완료' : '대기(운영 처리)'}
                   </span>
                 </li>
@@ -152,7 +152,7 @@ export function GuardMomRegisterPage() {
                 type="button"
                 disabled={listingBusy || !certified}
                 onClick={() => void handleListingPay()}
-                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-rose-500 to-orange-500 py-3 text-sm font-extrabold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#5E43FF] to-violet-600 py-3 text-sm font-extrabold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {listingBusy ? '이동 중…' : '7일 노출권 Stripe 결제'}
               </button>

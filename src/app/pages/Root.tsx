@@ -30,7 +30,7 @@ export function Root() {
   const showPrimaryNav = !hideBottomNav;
 
   return (
-    <div className="flex min-h-[100dvh] justify-center bg-slate-100">
+    <div className="flex min-h-[100dvh] justify-center bg-[#ECECF0]">
       <div className="relative flex min-h-[100dvh] w-full max-w-[min(100%,480px)] flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {!hasOwnNav && !isAdminPage && <Header />}
@@ -39,12 +39,12 @@ export function Root() {
           </main>
 
           {showPrimaryNav && (
-            <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200 bg-white">
+            <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200/90 bg-white/95 backdrop-blur-md">
               <div className="flex items-center justify-around">
                 <Link
                   to="/explore"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/explore' ? 'text-orange-600' : 'text-gray-500'
+                    location.pathname === '/explore' ? 'text-[#5E43FF]' : 'text-gray-500'
                   }`}
                 >
                   <Home className="h-5 w-5" />
@@ -53,7 +53,7 @@ export function Root() {
                 <Link
                   to="/search"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/search' ? 'text-orange-600' : 'text-gray-500'
+                    location.pathname === '/search' ? 'text-[#5E43FF]' : 'text-gray-500'
                   }`}
                 >
                   <Search className="h-5 w-5" />
@@ -62,17 +62,19 @@ export function Root() {
                 <Link
                   to="/sitters"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname.startsWith('/sitter') ? 'text-orange-600' : 'text-gray-500'
+                    location.pathname.startsWith('/sitter') || location.pathname.startsWith('/guard-mom')
+                      ? 'text-[#5E43FF]'
+                      : 'text-gray-500'
                   }`}
-                  aria-label="댕집사"
+                  aria-label="모임과 유료 돌봄"
                 >
                   <PawTabIcon className="h-5 w-5" />
-                  <span className="text-[10px] font-semibold">댕집사</span>
+                  <span className="text-[10px] font-semibold">모임·돌봄</span>
                 </Link>
                 <Link
                   to="/my"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/my' ? 'text-orange-600' : 'text-gray-500'
+                    location.pathname === '/my' ? 'text-[#5E43FF]' : 'text-gray-500'
                   }`}
                 >
                   <User className="h-5 w-5" />

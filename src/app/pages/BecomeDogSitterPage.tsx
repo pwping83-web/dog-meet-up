@@ -42,7 +42,7 @@ export function BecomeDogSitterPage() {
     }
 
     console.log('댕집사 등록:', formData);
-    alert('등록 완료! 🎉\n이제 모임을 만들 수 있어요');
+    alert('등록 완료! 🎉\n이제 유료로 댕댕이 돌봄을 제공할 수 있어요');
     navigate('/my');
   };
 
@@ -54,7 +54,7 @@ export function BecomeDogSitterPage() {
           <button onClick={() => navigate(-1)}>
             <X className="w-6 h-6" />
           </button>
-          <h1 style={{ fontWeight: 700 }}>댕집사 등록 🐾</h1>
+          <h1 style={{ fontWeight: 700 }}>유료 돌봄(댕집사) 등록 🐾</h1>
           <div className="w-6" />
         </div>
       </div>
@@ -64,7 +64,7 @@ export function BecomeDogSitterPage() {
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🐕</div>
           <h2 className="text-2xl mb-3" style={{ fontWeight: 700 }}>
-            댕친 모임을 이끌어주세요
+            돈 받고 댕댕이를 돌봐 주는 돌보미로 활동해요
           </h2>
           <p className="text-gray-600 text-base">
             이웃 댕댕이들과 함께 즐거운 시간을

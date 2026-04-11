@@ -10,7 +10,7 @@ import { RouteErrorPage } from './pages/RouteErrorPage';
  * Route Structure:
  * - / : Home (simple, vibrant landing)
  * - /explore : Community explorer (meetups, MBTI, dog profiles)
- * - /sitters : Browse dog sitters & meetups
+ * - /sitters : 모이자·만나자 + 유료 돌봄(댕집사) + 보호맘
  * - /create-meetup : Create new meetup
  * - /meetup/:id : Meetup detail + join requests
  * - /sitter/:id : Dog sitter profile

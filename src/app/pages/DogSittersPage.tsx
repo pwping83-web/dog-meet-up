@@ -58,48 +58,48 @@ export function DogSittersPage() {
           <button
             type="button"
             onClick={() => setActiveTab('meetups')}
-            className={`flex-1 py-3.5 text-sm transition-colors relative ${
-              activeTab === 'meetups'
-                ? 'text-slate-900'
-                : 'text-slate-400'
+            className={`relative flex-1 py-3.5 text-[13px] transition-colors ${
+              activeTab === 'meetups' ? 'text-slate-900' : 'text-slate-400'
             }`}
-            style={{ fontWeight: 700 }}
+            style={{ fontWeight: 800 }}
           >
-            🐕 댕친 구해요
+            모이자·만나자
             {activeTab === 'meetups' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-yellow-500"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-[#5E43FF]" />
             )}
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('sitters')}
-            className={`flex-1 py-3.5 text-sm transition-colors relative ${
-              activeTab === 'sitters'
-                ? 'text-slate-900'
-                : 'text-slate-400'
+            className={`relative flex-1 py-3.5 text-[13px] transition-colors ${
+              activeTab === 'sitters' ? 'text-slate-900' : 'text-slate-400'
             }`}
-            style={{ fontWeight: 700 }}
+            style={{ fontWeight: 800 }}
           >
-            🐾 댕친 찾기
+            유료 돌봄
             {activeTab === 'sitters' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-yellow-500"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-[#5E43FF]" />
             )}
           </button>
           <button
             type="button"
             onClick={() => navigate('/guard-moms')}
-            className="flex-1 py-3.5 text-sm text-slate-400 transition-colors relative hover:text-slate-600"
-            style={{ fontWeight: 700 }}
+            className="relative flex-1 py-3.5 text-[12px] text-slate-400 transition-colors hover:text-slate-600"
+            style={{ fontWeight: 800 }}
           >
-            🍼 보호맘
+            보호맘
           </button>
         </div>
       </div>
 
-      {/* 댕친 구해요 탭 */}
       {activeTab === 'meetups' && (
-        <div className="px-4 py-4 max-w-screen-md mx-auto">
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
+        <div className="mx-auto max-w-screen-md px-4 py-4">
+          <p className="mb-3 rounded-2xl border border-violet-100 bg-violet-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-violet-900">
+            <strong className="font-extrabold">모이자 · 만나자</strong>는 산책·놀이 등{' '}
+            <strong>함께할 댕친을 부르는 글</strong>이에요. 돈 받고 맡아 주는 건 옆의{' '}
+            <strong>유료 돌봄</strong> 탭을 이용해 주세요.
+          </p>
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {categories.map((cat) => (
               <button
                 key={cat}
@@ -161,13 +161,20 @@ export function DogSittersPage() {
         </div>
       )}
 
-      {/* 댕친 찾기 탭 */}
       {activeTab === 'sitters' && (
-        <div className="px-4 py-4 max-w-screen-md mx-auto">
-          <div className="bg-orange-50/50 border-2 border-orange-200 rounded-3xl p-4 mb-4">
+        <div className="mx-auto max-w-screen-md px-4 py-4">
+          <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
+            <strong className="font-extrabold">유료 돌봄(댕집사)</strong>는{' '}
+            <strong>돈을 받고 강아지를 맡아 돌봐 주는 돌보미</strong>를 찾는 곳이에요. 같이 놀 만남 모집은{' '}
+            <strong>모이자·만나자</strong> 탭이에요.
+          </p>
+          <div className="mb-4 rounded-3xl border-2 border-amber-200/80 bg-amber-50/50 p-4">
             <div className="mb-2">
-              <label className="block text-xs text-slate-700 mb-2 flex items-center gap-2" style={{ fontWeight: 700 }}>
-                <MapPin className="w-4 h-4 text-orange-600 flex-shrink-0" />
+              <label
+                className="mb-2 flex items-center gap-2 text-xs text-slate-700"
+                style={{ fontWeight: 700 }}
+              >
+                <MapPin className="h-4 w-4 shrink-0 text-amber-700" />
                 내 위치
               </label>
               <RegionSelector
@@ -177,16 +184,14 @@ export function DogSittersPage() {
                 onDistrictChange={setUserDistrict}
               />
             </div>
-            <p className="text-xs text-orange-700 mt-2" style={{ fontWeight: 700 }}>
-              💡 가까운 순서대로 보여드려요
-            </p>
+            <p className="mt-2 text-xs font-bold text-amber-900">가까운 돌보미 순으로 보여요</p>
           </div>
 
           <div className="relative mb-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="댕친 검색 🐕"
+              placeholder="돌보미 검색 · 산책·돌봄 🐕"
               className="w-full pl-11 pr-4 h-12 text-sm border-transparent bg-slate-50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400"
               style={{ fontWeight: 500 }}
             />

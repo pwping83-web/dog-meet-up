@@ -57,7 +57,7 @@ export function MeetupDetailPage() {
           <button type="button" onClick={() => navigate('/explore')} className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="메인으로">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>모임 상세 🐾</span>
+          <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>만남 상세 🐾</span>
         </div>
       </div>
 

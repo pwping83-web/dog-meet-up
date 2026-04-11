@@ -44,17 +44,17 @@ export function GuardMomsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50/80 pb-28">
-      <header className="sticky top-0 z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-4">
+    <div className="min-h-screen bg-[#F5F5F7] pb-28">
+      <header className="sticky top-0 z-40 bg-[#5E43FF] shadow-sm">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <Link
             to="/sitters"
-            className="-ml-2 rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-100"
+            className="-ml-1 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
             aria-label="뒤로"
           >
             <ArrowLeft className="h-6 w-6" />
           </Link>
-          <h1 className="text-lg font-extrabold text-slate-800">인증 보호맘 란</h1>
+          <h1 className="text-lg font-extrabold text-white">인증 보호맘 란</h1>
         </div>
       </header>
 
@@ -66,7 +66,7 @@ export function GuardMomsPage() {
 
         <Link
           to="/guard-mom/register"
-          className="flex items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 py-3.5 text-sm font-extrabold text-orange-800 shadow-sm active:scale-[0.99] transition-transform"
+          className="flex items-center justify-center gap-2 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-indigo-50 py-3.5 text-sm font-extrabold text-[#5E43FF] shadow-sm transition-transform active:scale-[0.99]"
         >
           <Baby className="h-4 w-4" />
           보호맘으로 프로필 등록 · 노출 결제
@@ -95,14 +95,14 @@ export function GuardMomsPage() {
               <li key={m.id}>
                 <Link
                   to={`/guard-mom/${m.id}`}
-                  className="block rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.99]"
+                  className="block rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-all hover:border-violet-200 hover:shadow-md active:scale-[0.99]"
                 >
                   <div className="flex items-start gap-3">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-100 to-orange-100 text-2xl">
                       🍼
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs font-extrabold uppercase tracking-wide text-rose-600">인증 보호맘</p>
+                      <p className="text-xs font-extrabold uppercase tracking-wide text-[#5E43FF]">인증 보호맘</p>
                       <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-800">
                         {m.intro.trim() || '소개를 준비 중이에요.'}
                       </p>
@@ -111,7 +111,7 @@ export function GuardMomsPage() {
                           <MapPin className="h-3.5 w-3.5" />
                           {[m.region_si, m.region_gu].filter(Boolean).join(' ') || '동네 미입력'}
                         </span>
-                        <span className="text-orange-600">
+                        <span className="text-[#5E43FF]">
                           1일 {m.per_day_fee_krw.toLocaleString('ko-KR')}원부터
                         </span>
                       </div>
