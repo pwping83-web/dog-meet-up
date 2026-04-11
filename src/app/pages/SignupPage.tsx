@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 
 export function SignupPage() {
@@ -26,10 +26,13 @@ export function SignupPage() {
   };
 
   const handleKakaoSignup = async () => {
+    if (!termsAgree || !privacyAgree) {
+      alert('필수 약관에 동의해 주세요.');
+      return;
+    }
     try {
       setLoading(true);
       await signInWithKakao();
-      // Supabase가 자동으로 Kakao로 리다이렉트합니다
     } catch (error) {
       console.error('Kakao signup error:', error);
       alert('카카오 가입에 실패했습니다. 다시 시도해주세요.');
@@ -155,13 +158,41 @@ export function SignupPage() {
               </div>
             </div>
 
+            <div className="relative mb-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-white text-slate-500 font-bold">또는</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleKakaoSignup()}
+              disabled={loading || !termsAgree || !privacyAgree}
+              className="mb-4 w-full rounded-2xl bg-[#FEE500] py-3.5 font-bold text-gray-900 shadow-md transition-all hover:bg-[#FDD835] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <path d="M12 3C6.5 3 2 6.6 2 11c0 2.8 1.9 5.3 4.8 6.7-.2.9-.7 3-.8 3.4 0 0 0 .3.2.4.1.1.3.1.4 0 .5-.3 3.7-2.4 4.3-2.8.4 0 .8.1 1.2.1 5.5 0 9.9-3.6 9.9-8s-4.5-8-10-8z" />
+              </svg>
+              {loading ? '카카오로 연결 중…' : '카카오로 가입하기'}
+            </button>
+
             <button
               type="submit"
               disabled={!termsAgree || !privacyAgree}
               className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] disabled:from-gray-300 disabled:to-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
             >
-              다음
+              휴대폰으로 계속하기
             </button>
+
+            <p className="mt-6 text-center text-sm font-medium text-slate-500">
+              이미 계정이 있나요?{' '}
+              <Link to="/login" className="font-bold text-orange-600 hover:underline">
+                로그인
+              </Link>
+            </p>
           </form>
         )}
 
