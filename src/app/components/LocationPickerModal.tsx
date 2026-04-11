@@ -1,0 +1,233 @@
+import { useEffect, useRef, useState } from 'react';
+import { Crosshair, MapPin, Navigation, X } from 'lucide-react';
+import { RegionSelector } from './RegionSelector';
+import { useUserLocation } from '../../contexts/UserLocationContext';
+import {
+  createMap,
+  getKakaoMapAppKey,
+  loadKakaoMapScript,
+  type KakaoMap,
+} from '../../lib/kakaoMaps';
+import { getCurrentBrowserPosition } from '../../lib/browserGeolocation';
+
+type Props = {
+  open: boolean;
+  onClose: () => void;
+};
+
+export function LocationPickerModal({ open, onClose }: Props) {
+  const { location, setManualRegion, applyCoordinates, applyGpsLocation } = useUserLocation();
+  const mapEl = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<KakaoMap | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<'gps' | 'apply' | 'saveGps' | null>(null);
+  const hasKey = Boolean(getKakaoMapAppKey());
+
+  const [selCity, setSelCity] = useState(location.city);
+  const [selDistrict, setSelDistrict] = useState(location.district);
+
+  useEffect(() => {
+    if (!open) return;
+    setSelCity(location.city);
+    setSelDistrict(location.district);
+    setError(null);
+  }, [open, location.city, location.district]);
+
+  useEffect(() => {
+    if (!open || !hasKey || !mapEl.current) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        await loadKakaoMapScript();
+        if (cancelled || !mapEl.current) return;
+        mapEl.current.innerHTML = '';
+        const lat = location.lat ?? 37.5665;
+        const lng = location.lng ?? 126.978;
+        const map = createMap(mapEl.current, { lat, lng }, 5);
+        mapRef.current = map;
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      mapRef.current = null;
+      if (mapEl.current) mapEl.current.innerHTML = '';
+    };
+  }, [open, hasKey, location.lat, location.lng]);
+
+  const moveMapTo = (lat: number, lng: number) => {
+    const k = window.kakao;
+    const map = mapRef.current;
+    if (!k?.maps || !map) return;
+    map.setCenter(new k.maps.LatLng(lat, lng));
+    map.setLevel(4);
+  };
+
+  const handlePanToGps = async () => {
+    setBusy('gps');
+    setError(null);
+    try {
+      const { lat, lng } = await getCurrentBrowserPosition();
+      moveMapTo(lat, lng);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleApplyMapCenter = async () => {
+    setBusy('apply');
+    setError(null);
+    try {
+      const map = mapRef.current;
+      const k = window.kakao;
+      if (!hasKey || !map || !k?.maps) {
+        setManualRegion(selCity, selDistrict);
+        onClose();
+        return;
+      }
+      const c = map.getCenter();
+      await applyCoordinates(c.getLat(), c.getLng(), 'map');
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleSaveGpsDirect = async () => {
+    setBusy('saveGps');
+    setError(null);
+    try {
+      await applyGpsLocation();
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleManualOnly = () => {
+    setManualRegion(selCity, selDistrict);
+    onClose();
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center p-0 sm:p-4">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+        aria-label="닫기"
+        onClick={onClose}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative z-[101] flex w-full max-w-md flex-col rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:rounded-3xl max-h-[92vh] overflow-hidden"
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-orange-600" />
+            <h2 className="text-base font-extrabold text-slate-900">내 동네 설정</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-slate-500 hover:bg-slate-100"
+            aria-label="닫기"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {error && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+              {error}
+            </div>
+          )}
+
+          {!hasKey && (
+            <p className="text-sm leading-relaxed text-slate-600">
+              <strong className="text-slate-800">카카오맵</strong> 앱 키(
+              <code className="rounded bg-slate-100 px-1 text-xs">VITE_KAKAO_MAP_APP_KEY</code>)가 없으면
+              지도·자동 주소 변환은 비활성입니다. 아래에서 시·구를 직접 선택할 수 있습니다.
+            </p>
+          )}
+
+          {hasKey && (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void handlePanToGps()}
+                  className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-2xl bg-slate-900 px-3 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  <Navigation className="h-4 w-4" />
+                  {busy === 'gps' ? '위치 가져오는 중…' : '지도를 현재 위치로'}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void handleSaveGpsDirect()}
+                  className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-sm font-bold text-orange-800 disabled:opacity-50"
+                >
+                  <Crosshair className="h-4 w-4" />
+                  {busy === 'saveGps' ? '저장 중…' : 'GPS로 바로 저장'}
+                </button>
+              </div>
+
+              <p className="text-xs text-slate-500">
+                지도를 움직인 뒤 <strong>지도 중심을 내 동네로 저장</strong>을 누르면, 그 지점 기준으로 카카오
+                주소를 읽어 시·구를 맞춥니다.
+              </p>
+
+              <div
+                ref={mapEl}
+                className="h-[220px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+              />
+
+              <button
+                type="button"
+                disabled={busy !== null}
+                onClick={() => void handleApplyMapCenter()}
+                className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-3.5 text-sm font-extrabold text-white shadow-md disabled:opacity-50"
+              >
+                {busy === 'apply' ? '저장 중…' : '지도 중심을 내 동네로 저장'}
+              </button>
+            </>
+          )}
+
+          <div className="border-t border-slate-100 pt-4">
+            <p className="mb-2 text-xs font-bold text-slate-500">또는 시·구 선택</p>
+            <RegionSelector
+              layout="modal"
+              selectedCity={selCity}
+              selectedDistrict={selDistrict}
+              onCityChange={setSelCity}
+              onDistrictChange={setSelDistrict}
+              placeholder="시·도와 구·군을 선택하세요"
+            />
+            <button
+              type="button"
+              onClick={handleManualOnly}
+              className="mt-3 w-full rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50"
+            >
+              선택한 시·구만 저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

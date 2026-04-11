@@ -1,0 +1,8 @@
+# Supabase 로컬/배포용. project_id는 대시보드 URL의 ref와 동일하게 맞추면 됩니다.
+project_id = "silbyvmcuymjewurkrfn"
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false

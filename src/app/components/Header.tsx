@@ -1,0 +1,58 @@
+import { useState } from 'react';
+import { Link } from 'react-router';
+import { MapPin, Shield, ChevronDown, Bell } from 'lucide-react';
+import { useUserLocation } from '../../contexts/UserLocationContext';
+import { LocationPickerModal } from './LocationPickerModal';
+
+export function Header() {
+  const { shortLabel, fullLabel } = useUserLocation();
+  const [locationOpen, setLocationOpen] = useState(false);
+
+  return (
+    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all">
+      <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
+      <div className="mx-auto w-full max-w-screen-md px-4 lg:max-w-none lg:px-6">
+        <div className="flex items-center justify-between h-14 relative">
+          
+          {/* 좌측: 지역 선택 (카카오맵 / GPS / 수동) */}
+          <div className="flex items-center min-w-0 max-w-[45%]">
+            <button
+              type="button"
+              title={fullLabel}
+              onClick={() => setLocationOpen(true)}
+              className="flex min-w-0 items-center gap-1.5 rounded-full bg-slate-100/80 px-3 py-1.5 shadow-inner transition-colors hover:bg-slate-200/80"
+            >
+              <MapPin className="h-4 w-4 shrink-0 text-orange-600" />
+              <span className="truncate text-sm font-extrabold tracking-tight text-slate-800">
+                {shortLabel}
+              </span>
+              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+            </button>
+          </div>
+
+          {/* 중앙: 앱 타이틀 (절대 위치로 정중앙 고정) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <h1 className="text-lg font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-yellow-600 tracking-tight">
+              댕댕마켓
+            </h1>
+          </div>
+          
+          {/* 우측: 유틸리티 아이콘 */}
+          <div className="flex items-center gap-1">
+            {/* 알림 아이콘 (추가 제안) */}
+            <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all relative">
+              <Bell className="w-5 h-5" />
+              {/* 알림 뱃지 포인트 */}
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+            </button>
+            
+            <Link to="/admin" className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all">
+              <Shield className="w-5 h-5" />
+            </Link>
+          </div>
+
+        </div>
+      </div>
+    </header>
+  );
+}
