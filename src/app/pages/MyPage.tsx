@@ -115,7 +115,7 @@ export function MyPage() {
     <div className="min-h-screen bg-slate-50 pb-24">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
-      <header className="sticky top-0 z-50 bg-brand shadow-md">
+      <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
           <Link
@@ -153,7 +153,7 @@ export function MyPage() {
                       setLocationBasedEnabled(!locationBasedEnabled);
                     }}
                     className={`relative z-10 h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-300 ${
-                      locationBasedEnabled ? 'bg-brand shadow-inner' : 'bg-slate-300'
+                      locationBasedEnabled ? 'bg-market-cta shadow-inner' : 'bg-slate-300'
                     }`}
                   >
                     <span
@@ -243,7 +243,7 @@ export function MyPage() {
             </div>
             <Link
               to="/create-dog"
-              className="block w-full rounded-xl bg-brand py-3 text-center text-sm font-bold text-white shadow-md shadow-brand/20 transition-all hover:opacity-[0.92]"
+              className="block w-full rounded-xl bg-market-cta py-3 text-center text-sm font-bold text-white shadow-market transition-all hover:opacity-[0.92]"
             >
               프로필 업데이트하기 🐾
             </Link>
@@ -258,7 +258,7 @@ export function MyPage() {
             </p>
             <Link
               to="/dog-mbti-test"
-              className="inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand/25 transition-all hover:opacity-[0.92] active:scale-95"
+              className="inline-block rounded-xl bg-market-cta px-6 py-3 text-sm font-bold text-white shadow-market-lg transition-all hover:opacity-[0.92] active:scale-95"
             >
               강아지 MBTI 테스트 시작 🎯
             </Link>
@@ -286,7 +286,7 @@ export function MyPage() {
               {/* iOS 스타일 토글 스위치 */}
               <button
                 onClick={handleToggleActive}
-                className={`relative h-8 w-14 rounded-full transition-all duration-300 ${isActive ? 'bg-brand shadow-inner' : 'bg-slate-200'}`}
+                className={`relative h-8 w-14 rounded-full transition-all duration-300 ${isActive ? 'bg-market-cta shadow-inner' : 'bg-slate-200'}`}
               >
                 <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
               </button>
@@ -297,7 +297,7 @@ export function MyPage() {
               className={`rounded-2xl border px-4 py-3.5 text-sm transition-colors ${isActive ? 'border-brand/20 bg-brand/10' : 'border border-slate-100 bg-slate-50'}`}
             >
               <div className="flex items-center gap-3">
-                <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'animate-pulse bg-brand' : 'bg-slate-400'}`} />
+                <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'animate-pulse bg-yellow-300' : 'bg-slate-400'}`} />
                 <div>
                   <p className={`font-bold ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
                     {isActive ? '지금 돌봄 의뢰를 받을 수 있어요 🐕' : '돌봄 접수를 잠시 멈췄어요'}
@@ -317,7 +317,7 @@ export function MyPage() {
                 <p className="mt-1 text-[10px] font-bold text-slate-400">완료 돌봄</p>
               </div>
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-brand-bright">4.8</p>
+                <p className="text-xl font-black text-amber-500">4.8</p>
                 <p className="text-[10px] font-bold text-slate-400 mt-1">평균 평점</p>
               </div>
             </div>
@@ -462,7 +462,7 @@ export function MyPage() {
         {!isRepairer && (
           <Link
             to="/become-sitter"
-            className="group relative block overflow-hidden rounded-3xl bg-gradient-to-br from-brand to-brand-bright p-6 text-white shadow-lg shadow-brand/25 transition-all active:scale-[0.99]"
+            className="group relative block overflow-hidden rounded-3xl bg-market-header p-6 text-white shadow-market-lg transition-all active:scale-[0.99]"
           >
             <div className="relative z-10">
               <h3 className="mb-1.5 flex items-center gap-2 text-xl font-extrabold">
@@ -505,7 +505,7 @@ export function MyPage() {
           </Link>
 
           <Link to="/create-meetup" className="-mt-2 flex flex-col items-center group">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-bright shadow-lg shadow-brand/35 transition-all group-active:scale-95 group-hover:shadow-brand/40">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-market-header shadow-lg shadow-orange-400/45 transition-all group-active:scale-95 group-hover:shadow-orange-400/55">
               <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>

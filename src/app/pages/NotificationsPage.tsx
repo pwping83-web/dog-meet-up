@@ -37,7 +37,7 @@ function PrefSwitch({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-300 disabled:opacity-40 ${
-        checked ? 'bg-brand shadow-inner' : 'bg-slate-200'
+        checked ? 'bg-market-cta shadow-inner' : 'bg-slate-200'
       }`}
     >
       <span
@@ -155,7 +155,7 @@ export function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-28">
-      <header className="sticky top-0 z-10 bg-brand shadow-md">
+      <header className="sticky top-0 z-10 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
             type="button"

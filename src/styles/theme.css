@@ -17,12 +17,13 @@
   --popover-foreground: #0f172a;
 
   /*
-   * 댕댕마켓 브랜드 (주황 계열) — 색 변경 시 이 블록만 맞추면 됩니다.
-   * Tailwind: text-brand, bg-brand, bg-brand-deep, border-brand/20 등
+   * 댕댕마켓 브랜드 — 탐색(/explore) 히어로와 동일한 밝은 주황·노랑 그라데이션 톤
+   * (from-orange-500 via-orange-400 to-yellow-400 계열)
+   * Tailwind: text-brand, bg-brand, border-brand/20, from-brand, to-brand-bright 등
    */
-  --dd-brand: #ea580c; /* orange-600 */
-  --dd-brand-deep: #c2410c; /* orange-700 — 헤더·강조 배경 */
-  --dd-brand-bright: #f97316; /* orange-500 */
+  --dd-brand: #f97316; /* orange-500 */
+  --dd-brand-deep: #ea580c; /* orange-600 — 텍스트·포인트만 (헤더 단색 X) */
+  --dd-brand-bright: #facc15; /* yellow-400 — 그라데이션 끝 */
   --dd-brand-soft: #fff7ed; /* orange-50 */
   --dd-brand-muted: #ffedd5; /* orange-100 */
   --dd-brand-border: #fed7aa; /* orange-200 */
@@ -51,7 +52,7 @@
   --chart-2: #f59e0b;
   --chart-3: #fbbf24;
   --chart-4: #fdba74;
-  --chart-5: #ea580c;
+  --chart-5: #f97316;
   
   /* 전체적인 둥글기를 모바일 앱처럼 부드러운 스쿼클 형태로 변경 */
   --radius: 1rem; 
@@ -237,5 +238,26 @@
 
   .animate-slideUp {
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* 탐색 메인 히어로와 동일한 밝은 주황 그라데이션 (헤더·FAB·주요 CTA) */
+  .bg-market-header {
+    background-image: linear-gradient(to bottom right, #f97316, #fb923c, #facc15);
+  }
+
+  .bg-market-cta {
+    background-image: linear-gradient(to right, #f97316, #facc15);
+  }
+
+  .shadow-market {
+    box-shadow:
+      0 10px 15px -3px rgb(249 115 22 / 0.35),
+      0 4px 6px -4px rgb(250 204 21 / 0.22);
+  }
+
+  .shadow-market-lg {
+    box-shadow:
+      0 12px 28px -6px rgb(249 115 22 / 0.4),
+      0 8px 12px -8px rgb(251 191 36 / 0.25);
   }
 }

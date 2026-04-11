@@ -361,7 +361,7 @@ export function DogSittersPage() {
                 onClick={() => syncCareToUrl(id)}
                 className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm transition-all ${
                   careFilter === id
-                    ? 'bg-brand-deep text-white shadow-md shadow-orange-500/25'
+                    ? 'bg-market-cta text-white shadow-market'
                     : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                 }`}
                 style={{ fontWeight: 700 }}

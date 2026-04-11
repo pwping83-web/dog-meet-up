@@ -95,7 +95,7 @@ export function CustomerServicePage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       {/* 헤더 */}
-      <header className="sticky top-0 z-50 bg-brand shadow-md">
+      <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
           <button
             onClick={() => navigate('/explore')}
@@ -158,7 +158,7 @@ export function CustomerServicePage() {
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`rounded-xl px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-all ${
                     selectedCategory === cat.id
-                      ? 'bg-brand text-white shadow-md shadow-brand/25'
+                      ? 'bg-market-cta text-white shadow-market'
                       : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -202,7 +202,7 @@ export function CustomerServicePage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab('inquiry')}
-                    className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-brand/20 transition-all hover:opacity-90"
+                    className="rounded-xl bg-market-cta px-5 py-2.5 text-sm font-bold text-white shadow-market transition-all hover:opacity-90"
                   >
                     1:1 문의하기
                   </button>
@@ -294,7 +294,7 @@ export function CustomerServicePage() {
 
             <button
               type="submit"
-              className="w-full rounded-2xl bg-gradient-to-r from-brand to-brand-bright py-4 font-bold text-white shadow-lg shadow-brand/25 transition-all hover:shadow-brand/35 active:scale-[0.98]"
+              className="w-full rounded-2xl bg-market-cta py-4 font-bold text-white shadow-market-lg transition-all hover:opacity-95 active:scale-[0.98]"
             >
               문의하기
             </button>

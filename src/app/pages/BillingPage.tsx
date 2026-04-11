@@ -115,7 +115,7 @@ export function BillingPage() {
 
   return (
     <div className="min-h-full bg-slate-50 pb-28">
-      <header className="sticky top-0 z-40 bg-brand shadow-md">
+      <header className="sticky top-0 z-40 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-3">
           <Link
             to="/explore"
@@ -172,16 +172,16 @@ export function BillingPage() {
             <p className="mb-4 text-sm font-medium text-slate-600">결제하려면 로그인이 필요합니다.</p>
             <Link
               to="/login"
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand to-brand-bright px-6 py-3 text-sm font-bold text-white shadow-md shadow-brand/25 transition-opacity hover:opacity-95"
+              className="inline-flex items-center justify-center rounded-xl bg-market-cta px-6 py-3 text-sm font-bold text-white shadow-market transition-opacity hover:opacity-95"
             >
               로그인하기
             </Link>
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border-2 border-brand/25 bg-gradient-to-br from-brand-soft to-white p-5 shadow-sm shadow-brand/10">
+            <div className="rounded-2xl border-2 border-orange-200/60 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm shadow-orange-200/25">
               <div className="flex items-start gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-bright text-white shadow-md shadow-brand/20">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-market-header text-white shadow-market">
                   <Baby className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -206,8 +206,8 @@ export function BillingPage() {
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border-2 border-brand/25 bg-white shadow-lg shadow-brand/15">
-              <div className="bg-gradient-to-r from-brand to-brand-bright px-5 py-4 text-white">
+            <div className="overflow-hidden rounded-2xl border-2 border-orange-200/70 bg-white shadow-market-lg">
+              <div className="bg-market-cta px-5 py-4 text-white">
                 <p className="text-xs font-bold text-white/90">단일 상품</p>
                 <h3 className="mt-0.5 text-lg font-black tracking-tight">{product.title}</h3>
               </div>
@@ -224,7 +224,7 @@ export function BillingPage() {
                   type="button"
                   disabled={checkoutLoading !== null}
                   onClick={() => void handlePay(product.key)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-brand-bright py-3.5 text-sm font-extrabold text-white shadow-md shadow-brand/25 transition-transform active:scale-[0.98] disabled:opacity-60"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-market-cta py-3.5 text-sm font-extrabold text-white shadow-market transition-transform active:scale-[0.98] disabled:opacity-60"
                 >
                   {checkoutLoading === product.key ? (
                     <>

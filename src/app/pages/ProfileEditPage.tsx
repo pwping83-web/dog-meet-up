@@ -135,7 +135,7 @@ export function ProfileEditPage() {
   return (
     <div className="min-h-screen bg-slate-50 pb-28">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
-      <header className="sticky top-0 z-50 bg-brand shadow-md">
+      <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <button
             type="button"
@@ -330,7 +330,7 @@ export function ProfileEditPage() {
             type="button"
             onClick={() => void handleSave()}
             disabled={saveBusy || authLoading || profileLoading}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-brand text-lg font-bold text-white shadow-md shadow-brand/25 transition-all hover:opacity-[0.92] active:scale-[0.98] disabled:opacity-50"
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-market-cta text-lg font-bold text-white shadow-market transition-all hover:opacity-[0.92] active:scale-[0.98] disabled:opacity-50"
           >
             {saveBusy ? <Loader2 className="h-6 w-6 animate-spin" aria-hidden /> : null}
             저장하기

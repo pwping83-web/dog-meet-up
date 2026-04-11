@@ -81,7 +81,7 @@ export function GuardMomDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-32">
-      <header className="sticky top-0 z-40 bg-brand-deep shadow-sm">
+      <header className="sticky top-0 z-40 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
             type="button"

@@ -12,7 +12,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         // 프리미엄 오렌지 색상과 은은한 그림자 효과
-        default: "bg-orange-500 text-white shadow-md shadow-orange-500/20 hover:bg-orange-600 hover:shadow-lg hover:shadow-orange-500/30",
+        default:
+          "bg-gradient-to-r from-orange-500 to-yellow-400 text-white shadow-lg shadow-orange-400/40 hover:opacity-[0.94] hover:shadow-orange-400/50",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 shadow-md shadow-destructive/20",
         outline:
@@ -21,7 +22,7 @@ const buttonVariants = cva(
           "bg-slate-100 text-slate-900 hover:bg-slate-200 shadow-sm",
         ghost:
           "hover:bg-slate-100 hover:text-slate-900 text-slate-600 dark:hover:bg-accent/50",
-        link: "text-orange-600 underline-offset-4 hover:underline",
+        link: "text-orange-500 underline-offset-4 hover:underline",
       },
       size: {
         default: "h-12 px-6 py-2 has-[>svg]:px-4", // 모바일 터치를 고려해 기본 높이를 약간 키움

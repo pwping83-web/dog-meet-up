@@ -93,7 +93,7 @@ export function MeetupDetailPage() {
           {meetup.category === '돌봄' && (
             <Link
               to="/sitters?care=guard"
-              className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-brand/25 bg-brand-soft px-4 py-3 text-sm font-extrabold text-brand transition-colors hover:bg-brand-muted"
+              className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200/80 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 px-4 py-3 text-sm font-extrabold text-orange-600 transition-colors hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100"
             >
               인증 댕집사·유료 돌봄 목록 보기 →
             </Link>

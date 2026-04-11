@@ -91,7 +91,8 @@ export function LandingPage() {
   }, []);
 
   const getQuoteCount = (id: string) => mockQuotes.filter(q => q.repairRequestId === id).length;
-  const recentMeetups = mockRequests.slice(0, 6);
+  const meetupFeedItems = mockRequests.filter((r) => r.category !== '돌봄').slice(0, 6);
+  const dolbomFeedItems = mockRequests.filter((r) => r.category === '돌봄');
 
   const closeExploreMenu = () => setExploreMenuOpen(false);
 
@@ -414,7 +415,7 @@ export function LandingPage() {
               🙌 모이자 · 만나자
             </h2>
             <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-              산책·놀이 모임도 있고, 잠시 맡기는 돌봄 글도 섞여 있어요
+              같이 산책·놀이할 댕친을 부르는 글이에요
             </p>
           </div>
           <Link to="/sitters" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
@@ -423,7 +424,7 @@ export function LandingPage() {
         </motion.div>
 
         <div className="space-y-3 max-md:space-y-3 md:space-y-2.5">
-          {recentMeetups.map((req, i) => {
+          {meetupFeedItems.map((req, i) => {
             const quoteCount = getQuoteCount(req.id);
             return (
               <motion.div key={req.id} variants={fadeUp} custom={i + 1}>
@@ -476,6 +477,93 @@ export function LandingPage() {
           })}
         </div>
       </motion.section>
+
+      {/* ─── 돌봄 · 맡기기 (모이자·만나자와 분리) ─── */}
+      {dolbomFeedItems.length > 0 && (
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          className="px-4 mt-10"
+        >
+          <motion.div variants={fadeUp} custom={0} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
+            <div>
+              <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>
+                🍼 돌봄 · 맡기기
+              </h2>
+              <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
+                출장·여행 때 잠시 맡기거나, 집 방문 돌봄을 찾는 글이에요
+              </p>
+            </div>
+            <Link
+              to="/sitters?care=guard"
+              className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs"
+              style={{ fontWeight: 800 }}
+            >
+              인증 돌봄 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
+            </Link>
+          </motion.div>
+
+          <div className="space-y-3 max-md:space-y-3 md:space-y-2.5">
+            {dolbomFeedItems.map((req, i) => {
+              const quoteCount = getQuoteCount(req.id);
+              return (
+                <motion.div key={req.id} variants={fadeUp} custom={i + 1}>
+                  <Link
+                    to={`/meetup/${req.id}`}
+                    className="flex gap-4 rounded-3xl border border-amber-100/90 bg-gradient-to-br from-amber-50/80 to-white p-4 shadow-sm transition-all hover:border-amber-200 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
+                  >
+                    <div className="flex h-[4.5rem] w-[4.5rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
+                      {req.images && req.images.length > 0 ? (
+                        <ImageWithFallback
+                          src={req.images[0]}
+                          alt={req.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl" aria-hidden>
+                          🍼
+                        </span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1 py-0.5">
+                      <div className="mb-1 flex items-center gap-2">
+                        <span
+                          className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] text-orange-700 max-md:text-[11px] md:text-[9px]"
+                          style={{ fontWeight: 800 }}
+                        >
+                          돌봄
+                        </span>
+                        <h3
+                          className="line-clamp-1 min-w-0 flex-1 text-base text-slate-800 max-md:text-[15px] md:mb-0 md:text-xs"
+                          style={{ fontWeight: 800 }}
+                        >
+                          {req.title}
+                        </h3>
+                      </div>
+                      <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
+                        {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
+                      </p>
+                      <div className="flex items-center gap-3">
+                        {req.estimatedCost && (
+                          <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>
+                            {req.estimatedCost}
+                          </span>
+                        )}
+                        {quoteCount > 0 && (
+                          <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
+                            <MessageCircle className="h-3 w-3" /> {quoteCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.section>
+      )}
 
       {/* ─── HERO IMAGE SECTION ─── */}
       <motion.section
