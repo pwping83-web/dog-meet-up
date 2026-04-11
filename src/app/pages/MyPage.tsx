@@ -295,7 +295,10 @@ export function MyPage() {
               </div>
             </div>
 
-            <Link to="/sitter/r1" className="mt-4 w-full bg-orange-50/50 text-orange-600 border border-orange-100 py-3.5 rounded-2xl font-bold text-sm text-center block hover:bg-orange-100 transition-colors">
+            <Link
+              to="/sitter/r1"
+              className="mt-4 block w-full rounded-2xl border-2 border-orange-300 bg-orange-50 py-3.5 text-center text-sm font-bold text-orange-700 shadow-sm transition-colors hover:border-orange-400 hover:bg-orange-100 underline decoration-orange-600 decoration-2 underline-offset-4"
+            >
               내 프로필 미리보기
             </Link>
           </div>

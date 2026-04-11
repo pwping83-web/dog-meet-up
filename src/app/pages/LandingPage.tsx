@@ -1,9 +1,10 @@
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import {
   MapPin, Users, Heart, ArrowRight, Star,
   Shield, MessageCircle, ChevronRight, Sparkles,
-  Home, PlusCircle, User, Search, Bell, Loader2
+  Home, PlusCircle, User, Bell, Loader2,
+  Menu, X, Settings, LogOut, CreditCard,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { mockRequests, mockQuotes } from '../data/mockData';
@@ -12,6 +13,7 @@ import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAppAdmin } from '../../lib/appAdmin';
 import type { User } from '@supabase/supabase-js';
 
 function shortProfileLabel(user: User): string {
@@ -55,7 +57,10 @@ const fadeUp = {
 
 export function LandingPage() {
   const location = useLocation();
-  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const { user, loading: authLoading, signOut } = useAuth();
+  const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
+  const [logoutBusy, setLogoutBusy] = useState(false);
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
   const [dbDogs, setDbDogs] = useState<any[]>([]);
   const [dogsLoading, setDogsLoading] = useState(true);
@@ -83,6 +88,22 @@ export function LandingPage() {
 
   const getQuoteCount = (id: string) => mockQuotes.filter(q => q.repairRequestId === id).length;
   const recentMeetups = mockRequests.slice(0, 6);
+
+  const closeExploreMenu = () => setExploreMenuOpen(false);
+
+  const handleExploreLogout = async () => {
+    try {
+      setLogoutBusy(true);
+      await signOut();
+      closeExploreMenu();
+      navigate('/');
+    } catch (e) {
+      console.error(e);
+      alert('로그아웃에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setLogoutBusy(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-orange-50/30 pb-20 overflow-x-hidden">
@@ -113,14 +134,15 @@ export function LandingPage() {
               <Loader2 className="h-4 w-4 animate-spin text-white" aria-hidden />
             </span>
           ) : user ? (
-            <Link
-              to="/my"
-              className="max-w-[7rem] truncate bg-white/25 px-3 py-1.5 text-xs text-white backdrop-blur-md rounded-lg border border-white/40 active:scale-95 transition-all"
-              style={{ fontWeight: 700 }}
-              title="마이페이지"
+            <button
+              type="button"
+              onClick={() => setExploreMenuOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/40 bg-white/20 text-white backdrop-blur-md active:scale-95 transition-all"
+              aria-label="메뉴·설정"
+              aria-expanded={exploreMenuOpen}
             >
-              {shortProfileLabel(user)}
-            </Link>
+              <Menu className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+            </button>
           ) : (
             <Link
               to="/login"
@@ -161,11 +183,11 @@ export function LandingPage() {
             className="flex gap-2.5"
           >
             <Link
-              to="/signup"
+              to={!authLoading && user ? '/create-meetup' : '/signup'}
               className="flex-1 bg-white text-orange-600 py-3 rounded-xl text-center text-sm shadow-xl shadow-orange-600/20 active:scale-[0.97] transition-all"
               style={{ fontWeight: 800 }}
             >
-              시작하기
+              {!authLoading && user ? '모임 만들기' : '시작하기'}
             </Link>
             <Link
               to="/sitters"
@@ -487,57 +509,48 @@ export function LandingPage() {
         </div>
       </motion.section>
 
-      {/* ─── FINAL CTA ─── */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-50px' }}
-        className="px-4 mt-10"
-      >
-        <motion.div
-          variants={fadeUp}
-          custom={0}
-          className="bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 rounded-2xl p-6 text-center relative overflow-hidden shadow-xl shadow-orange-200/50"
+      {/* ─── FINAL CTA (비로그인만) ─── */}
+      {!authLoading && !user && (
+        <motion.section
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          className="px-4 mt-10"
         >
-          <div className="absolute inset-0 pointer-events-none">
-            <span className="absolute -top-4 -left-4 text-6xl opacity-10 rotate-12 select-none">🐾</span>
-            <span className="absolute -bottom-3 -right-3 text-5xl opacity-10 -rotate-12 select-none">🦴</span>
-          </div>
-          <div className="relative z-10">
-            <span className="text-4xl mb-3 block">🐕</span>
-            <h2 className="text-white text-xl mb-2 tracking-tight" style={{ fontWeight: 900 }}>
-              지금 바로 시작해요!
-            </h2>
-            <p className="text-orange-100/90 text-xs mb-4" style={{ fontWeight: 600 }}>
-              우리 동네 댕친들이 기다리고 있어요
-            </p>
-            <Link
-              to="/signup"
-              className="inline-block bg-white text-orange-600 px-8 py-3 rounded-xl text-sm shadow-xl active:scale-[0.97] transition-all"
-              style={{ fontWeight: 900 }}
-            >
-              무료로 가입하기 →
-            </Link>
-            <p className="text-orange-100/60 text-[11px] mt-3" style={{ fontWeight: 600 }}>
-              {user ? (
-                <>
-                  환영해요!{' '}
-                  <Link to="/my" className="text-white underline underline-offset-2" style={{ fontWeight: 800 }}>
-                    내댕댕
-                  </Link>
-                </>
-              ) : (
-                <>
-                  이미 계정이 있나요?{' '}
-                  <Link to="/login" className="text-white underline underline-offset-2" style={{ fontWeight: 800 }}>
-                    로그인
-                  </Link>
-                </>
-              )}
-            </p>
-          </div>
-        </motion.div>
-      </motion.section>
+          <motion.div
+            variants={fadeUp}
+            custom={0}
+            className="bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 rounded-2xl p-6 text-center relative overflow-hidden shadow-xl shadow-orange-200/50"
+          >
+            <div className="absolute inset-0 pointer-events-none">
+              <span className="absolute -top-4 -left-4 text-6xl opacity-10 rotate-12 select-none">🐾</span>
+              <span className="absolute -bottom-3 -right-3 text-5xl opacity-10 -rotate-12 select-none">🦴</span>
+            </div>
+            <div className="relative z-10">
+              <span className="text-4xl mb-3 block">🐕</span>
+              <h2 className="text-white text-xl mb-2 tracking-tight" style={{ fontWeight: 900 }}>
+                지금 바로 시작해요!
+              </h2>
+              <p className="text-orange-100/90 text-xs mb-4" style={{ fontWeight: 600 }}>
+                우리 동네 댕친들이 기다리고 있어요
+              </p>
+              <Link
+                to="/signup"
+                className="inline-block bg-white text-orange-600 px-8 py-3 rounded-xl text-sm shadow-xl active:scale-[0.97] transition-all"
+                style={{ fontWeight: 900 }}
+              >
+                무료로 가입하기 →
+              </Link>
+              <p className="text-orange-100/60 text-[11px] mt-3" style={{ fontWeight: 600 }}>
+                이미 계정이 있나요?{' '}
+                <Link to="/login" className="text-white underline underline-offset-2" style={{ fontWeight: 800 }}>
+                  로그인
+                </Link>
+              </p>
+            </div>
+          </motion.div>
+        </motion.section>
+      )}
 
       {/* ─── FOOTER ─── */}
       <footer className="px-4 mt-10 mb-6 text-center">
@@ -580,6 +593,99 @@ export function LandingPage() {
           </Link>
         </div>
       </nav>
+
+      {exploreMenuOpen && user && (
+        <div className="fixed inset-0 z-[200] flex justify-end" role="dialog" aria-modal="true" aria-labelledby="explore-menu-title">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
+            onClick={closeExploreMenu}
+            aria-label="닫기"
+          />
+          <div className="relative flex h-full w-[min(100%,288px)] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
+            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
+              <div className="min-w-0">
+                <p id="explore-menu-title" className="text-xs font-bold uppercase tracking-wide text-slate-400">
+                  설정
+                </p>
+                <p className="truncate text-sm font-extrabold text-slate-900">{shortProfileLabel(user)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeExploreMenu}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
+                aria-label="메뉴 닫기"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-2">
+              <Link
+                to="/my"
+                onClick={closeExploreMenu}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <User className="h-5 w-5 text-orange-500" />
+                마이페이지
+              </Link>
+              <Link
+                to="/profile/edit"
+                onClick={closeExploreMenu}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <Settings className="h-5 w-5 text-slate-500" />
+                프로필 · 계정 설정
+              </Link>
+              <Link
+                to="/notifications"
+                replace
+                onClick={closeExploreMenu}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <Bell className="h-5 w-5 text-slate-500" />
+                알림
+              </Link>
+              <Link
+                to="/billing"
+                onClick={closeExploreMenu}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <CreditCard className="h-5 w-5 text-slate-500" />
+                결제 · 프리미엄
+              </Link>
+              <Link
+                to="/customer-service"
+                onClick={closeExploreMenu}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <MessageCircle className="h-5 w-5 text-slate-500" />
+                고객센터
+              </Link>
+              {isAppAdmin(user) && (
+                <Link
+                  to="/admin"
+                  onClick={closeExploreMenu}
+                  className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+                >
+                  <Shield className="h-5 w-5 text-slate-500" />
+                  관리자
+                </Link>
+              )}
+            </nav>
+            <div className="border-t border-slate-100 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <button
+                type="button"
+                disabled={logoutBusy}
+                onClick={() => void handleExploreLogout()}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 py-3.5 text-sm font-extrabold text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                <LogOut className="h-5 w-5" />
+                {logoutBusy ? '로그아웃 중…' : '로그아웃'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

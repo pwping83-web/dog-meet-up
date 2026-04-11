@@ -48,12 +48,14 @@ export function Header() {
           
           {/* 우측: 유틸리티 아이콘 */}
           <div className="flex items-center gap-1">
-            {/* 알림 아이콘 (추가 제안) */}
-            <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-all relative">
-              <Bell className="w-5 h-5" />
-              {/* 알림 뱃지 포인트 */}
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            <Link
+              to="/notifications"
+              className="relative rounded-full p-2 text-slate-400 transition-all hover:bg-orange-50 hover:text-orange-600"
+              aria-label="알림"
+            >
+              <Bell className="h-5 w-5" aria-hidden />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500" aria-hidden />
+            </Link>
             
             {user && isAppAdmin(user) && (
               <Link

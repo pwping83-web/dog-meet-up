@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Crosshair, MapPin, Navigation, X } from 'lucide-react';
+import { Crosshair, LocateFixed, MapPin, Navigation, X } from 'lucide-react';
 import { RegionSelector } from './RegionSelector';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import {
@@ -27,7 +27,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<'gps' | 'apply' | 'saveGps' | null>(null);
+  const [busy, setBusy] = useState<'gps' | 'apply' | 'saveGps' | 'findMe' | null>(null);
   const hasKey = Boolean(getKakaoMapAppKey());
 
   const [selCity, setSelCity] = useState(location.city);
@@ -118,6 +118,28 @@ export function LocationPickerModal({ open, onClose }: Props) {
     try {
       await applyGpsLocation();
       onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  /** 시·구 선택란 근처: GPS → 역지오코딩 후 저장 + 목록·지도 동기화 (모달 유지) */
+  const handleFindMyLocation = async () => {
+    if (!locationBasedEnabled) {
+      setError('위치 기반 서비스를 먼저 켜 주세요.');
+      return;
+    }
+    setBusy('findMe');
+    setError(null);
+    try {
+      const snap = await applyGpsLocation();
+      setSelCity(snap.city);
+      setSelDistrict(snap.district);
+      if (hasKey && snap.lat != null && snap.lng != null) {
+        moveMapTo(snap.lat, snap.lng);
+      }
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -256,6 +278,21 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
           <div className={`border-t border-slate-100 pt-4 ${!locationBasedEnabled ? 'opacity-50' : ''}`}>
             <p className="mb-2 text-xs font-bold text-slate-500">또는 시·구 선택</p>
+            <button
+              type="button"
+              disabled={busy !== null || !locationBasedEnabled}
+              onClick={() => void handleFindMyLocation()}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.99] disabled:opacity-50"
+            >
+              <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
+              {busy === 'findMe' ? '내 위치 확인 중…' : '내 위치 찾기'}
+            </button>
+            {!hasKey && locationBasedEnabled && (
+              <p className="mb-3 text-[11px] font-medium leading-relaxed text-slate-500">
+                자동으로 시·구를 채우려면 <code className="rounded bg-slate-100 px-1">VITE_KAKAO_MAP_APP_KEY</code>가
+                필요해요. 키가 없으면 아래에서 직접 선택해 주세요.
+              </p>
+            )}
             <RegionSelector
               layout="modal"
               selectedCity={selCity}

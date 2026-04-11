@@ -1,0 +1,5 @@
+#!/bin/sh
+# 커밋 직후 원격으로 즉시 push (core.hooksPath=.githooks 일 때만 동작)
+# 최초 1회: npm run git:hooks-install
+cd "$(dirname "$0")/.." || exit 0
+exec node scripts/git-push-only.mjs

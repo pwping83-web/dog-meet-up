@@ -29,8 +29,8 @@ type UserLocationContextValue = {
   regionShortLabel: string;
   regionFullLabel: string;
   setManualRegion: (city: string, district: string) => void;
-  applyCoordinates: (lat: number, lng: number, source: 'gps' | 'map') => Promise<void>;
-  applyGpsLocation: () => Promise<void>;
+  applyCoordinates: (lat: number, lng: number, source: 'gps' | 'map') => Promise<UserLocationSnapshot>;
+  applyGpsLocation: () => Promise<UserLocationSnapshot>;
   resetToDefault: () => void;
 };
 
@@ -103,7 +103,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const applyCoordinates = useCallback(
-    async (lat: number, lng: number, source: 'gps' | 'map') => {
+    async (lat: number, lng: number, source: 'gps' | 'map'): Promise<UserLocationSnapshot> => {
       if (!locationBasedEnabled) {
         throw new Error('위치 기반 서비스를 켜 주세요. 내댕댕 또는 동네 설정에서 스위치를 켜면 GPS·지도 저장을 쓸 수 있어요.');
       }
@@ -111,13 +111,15 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
         await loadKakaoMapScript();
         const parts = await coord2AddressParts(lng, lat);
         const m = matchKakaoAdministrative(parts.depth1, parts.depth2, parts.depth3);
-        persist({
+        const next: UserLocationSnapshot = {
           city: m.city,
           district: m.district || parts.depth2 || '선택',
           lat,
           lng,
           source,
-        });
+        };
+        persist(next);
+        return next;
       } catch {
         setLocation((prev) => {
           const next: UserLocationSnapshot = {
@@ -151,12 +153,12 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     [persist, locationBasedEnabled],
   );
 
-  const applyGpsLocation = useCallback(async () => {
+  const applyGpsLocation = useCallback(async (): Promise<UserLocationSnapshot> => {
     if (!locationBasedEnabled) {
       throw new Error('위치 기반 서비스를 켜 주세요.');
     }
     const { lat, lng } = await getCurrentBrowserPosition();
-    await applyCoordinates(lat, lng, 'gps');
+    return applyCoordinates(lat, lng, 'gps');
   }, [applyCoordinates, locationBasedEnabled]);
 
   const resetToDefault = useCallback(() => {

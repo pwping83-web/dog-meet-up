@@ -21,6 +21,7 @@
     "preview": "vite preview",
     "git:push": "node scripts/git-commit-push.mjs",
     "push": "node scripts/git-commit-push.mjs",
+    "git:hooks-install": "git config core.hooksPath .githooks",
     "watch:push": "node scripts/watch-auto-push.mjs",
     "supabase:link": "npx --yes supabase@latest link --project-ref silbyvmcuymjewurkrfn"
   },

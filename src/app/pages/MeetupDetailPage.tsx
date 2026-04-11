@@ -149,7 +149,11 @@ export function MeetupDetailPage() {
 
                       {!isSelected && meetup.status === 'pending' && (
                         <div className="flex gap-3">
-                          <Link to={`/sitter/${sitter?.id}`} className="flex-1 py-3.5 border border-slate-200 bg-white hover:bg-slate-50 rounded-2xl text-center text-slate-600 transition-colors" style={{ fontWeight: 700 }}>
+                          <Link
+                            to={`/sitter/${sitter?.id}`}
+                            className="flex-1 rounded-2xl border-2 border-slate-300 bg-white py-3.5 text-center text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 underline decoration-slate-500 decoration-2 underline-offset-4"
+                            style={{ fontWeight: 700 }}
+                          >
                             프로필 보기
                           </Link>
                           <button onClick={() => handleAccept(request.id)} className={`flex-[2] py-3.5 rounded-2xl text-white transition-all active:scale-[0.98] ${isFirst ? 'bg-gradient-to-r from-orange-500 to-yellow-500 shadow-md shadow-orange-500/20' : 'bg-slate-800 hover:bg-slate-900'}`} style={{ fontWeight: 700 }}>
@@ -211,7 +215,11 @@ export function MeetupDetailPage() {
                       </div>
                     ) : (
                       <div className="flex gap-3">
-                        <Link to={`/sitter/${sitter.id}`} className="flex-1 py-3 border border-slate-200 bg-white hover:bg-slate-50 rounded-2xl text-center text-sm text-slate-600 transition-colors" style={{ fontWeight: 700 }}>
+                        <Link
+                          to={`/sitter/${sitter.id}`}
+                          className="flex-1 rounded-2xl border-2 border-slate-300 bg-white py-3 text-center text-sm text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 underline decoration-slate-500 decoration-2 underline-offset-4"
+                          style={{ fontWeight: 700 }}
+                        >
                           프로필
                         </Link>
                         <button onClick={() => alert(`${sitter.name}님에게 초대 보냄!`)} className={`flex-1 py-3 rounded-2xl text-sm text-white transition-all active:scale-[0.98] ${isVeryClose ? 'bg-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800'}`} style={{ fontWeight: 700 }}>
