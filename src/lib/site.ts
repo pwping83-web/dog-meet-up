@@ -1,6 +1,6 @@
 /**
- * OAuth(Supabase·카카오) 리다이렉트 등에 쓰는 사이트 Origin.
- * 배포 시 `VITE_SITE_URL`을 실제 도메인으로 두면 www/비-www 혼선을 줄일 수 있습니다.
+ * 사이트 기준 Origin (링크·메타 등). env가 있으면 우선합니다.
+ * OAuth 콜백에는 `getAuthRedirectUrl()`을 쓰세요 — www/apex 혼선 방지.
  */
 export function getSiteOrigin(): string {
   const fromEnv = import.meta.env.VITE_SITE_URL?.trim().replace(/\/$/, '');
@@ -9,8 +9,15 @@ export function getSiteOrigin(): string {
   return '';
 }
 
-/** 로그인 후 돌아올 URL (보통 루트) */
+/**
+ * OAuth(Supabase·카카오) `redirect_to`.
+ * 브라우저에서는 **반드시 `window.location.origin`** 과 같아야 PKCE·세션이 같은 Storage에 남습니다.
+ * `VITE_SITE_URL`을 apex만 넣고 www로 접속하면, 로그인은 되는데 곧바로 비로그인처럼 보이는 루프가 납니다.
+ */
 export function getAuthRedirectUrl(): string {
-  const o = getSiteOrigin();
-  return o ? `${o}/` : '/';
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/`;
+  }
+  const fromEnv = import.meta.env.VITE_SITE_URL?.trim().replace(/\/$/, '');
+  return fromEnv ? `${fromEnv}/` : '/';
 }

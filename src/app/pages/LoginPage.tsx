@@ -146,6 +146,14 @@ export function LoginPage() {
                 회원가입
               </Link>
             </div>
+            {__APP_DEPLOY_COMMIT__.length > 0 && (
+              <p
+                className="mt-6 text-center text-[10px] font-mono text-slate-400"
+                title={__APP_DEPLOY_COMMIT__}
+              >
+                배포 커밋 {__APP_DEPLOY_COMMIT__.slice(0, 7)}
+              </p>
+            )}
           </form>
         ) : (
           <form onSubmit={handleLogin}>

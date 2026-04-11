@@ -1,12 +1,17 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-pwa/client" />
 
+/** Vite `define` — Vercel에서 빌드할 때 전체 Git SHA (로컬 dev는 빈 문자열) */
+declare const __APP_DEPLOY_COMMIT__: string
+
 interface ImportMetaEnv {
   readonly VITE_SUPABASE_URL?: string;
   readonly VITE_SUPABASE_ANON_KEY?: string;
   /** OAuth 리다이렉트용 공개 사이트 URL (예: https://myapp.vercel.app). 비우면 window.location.origin 사용 */
   readonly VITE_SITE_URL?: string;
   readonly VITE_KAKAO_MAP_APP_KEY?: string;
+  /** 카카오 로그인 OAuth scope (공백 구분). 비우면 profile_nickname profile_image */
+  readonly VITE_KAKAO_AUTH_SCOPES?: string;
   /** Google Play 앱 페이지 전체 URL */
   readonly VITE_PLAY_STORE_URL?: string;
 }

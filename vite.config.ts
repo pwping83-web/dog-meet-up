@@ -1,5 +1,9 @@
 import { defineConfig } from 'vite'
+import fs from 'fs'
 import path from 'path'
+
+/** Vercel 빌드 시 설정됨 → 사이트에서 Git 커밋과 대조 가능 */
+const vercelGitCommitSha = process.env.VERCEL_GIT_COMMIT_SHA || ''
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -17,9 +21,43 @@ function figmaAssetResolver() {
   }
 }
 
+/** 디버그 세션(51d57b): dev 서버가 동일 출처로 NDJSON을 debug-51d57b.log에 적습니다. */
+function debugSessionLogIngest() {
+  const logFile = path.join(__dirname, 'debug-51d57b.log')
+  return {
+    name: 'debug-session-log-ingest',
+    configureServer(server) {
+      server.middlewares.use('/__debug/ingest-51d57b', (req, res, next) => {
+        if (req.method !== 'POST') {
+          next()
+          return
+        }
+        const chunks: Buffer[] = []
+        req.on('data', (c: Buffer) => {
+          chunks.push(c)
+        })
+        req.on('end', () => {
+          try {
+            const body = Buffer.concat(chunks).toString('utf8')
+            fs.appendFileSync(logFile, `${body.trimEnd()}\n`, 'utf8')
+          } catch {
+            /* ignore */
+          }
+          res.statusCode = 204
+          res.end()
+        })
+      })
+    },
+  }
+}
+
 export default defineConfig({
+  define: {
+    __APP_DEPLOY_COMMIT__: JSON.stringify(vercelGitCommitSha),
+  },
   plugins: [
     figmaAssetResolver(),
+    debugSessionLogIngest(),
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used – do not remove them
     react(),
