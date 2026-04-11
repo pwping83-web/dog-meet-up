@@ -1,6 +1,6 @@
 // src/app/pages/SearchPage.tsx 전체 교체
 import { Link, useLocation } from 'react-router';
-import { ArrowLeft, Search, X, ChevronRight, Home, Wrench, MessageCircle, User } from 'lucide-react';
+import { ArrowLeft, Search, X, ChevronRight, Home, MessageCircle, User } from 'lucide-react';
 import { useState } from 'react';
 import { mockRequests } from '../data/mockData';
 

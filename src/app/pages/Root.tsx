@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router';
-import { Home, Wrench, User, Search } from 'lucide-react';
+import { Home, User, Search } from 'lucide-react';
 import { Header } from '../components/Header';
+import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
 import { InstallPwaFab } from '../components/InstallPwaFab';
@@ -63,8 +64,9 @@ export function Root() {
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
                     location.pathname.startsWith('/sitter') ? 'text-orange-600' : 'text-gray-500'
                   }`}
+                  aria-label="댕집사"
                 >
-                  <Wrench className="h-5 w-5" />
+                  <PawTabIcon className="h-5 w-5" />
                   <span className="text-[10px] font-semibold">댕집사</span>
                 </Link>
                 <Link
