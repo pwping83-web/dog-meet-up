@@ -21,14 +21,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 초기 세션 확인
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let cancelled = false;
 
-    // 인증 상태 변경 감지
+    void (async () => {
+      await supabase.auth.initialize();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!cancelled) {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      }
+    })();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,7 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -67,70 +76,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Supabase → Authentication → Providers → Kakao → "Allow users without an email" 권장.
     const kakaoScopes =
       import.meta.env.VITE_KAKAO_AUTH_SCOPES?.trim() || 'profile_nickname profile_image';
-    const { data, error } = await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'kakao',
       options: {
         redirectTo,
         scopes: kakaoScopes,
-        skipBrowserRedirect: true,
       },
     });
     if (error) throw error;
-    // #region agent log
-    {
-      const envScopes = import.meta.env.VITE_KAKAO_AUTH_SCOPES?.trim();
-      let scopesParam: string | null = null;
-      let searchHasAccountEmail = false;
-      let authorizePath = '';
-      const authorizeQueryKeys: string[] = [];
-      try {
-        if (data?.url) {
-          const u = new URL(data.url);
-          authorizePath = u.pathname;
-          scopesParam = u.searchParams.get('scopes') ?? u.searchParams.get('scope');
-          searchHasAccountEmail = u.search.includes('account_email');
-          u.searchParams.forEach((_v, k) => authorizeQueryKeys.push(k));
-        }
-      } catch {
-        /* ignore parse errors */
-      }
-      const payload = {
-        sessionId: '51d57b',
-        runId: 'pre-fix',
-        hypothesisId: 'H1-H3',
-        location: 'AuthContext.tsx:signInWithKakao',
-        message: 'oauth_authorize_url_scope_probe',
-        data: {
-          kakaoScopes,
-          envOverride: Boolean(envScopes),
-          authorizePath,
-          scopesParam,
-          searchHasAccountEmail,
-          hasUrl: Boolean(data?.url),
-          authorizeQueryKeys,
-        },
-        timestamp: Date.now(),
-      };
-      const body = JSON.stringify(payload);
-      if (import.meta.env.DEV) {
-        fetch(`${window.location.origin}/__debug/ingest-51d57b`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body,
-        }).catch(() => {});
-      }
-      fetch('http://127.0.0.1:7335/ingest/fb5c9c07-34a2-4073-b636-16c8a2388a10', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '51d57b' },
-        body,
-      }).catch(() => {});
-    }
-    // #endregion
-    if (data?.url) {
-      window.location.assign(data.url);
-    } else {
-      throw new Error('OAuth URL을 받지 못했습니다.');
-    }
   };
 
   const signOut = async () => {

@@ -12,12 +12,12 @@ export function getSiteOrigin(): string {
 /**
  * OAuth(Supabase·카카오) `redirect_to`.
  * 브라우저에서는 **반드시 `window.location.origin`** 과 같아야 PKCE·세션이 같은 Storage에 남습니다.
- * `VITE_SITE_URL`을 apex만 넣고 www로 접속하면, 로그인은 되는데 곧바로 비로그인처럼 보이는 루프가 납니다.
+ * 로그인 직후 루트만 보면 “입장 안 된 것 같음”을 줄이기 위해 **탐색(/explore)** 으로 돌아옵니다.
  */
 export function getAuthRedirectUrl(): string {
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/`;
+    return `${window.location.origin}/explore`;
   }
   const fromEnv = import.meta.env.VITE_SITE_URL?.trim().replace(/\/$/, '');
-  return fromEnv ? `${fromEnv}/` : '/';
+  return fromEnv ? `${fromEnv}/explore` : '/explore';
 }

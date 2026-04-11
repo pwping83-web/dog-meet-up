@@ -94,6 +94,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
         navigateFallback: '/index.html',
+        // OAuth PKCE 콜백(?code=)에서 캐시된 SPA 껍데기만 받지 않도록 제외
+        navigateFallbackDenylist: [/\?code=/, /\?error=/],
       },
       devOptions: {
         enabled: false,
