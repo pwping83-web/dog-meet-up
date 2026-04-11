@@ -11,7 +11,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
-      <div className="mx-auto w-full max-w-screen-md px-4 lg:max-w-none lg:px-6">
+      <div className="mx-auto w-full max-w-[430px] px-4">
         <div className="flex items-center justify-between h-14 relative">
           
           {/* 좌측: 지역 선택 (카카오맵 / GPS / 수동) */}

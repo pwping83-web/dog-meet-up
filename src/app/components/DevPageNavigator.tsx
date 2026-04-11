@@ -47,6 +47,10 @@ export function DevPageNavigator() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
   const groupedPages = pages.reduce((acc, page) => {
     if (!acc[page.category]) acc[page.category] = [];
     acc[page.category].push(page);

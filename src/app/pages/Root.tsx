@@ -5,9 +5,14 @@ import { Header } from '../components/Header';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
 import { InstallPwaFab } from '../components/InstallPwaFab';
+import { MobileOnlyGate } from '../components/MobileOnlyGate';
+import { useIsMobileViewport } from '../../lib/useMobileViewport';
 
 export function Root() {
   const location = useLocation();
+  const isMobileViewport = useIsMobileViewport();
+  const allowDesktopPreview = import.meta.env.DEV;
+
   const isHomePage = location.pathname === '/';
   const isAdminPage = location.pathname === '/admin';
   const isExplorePage = location.pathname === '/explore';
@@ -71,46 +76,13 @@ export function Root() {
   const hideBottomNav = isHomePage || isAdminPage || hasOwnNav;
   const showPrimaryNav = !hideBottomNav;
 
-  const navLinkClass = (active: boolean) =>
-    `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
-      active ? 'bg-orange-50 text-orange-600' : 'text-slate-600 hover:bg-slate-50'
-    }`;
+  if (!allowDesktopPreview && !isMobileViewport) {
+    return <MobileOnlyGate />;
+  }
 
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center lg:items-start lg:py-6 lg:px-4">
-      <div className="w-full max-w-[430px] min-h-screen bg-white shadow-2xl relative flex flex-col overflow-hidden lg:max-w-7xl lg:min-h-[calc(100dvh-3rem)] lg:flex-row lg:rounded-2xl lg:shadow-xl lg:overflow-hidden">
-        {showPrimaryNav && (
-          <aside className="hidden lg:flex w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
-            <div className="px-4 pt-6 pb-4 border-b border-slate-100">
-              <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-yellow-600">
-                댕댕마켓
-              </span>
-              <p className="text-xs text-slate-500 mt-1">우리 동네 댕친 찾기</p>
-            </div>
-            <nav className="flex flex-col gap-0.5 p-3 flex-1">
-              <Link to="/" className={navLinkClass(location.pathname === '/')}>
-                <Home className="w-5 h-5 shrink-0" />
-                홈
-              </Link>
-              <Link to="/explore" className={navLinkClass(location.pathname === '/explore')}>
-                <Compass className="w-5 h-5 shrink-0" />
-                탐색
-              </Link>
-              <Link
-                to="/sitters"
-                className={navLinkClass(location.pathname.startsWith('/sitter'))}
-              >
-                <Wrench className="w-5 h-5 shrink-0" />
-                댕집사
-              </Link>
-              <Link to="/my" className={navLinkClass(location.pathname === '/my')}>
-                <User className="w-5 h-5 shrink-0" />
-                내 정보
-              </Link>
-            </nav>
-          </aside>
-        )}
-
+    <div className="flex min-h-[100dvh] justify-center bg-slate-100">
+      <div className="relative flex min-h-[100dvh] w-full max-w-[430px] flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {!hasOwnNav && !isAdminPage && <Header />}
           <main className="relative min-h-0 flex-1 overflow-x-hidden">
@@ -118,7 +90,7 @@ export function Root() {
           </main>
 
           {showPrimaryNav && (
-            <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white lg:hidden max-w-[430px] mx-auto w-full">
+            <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200 bg-white">
               <div className="flex items-center justify-around">
                 <Link
                   to="/"

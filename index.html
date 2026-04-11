@@ -7,9 +7,14 @@
       <meta name="description" content="댕댕마켓 — 우리 동네 강아지 모임과 댕집사를 연결하는 커뮤니티 웹 서비스입니다." />
       <meta name="theme-color" content="#f97316" />
       <meta name="mobile-web-app-capable" content="yes" />
+      <meta name="apple-mobile-web-app-capable" content="yes" />
       <link rel="apple-touch-icon" href="/favicon.svg" />
       <title>댕댕마켓</title>
-      <style>html, body { height: 100%; margin: 0; } #root { height: 100%; }</style>
+      <style>
+        html { -webkit-text-size-adjust: 100%; }
+        html, body { height: 100%; margin: 0; }
+        #root { min-height: 100%; }
+      </style>
     </head>
 
     <body>
