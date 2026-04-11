@@ -5,13 +5,9 @@ import { Header } from '../components/Header';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
 import { InstallPwaFab } from '../components/InstallPwaFab';
-import { MobileOnlyGate } from '../components/MobileOnlyGate';
-import { useIsMobileViewport } from '../../lib/useMobileViewport';
 
 export function Root() {
   const location = useLocation();
-  const isMobileViewport = useIsMobileViewport();
-  const allowDesktopPreview = import.meta.env.DEV;
 
   const isHomePage = location.pathname === '/';
   const isAdminPage = location.pathname === '/admin';
@@ -75,10 +71,6 @@ export function Root() {
   // 하단 네비게이션이 필요없는 페이지들 (LandingPage가 자체 네비게이션 포함)
   const hideBottomNav = isHomePage || isAdminPage || hasOwnNav;
   const showPrimaryNav = !hideBottomNav;
-
-  if (!allowDesktopPreview && !isMobileViewport) {
-    return <MobileOnlyGate />;
-  }
 
   return (
     <div className="flex min-h-[100dvh] justify-center bg-slate-100">
