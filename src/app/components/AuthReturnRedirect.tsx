@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const DAENG_AUTH_RETURN_KEY = 'daeng_auth_return';
@@ -19,9 +19,11 @@ export function setAuthReturnPath(path: string) {
 export function AuthReturnRedirect() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (loading || !user) return;
+    if (pathname === '/login' || pathname === '/signup') return;
     let path: string | null = null;
     let tsRaw: string | null = null;
     try {
@@ -48,7 +50,7 @@ export function AuthReturnRedirect() {
       /* ignore */
     }
     navigate(path, { replace: true });
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, pathname]);
 
   return null;
 }

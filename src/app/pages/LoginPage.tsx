@@ -5,7 +5,7 @@ import { DAENG_AUTH_RETURN_KEY, DAENG_AUTH_RETURN_TS } from "../components/AuthR
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signInWithKakao } = useAuth();
+  const { signInWithKakao, signInWithPhoneDemo } = useAuth();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
@@ -16,20 +16,37 @@ export function LoginPage() {
     setStep("code");
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     let to = "/explore";
     try {
       const p = sessionStorage.getItem(DAENG_AUTH_RETURN_KEY);
       if (p && p.startsWith("/") && !p.startsWith("//")) {
         to = p;
-        sessionStorage.removeItem(DAENG_AUTH_RETURN_KEY);
-        sessionStorage.removeItem(DAENG_AUTH_RETURN_TS);
       }
     } catch {
       /* ignore */
     }
-    navigate(to);
+    try {
+      setLoading(true);
+      await signInWithPhoneDemo(phone, code);
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : '전화 로그인에 실패했습니다. Supabase에서 익명 로그인(Anonymous)을 켜거나 카카오 로그인을 이용해 주세요.';
+      alert(msg);
+      setLoading(false);
+      return;
+    }
+    try {
+      sessionStorage.removeItem(DAENG_AUTH_RETURN_KEY);
+      sessionStorage.removeItem(DAENG_AUTH_RETURN_TS);
+    } catch {
+      /* ignore */
+    }
+    navigate(to, { replace: true });
+    setLoading(false);
   };
 
   const handleKakaoLogin = async () => {
@@ -204,9 +221,10 @@ export function LoginPage() {
             {/* 로그인 버튼 */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+              disabled={loading}
+              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              로그인
+              {loading ? "입장 중..." : "로그인"}
             </button>
 
             {/* 재전송 */}

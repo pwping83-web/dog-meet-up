@@ -11,6 +11,8 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signInWithKakao: () => Promise<void>;
+  /** 데모: 인증번호 000000 + Supabase 익명 로그인(대시보드에서 Anonymous 활성화 필요) */
+  signInWithPhoneDemo: (phone: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -97,13 +99,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const signInWithPhoneDemo = async (phone: string, code: string) => {
+    const trimmed = code.trim();
+    if (trimmed !== '000000') {
+      throw new Error('데모 환경에서는 인증번호 000000을 입력해 주세요.');
+    }
+    const { error: anonError } = await supabase.auth.signInAnonymously();
+    if (anonError) throw anonError;
+    const {
+      data: { user: u },
+    } = await supabase.auth.getUser();
+    if (!u) throw new Error('로그인 세션을 만들지 못했습니다.');
+    const digits = phone.replace(/\D/g, '');
+    const label =
+      digits.length >= 4 ? `휴대폰 ···${digits.slice(-4)}` : '휴대폰 로그인';
+    const { error: metaError } = await supabase.auth.updateUser({
+      data: {
+        nickname: label,
+        phone: phone.trim(),
+      },
+    });
+    if (metaError) {
+      console.warn('[댕댕마켓] 전화 데모 로그인: 프로필 메타 업데이트 실패', metaError.message);
+    }
+  };
+
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signInWithKakao, signOut }}>
+    <AuthContext.Provider
+      value={{ user, session, loading, signIn, signUp, signInWithKakao, signInWithPhoneDemo, signOut }}
+    >
       {children}
     </AuthContext.Provider>
   );
