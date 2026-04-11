@@ -181,16 +181,18 @@ export function ProfileEditPage() {
           </div>
         </div>
 
-        {/* 댕집사 모드일 때 추가 입력란 */}
+        {/* 유료 돌봄: 강아지 돌봄 서비스 안내 */}
         {profileMode === 'repairer' && (
           <div className="bg-orange-50/50 rounded-3xl p-5 border-2 border-orange-100 animate-fadeIn">
-            <h3 className="text-sm font-extrabold text-orange-900 mb-2">🐾 댕집사 전문 분야</h3>
-            <p className="text-xs text-orange-600/70 font-bold mb-3">이웃들에게 가장 먼저 보여질 주력 활동 분야를 입력하세요.</p>
+            <h3 className="text-sm font-extrabold text-orange-900 mb-2">🐕 강아지 돌봄 분야</h3>
+            <p className="text-xs text-orange-600/70 font-bold mb-3">
+              모임 모집이 아니라, <strong>돈 받고 강아지를 돌봐 주는 서비스</strong>예요. 산책·방문·데이케어 등 적어 주세요.
+            </p>
             <input
               type="text"
               value={formData.specialty}
               onChange={(e) => setFormData({...formData, specialty: e.target.value})}
-              placeholder="예: 산책, 훈련, 사회화 등"
+              placeholder="예: 주간 방문 돌봄, 산책 대행, 퍼피 케어"
               className="w-full px-4 py-3.5 bg-white border border-orange-200 rounded-2xl font-bold text-slate-800 focus:outline-none focus:ring-4 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
             />
           </div>

@@ -16,7 +16,7 @@ export function DogSitterProfilePage() {
 
   const handleSubmitJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`참여 신청 완료! 🎉\n\n시간: ${joinData.estimatedCost}\n일정: ${joinData.estimatedDuration}\n메시지: ${joinData.message}`);
+    alert(`돌봄 문의를 보냈어요 🎉\n\n맡기기 일시: ${joinData.estimatedCost}\n돌봄 기간: ${joinData.estimatedDuration}\n메시지: ${joinData.message}`);
     setShowJoinForm(false);
     setJoinData({ message: '', estimatedCost: '', estimatedDuration: '' });
   };
@@ -24,7 +24,7 @@ export function DogSitterProfilePage() {
   if (!dogSitter) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">🐕 댕친을 찾을 수 없습니다</p>
+        <p className="text-gray-500">🐕 돌보미를 찾을 수 없습니다</p>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function DogSitterProfilePage() {
           <button onClick={() => navigate('/sitters')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>댕친 프로필 🐾</span>
+          <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>강아지 돌봄 🐾</span>
         </div>
       </div>
 
@@ -74,8 +74,8 @@ export function DogSitterProfilePage() {
 
         {/* 전문 분야 */}
         <div className="mb-6">
-          <h3 className="text-sm text-slate-700 mb-3 px-1" style={{ fontWeight: 800 }}>
-            🐾 좋아하는 활동
+          <h3 className="mb-3 px-1 text-sm text-slate-700" style={{ fontWeight: 800 }}>
+            🐕 제공하는 돌봄
           </h3>
           <div className="flex flex-wrap gap-2">
             {dogSitter.specialties.map((specialty) => (
@@ -92,7 +92,7 @@ export function DogSitterProfilePage() {
 
         {/* 시간표 */}
         <div className="bg-orange-50/50 rounded-3xl p-5 mb-6 border-2 border-orange-200">
-          <h3 className="mb-4 text-center text-slate-800" style={{ fontWeight: 800 }}>⏰ 선호하는 시간대</h3>
+          <h3 className="mb-4 text-center text-slate-800" style={{ fontWeight: 800 }}>💰 돌봄 유형·요금(참고)</h3>
           <div className="space-y-3">
             {dogSitter.estimatedPrices.map((price, index) => (
               <div
@@ -142,12 +142,12 @@ export function DogSitterProfilePage() {
             style={{ fontWeight: 700 }}
           >
             <MessageCircle className="w-6 h-6" />
-            채팅하기 💬
+            돌봄 문의하기 💬
           </button>
         </div>
       </div>
 
-      {/* 참여 신청 폼 */}
+      {/* 돌봄 문의 폼 */}
       {showJoinForm && (
         <>
           <div 
@@ -158,7 +158,7 @@ export function DogSitterProfilePage() {
           <div className="absolute inset-x-0 bottom-0 z-50 animate-slideUp">
             <div className="bg-white rounded-t-[2rem] w-full shadow-2xl">
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
-                <h3 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>🐾 참여 신청하기</h3>
+                <h3 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>🐕 돌봄 문의하기</h3>
                 <button 
                   onClick={() => setShowJoinForm(false)}
                   className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
@@ -182,14 +182,14 @@ export function DogSitterProfilePage() {
 
                 <div>
                   <label className="block text-sm text-slate-700 mb-2" style={{ fontWeight: 800 }}>
-                    ⏰ 만날 시간 <span className="text-red-500">*</span>
+                    ⏰ 인수인계(맡기기) 희망 일시 <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={joinData.estimatedCost}
                     onChange={(e) => setJoinData({ ...joinData, estimatedCost: e.target.value })}
-                    placeholder="예: 오늘 오후 3시"
+                    placeholder="예: 내일 오전 10시, 집 앞"
                     className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     style={{ fontWeight: 700 }}
                   />
@@ -197,14 +197,14 @@ export function DogSitterProfilePage() {
 
                 <div>
                   <label className="block text-sm text-slate-700 mb-2" style={{ fontWeight: 800 }}>
-                    🐾 활동 시간 <span className="text-red-500">*</span>
+                    🐕 돌봄 기간 <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={joinData.estimatedDuration}
                     onChange={(e) => setJoinData({ ...joinData, estimatedDuration: e.target.value })}
-                    placeholder="예: 1-2시간"
+                    placeholder="예: 반나절, 하루, 주말 2박3일"
                     className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                     style={{ fontWeight: 700 }}
                   />
@@ -218,7 +218,7 @@ export function DogSitterProfilePage() {
                     required
                     value={joinData.message}
                     onChange={(e) => setJoinData({ ...joinData, message: e.target.value })}
-                    placeholder="어떤 활동을 하고 싶은지, 우리 댕댕이 성격 등을 알려주세요"
+                    placeholder="맡기기 기간, 우리 아이 성격·주의사항 등을 적어 주세요"
                     rows={4}
                     className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all resize-none"
                     style={{ fontWeight: 500 }}
@@ -227,7 +227,7 @@ export function DogSitterProfilePage() {
 
                 <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
                   <p className="text-xs text-amber-800 leading-relaxed" style={{ fontWeight: 700 }}>
-                    💡 <span style={{ fontWeight: 800 }}>팁:</span> 처음 만나는 댕친이라면 안전한 공공 장소에서 만나는 것을 추천해요!
+                    💡 <span style={{ fontWeight: 800 }}>팁:</span> 첫 돌봄은 만남 장소·안전 수칙을 미리 채팅으로 맞추는 걸 추천해요.
                   </p>
                 </div>
 
@@ -236,7 +236,7 @@ export function DogSitterProfilePage() {
                   className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl text-base shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
                   style={{ fontWeight: 800 }}
                 >
-                  참여 신청 보내기 🚀
+                  돌봄 문의 보내기 🚀
                 </button>
               </form>
             </div>
