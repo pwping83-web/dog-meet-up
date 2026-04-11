@@ -188,7 +188,8 @@ export function LandingPage() {
                 style={{ fontWeight: 600 }}
               >
                 성격이 맞는 댕댕이 친구를 찾고<br />
-                산책·훈련 모임에 함께 참여해요 🐾
+                산책·훈련 모임에 함께 참여해요 🐾<br />
+                여행·출장처럼 집을 비울 땐, 친해진 댕친 집에 맡기고 오기도 해요
               </p>
             </motion.div>
 
@@ -337,7 +338,7 @@ export function LandingPage() {
           {[
             { step: '01', icon: <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
             { step: '02', icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-pink-500 to-rose-400' },
-            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '모임 참여', desc: '산책, 훈련, 놀이 모임에 참여 신청해요', color: 'from-emerald-500 to-teal-400' },
+            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '모임 참여', desc: '산책·모임으로 친해지면, 여행·출장 때 서로 집에 잠시 맡아줄 수도 있어요', color: 'from-emerald-500 to-teal-400' },
           ].map((item, i) => (
             <motion.div
               key={item.step}
@@ -549,8 +550,10 @@ export function LandingPage() {
               <h2 className="text-white text-xl mb-2 tracking-tight" style={{ fontWeight: 900 }}>
                 지금 바로 시작해요!
               </h2>
-              <p className="text-orange-100/90 text-xs mb-4" style={{ fontWeight: 600 }}>
-                우리 동네 댕친들이 기다리고 있어요
+              <p className="text-orange-100/90 text-xs mb-4 leading-relaxed" style={{ fontWeight: 600 }}>
+                우리 동네 댕친들이 기다리고 있어요.
+                <br />
+                여행·출장으로 떠날 땐, 믿을 댕친 집에 맡기며 서로 도와줄 수 있어요
               </p>
               <Link
                 to="/signup"

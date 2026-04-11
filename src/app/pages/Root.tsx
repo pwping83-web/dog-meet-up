@@ -22,7 +22,7 @@ export function Root() {
 
   // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
   useEffect(() => {
-    document.title = '댕댕마켓 - 우리 동네 댕친 찾기';
+    document.title = '댕댕마켓 - 우리 동네 댕친 · 여행·출장 때 맡기기';
   }, []);
 
   // 하단 네비게이션이 필요없는 페이지들 (LandingPage가 자체 네비게이션 포함)

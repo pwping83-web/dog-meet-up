@@ -103,10 +103,10 @@ export default function HomePage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.7, delay: 0.7 }}
-          className="text-slate-400 text-sm mb-14"
+          className="text-slate-400 text-sm mb-14 max-w-xs mx-auto leading-relaxed"
           style={{ fontFamily: "'Jua', sans-serif" }}
         >
-          성격 맞는 댕친과 산책하고, 함께 놀아요
+          성격 맞는 댕친과 산책·모임으로 친해지고, 여행·출장 때는 서로 집에 맡기며 도와줄 수 있어요
         </motion.p>
 
         {/* 입장하기 버튼 */}

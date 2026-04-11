@@ -75,7 +75,7 @@ export function LoginPage() {
             댕댕마켓
           </h2>
           <p className="text-sm font-bold text-slate-500">
-            우리 동네 댕친 찾기 🐾
+            여행·출장 때 댕친 집에 맡기려고, 동네에서 친구를 찾아요 🐾
           </p>
         </div>
 
