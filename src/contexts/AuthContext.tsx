@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getAuthRedirectUrl } from '../lib/site';
+import { ensurePublicProfile } from '../lib/ensurePublicProfile';
 
 interface AuthContextType {
   user: User | null;
@@ -32,15 +33,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          queueMicrotask(() => {
+            void ensurePublicProfile(session.user);
+          });
+        }
       }
     })();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user && (event === 'SIGNED_IN' || event === 'INITIAL_SESSION')) {
+        queueMicrotask(() => {
+          void ensurePublicProfile(session.user);
+        });
+      }
     });
 
     return () => {

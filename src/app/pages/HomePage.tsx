@@ -115,15 +115,12 @@ export default function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 1 }}
         >
-          <Link to="/explore">
-            <motion.div
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
-              className="bg-gradient-to-r from-orange-500 to-amber-400 text-white px-14 py-4 rounded-full text-base shadow-xl shadow-orange-400/30 cursor-pointer"
-              style={{ fontFamily: "'Jua', sans-serif" }}
-            >
-              입장하기
-            </motion.div>
+          <Link
+            to="/explore"
+            className="inline-block rounded-full bg-gradient-to-r from-orange-500 to-amber-400 px-14 py-4 text-base font-bold text-white shadow-xl shadow-orange-400/30 transition-transform active:scale-[0.96]"
+            style={{ fontFamily: "'Jua', sans-serif" }}
+          >
+            입장하기
           </Link>
         </motion.div>
       </div>
