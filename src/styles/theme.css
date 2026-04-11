@@ -1,7 +1,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --font-size: 14px;
+  /* 모바일 웹앱 가독성 (당근류 앱에 가깝게 16px 기준) */
+  --font-size: 16px;
   --background: #f8fafc; /* 완전 흰색 대신 아주 연한 쿨톤 배경으로 고급스러움 강조 */
   --foreground: #0f172a;
   --card: #ffffff;

@@ -14,8 +14,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
-      <div className="mx-auto w-full max-w-[430px] px-4">
-        <div className="flex items-center justify-between h-14 relative">
+      <div className="mx-auto w-full max-w-[min(100%,480px)] px-4 pt-[env(safe-area-inset-top)]">
+        <div className="relative flex min-h-[56px] items-center justify-between py-1">
           
           {/* 좌측: 지역 선택 (카카오맵 / GPS / 수동) */}
           <div className="flex items-center min-w-0 max-w-[45%]">
