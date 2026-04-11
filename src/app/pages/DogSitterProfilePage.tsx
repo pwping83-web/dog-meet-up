@@ -34,7 +34,12 @@ export function DogSitterProfilePage() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">
-          <button type="button" onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="홈으로">
+          <button
+            type="button"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/sitters'))}
+            className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            aria-label="뒤로"
+          >
             <ArrowLeft className="w-6 h-6" />
           </button>
           <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>강아지 돌봄 🐾</span>
