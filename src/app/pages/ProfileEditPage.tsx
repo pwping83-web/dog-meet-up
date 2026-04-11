@@ -15,15 +15,15 @@ export function ProfileEditPage() {
     city: '서울',
     district: '강남구',
     avatarTheme: 'default',
-    specialty: '전동킥보드', // 기사 모드용
+    specialty: '산책 · 돌봄', // 댕집사 모드용
   });
 
-  // 귀여운 테마 아바타 리스트
+  /** 프로필 테마 — 댕댕마켓용 강아지 캐릭터 (이전 수리마켓 킥보드·드론·렌치 제거) */
   const themeAvatars = [
     { id: 'default', emoji: '👤', bg: 'bg-slate-100', border: 'border-slate-200' },
-    { id: 'scooter', emoji: '🛴', bg: 'bg-yellow-100', border: 'border-yellow-300' },
-    { id: 'drone', emoji: '🚁', bg: 'bg-sky-100', border: 'border-sky-300' },
-    { id: 'tool', emoji: '🔧', bg: 'bg-orange-100', border: 'border-orange-300' },
+    { id: 'pup', emoji: '🐶', bg: 'bg-amber-100', border: 'border-amber-300' },
+    { id: 'poodle', emoji: '🐩', bg: 'bg-rose-100', border: 'border-rose-300' },
+    { id: 'retriever', emoji: '🦮', bg: 'bg-orange-100', border: 'border-orange-300' },
   ];
 
   // 프로필 완성도 계산 (단순 예시)
@@ -55,15 +55,17 @@ export function ProfileEditPage() {
 
       <div className="max-w-screen-md mx-auto p-4 space-y-4">
         
-        {/* 일반/기사 모드 스위치 탭 */}
+        {/* 일반 / 댕집사 모드 탭 */}
         <div className="bg-slate-100 p-1 rounded-2xl flex relative mb-6">
-          <button 
+          <button
+            type="button"
             onClick={() => setProfileMode('general')}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all z-10 ${profileMode === 'general' ? 'text-orange-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
             일반 회원
           </button>
           <button 
+            type="button"
             onClick={() => setProfileMode('repairer')}
             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all z-10 ${profileMode === 'repairer' ? 'text-orange-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
@@ -81,7 +83,7 @@ export function ProfileEditPage() {
                 내 프로필 신뢰도 {completionRate === 100 && <ShieldCheck className="w-4 h-4 text-emerald-500" />}
               </span>
               <p className="text-xs text-slate-500 mt-1 font-medium">
-                {completionRate === 100 ? '완벽해요! 이웃들이 신뢰할 수 있어요.' : 'GPS 동네 인증을 하면 뢰도가 올라가요!'}
+                {completionRate === 100 ? '완벽해요! 이웃들이 신뢰할 수 있어요.' : 'GPS 동네 인증을 하면 신뢰도가 올라가요!'}
               </p>
             </div>
             <span className="text-orange-600 font-black text-xl">{completionRate}%</span>
@@ -120,7 +122,9 @@ export function ProfileEditPage() {
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-slate-400 font-bold mt-3">내 사진을 올리거나 귀여운 테마를 선택해보세요</p>
+            <p className="text-[11px] text-slate-400 font-bold mt-3 text-center px-2">
+              사진을 올리거나, 댕댕이 캐릭터(품종 느낌)를 골라보세요
+            </p>
           </div>
         </div>
 
@@ -177,7 +181,7 @@ export function ProfileEditPage() {
           </div>
         </div>
 
-        {/* 기사 모드일 때 추가 입력란 */}
+        {/* 댕집사 모드일 때 추가 입력란 */}
         {profileMode === 'repairer' && (
           <div className="bg-orange-50/50 rounded-3xl p-5 border-2 border-orange-100 animate-fadeIn">
             <h3 className="text-sm font-extrabold text-orange-900 mb-2">🐾 댕집사 전문 분야</h3>

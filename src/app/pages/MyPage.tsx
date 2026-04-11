@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Navigation,
   Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
@@ -34,6 +35,7 @@ export function MyPage() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const {
+    location: userLoc,
     fullLabel,
     applyGpsLocation,
     locationBasedEnabled,
@@ -80,7 +82,7 @@ export function MyPage() {
       ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
       : []),
     { icon: Settings, label: '설정', to: '#', disabled: true },
-    { icon: Bell, label: '알림', to: '/notifications', replace: true },
+    { icon: Bell, label: '알림 설정', to: '/notifications', replace: true },
   ];
 
   const supportItems = [
@@ -98,7 +100,7 @@ export function MyPage() {
       console.error(e);
       alert(
         (e as Error)?.message ||
-          '위치를 가져오지 못했습니다. 브라우저에서 위치 권한을 허용했는지, 카카오맵 키(VITE_KAKAO_MAP_APP_KEY)가 있는지 확인해 주세요.',
+          '위치를 가져오지 못했습니다. 브라우저·기기에서 위치 권한을 허용했는지 확인해 주세요.',
       );
     } finally {
       setGpsBusy(false);
@@ -138,8 +140,11 @@ export function MyPage() {
                     type="button"
                     role="switch"
                     aria-checked={locationBasedEnabled}
-                    onClick={() => setLocationBasedEnabled(!locationBasedEnabled)}
-                    className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-300 ${
+                    onClick={(ev) => {
+                      ev.stopPropagation();
+                      setLocationBasedEnabled(!locationBasedEnabled);
+                    }}
+                    className={`relative z-10 h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-300 ${
                       locationBasedEnabled ? 'bg-orange-600 shadow-inner' : 'bg-slate-300'
                     }`}
                   >
@@ -172,19 +177,28 @@ export function MyPage() {
                     ? '탭해서 지도·시·구로 동네를 바꿀 수 있어요'
                     : '위치 기반을 켜면 동네·GPS 설정을 쓸 수 있어요'}
                 </p>
+                {locationBasedEnabled &&
+                  userLoc.lat != null &&
+                  userLoc.lng != null &&
+                  (userLoc.source === 'gps' || userLoc.source === 'map') && (
+                    <p className="mt-2 flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-[11px] font-bold text-emerald-800">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                      현재 위치로 동네가 맞춰져 있어요 (위치 인증)
+                    </p>
+                  )}
               </div>
               <button
                 type="button"
                 disabled={gpsBusy || !locationBasedEnabled}
                 onClick={() => void handleGpsRefresh()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 py-3 text-sm font-extrabold text-orange-800 transition-colors hover:bg-orange-100 disabled:opacity-60"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 py-3 text-sm font-extrabold text-orange-800 transition-colors hover:bg-orange-100 disabled:pointer-events-none disabled:opacity-50"
               >
                 {gpsBusy ? (
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 ) : (
                   <Navigation className="h-4 w-4 shrink-0" />
                 )}
-                {gpsBusy ? '현재 위치 확인 중…' : '현재 위치로 동네 맞추기'}
+                {gpsBusy ? '현재 위치 확인 중…' : '현재 위치로 동네 다시 맞추기'}
               </button>
             </div>
           </div>

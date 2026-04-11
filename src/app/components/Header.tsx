@@ -51,7 +51,7 @@ export function Header() {
             <Link
               to="/notifications"
               className="relative rounded-full p-2 text-slate-400 transition-all hover:bg-orange-50 hover:text-orange-600"
-              aria-label="알림"
+              aria-label="알림 설정"
             >
               <Bell className="h-5 w-5" aria-hidden />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500" aria-hidden />

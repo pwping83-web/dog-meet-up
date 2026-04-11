@@ -4,6 +4,8 @@ import { formatRegion } from '../app/data/regions';
 import { getCurrentBrowserPosition } from '../lib/browserGeolocation';
 import { coord2AddressParts, loadKakaoMapScript } from '../lib/kakaoMaps';
 import { matchKakaoAdministrative } from '../lib/matchKakaoToRegion';
+import { reverseGeocodeToRegion } from '../lib/reverseGeocodeClient';
+import { getKakaoMapAppKey } from '../lib/kakaoMaps';
 
 const STORAGE_KEY = 'daeng_user_location_v1';
 const STORAGE_LOCATION_BASED = 'daeng_location_based_v1';
@@ -107,31 +109,43 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
       if (!locationBasedEnabled) {
         throw new Error('위치 기반 서비스를 켜 주세요. 내댕댕 또는 동네 설정에서 스위치를 켜면 GPS·지도 저장을 쓸 수 있어요.');
       }
-      try {
-        await loadKakaoMapScript();
-        const parts = await coord2AddressParts(lng, lat);
-        const m = matchKakaoAdministrative(parts.depth1, parts.depth2, parts.depth3);
+
+      const persistFromMatch = (m: ReturnType<typeof matchKakaoAdministrative>, districtFallback: string) => {
         const next: UserLocationSnapshot = {
           city: m.city,
-          district: m.district || parts.depth2 || '선택',
+          district: m.district || districtFallback || '선택',
           lat,
           lng,
           source,
         };
         persist(next);
         return next;
-      } catch {
+      };
+
+      try {
+        if (getKakaoMapAppKey()) {
+          try {
+            await loadKakaoMapScript();
+            const parts = await coord2AddressParts(lng, lat);
+            const m = matchKakaoAdministrative(parts.depth1, parts.depth2, parts.depth3);
+            return persistFromMatch(m, parts.depth2);
+          } catch {
+            /* 키 오류·네트워크 등 → 무료 역지오코딩 폴백 */
+          }
+        }
+
+        const m = await reverseGeocodeToRegion(lat, lng);
+        return persistFromMatch(m, '');
+      } catch (e) {
         setLocation((prev) => {
-          const next: UserLocationSnapshot = {
-            ...prev,
-            lat,
-            lng,
-            source,
-          };
+          const next: UserLocationSnapshot = { ...prev, lat, lng, source };
           writeStorage(next);
           return next;
         });
-        throw new Error('주소 변환에 실패했습니다. 카카오 앱 키·네트워크를 확인하거나 목록에서 지역을 선택하세요.');
+        throw new Error(
+          (e as Error)?.message ||
+            '주소 변환에 실패했습니다. 네트워크를 확인하거나 목록에서 시·구를 직접 선택해 주세요.',
+        );
       }
     },
     [persist, locationBasedEnabled],

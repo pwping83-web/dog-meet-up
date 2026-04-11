@@ -110,11 +110,11 @@ export function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-orange-50/30 pb-20 overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden bg-orange-50/30 pb-[5.5rem] md:pb-20">
       <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
 
       {/* ─── HERO SECTION ─── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 pt-4 pb-10 px-4">
+      <section className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 px-4 pt-5 pb-12 max-md:pb-14 md:pt-4 md:pb-10">
         {/* 배경 장식 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-16 -right-16 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
@@ -123,37 +123,37 @@ export function LandingPage() {
           <span className="absolute bottom-8 left-6 text-4xl opacity-10 -rotate-12 select-none">🦴</span>
         </div>
 
-        {/* 모바일: 하단 탭(~5rem) 제외 높이에서 제목↑ / CTA(모임 만들기)↓ · md 이상은 기존처럼 자연 높이 */}
-        <div className="relative z-10 flex min-h-[calc(100dvh-5rem)] flex-col md:min-h-0">
+        {/* 모바일: 제목 → 댕친 사진 → CTA(모임 만들기) / md↑: 제목 → CTA → 사진 */}
+        <div className="relative z-10 flex flex-col md:min-h-0">
           {/* 헤더 */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex shrink-0 items-center justify-between pb-4"
+            className="flex shrink-0 items-center justify-between pb-4 max-md:pb-5"
           >
-            <div className="flex items-center gap-1.5">
-              <span className="text-xl">🐕</span>
-              <span className="text-lg text-white/90 tracking-tight" style={{ fontWeight: 900 }}>댕댕마켓</span>
+            <div className="flex items-center gap-2 max-md:gap-2.5">
+              <span className="text-2xl max-md:text-[1.75rem] md:text-xl" aria-hidden>🐕</span>
+              <span className="text-xl max-md:text-[1.35rem] text-white/90 tracking-tight md:text-lg" style={{ fontWeight: 900 }}>댕댕마켓</span>
             </div>
             {authLoading ? (
-              <span className="flex h-8 w-16 items-center justify-center rounded-lg border border-white/20 bg-white/10">
-                <Loader2 className="h-4 w-4 animate-spin text-white" aria-hidden />
+              <span className="flex h-10 w-[4.5rem] max-md:h-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 md:h-8 md:w-16 md:rounded-lg">
+                <Loader2 className="h-5 w-5 animate-spin text-white max-md:h-5 md:h-4 md:w-4" aria-hidden />
               </span>
             ) : user ? (
               <button
                 type="button"
                 onClick={() => setExploreMenuOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/40 bg-white/20 text-white backdrop-blur-md active:scale-95 transition-all"
+                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/40 bg-white/20 text-white backdrop-blur-md active:scale-95 transition-all md:h-9 md:w-9 md:rounded-xl"
                 aria-label="메뉴·설정"
                 aria-expanded={exploreMenuOpen}
               >
-                <Menu className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+                <Menu className="h-6 w-6 md:h-5 md:w-5" strokeWidth={2.5} aria-hidden />
               </button>
             ) : (
               <Link
                 to="/login"
-                className="bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs border border-white/30 active:scale-95 transition-all"
+                className="bg-white/20 backdrop-blur-md text-white px-4 py-2.5 rounded-xl text-sm border border-white/30 active:scale-95 transition-all md:px-3 md:py-1.5 md:rounded-lg md:text-xs"
                 style={{ fontWeight: 700 }}
               >
                 로그인
@@ -161,44 +161,84 @@ export function LandingPage() {
             )}
           </motion.div>
 
-          <div className="flex min-h-0 flex-1 flex-col justify-between gap-6 md:block md:flex-none">
-            {/* 히어로 텍스트 */}
+          <div className="flex flex-col gap-6 pb-1 max-md:gap-7 md:gap-5">
+            {/* 히어로 텍스트 — 모바일 당근형: 큰 제목·배지 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
+              className="order-1"
             >
-              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-full mb-3 border border-white/20" style={{ fontWeight: 800 }}>
-                <Sparkles className="w-3 h-3" />
+              <span
+                className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-white px-3 py-2 rounded-full mb-4 border border-white/25 text-xs max-md:text-[13px] md:mb-3 md:px-2.5 md:py-1 md:text-[10px]"
+                style={{ fontWeight: 800 }}
+              >
+                <Sparkles className="w-4 h-4 shrink-0 md:w-3 md:h-3" />
                 강아지 MBTI 매칭 시스템
               </span>
-              <h1 className="text-white text-2xl mb-2 leading-tight tracking-tight" style={{ fontWeight: 900 }}>
+              <h1
+                className="text-white mb-3 leading-[1.12] tracking-tight text-[1.7rem] max-md:text-[1.95rem] max-md:mb-3.5 md:mb-2 md:text-2xl"
+                style={{ fontWeight: 900 }}
+              >
                 우리 동네<br />
                 <span className="text-yellow-200">댕친</span>을 찾아보세요
               </h1>
-              <p className="text-orange-100/90 text-xs md:mb-5 leading-relaxed" style={{ fontWeight: 600 }}>
+              <p
+                className="text-orange-100/95 leading-relaxed text-sm max-md:text-[15px] max-md:leading-snug md:text-xs"
+                style={{ fontWeight: 600 }}
+              >
                 성격이 맞는 댕댕이 친구를 찾고<br />
                 산책·훈련 모임에 함께 참여해요 🐾
               </p>
             </motion.div>
 
-            {/* CTA — 모바일에서 히어로 블록 하단에 정렬 */}
+            {/* 댕친 프로필 — 모바일: CTA 위 / md: CTA 아래 */}
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.25 }}
+              className="order-2 md:order-3"
+            >
+              <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1 max-md:gap-3.5 md:gap-2">
+                {dogProfiles.map((dog, i) => (
+                  <motion.div
+                    key={dog.name}
+                    onHoverStart={() => setHoveredDog(i)}
+                    onHoverEnd={() => setHoveredDog(null)}
+                    whileTap={{ scale: 0.95 }}
+                    className="min-w-[5.75rem] flex-shrink-0 rounded-2xl border border-white/70 bg-white/95 p-3 text-center shadow-lg shadow-orange-600/10 backdrop-blur-md max-md:min-w-[6.25rem] max-md:p-3.5 md:min-w-[72px] md:rounded-xl md:p-2"
+                  >
+                    <div className="mx-auto mb-2 h-[4.25rem] w-[4.25rem] overflow-hidden rounded-full bg-orange-100 ring-[3px] ring-white/90 max-md:h-[4.5rem] max-md:w-[4.5rem] md:mb-1.5 md:h-12 md:w-12 md:ring-2">
+                      <ImageWithFallback
+                        src={dog.img}
+                        alt={dog.name}
+                        className={`h-full w-full object-cover transition-transform duration-500 ${hoveredDog === i ? 'scale-110' : 'scale-100'}`}
+                      />
+                    </div>
+                    <p className="truncate text-slate-800 text-xs max-md:text-[13px] md:text-[10px]" style={{ fontWeight: 900 }}>{dog.name}</p>
+                    <p className="truncate text-slate-400 text-[10px] max-md:text-[11px] md:text-[8px]" style={{ fontWeight: 700 }}>{dog.breed}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* CTA — 모바일: 사진 아래 / md: 사진 위 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="flex gap-2.5 pb-1 md:mt-0"
+              transition={{ duration: 0.5, delay: 0.35 }}
+              className="order-3 flex w-full flex-col gap-3 max-md:gap-3.5 md:order-2 md:flex-row md:gap-2.5"
             >
               <Link
                 to={!authLoading && user ? '/create-meetup' : '/signup'}
-                className="flex-1 bg-white text-orange-600 py-3.5 rounded-xl text-center text-sm shadow-xl shadow-orange-600/20 active:scale-[0.97] transition-all touch-manipulation"
+                className="w-full rounded-2xl bg-white py-4 text-center text-base text-orange-600 shadow-xl shadow-orange-600/25 active:scale-[0.98] transition-all touch-manipulation md:flex-1 md:rounded-xl md:py-3.5 md:text-sm"
                 style={{ fontWeight: 800 }}
               >
                 {!authLoading && user ? '모임 만들기' : '시작하기'}
               </Link>
               <Link
                 to="/sitters"
-                className="flex-1 bg-white/15 backdrop-blur-md text-white py-3.5 rounded-xl text-center text-sm border border-white/25 active:scale-[0.97] transition-all touch-manipulation"
+                className="w-full rounded-2xl border-2 border-white/35 bg-white/15 py-4 text-center text-base text-white backdrop-blur-md active:scale-[0.98] transition-all touch-manipulation md:flex-1 md:rounded-xl md:border md:py-3.5 md:text-sm"
                 style={{ fontWeight: 800 }}
               >
                 둘러보기
@@ -206,36 +246,6 @@ export function LandingPage() {
             </motion.div>
           </div>
         </div>
-
-        {/* 댕친 프로필 카드 가로 스크롤 */}
-        <motion.div
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-          className="relative z-10 mt-5"
-        >
-          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1">
-            {dogProfiles.map((dog, i) => (
-              <motion.div
-                key={dog.name}
-                onHoverStart={() => setHoveredDog(i)}
-                onHoverEnd={() => setHoveredDog(null)}
-                whileTap={{ scale: 0.95 }}
-                className="min-w-[72px] bg-white/95 backdrop-blur-md rounded-xl p-2 shadow-lg shadow-orange-600/10 border border-white/60 flex-shrink-0 text-center"
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden mx-auto mb-1.5 bg-orange-100 ring-2 ring-white/80">
-                  <ImageWithFallback
-                    src={dog.img}
-                    alt={dog.name}
-                    className={`w-full h-full object-cover transition-transform duration-500 ${hoveredDog === i ? 'scale-110' : 'scale-100'}`}
-                  />
-                </div>
-                <p className="text-slate-800 text-[10px] truncate" style={{ fontWeight: 900 }}>{dog.name}</p>
-                <p className="text-slate-400 text-[8px] truncate" style={{ fontWeight: 700 }}>{dog.breed}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
       </section>
 
       {/* ─── STATS BAR ─── */}
@@ -243,12 +253,12 @@ export function LandingPage() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-50px' }}
-        className="-mt-5 px-4 relative z-20"
+        className="-mt-5 px-4 relative z-20 max-md:-mt-4"
       >
         <motion.div
           variants={fadeUp}
           custom={0}
-          className="bg-white rounded-2xl p-4 shadow-lg shadow-slate-200/50 border border-slate-100 grid grid-cols-3 gap-3"
+          className="grid grid-cols-3 gap-2 rounded-3xl border border-slate-100 bg-white p-5 shadow-lg shadow-slate-200/50 max-md:gap-3 max-md:p-5 md:gap-3 md:rounded-2xl md:p-4"
         >
           {[
             { num: '2,847', label: '등록 댕댕이', icon: '🐕' },
@@ -256,9 +266,9 @@ export function LandingPage() {
             { num: '98%', label: '만족도', icon: '💛' },
           ].map((stat) => (
             <div key={stat.label} className="text-center">
-              <span className="text-lg block mb-0.5">{stat.icon}</span>
-              <p className="text-orange-600 text-sm" style={{ fontWeight: 900 }}>{stat.num}</p>
-              <p className="text-slate-400 text-[9px]" style={{ fontWeight: 700 }}>{stat.label}</p>
+              <span className="mb-1 block text-2xl max-md:text-[1.65rem] md:mb-0.5 md:text-lg">{stat.icon}</span>
+              <p className="text-orange-600 text-base max-md:text-lg md:text-sm" style={{ fontWeight: 900 }}>{stat.num}</p>
+              <p className="text-slate-400 text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 700 }}>{stat.label}</p>
             </div>
           ))}
         </motion.div>
@@ -272,35 +282,35 @@ export function LandingPage() {
           viewport={{ once: true, margin: '-50px' }}
           className="px-4 mt-8"
         >
-          <motion.div variants={fadeUp} custom={0} className="flex items-center justify-between mb-3">
+          <motion.div variants={fadeUp} custom={0} className="mb-4 flex items-center justify-between max-md:mb-4 md:mb-3">
             <div>
-              <h2 className="text-lg text-slate-900" style={{ fontWeight: 900 }}>
-                새로운 댕친 <Heart className="w-4 h-4 fill-red-500 text-red-500 inline" />
+              <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>
+                새로운 댕친 <Heart className="inline h-5 w-5 fill-red-500 text-red-500 max-md:h-5 max-md:w-5 md:h-4 md:w-4" />
               </h2>
-              <p className="text-[11px] text-slate-400 mt-0.5" style={{ fontWeight: 600 }}>최근 등록된 우리 동네 댕댕이</p>
+              <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>최근 등록된 우리 동네 댕댕이</p>
             </div>
-            <Link to="/search" className="flex items-center gap-1 text-orange-600 text-xs active:scale-95 transition-all" style={{ fontWeight: 800 }}>
-              전체보기 <ArrowRight className="w-3.5 h-3.5" />
+            <Link to="/search" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
+              전체보기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
             </Link>
           </motion.div>
 
-          <div className="flex gap-2.5 overflow-x-auto pb-2 no-scrollbar -mx-1 px-1">
+          <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar max-md:gap-3 md:gap-2.5">
             {dbDogs.map((dog, i) => (
               <motion.div
                 key={dog.id}
                 variants={fadeUp}
                 custom={i + 1}
-                className="min-w-[100px] bg-white rounded-2xl p-3 border border-slate-100 shadow-sm text-center flex-shrink-0 active:scale-95 transition-transform"
+                className="min-w-[7.25rem] flex-shrink-0 rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-transform active:scale-95 max-md:min-w-[7.5rem] max-md:p-4 md:min-w-[100px] md:rounded-2xl md:p-3"
               >
-                <div className="w-14 h-14 rounded-xl mx-auto bg-orange-100 flex items-center justify-center text-3xl mb-2 shadow-inner overflow-hidden">
+                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 text-3xl shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
                   {dog.photo_url ? (
                     <ImageWithFallback src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
                   ) : (
                     '🐶'
                   )}
                 </div>
-                <p className="text-slate-800 text-[11px] truncate" style={{ fontWeight: 900 }}>{dog.name}</p>
-                <p className="text-slate-400 text-[9px] truncate" style={{ fontWeight: 600 }}>
+                <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{dog.name}</p>
+                <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
                   {dog.breed}{dog.age ? ` · ${dog.age}살` : ''}
                 </p>
               </motion.div>
@@ -314,38 +324,38 @@ export function LandingPage() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, margin: '-50px' }}
-        className="px-4 mt-8"
+        className="mt-8 px-4 max-md:mt-10"
       >
-        <motion.h2 variants={fadeUp} custom={0} className="text-lg text-slate-900 mb-1.5 text-center" style={{ fontWeight: 900 }}>
+        <motion.h2 variants={fadeUp} custom={0} className="mb-2 text-center text-xl text-slate-900 max-md:text-[1.35rem] md:mb-1.5 md:text-lg" style={{ fontWeight: 900 }}>
           이렇게 이용해요
         </motion.h2>
-        <motion.p variants={fadeUp} custom={1} className="text-xs text-slate-400 text-center mb-5" style={{ fontWeight: 600 }}>
+        <motion.p variants={fadeUp} custom={1} className="mb-6 text-center text-sm text-slate-400 max-md:mb-6 md:mb-5 md:text-xs" style={{ fontWeight: 600 }}>
           간단한 3단계로 시작하세요
         </motion.p>
 
-        <div className="space-y-3">
+        <div className="space-y-3 max-md:space-y-3.5">
           {[
-            { step: '01', icon: <MapPin className="w-5 h-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
-            { step: '02', icon: <Heart className="w-5 h-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-pink-500 to-rose-400' },
-            { step: '03', icon: <Users className="w-5 h-5" />, title: '모임 참여', desc: '산책, 훈련, 놀이 모임에 참여 신청해요', color: 'from-emerald-500 to-teal-400' },
+            { step: '01', icon: <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
+            { step: '02', icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-pink-500 to-rose-400' },
+            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '모임 참여', desc: '산책, 훈련, 놀이 모임에 참여 신청해요', color: 'from-emerald-500 to-teal-400' },
           ].map((item, i) => (
             <motion.div
               key={item.step}
               variants={fadeUp}
               custom={i + 2}
-              className="flex items-center gap-3 bg-white rounded-2xl p-4 border border-slate-100 shadow-sm"
+              className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm max-md:gap-4 max-md:p-5 md:gap-3 md:rounded-2xl md:p-4"
             >
-              <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center text-white shadow-md flex-shrink-0`}>
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-md max-md:h-14 max-md:w-14 md:h-11 md:w-11 md:rounded-xl`}>
                 {item.icon}
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[9px] text-orange-500 px-1.5 py-0.5 bg-orange-50 rounded-full" style={{ fontWeight: 900 }}>STEP {item.step}</span>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-center gap-2 md:mb-0.5">
+                  <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] text-orange-500 max-md:text-[11px] md:px-1.5 md:text-[9px]" style={{ fontWeight: 900 }}>STEP {item.step}</span>
                 </div>
-                <h3 className="text-slate-800 text-sm mb-0.5" style={{ fontWeight: 900 }}>{item.title}</h3>
-                <p className="text-slate-400 text-[11px]" style={{ fontWeight: 600 }}>{item.desc}</p>
+                <h3 className="mb-1 text-base text-slate-800 max-md:text-base md:mb-0.5 md:text-sm" style={{ fontWeight: 900 }}>{item.title}</h3>
+                <p className="text-sm text-slate-400 max-md:leading-snug md:text-[11px]" style={{ fontWeight: 600 }}>{item.desc}</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 max-md:h-5 max-md:w-5 md:h-4 md:w-4" />
             </motion.div>
           ))}
         </div>
@@ -358,17 +368,17 @@ export function LandingPage() {
         viewport={{ once: true, margin: '-50px' }}
         className="px-4 mt-10"
       >
-        <motion.div variants={fadeUp} custom={0} className="flex items-center justify-between mb-4">
+        <motion.div variants={fadeUp} custom={0} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
           <div>
-            <h2 className="text-lg text-slate-900" style={{ fontWeight: 900 }}>강아지 MBTI</h2>
-            <p className="text-[11px] text-slate-400 mt-0.5" style={{ fontWeight: 600 }}>성격에 맞는 댕친을 찾아요</p>
+            <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>강아지 MBTI</h2>
+            <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>성격에 맞는 댕친을 찾아요</p>
           </div>
-          <Link to="/dog-mbti-test" className="flex items-center gap-1 text-orange-600 text-xs active:scale-95 transition-all" style={{ fontWeight: 800 }}>
-            테스트하기 <ArrowRight className="w-3.5 h-3.5" />
+          <Link to="/dog-mbti-test" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
+            테스트하기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
           </Link>
         </motion.div>
 
-        <div className="grid grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-2 gap-3 max-md:gap-3 md:gap-2.5">
           {mbtiTypes.map((m, i) => (
             <motion.div
               key={m.type}
@@ -377,13 +387,13 @@ export function LandingPage() {
             >
               <Link
                 to="/dog-mbti-test"
-                className="block bg-white rounded-2xl p-3.5 border border-slate-100 shadow-sm hover:shadow-md active:scale-[0.97] transition-all"
+                className="block rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.97] max-md:p-4 md:rounded-2xl md:p-3.5"
               >
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${m.color} flex items-center justify-center text-xl mb-2.5 shadow-md`}>
+                <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${m.color} text-2xl shadow-md max-md:mb-3 max-md:h-12 max-md:w-12 max-md:text-[1.35rem] md:mb-2.5 md:h-10 md:w-10 md:rounded-xl md:text-xl`}>
                   {m.emoji}
                 </div>
-                <h4 className="text-slate-800 text-xs mb-0.5" style={{ fontWeight: 900 }}>{m.type}</h4>
-                <p className="text-slate-400 text-[10px]" style={{ fontWeight: 600 }}>{m.desc}</p>
+                <h4 className="mb-1 text-sm text-slate-800 max-md:text-sm md:mb-0.5 md:text-xs" style={{ fontWeight: 900 }}>{m.type}</h4>
+                <p className="text-xs text-slate-400 max-md:leading-snug md:text-[10px]" style={{ fontWeight: 600 }}>{m.desc}</p>
               </Link>
             </motion.div>
           ))}
@@ -397,27 +407,27 @@ export function LandingPage() {
         viewport={{ once: true, margin: '-50px' }}
         className="px-4 mt-10"
       >
-        <motion.div variants={fadeUp} custom={0} className="flex items-center justify-between mb-4">
+        <motion.div variants={fadeUp} custom={0} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
           <div>
-            <h2 className="text-lg text-slate-900" style={{ fontWeight: 900 }}>🐾 동네 모임</h2>
-            <p className="text-[11px] text-slate-400 mt-0.5" style={{ fontWeight: 600 }}>우리 동네에서 열리는 모임이에요</p>
+            <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>🐾 동네 모임</h2>
+            <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>우리 동네에서 열리는 모임이에요</p>
           </div>
-          <Link to="/sitters" className="flex items-center gap-1 text-orange-600 text-xs active:scale-95 transition-all" style={{ fontWeight: 800 }}>
-            전체보기 <ArrowRight className="w-3.5 h-3.5" />
+          <Link to="/sitters" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
+            전체보기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
           </Link>
         </motion.div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3 max-md:space-y-3 md:space-y-2.5">
           {recentMeetups.map((req, i) => {
             const quoteCount = getQuoteCount(req.id);
             return (
               <motion.div key={req.id} variants={fadeUp} custom={i + 1}>
                 <Link
                   to={`/meetup/${req.id}`}
-                  className="flex gap-3 bg-white rounded-2xl p-3 border border-slate-100 shadow-sm hover:shadow-md hover:border-orange-100 active:scale-[0.98] transition-all"
+                  className="flex gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
                 >
                   {/* 썸네일 */}
-                  <div className="w-16 h-16 rounded-xl flex-shrink-0 overflow-hidden bg-gradient-to-br from-orange-100 to-yellow-50">
+                  <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-50 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
                     {req.images && req.images.length > 0 ? (
                       <ImageWithFallback
                         src={req.images[0]}
@@ -431,19 +441,19 @@ export function LandingPage() {
                     )}
                   </div>
                   {/* 내용 */}
-                  <div className="flex-1 min-w-0 py-0.5">
-                    <h3 className="text-slate-800 text-xs mb-0.5 line-clamp-1" style={{ fontWeight: 800 }}>
+                  <div className="min-w-0 flex-1 py-0.5">
+                    <h3 className="mb-1 line-clamp-1 text-base text-slate-800 max-md:text-[15px] md:mb-0.5 md:text-xs" style={{ fontWeight: 800 }}>
                       {req.title}
                     </h3>
-                    <p className="text-slate-400 text-[11px] mb-1.5" style={{ fontWeight: 600 }}>
+                    <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
                       {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
                     </p>
                     <div className="flex items-center gap-3">
                       {req.estimatedCost && (
-                        <span className="text-orange-600 text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
+                        <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
                       )}
                       {quoteCount > 0 && (
-                        <span className="flex items-center gap-1 text-slate-400 text-[11px]" style={{ fontWeight: 700 }}>
+                        <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
                           <MessageCircle className="w-3 h-3" /> {quoteCount}
                         </span>
                       )}
@@ -575,35 +585,37 @@ export function LandingPage() {
       </footer>
 
       {/* ─── BOTTOM NAV ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-orange-50 z-50 pb-safe max-w-[430px] mx-auto">
-        <div className="flex items-center justify-around h-14 px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[430px] border-t border-orange-50 bg-white/95 pb-safe backdrop-blur-xl max-md:border-slate-200/80">
+        <div className="flex h-[3.75rem] items-center justify-around px-1 max-md:h-16 max-md:px-2 md:h-14">
           <Link
             to="/explore"
-            className={`flex flex-col items-center gap-0.5 ${location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400'}`}
+            className={`flex flex-col items-center gap-1 max-md:gap-1 ${location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400'}`}
           >
-            <Home className="w-5 h-5" />
-            <span className="text-[9px]" style={{ fontWeight: 800 }}>홈</span>
+            <Home className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
+            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>홈</span>
           </Link>
           <button
             type="button"
             onClick={() => setLocationPickerOpen(true)}
-            className="flex flex-col items-center gap-0.5 text-slate-400 active:opacity-80"
+            className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1 active:opacity-80"
             aria-label={`위치·동네 설정. 현재 ${locationShortLabel}`}
           >
-            <MapPin className="w-5 h-5" />
-            <span className="text-[9px]" style={{ fontWeight: 800 }}>위치</span>
+            <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
+            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>위치</span>
           </button>
-          <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-400 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-400/40 group-active:scale-90 transition-all border-[3px] border-white">
-              <PlusCircle className="w-6 h-6 text-white" />
+          <Link to="/create-meetup" className="group -mt-2 flex flex-col items-center max-md:-mt-1">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-gradient-to-br from-orange-500 to-yellow-400 shadow-lg shadow-orange-400/45 transition-all group-active:scale-90 max-md:h-[3.65rem] max-md:w-[3.65rem] md:h-12 md:w-12 md:rounded-2xl">
+              <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7 md:h-6 md:w-6" />
             </div>
-            <span className="text-[9px] text-slate-400 mt-0.5" style={{ fontWeight: 800 }}>등록하기</span>
+            <span className="mt-1 text-[11px] text-slate-500 max-md:text-xs md:mt-0.5 md:text-[9px]" style={{ fontWeight: 800 }}>등록하기</span>
           </Link>
-          <Link to="/chats" className="flex flex-col items-center gap-0.5 text-slate-400">
-            <MessageCircle className="w-5 h-5" /><span className="text-[9px]" style={{ fontWeight: 800 }}>댕팅</span>
+          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
+            <MessageCircle className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
+            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>댕팅</span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-0.5 text-slate-400">
-            <User className="w-5 h-5" /><span className="text-[9px]" style={{ fontWeight: 800 }}>내댕댕</span>
+          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
+            <User className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
+            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>내댕댕</span>
           </Link>
         </div>
       </nav>
@@ -668,7 +680,7 @@ export function LandingPage() {
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
               >
                 <Bell className="h-5 w-5 text-slate-500" />
-                알림
+                알림 설정
               </Link>
               <Link
                 to="/billing"

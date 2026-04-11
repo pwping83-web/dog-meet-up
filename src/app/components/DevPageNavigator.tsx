@@ -30,7 +30,7 @@ const pages: PageInfo[] = [
   // 채팅 & 알림
   { path: '/chats', name: '채팅 목록', emoji: '💬', category: '소통' },
   { path: '/chat/1', name: '채팅 상세', emoji: '💭', category: '소통' },
-  { path: '/notifications', name: '알림', emoji: '🔔', category: '소통' },
+  { path: '/notifications', name: '알림 설정', emoji: '🔔', category: '소통' },
   
   // 사용자
   { path: '/my', name: '마이페이지', emoji: '👤', category: '사용자' },
