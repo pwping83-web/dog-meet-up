@@ -1,4 +1,4 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { motion } from 'motion/react';
 import {
   MapPin, Users, Heart, ArrowRight, Star,
@@ -54,6 +54,7 @@ const fadeUp = {
 };
 
 export function LandingPage() {
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
   const [dbDogs, setDbDogs] = useState<any[]>([]);
@@ -555,8 +556,12 @@ export function LandingPage() {
       {/* ─── BOTTOM NAV ─── */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-orange-50 z-50 pb-safe max-w-[430px] mx-auto">
         <div className="flex items-center justify-around h-14 px-2">
-          <Link to="/" className="flex flex-col items-center gap-0.5 text-slate-400">
-            <Home className="w-5 h-5" /><span className="text-[9px]" style={{ fontWeight: 800 }}>홈</span>
+          <Link
+            to="/explore"
+            className={`flex flex-col items-center gap-0.5 ${location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400'}`}
+          >
+            <Home className="w-5 h-5" />
+            <span className="text-[9px]" style={{ fontWeight: 800 }}>홈</span>
           </Link>
           <Link to="/sitters" className="flex flex-col items-center gap-0.5 text-slate-400">
             <MapPin className="w-5 h-5" /><span className="text-[9px]" style={{ fontWeight: 800 }}>동네번개</span>

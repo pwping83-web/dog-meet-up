@@ -58,7 +58,7 @@ export function SignupPage() {
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // 회원가입 완료
-    navigate('/');
+    navigate('/explore');
   };
 
   return (

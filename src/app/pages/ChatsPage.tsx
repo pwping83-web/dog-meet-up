@@ -26,7 +26,7 @@ export function ChatsPage() {
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="max-w-screen-md mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2 -ml-2">
-            <Link to="/" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+            <Link to="/explore" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="메인으로">
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <h1 className="text-lg font-extrabold text-slate-800">채팅</h1>

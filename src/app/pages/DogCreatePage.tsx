@@ -81,7 +81,7 @@ export function DogCreatePage() {
       if (dbError) throw dbError;
 
       alert('🐶 우리 댕댕이가 성공적으로 등록되었습니다!');
-      navigate('/');
+      navigate('/explore');
     } catch (error: any) {
       alert('등록 중 오류 발생: ' + error.message);
     } finally {

@@ -1,5 +1,5 @@
 // src/app/pages/SearchPage.tsx 전체 교체
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { ArrowLeft, Search, X, ChevronRight, Home, Wrench, MessageCircle, User } from 'lucide-react';
 import { useState } from 'react';
 import { mockRequests } from '../data/mockData';
@@ -14,6 +14,7 @@ const recentSearches = [
 ];
 
 export function SearchPage() {
+  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
 
@@ -39,7 +40,7 @@ export function SearchPage() {
       {/* 글래스모피즘 헤더 & 검색창 */}
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="px-3 py-3 flex items-center gap-3 max-w-screen-md mx-auto">
-          <Link to="/" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+          <Link to="/explore" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="메인으로">
             <ArrowLeft className="w-6 h-6" />
           </Link>
           
@@ -170,7 +171,7 @@ export function SearchPage() {
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4 px-1">
                 <h2 className="font-extrabold text-lg text-slate-900">🐾 동네 댕친 모임</h2>
-                <Link to="/" className="text-xs font-bold text-orange-600 hover:underline">더보기</Link>
+                <Link to="/explore" className="text-xs font-bold text-orange-600 hover:underline">더보기</Link>
               </div>
               <div className="space-y-3">
                 {mockRequests.slice(0, 4).map((request) => (
@@ -216,7 +217,12 @@ export function SearchPage() {
       {/* Bottom tab navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/60 z-50 pb-safe max-w-[430px] mx-auto">
         <div className="flex items-center justify-around h-16 max-w-screen-md mx-auto px-2">
-          <Link to="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">
+          <Link
+            to="/explore"
+            className={`flex flex-col items-center gap-1 transition-colors ${
+              location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400 hover:text-orange-600'
+            }`}
+          >
             <Home className="w-6 h-6" />
             <span className="text-[10px] font-bold">홈</span>
           </Link>

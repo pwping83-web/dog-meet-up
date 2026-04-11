@@ -24,7 +24,7 @@ export function NotFound() {
         
         {/* 홈 버튼 */}
         <Link
-          to="/"
+          to="/explore"
           className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
         >
           <Home className="w-5 h-5" />

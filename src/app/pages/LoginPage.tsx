@@ -18,7 +18,7 @@ export function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // 로그인 처리
-    navigate("/");
+    navigate("/explore");
   };
 
   const handleKakaoLogin = async () => {

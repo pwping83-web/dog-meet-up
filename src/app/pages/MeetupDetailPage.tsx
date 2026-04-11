@@ -54,7 +54,7 @@ export function MeetupDetailPage() {
       {/* 글래스모피즘 헤더 */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center h-14 px-2 max-w-screen-md mx-auto">
-          <button onClick={() => navigate('/')} className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <button type="button" onClick={() => navigate('/explore')} className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="메인으로">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>모임 상세 🐾</span>

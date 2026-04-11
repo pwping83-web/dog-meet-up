@@ -1,6 +1,12 @@
 import { Link } from 'react-router';
-import { ArrowLeft, Bell, X } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Bell, X, Smartphone, Zap } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  canUseNotifications,
+  pulseVibrate,
+  requestNotificationPermission,
+  showDeviceNotification,
+} from '../../lib/deviceNotify';
 
 interface Notification {
   id: string;
@@ -84,9 +90,49 @@ export function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [perm, setPerm] = useState<NotificationPermission>('default');
+
+  useEffect(() => {
+    if (!canUseNotifications()) return;
+    setPerm(Notification.permission);
+  }, []);
+
+  const refreshPerm = useCallback(() => {
+    if (canUseNotifications()) setPerm(Notification.permission);
+  }, []);
+
+  const handleEnableNotify = async () => {
+    const p = await requestNotificationPermission();
+    setPerm(p);
+    if (p === 'granted') {
+      pulseVibrate([120, 60, 120]);
+      await showDeviceNotification('댕댕마켓', '알림이 켜졌어요. 모임·채팅 소식을 이렇게 보내드릴게요 🐾', {
+        tag: 'daeng-permission-on',
+      });
+    } else if (p === 'denied') {
+      alert('브라우저 설정에서 이 사이트의 알림을 허용해 주세요.');
+    }
+  };
+
+  const handleTestNotify = async () => {
+    refreshPerm();
+    if (Notification.permission !== 'granted') {
+      await handleEnableNotify();
+      if (Notification.permission !== 'granted') return;
+    }
+    pulseVibrate([200, 100, 200, 100, 200]);
+    await showDeviceNotification('댕댕마켓 테스트', '새 모임 신청이 도착했어요! (테스트 알림)', {
+      tag: `daeng-test-${Date.now()}`,
+    });
+  };
 
   const handleMarkAllRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+  };
+
+  const openNotification = (n: Notification) => {
+    pulseVibrate([60, 40, 60]);
+    setSelectedNotification(n);
   };
 
   return (
@@ -95,7 +141,7 @@ export function NotificationsPage() {
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-10">
         <div className="px-4 h-14 flex items-center justify-between max-w-screen-md mx-auto">
           <div className="flex items-center gap-2">
-            <Link to="/" className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+            <Link to="/explore" className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="메인으로">
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <h1 className="text-lg font-extrabold text-slate-800">알림</h1>
@@ -115,6 +161,49 @@ export function NotificationsPage() {
         </div>
       </header>
 
+      {/* 휴대폰 알림 · 진동 */}
+      <div className="max-w-screen-md mx-auto px-4 pt-4">
+        <div className="rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50/80 p-4 shadow-sm">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+              <Smartphone className="h-5 w-5 text-orange-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-extrabold text-slate-900">휴대폰 알림 · 진동</p>
+              <p className="mt-0.5 text-xs font-medium leading-relaxed text-slate-600">
+                {!canUseNotifications()
+                  ? '이 브라우저는 시스템 알림을 지원하지 않아요.'
+                  : perm === 'granted'
+                    ? '알림이 허용됐어요. 새 소식이 오면 팝업과 진동(지원 기기)으로 알려드려요.'
+                    : perm === 'denied'
+                      ? '알림이 차단돼 있어요. 브라우저 사이트 설정에서 알림을 켜 주세요.'
+                      : '아래에서 허용하면 모임·채팅 알림이 폰에 뜨고, 진동도 함께 울려요.'}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void handleEnableNotify()}
+              disabled={!canUseNotifications() || perm === 'granted'}
+              className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none"
+            >
+              <Bell className="h-4 w-4 shrink-0" />
+              {perm === 'granted' ? '알림 허용됨' : '알림 허용하기'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleTestNotify()}
+              disabled={!canUseNotifications()}
+              className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-white px-4 py-3 text-sm font-extrabold text-orange-800 shadow-sm transition-transform active:scale-[0.98] disabled:opacity-50"
+            >
+              <Zap className="h-4 w-4 shrink-0" />
+              테스트 알림 + 진동
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 알림 목록 */}
       {notifications.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4">
@@ -131,7 +220,7 @@ export function NotificationsPage() {
           {notifications.map((notification) => (
             <button
               key={notification.id}
-              onClick={() => setSelectedNotification(notification)}
+              onClick={() => openNotification(notification)}
               className={`w-full rounded-3xl border transition-all active:scale-[0.98] ${
                 !notification.isRead 
                   ? 'bg-orange-50/50 border-orange-100 hover:shadow-md hover:border-orange-200' 

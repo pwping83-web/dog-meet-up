@@ -16,7 +16,14 @@ type Props = {
 };
 
 export function LocationPickerModal({ open, onClose }: Props) {
-  const { location, setManualRegion, applyCoordinates, applyGpsLocation } = useUserLocation();
+  const {
+    location,
+    setManualRegion,
+    applyCoordinates,
+    applyGpsLocation,
+    locationBasedEnabled,
+    setLocationBasedEnabled,
+  } = useUserLocation();
   const mapEl = useRef<HTMLDivElement>(null);
   const mapRef = useRef<KakaoMap | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +88,10 @@ export function LocationPickerModal({ open, onClose }: Props) {
   };
 
   const handleApplyMapCenter = async () => {
+    if (!locationBasedEnabled) {
+      setError('위치 기반 서비스를 켜 주세요.');
+      return;
+    }
     setBusy('apply');
     setError(null);
     try {
@@ -115,8 +126,13 @@ export function LocationPickerModal({ open, onClose }: Props) {
   };
 
   const handleManualOnly = () => {
-    setManualRegion(selCity, selDistrict);
-    onClose();
+    setError(null);
+    try {
+      setManualRegion(selCity, selDistrict);
+      onClose();
+    } catch (e) {
+      setError((e as Error).message);
+    }
   };
 
   if (!open) return null;
@@ -156,6 +172,36 @@ export function LocationPickerModal({ open, onClose }: Props) {
             </div>
           )}
 
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-orange-100 bg-orange-50/60 px-4 py-3">
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold text-slate-900">위치 기반 서비스</p>
+              <p className="mt-0.5 text-[11px] font-medium leading-snug text-slate-600">
+                켜면 GPS·지도·시·구 저장으로 동네 맞춤을 씁니다. 끄면 전국 기준으로 보여요.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={locationBasedEnabled}
+              onClick={() => setLocationBasedEnabled(!locationBasedEnabled)}
+              className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-300 ${
+                locationBasedEnabled ? 'bg-orange-600 shadow-inner' : 'bg-slate-300'
+              }`}
+            >
+              <span
+                className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+                  locationBasedEnabled ? 'translate-x-6' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {!locationBasedEnabled && (
+            <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-600">
+              위치 기반이 꺼져 있어요. 스위치를 켠 뒤 GPS·지도·시·구 저장을 사용할 수 있어요.
+            </p>
+          )}
+
           {!hasKey && (
             <p className="text-sm leading-relaxed text-slate-600">
               <strong className="text-slate-800">카카오맵</strong> 앱 키(
@@ -166,10 +212,10 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
           {hasKey && (
             <>
-              <div className="flex flex-wrap gap-2">
+              <div className={`flex flex-wrap gap-2 ${!locationBasedEnabled ? 'pointer-events-none opacity-40' : ''}`}>
                 <button
                   type="button"
-                  disabled={busy !== null}
+                  disabled={busy !== null || !locationBasedEnabled}
                   onClick={() => void handlePanToGps()}
                   className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-2xl bg-slate-900 px-3 py-2.5 text-sm font-bold text-white disabled:opacity-50"
                 >
@@ -178,7 +224,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
                 </button>
                 <button
                   type="button"
-                  disabled={busy !== null}
+                  disabled={busy !== null || !locationBasedEnabled}
                   onClick={() => void handleSaveGpsDirect()}
                   className="inline-flex flex-1 min-w-[140px] items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-orange-50 px-3 py-2.5 text-sm font-bold text-orange-800 disabled:opacity-50"
                 >
@@ -194,12 +240,12 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
               <div
                 ref={mapEl}
-                className="h-[220px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100"
+                className={`h-[220px] w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 ${!locationBasedEnabled ? 'opacity-40 pointer-events-none' : ''}`}
               />
 
               <button
                 type="button"
-                disabled={busy !== null}
+                disabled={busy !== null || !locationBasedEnabled}
                 onClick={() => void handleApplyMapCenter()}
                 className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-3.5 text-sm font-extrabold text-white shadow-md disabled:opacity-50"
               >
@@ -208,7 +254,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
             </>
           )}
 
-          <div className="border-t border-slate-100 pt-4">
+          <div className={`border-t border-slate-100 pt-4 ${!locationBasedEnabled ? 'opacity-50' : ''}`}>
             <p className="mb-2 text-xs font-bold text-slate-500">또는 시·구 선택</p>
             <RegionSelector
               layout="modal"
@@ -220,8 +266,9 @@ export function LocationPickerModal({ open, onClose }: Props) {
             />
             <button
               type="button"
+              disabled={!locationBasedEnabled}
               onClick={handleManualOnly}
-              className="mt-3 w-full rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50"
+              className="mt-3 w-full rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               선택한 시·구만 저장
             </button>

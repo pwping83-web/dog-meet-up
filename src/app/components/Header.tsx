@@ -5,7 +5,7 @@ import { useUserLocation } from '../../contexts/UserLocationContext';
 import { LocationPickerModal } from './LocationPickerModal';
 
 export function Header() {
-  const { shortLabel, fullLabel } = useUserLocation();
+  const { shortLabel, fullLabel, locationBasedEnabled } = useUserLocation();
   const [locationOpen, setLocationOpen] = useState(false);
 
   return (
@@ -20,9 +20,15 @@ export function Header() {
               type="button"
               title={fullLabel}
               onClick={() => setLocationOpen(true)}
-              className="flex min-w-0 items-center gap-1.5 rounded-full bg-slate-100/80 px-3 py-1.5 shadow-inner transition-colors hover:bg-slate-200/80"
+              className={`flex min-w-0 items-center gap-1.5 rounded-full px-3 py-1.5 shadow-inner transition-colors ${
+                locationBasedEnabled
+                  ? 'bg-slate-100/80 hover:bg-slate-200/80'
+                  : 'bg-slate-200/70 hover:bg-slate-200'
+              }`}
             >
-              <MapPin className="h-4 w-4 shrink-0 text-orange-600" />
+              <MapPin
+                className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-orange-600' : 'text-slate-500'}`}
+              />
               <span className="truncate text-sm font-extrabold tracking-tight text-slate-800">
                 {shortLabel}
               </span>

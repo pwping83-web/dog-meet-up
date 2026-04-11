@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router';
-import { Home, Wrench, User, Compass } from 'lucide-react';
+import { Home, Wrench, User, Search } from 'lucide-react';
 import { Header } from '../components/Header';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
@@ -85,21 +85,21 @@ export function Root() {
             <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200 bg-white">
               <div className="flex items-center justify-around">
                 <Link
-                  to="/"
+                  to="/explore"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/' ? 'text-orange-600' : 'text-gray-500'
+                    location.pathname === '/explore' ? 'text-orange-600' : 'text-gray-500'
                   }`}
                 >
                   <Home className="h-5 w-5" />
                   <span className="text-[10px] font-semibold">홈</span>
                 </Link>
                 <Link
-                  to="/explore"
+                  to="/search"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/explore' ? 'text-orange-600' : 'text-gray-500'
+                    location.pathname === '/search' ? 'text-orange-600' : 'text-gray-500'
                   }`}
                 >
-                  <Compass className="h-5 w-5" />
+                  <Search className="h-5 w-5" />
                   <span className="text-[10px] font-semibold">탐색</span>
                 </Link>
                 <Link

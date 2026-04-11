@@ -1,13 +1,46 @@
 // src/app/pages/MyPage.tsx 전체 교체
-import { User, FileText, MessageCircle, Settings, ChevronRight, Play, Shield, Bell, Heart, Power, Home, Search, Sparkles, CreditCard, LogOut } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import {
+  User,
+  FileText,
+  MessageCircle,
+  Settings,
+  ChevronRight,
+  Play,
+  Shield,
+  Bell,
+  Heart,
+  Power,
+  Home,
+  Search,
+  Sparkles,
+  CreditCard,
+  LogOut,
+  MapPin,
+  ChevronDown,
+  Navigation,
+  Loader2,
+} from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
 import { dogMbtiResults, DogMbtiType } from '../data/dogMbtiData';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserLocation } from '../../contexts/UserLocationContext';
+import { LocationPickerModal } from '../components/LocationPickerModal';
+import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 
 export function MyPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, signOut } = useAuth();
+  const {
+    fullLabel,
+    applyGpsLocation,
+    locationBasedEnabled,
+    setLocationBasedEnabled,
+    regionFullLabel,
+  } = useUserLocation();
+  const [locationOpen, setLocationOpen] = useState(false);
+  const [gpsBusy, setGpsBusy] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [isRepairer, setIsRepairer] = useState(true); 
   const [isActive, setIsActive] = useState(true); 
@@ -48,8 +81,27 @@ export function MyPage() {
 
   const handleToggleActive = () => setIsActive(!isActive);
 
+  const handleGpsRefresh = async () => {
+    setGpsBusy(true);
+    try {
+      await applyGpsLocation();
+    } catch (e) {
+      console.error(e);
+      alert(
+        (e as Error)?.message ||
+          '위치를 가져오지 못했습니다. 브라우저에서 위치 권한을 허용했는지, 카카오맵 키(VITE_KAKAO_MAP_APP_KEY)가 있는지 확인해 주세요.',
+      );
+    } finally {
+      setGpsBusy(false);
+    }
+  };
+
+  const profileName = user ? displayNameFromUser(user) : '로그인 후 이용';
+
   return (
     <div className="min-h-screen bg-slate-50/80 pb-24">
+      <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
+
       {/* 헤더 */}
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="px-4 h-14 flex items-center justify-center max-w-screen-md mx-auto">
@@ -59,19 +111,73 @@ export function MyPage() {
 
       <div className="max-w-screen-md mx-auto px-4 py-6 space-y-5">
         
-        {/* 프로필 섹션 */}
+        {/* 프로필 섹션 · 동네 = UserLocation (헤더와 동일 저장소) */}
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-          <div className="flex items-center gap-5">
-            <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-yellow-50 border border-slate-100 rounded-2xl flex items-center justify-center shadow-inner">
+          <div className="flex items-start gap-5">
+            <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-yellow-50 border border-slate-100 rounded-2xl flex items-center justify-center shadow-inner shrink-0">
               <User className="w-7 h-7 text-orange-600" />
             </div>
-            <div className="flex-1">
-              <h2 className="font-extrabold text-xl text-slate-800 mb-1">김철수</h2>
-              <p className="text-sm font-bold text-slate-400">서울시 강남구</p>
+            <div className="flex-1 min-w-0 space-y-3">
+              <div>
+                <h2 className="font-extrabold text-xl text-slate-800 mb-1 truncate">{profileName}</h2>
+                <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-extrabold text-slate-800">위치 기반</p>
+                    <p className="text-[10px] font-medium text-slate-500">GPS·동네 맞춤</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={locationBasedEnabled}
+                    onClick={() => setLocationBasedEnabled(!locationBasedEnabled)}
+                    className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-300 ${
+                      locationBasedEnabled ? 'bg-orange-600 shadow-inner' : 'bg-slate-300'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
+                        locationBasedEnabled ? 'translate-x-6' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  title={fullLabel}
+                  onClick={() => setLocationOpen(true)}
+                  className="flex w-full max-w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
+                >
+                  <MapPin
+                    className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-orange-600' : 'text-slate-400'}`}
+                  />
+                  <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{fullLabel}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
+                </button>
+                {!locationBasedEnabled && regionFullLabel && (
+                  <p className="mt-1 text-[10px] font-medium text-slate-400">
+                    저장된 동네: {regionFullLabel} (켜면 이 동네로 다시 표시돼요)
+                  </p>
+                )}
+                <p className="mt-1.5 text-[11px] font-medium text-slate-400">
+                  {locationBasedEnabled
+                    ? '탭해서 지도·시·구로 동네를 바꿀 수 있어요'
+                    : '위치 기반을 켜면 동네·GPS 설정을 쓸 수 있어요'}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={gpsBusy || !locationBasedEnabled}
+                onClick={() => void handleGpsRefresh()}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 py-3 text-sm font-extrabold text-orange-800 transition-colors hover:bg-orange-100 disabled:opacity-60"
+              >
+                {gpsBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                ) : (
+                  <Navigation className="h-4 w-4 shrink-0" />
+                )}
+                {gpsBusy ? '현재 위치 확인 중…' : '현재 위치로 동네 맞추기'}
+              </button>
             </div>
-            <button className="p-2 text-slate-300 cursor-not-allowed rounded-full">
-              <ChevronRight className="w-6 h-6" />
-            </button>
           </div>
         </div>
 
@@ -282,7 +388,12 @@ export function MyPage() {
       {/* Bottom tab navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-orange-50 z-50 pb-safe max-w-[430px] mx-auto">
         <div className="flex items-center justify-around h-16 max-w-screen-md mx-auto px-2">
-          <Link to="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-orange-600 transition-colors">
+          <Link
+            to="/explore"
+            className={`flex flex-col items-center gap-1 transition-colors ${
+              location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400 hover:text-orange-600'
+            }`}
+          >
             <Home className="w-6 h-6" />
             <span className="text-[10px] font-bold">홈</span>
           </Link>

@@ -2,7 +2,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 
 /** 카카오·기타 OAuth가 넣는 메타 키가 제각각이라 순서대로 시도 */
-function displayNameFromUser(user: User): string {
+export function displayNameFromUser(user: User): string {
   const m = user.user_metadata ?? {};
   const candidates = [
     m.nickname,

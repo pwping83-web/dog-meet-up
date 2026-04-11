@@ -29,7 +29,7 @@ export function AdminPage() {
               <span className="font-medium">마이페이지</span>
             </button>
           )}
-          <Link to="/" className="text-sm text-gray-600">
+          <Link to="/explore" className="text-sm text-gray-600">
             홈으로
           </Link>
         </div>

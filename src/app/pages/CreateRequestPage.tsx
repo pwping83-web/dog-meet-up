@@ -47,7 +47,7 @@ export function CreateRequestPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert('🐾 모임이 등록되었습니다!\n동네 댕친들이 곧 찾아올 거예요');
-    navigate('/');
+    navigate('/explore');
   };
 
   return (
@@ -55,7 +55,7 @@ export function CreateRequestPage() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center justify-between h-14 px-4 max-w-screen-md mx-auto">
-          <button onClick={() => navigate('/')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <button type="button" onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="닫기">
             <X className="w-6 h-6" />
           </button>
           <h1 className="font-bold text-slate-800 text-lg">모임 만들기 🐾</h1>
