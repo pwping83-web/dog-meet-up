@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 /**
- * Cursor `stop` 훅: 에이전트 턴이 끝난 뒤, 작업 트리에 변경이 있으면 커밋 + 푸시합니다.
+ * Cursor 훅 (`stop` | `subagentStop` | `sessionEnd`): 변경이 있으면 커밋 + 푸시합니다.
+ * - `stop`: 에이전트 턴 종료
+ * - `subagentStop`: 서브에이전트(Task) 종료
+ * - `sessionEnd`: 채팅 세션 종료(창 닫기 등)
  * 비활성화: 프로젝트 루트에 빈 파일 `.cursor/disable-auto-push` 생성
  * 또는 환경 변수 CURSOR_DISABLE_AUTO_PUSH=1
  *
@@ -28,7 +31,7 @@ try {
 let status = 'completed';
 try {
   const j = JSON.parse(input || '{}');
-  if (j.status) status = j.status;
+  if (j.status != null && String(j.status).length > 0) status = String(j.status);
 } catch {
   /* ignore */
 }
@@ -39,7 +42,11 @@ if (existsSync(disableFile) || process.env.CURSOR_DISABLE_AUTO_PUSH === '1') {
   process.exit(0);
 }
 
-if (status !== 'completed') {
+/* 훅마다 status 문자열이 다름. 취소·실패만 스킵하고 나머지는 푸시 시도 */
+const skipPush = new Set(
+  ['cancelled', 'canceled', 'error', 'aborted', 'failed', 'rejected'].map((s) => s.toLowerCase()),
+);
+if (skipPush.has(status.toLowerCase())) {
   out({});
   process.exit(0);
 }

@@ -1,10 +1,23 @@
-# 에이전트 종료 시 자동 커밋·푸시
+# 자동 커밋·푸시 (버튼 없이)
 
-`hooks.json`의 **`stop`** 이벤트에서 `.cursor/hooks/git-auto-push.mjs`가 실행됩니다.
+`hooks.json`에서 아래 이벤트마다 `.cursor/hooks/git-auto-push.mjs`가 실행됩니다.
 
-- 에이전트 턴이 **정상 종료(`completed`)** 되었고
+| 이벤트 | 언제 |
+|--------|------|
+| **`stop`** | 에이전트 턴이 끝날 때 |
+| **`subagentStop`** | 서브에이전트(Task)가 끝날 때 |
+| **`sessionEnd`** | 채팅 세션을 닫을 때 |
+
+- stdin의 `status`가 **취소/실패**(cancelled, error, aborted 등)가 아니고
 - Git 작업 트리에 **변경이 있을 때만**  
-  `npm run git:push`와 동일하게 **전부 스테이징 → 커밋 → 현재 브랜치로 push** 합니다.
+  `npm run git:push`와 같이 **전부 스테이징 → 커밋 → 현재 브랜치로 push** 합니다.
+
+## Cursor에서 꼭 할 일 (안 되면 여기부터)
+
+1. **설정 → Cursor Settings → Hooks**(또는 **기능 → Hooks**)에서 **프로젝트 훅**이 켜져 있는지 확인합니다.
+2. 이 저장소를 연 채로 **Cursor를 한 번 재시작**하면 훅이 잘 읽힙니다.
+3. **출력(Output)** 패널에서 채널을 **Hooks**로 바꿔, 훅 실행·오류 로그가 찍히는지 봅니다.
+4. PC에 **`node`**가 PATH에 있어야 합니다 (`node -v`로 확인).
 
 ## 비활성화
 

@@ -6,6 +6,18 @@
         "command": "node .cursor/hooks/git-auto-push.mjs",
         "timeout": 120
       }
+    ],
+    "subagentStop": [
+      {
+        "command": "node .cursor/hooks/git-auto-push.mjs",
+        "timeout": 120
+      }
+    ],
+    "sessionEnd": [
+      {
+        "command": "node .cursor/hooks/git-auto-push.mjs",
+        "timeout": 120
+      }
     ]
   }
 }

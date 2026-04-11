@@ -94,8 +94,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webp}'],
         navigateFallback: '/index.html',
-        // OAuth PKCE 콜백(?code=)에서 캐시된 SPA 껍데기만 받지 않도록 제외
-        navigateFallbackDenylist: [/\?code=/, /\?error=/],
+        // ?code= / ?error= 를 denylist에 넣으면 OAuth 복귀 시 index.html로 폴백되지 않아
+        // 호스팅이 SPA 라우트를 못 주면 404가 납니다. PKCE 처리는 앱 로드 후 Supabase가 담당합니다.
       },
       devOptions: {
         enabled: false,
