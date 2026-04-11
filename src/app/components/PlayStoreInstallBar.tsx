@@ -42,7 +42,7 @@ export function PlayStoreInstallBar({ reserveSpaceForBottomNav, hidden }: Props)
     >
       <div className="pointer-events-auto flex w-full max-w-[min(430px,calc(100vw-1.5rem))] items-stretch gap-2 rounded-2xl border border-slate-200/90 bg-white/95 p-2.5 shadow-lg backdrop-blur-md lg:max-w-md">
         <div className="flex min-w-0 flex-1 items-center gap-3 pl-1">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-inner">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white shadow-inner">
             <Download className="h-5 w-5" strokeWidth={2.5} />
           </div>
           <div className="min-w-0">

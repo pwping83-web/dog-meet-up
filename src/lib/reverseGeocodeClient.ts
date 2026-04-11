@@ -4,7 +4,7 @@
  * @see https://www.bigdatacloud.com/packages/reverse-geocoding
  */
 
-import { matchKakaoAdministrative } from './matchKakaoToRegion';
+import { matchAdministrativeNames, matchKakaoAdministrative } from './matchKakaoToRegion';
 
 /** 영문 광역 단위 → 카카오식 depth1 (matchKakaoAdministrative 입력과 호환) */
 const EN_SUBDIV_TO_DEPTH1: Record<string, string> = {
@@ -56,11 +56,39 @@ export async function reverseGeocodeToKoreaAdmin(
 
   const j = (await res.json()) as Record<string, unknown>;
 
+  const admin = j.localityInfo as { administrative?: Array<{ name?: string }> } | undefined;
+  const adminNames = (admin?.administrative ?? []).map((x) => String(x.name ?? ''));
+
+  const fromStack = matchAdministrativeNames(adminNames);
+  if (fromStack.matched) {
+    const depth1Ko =
+      Object.entries({
+        서울: '서울특별시',
+        부산: '부산광역시',
+        대구: '대구광역시',
+        인천: '인천광역시',
+        광주: '광주광역시',
+        대전: '대전광역시',
+        울산: '울산광역시',
+        세종: '세종특별자치시',
+        경기: '경기도',
+        강원: '강원특별자치도',
+        충북: '충청북도',
+        충남: '충청남도',
+        전북: '전북특별자치도',
+        전남: '전라남도',
+        경북: '경상북도',
+        경남: '경상남도',
+        제주: '제주특별자치도',
+      }).find(([key]) => key === fromStack.city)?.[1] ?? fromStack.city;
+
+    return { depth1: depth1Ko, depth2: fromStack.district, depth3: '' };
+  }
+
   const principal = String(j.principalSubdivision ?? '');
   const city = String(j.city ?? '');
   const locality = String(j.locality ?? '');
-  const admin = j.localityInfo as { administrative?: Array<{ name?: string }> } | undefined;
-  const admin0 = admin?.administrative?.[0]?.name ? String(admin.administrative[0].name) : '';
+  const admin0 = adminNames[0] ?? '';
 
   const depth1 = toDepth1(principal || city) || toDepth1(locality);
   const depth2 = locality || admin0 || city || '';

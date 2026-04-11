@@ -76,7 +76,7 @@ export function DogMbtiTestPage() {
         {/* 헤더 */}
         <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-orange-100 z-50">
           <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">
-            <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+            <button onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
               <ArrowLeft className="w-6 h-6" />
             </button>
             <span className="ml-2 font-bold text-slate-800 text-lg">강아지 MBTI 결과 🐾</span>
@@ -169,7 +169,7 @@ export function DogMbtiTestPage() {
       {/* 헤더 */}
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-orange-100 z-50">
         <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <span className="ml-2 font-bold text-slate-800 text-lg">강아지 MBTI 테스트 🐾</span>

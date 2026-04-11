@@ -12,7 +12,7 @@ export function MyMeetupsPage() {
       case 'in-progress':
         return <span className="px-3 py-1 bg-amber-50 text-amber-700 text-xs rounded-lg border border-amber-100" style={{ fontWeight: 700 }}>🐾 진행중</span>;
       case 'completed':
-        return <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs rounded-lg border border-emerald-100" style={{ fontWeight: 700 }}>✅ 완료</span>;
+        return <span className="px-3 py-1 bg-orange-50 text-orange-700 text-xs rounded-lg border border-orange-100" style={{ fontWeight: 700 }}>✅ 완료</span>;
       default:
         return null;
     }
@@ -31,7 +31,7 @@ export function MyMeetupsPage() {
     <div className="min-h-screen bg-slate-50/50 pb-24">
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="px-4 h-14 flex items-center gap-3 max-w-screen-md mx-auto">
-          <Link to="/my" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+          <Link to="/explore" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="홈으로">
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <h1 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>모이자·만나자</h1>
@@ -51,7 +51,7 @@ export function MyMeetupsPage() {
             <p className="text-xs text-slate-500" style={{ fontWeight: 700 }}>대기중</p>
           </div>
           <div className="bg-white rounded-2xl p-4 text-center border border-slate-100 shadow-sm">
-            <p className="text-2xl text-emerald-600 mb-1" style={{ fontWeight: 900 }}>
+            <p className="text-2xl text-orange-600 mb-1" style={{ fontWeight: 900 }}>
               {myMeetups.filter(r => r.status === 'completed').length}
             </p>
             <p className="text-xs text-slate-500" style={{ fontWeight: 700 }}>완료</p>

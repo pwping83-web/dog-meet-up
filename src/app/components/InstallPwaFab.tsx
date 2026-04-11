@@ -139,7 +139,7 @@ export function InstallPwaFab({ hidden }: Props) {
             {iosHelp ? (
               <ol className="list-decimal space-y-3 pl-5 text-sm font-medium text-slate-700">
                 <li className="pl-1">
-                  Safari 하단의 <Share2 className="mx-1 inline h-4 w-4 align-text-bottom text-blue-500" />
+                  Safari 하단의 <Share2 className="mx-1 inline h-4 w-4 align-text-bottom text-orange-500" />
                   <strong> 공유</strong> 버튼을 누릅니다.
                 </li>
                 <li className="pl-1">

@@ -7,11 +7,7 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type ProductKey =
-  | "premium_month"
-  | "meetup_boost"
-  | "guard_mom_listing_7d"
-  | "guard_mom_care_day";
+type ProductKey = "guard_mom_listing_7d" | "guard_mom_care_day";
 
 type Body = {
   productKey: ProductKey;
@@ -25,12 +21,7 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-const ALLOWED_KEYS: ProductKey[] = [
-  "premium_month",
-  "meetup_boost",
-  "guard_mom_listing_7d",
-  "guard_mom_care_day",
-];
+const ALLOWED_KEYS: ProductKey[] = ["guard_mom_listing_7d", "guard_mom_care_day"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -45,8 +36,6 @@ Deno.serve(async (req) => {
   const publicSiteUrl = (Deno.env.get("PUBLIC_SITE_URL") ?? "").replace(/\/$/, "");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const pricePremiumMonth = Deno.env.get("STRIPE_PRICE_PREMIUM_MONTHLY");
-  const priceMeetupBoost = Deno.env.get("STRIPE_PRICE_MEETUP_BOOST");
   const priceGuardMomListing = Deno.env.get("STRIPE_PRICE_GUARD_MOM_LISTING_7D");
 
   if (!stripeSecret || !supabaseUrl || !supabaseAnonKey) {
@@ -141,25 +130,15 @@ Deno.serve(async (req) => {
     mode = "payment";
     bookingIdForMeta = bookingId;
   } else {
-    const priceId =
-      productKey === "premium_month"
-        ? pricePremiumMonth
-        : productKey === "meetup_boost"
-          ? priceMeetupBoost
-          : priceGuardMomListing;
-
-    if (!priceId) {
-      const msg =
-        productKey === "premium_month"
-          ? "STRIPE_PRICE_PREMIUM_MONTHLY 가 설정되지 않았습니다."
-          : productKey === "meetup_boost"
-            ? "STRIPE_PRICE_MEETUP_BOOST 가 설정되지 않았습니다."
-            : "STRIPE_PRICE_GUARD_MOM_LISTING_7D 가 설정되지 않았습니다.";
-      return jsonResponse({ error: msg }, 503);
+    if (!priceGuardMomListing) {
+      return jsonResponse(
+        { error: "STRIPE_PRICE_GUARD_MOM_LISTING_7D 가 설정되지 않았습니다." },
+        503,
+      );
     }
 
-    lineItems = [{ price: priceId, quantity: 1 }];
-    mode = productKey === "premium_month" ? "subscription" : "payment";
+    lineItems = [{ price: priceGuardMomListing, quantity: 1 }];
+    mode = "payment";
   }
 
   const { data: order, error: orderError } = await supabase
@@ -197,17 +176,6 @@ Deno.serve(async (req) => {
         product_key: productKey,
         booking_id: bookingIdForMeta,
       },
-      ...(mode === "subscription"
-        ? {
-            subscription_data: {
-              metadata: {
-                order_id: order.id,
-                user_id: user.id,
-                product_key: productKey,
-              },
-            },
-          }
-        : {}),
     });
 
     const { error: updError } = await supabase

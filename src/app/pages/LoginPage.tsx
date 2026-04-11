@@ -40,7 +40,7 @@ export function LoginPage() {
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="px-4 h-14 flex items-center max-w-screen-md mx-auto">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
             className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
           >
             <svg

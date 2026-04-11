@@ -27,7 +27,7 @@ export function MeetupDetailPage() {
   const statusText = { pending: '모집중', 'in-progress': '진행중', completed: '완료' };
   const statusColor = {
     pending: 'bg-orange-100 text-orange-700',
-    'in-progress': 'bg-emerald-100 text-emerald-700',
+    'in-progress': 'bg-orange-100 text-orange-700',
     completed: 'bg-slate-100 text-slate-600',
   };
 
@@ -90,6 +90,14 @@ export function MeetupDetailPage() {
           <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 text-slate-700 leading-relaxed" style={{ fontWeight: 500 }}>
             {meetup.description}
           </div>
+          {meetup.category === '돌봄' && (
+            <Link
+              to="/sitters?care=guard"
+              className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-brand/25 bg-brand-soft px-4 py-3 text-sm font-extrabold text-brand transition-colors hover:bg-brand-muted"
+            >
+              인증 댕집사·유료 돌봄 목록 보기 →
+            </Link>
+          )}
         </div>
 
         {/* 2. 받은 참여 신청 */}
@@ -109,7 +117,7 @@ export function MeetupDetailPage() {
                 const isSelected = selectedRequestId === request.id;
 
                 return (
-                  <div key={request.id} className={`relative rounded-3xl p-5 transition-all ${isSelected ? 'border-2 border-emerald-500 bg-emerald-50 shadow-sm' : isFirst ? 'border-2 border-orange-500 bg-orange-50/30 shadow-md shadow-orange-500/10' : 'border border-slate-200 bg-white hover:border-orange-200 hover:shadow-sm'}`}>
+                  <div key={request.id} className={`relative rounded-3xl p-5 transition-all ${isSelected ? 'border-2 border-orange-500 bg-orange-50 shadow-sm' : isFirst ? 'border-2 border-orange-500 bg-orange-50/30 shadow-md shadow-orange-500/10' : 'border border-slate-200 bg-white hover:border-orange-200 hover:shadow-sm'}`}>
                       
                       {isFirst && !isSelected && (
                         <div className="absolute -top-3 right-5 bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-[10px] px-3 py-1 rounded-full shadow-sm" style={{ fontWeight: 800 }}>
@@ -124,7 +132,7 @@ export function MeetupDetailPage() {
                           </div>
                           <div>
                             <h3 className="text-slate-800 text-lg flex items-center gap-1" style={{ fontWeight: 800 }}>
-                              {request.dogSitterName} <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                              {request.dogSitterName} <ShieldCheck className="w-4 h-4 text-orange-500" />
                             </h3>
                             {sitter && (
                               <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5" style={{ fontWeight: 500 }}>
@@ -163,7 +171,7 @@ export function MeetupDetailPage() {
                       )}
 
                       {isSelected && (
-                        <div className="bg-emerald-500 text-white py-3.5 rounded-2xl text-center flex items-center justify-center gap-2" style={{ fontWeight: 800 }}>
+                        <div className="bg-orange-500 text-white py-3.5 rounded-2xl text-center flex items-center justify-center gap-2" style={{ fontWeight: 800 }}>
                           ✓ 수락 완료되었습니다
                         </div>
                       )}
@@ -187,7 +195,7 @@ export function MeetupDetailPage() {
                 const isVeryClose = sitter.distance < 2;
                 
                 return (
-                  <div key={sitter.id} className={`rounded-3xl p-5 transition-all ${hasJoined ? 'border border-emerald-200 bg-emerald-50/30' : 'border border-slate-200 bg-white hover:border-orange-200 hover:shadow-sm'}`}>
+                  <div key={sitter.id} className={`rounded-3xl p-5 transition-all ${hasJoined ? 'border border-orange-200 bg-orange-50/30' : 'border border-slate-200 bg-white hover:border-orange-200 hover:shadow-sm'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${index === 0 ? 'bg-gradient-to-br from-orange-100 to-yellow-50 text-orange-600' : 'bg-slate-50 text-slate-400'}`} style={{ fontWeight: 900 }}>
@@ -210,7 +218,7 @@ export function MeetupDetailPage() {
                     </div>
 
                     {hasJoined ? (
-                      <div className="bg-emerald-50 text-emerald-600 py-3 rounded-2xl text-center text-sm border border-emerald-100" style={{ fontWeight: 700 }}>
+                      <div className="bg-orange-50 text-orange-600 py-3 rounded-2xl text-center text-sm border border-orange-100" style={{ fontWeight: 700 }}>
                         ✓ 이미 신청한 댕친입니다
                       </div>
                     ) : (

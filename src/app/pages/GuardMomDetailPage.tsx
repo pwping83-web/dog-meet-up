@@ -81,13 +81,13 @@ export function GuardMomDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-32">
-      <header className="sticky top-0 z-40 bg-[#5E43FF] shadow-sm">
+      <header className="sticky top-0 z-40 bg-brand-deep shadow-sm">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/sitters?care=guard')}
             className="-ml-1 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
-            aria-label="뒤로"
+            aria-label="유료 돌봄 목록으로"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
@@ -105,7 +105,7 @@ export function GuardMomDetailPage() {
         ) : (
           <>
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-              <p className="text-xs font-extrabold uppercase tracking-wide text-rose-600">인증 보호맘</p>
+              <p className="text-xs font-extrabold uppercase tracking-wide text-orange-600">인증 보호맘</p>
               <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-800">
                 {mom.intro.trim() || '소개 글이 없어요.'}
               </p>
@@ -114,7 +114,7 @@ export function GuardMomDetailPage() {
                   <MapPin className="h-3.5 w-3.5" />
                   {[mom.region_si, mom.region_gu].filter(Boolean).join(' ') || '동네 미입력'}
                 </span>
-                <span className="rounded-full bg-violet-100 px-3 py-1 text-[#5E43FF]">
+                <span className="rounded-full bg-orange-100 px-3 py-1 text-brand">
                   1일 돌봄 {mom.per_day_fee_krw.toLocaleString('ko-KR')}원
                 </span>
               </div>
@@ -137,13 +137,13 @@ export function GuardMomDetailPage() {
                 <p className="text-sm font-semibold text-slate-600">돌봄 신청·결제는 로그인 후 가능해요.</p>
                 <Link
                   to="/login"
-                  className="mt-3 inline-block rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 px-6 py-3 text-sm font-extrabold text-white shadow-md"
+                  className="mt-3 inline-block rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-extrabold text-white shadow-md"
                 >
                   로그인하기
                 </Link>
               </div>
             ) : (
-              <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50/95 to-indigo-50/80 p-5 shadow-sm">
+              <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50/95 to-amber-50/80 p-5 shadow-sm">
                 <h2 className="text-sm font-extrabold text-slate-900">돌봄 일정 신청 (Stripe 결제)</h2>
                 <p className="mt-1 text-xs font-medium text-slate-600">
                   일수 × 1일 요금으로 결제됩니다. 세부 일정·집 맡기기는 채팅으로 조율해 주세요.
@@ -169,7 +169,7 @@ export function GuardMomDetailPage() {
                     className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
                   />
                 </label>
-                <p className="mt-3 text-sm font-black text-[#5E43FF]">
+                <p className="mt-3 text-sm font-black text-brand">
                   합계 {total.toLocaleString('ko-KR')}원
                 </p>
                 {submitErr && (
@@ -179,7 +179,7 @@ export function GuardMomDetailPage() {
                   type="button"
                   disabled={payBusy}
                   onClick={() => void handleRequestPay()}
-                  className="mt-4 w-full rounded-2xl bg-gradient-to-r from-[#5E43FF] to-violet-600 py-3.5 text-sm font-extrabold text-white shadow-md disabled:opacity-60"
+                  className="mt-4 w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-extrabold text-white shadow-md disabled:opacity-60"
                 >
                   {payBusy ? '처리 중…' : '예약 만들고 Stripe로 결제'}
                 </button>

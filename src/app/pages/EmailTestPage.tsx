@@ -22,7 +22,7 @@ export function EmailTestPage() {
       name: '환영 이메일',
       emoji: '👋',
       description: '회원가입 시 발송',
-      color: 'from-purple-500 to-pink-500',
+      color: 'from-orange-500 to-amber-500',
       send: () =>
         sendWelcomeEmail({
           userEmail: testEmail,
@@ -34,7 +34,7 @@ export function EmailTestPage() {
       name: '모임 등록 알림',
       emoji: '✅',
       description: '모임 등록 완료',
-      color: 'from-green-500 to-emerald-500',
+      color: 'from-amber-500 to-orange-600',
       send: () =>
         sendRequestCreatedNotification({
           userEmail: testEmail,
@@ -64,7 +64,7 @@ export function EmailTestPage() {
       name: '신청 수락',
       emoji: '🎉',
       description: '댕집사에게 수락 알림',
-      color: 'from-orange-500 to-red-500',
+      color: 'from-orange-500 to-amber-600',
       send: () =>
         sendQuoteAcceptedNotification({
           repairerEmail: testEmail,
@@ -95,7 +95,7 @@ export function EmailTestPage() {
       name: '댕집사 승인',
       emoji: '🐾',
       description: '댕집사 등록 승인',
-      color: 'from-teal-500 to-green-500',
+      color: 'from-amber-500 to-orange-500',
       send: () =>
         sendRepairerApprovedNotification({
           repairerEmail: testEmail,
@@ -182,18 +182,18 @@ export function EmailTestPage() {
           <div
             className={`rounded-2xl p-4 mb-6 flex items-start gap-3 ${
               result.type === 'success'
-                ? 'bg-green-50 border border-green-200'
+                ? 'bg-orange-50 border border-orange-200'
                 : 'bg-red-50 border border-red-200'
             }`}
           >
             {result.type === 'success' ? (
-              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" />
             ) : (
               <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
             )}
             <p
               className={`text-sm font-bold ${
-                result.type === 'success' ? 'text-green-800' : 'text-red-800'
+                result.type === 'success' ? 'text-orange-900' : 'text-red-800'
               }`}
             >
               {result.message}

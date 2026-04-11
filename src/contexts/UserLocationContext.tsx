@@ -137,11 +137,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
         const m = await reverseGeocodeToRegion(lat, lng);
         return persistFromMatch(m, '');
       } catch (e) {
-        setLocation((prev) => {
-          const next: UserLocationSnapshot = { ...prev, lat, lng, source };
-          writeStorage(next);
-          return next;
-        });
+        // 이전 동네(기본값 강남 등)를 유지한 채 좌표만 바꾸면 라벨이 강남으로 "고정"된 것처럼 보임 → 저장하지 않고 안내만
         throw new Error(
           (e as Error)?.message ||
             '주소 변환에 실패했습니다. 네트워크를 확인하거나 목록에서 시·구를 직접 선택해 주세요.',

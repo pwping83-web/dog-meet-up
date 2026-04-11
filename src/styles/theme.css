@@ -1,19 +1,36 @@
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * 댕댕마켓 브랜드 색 — 앱 전반의 주황 톤은 아래 --dd-* 변수에 모았습니다.
+ * 메인 컬러를 바꿀 때: --dd-brand / --dd-brand-deep / --dd-brand-bright 를 조정하고,
+ * index.html 의 meta theme-color 도 비슷한 HEX로 맞추면 됩니다.
+ */
+
 :root {
   /* 모바일 웹앱 가독성 (당근류 앱에 가깝게 16px 기준) */
   --font-size: 16px;
-  --background: #f8fafc; /* 완전 흰색 대신 아주 연한 쿨톤 배경으로 고급스러움 강조 */
+  --background: #f8fafc;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
   --popover: #ffffff;
   --popover-foreground: #0f172a;
-  
-  /* 신뢰감을 주는 깊은 인디고(Indigo) 톤으로 브랜드 컬러 변경 */
-  --primary: #4f46e5; 
+
+  /*
+   * 댕댕마켓 브랜드 (주황 계열) — 색 변경 시 이 블록만 맞추면 됩니다.
+   * Tailwind: text-brand, bg-brand, bg-brand-deep, border-brand/20 등
+   */
+  --dd-brand: #ea580c; /* orange-600 */
+  --dd-brand-deep: #c2410c; /* orange-700 — 헤더·강조 배경 */
+  --dd-brand-bright: #f97316; /* orange-500 */
+  --dd-brand-soft: #fff7ed; /* orange-50 */
+  --dd-brand-muted: #ffedd5; /* orange-100 */
+  --dd-brand-border: #fed7aa; /* orange-200 */
+  --dd-brand-foreground: #ffffff;
+
+  --primary: var(--dd-brand);
   --primary-foreground: #ffffff;
-  
+
   --secondary: #f1f5f9;
   --secondary-foreground: #1e293b;
   --muted: #f1f5f9;
@@ -28,26 +45,25 @@
   --switch-background: #cbd5e1;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
-  --ring: #c7d2fe;
-  
-  /* 차트 색상도 최신 트렌드 톤으로 부드럽게 */
-  --chart-1: #4f46e5;
-  --chart-2: #06b6d4;
-  --chart-3: #10b981;
-  --chart-4: #f59e0b;
-  --chart-5: #f43f5e;
+  --ring: color-mix(in srgb, var(--dd-brand) 35%, transparent);
+
+  --chart-1: var(--dd-brand);
+  --chart-2: #f59e0b;
+  --chart-3: #fbbf24;
+  --chart-4: #fdba74;
+  --chart-5: #ea580c;
   
   /* 전체적인 둥글기를 모바일 앱처럼 부드러운 스쿼클 형태로 변경 */
   --radius: 1rem; 
   
   --sidebar: #ffffff;
   --sidebar-foreground: #0f172a;
-  --sidebar-primary: #4f46e5;
+  --sidebar-primary: var(--dd-brand);
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f1f5f9;
   --sidebar-accent-foreground: #0f172a;
   --sidebar-border: #e2e8f0;
-  --sidebar-ring: #c7d2fe;
+  --sidebar-ring: color-mix(in srgb, var(--dd-brand) 40%, transparent);
 }
 
 .dark {
@@ -57,7 +73,7 @@
   --card-foreground: #f8fafc;
   --popover: #1e293b;
   --popover-foreground: #f8fafc;
-  --primary: #818cf8;
+  --primary: #fb923c;
   --primary-foreground: #0f172a;
   --secondary: #334155;
   --secondary-foreground: #f8fafc;
@@ -69,7 +85,7 @@
   --destructive-foreground: #f8fafc;
   --border: #334155;
   --input: #334155;
-  --ring: #4f46e5;
+  --ring: #fb923c;
 }
 
 @theme inline {
@@ -99,6 +115,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-brand: var(--dd-brand);
+  --color-brand-deep: var(--dd-brand-deep);
+  --color-brand-bright: var(--dd-brand-bright);
+  --color-brand-soft: var(--dd-brand-soft);
+  --color-brand-muted: var(--dd-brand-muted);
+  --color-brand-border: var(--dd-brand-border);
+  --color-brand-foreground: var(--dd-brand-foreground);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

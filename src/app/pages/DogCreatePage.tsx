@@ -92,7 +92,7 @@ export function DogCreatePage() {
   return (
     <div className="min-h-screen bg-white pb-10">
       <header className="h-16 flex items-center px-4 border-b border-orange-50 sticky top-0 bg-white z-50">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-400"><ChevronLeft className="w-6 h-6" /></button>
+        <button onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-400"><ChevronLeft className="w-6 h-6" /></button>
         <h1 className="flex-1 text-center font-black text-slate-800 mr-8">우리 댕댕이 등록하기 🐶</h1>
       </header>
 

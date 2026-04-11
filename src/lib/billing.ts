@@ -1,9 +1,7 @@
 import { supabase } from './supabase';
 
-export type BillingProductKey =
-  | 'premium_month'
-  | 'meetup_boost'
-  | 'guard_mom_listing_7d';
+/** 결제·상품 화면에서 노출하는 Stripe 상품 (유료 돌봄 목록 7일 노출 등) */
+export type BillingProductKey = 'guard_mom_listing_7d';
 
 export const BILLING_PRODUCTS: {
   key: BillingProductKey;
@@ -12,22 +10,10 @@ export const BILLING_PRODUCTS: {
   badge?: string;
 }[] = [
   {
-    key: 'premium_month',
-    title: '댕댕 프리미엄 (월)',
-    description: '유료 돌봄(댕집사) 노출 우선, 만남 글 부스트 등 혜택(Stripe 구독)',
-    badge: '구독',
-  },
-  {
-    key: 'meetup_boost',
-    title: '만남 글 부스트 (1회)',
-    description: '모이자·만나자 글을 탐색·검색 상단에 더 자주 노출(Stripe 일회 결제)',
-    badge: '1회',
-  },
-  {
     key: 'guard_mom_listing_7d',
-    title: '인증 보호맘 노출 (7일)',
+    title: '인증 보호맘 란 노출 (7일)',
     description:
-      '운영팀 인증을 받은 보호맘만 이용 가능. 소액으로 「보호맘 란」에 7일 동안 노출돼요 (잔여 기간이 있으면 이어서 연장)',
+      '운영팀 인증을 받은 보호맘만 구매할 수 있어요. 「유료 돌봄」 탭에 7일간 노출되며, 잔여 기간이 있으면 이어서 연장돼요.',
     badge: '7일',
   },
 ];

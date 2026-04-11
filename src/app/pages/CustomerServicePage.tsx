@@ -93,27 +93,31 @@ export function CustomerServicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
+    <div className="min-h-screen bg-slate-50 pb-20">
       {/* 헤더 */}
-      <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
-        <div className="px-4 h-14 flex items-center max-w-screen-md mx-auto">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <header className="sticky top-0 z-50 bg-brand shadow-md">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
+          <button
+            onClick={() => navigate('/explore')}
+            className="-ml-2 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
+            type="button"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-lg font-extrabold ml-2 text-slate-800">댕댕센터 🐾</h1>
+          <h1 className="ml-2 text-lg font-extrabold text-white">댕댕센터 🐾</h1>
         </div>
       </header>
 
       {/* 탭 메뉴 */}
-      <div className="sticky top-14 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-40">
+      <div className="sticky top-14 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
         <div className="flex max-w-screen-md mx-auto">
           <button
             onClick={() => setActiveTab('faq')}
-            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${
+            className={`flex-1 border-b-2 py-3 text-sm font-bold transition-colors ${
               activeTab === 'faq'
-                ? 'border-orange-600 text-orange-600'
+                ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
             }`}
           >
@@ -121,9 +125,9 @@ export function CustomerServicePage() {
           </button>
           <button
             onClick={() => setActiveTab('inquiry')}
-            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${
+            className={`flex-1 border-b-2 py-3 text-sm font-bold transition-colors ${
               activeTab === 'inquiry'
-                ? 'border-orange-600 text-orange-600'
+                ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
             }`}
           >
@@ -131,9 +135,9 @@ export function CustomerServicePage() {
           </button>
           <button
             onClick={() => setActiveTab('notice')}
-            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${
+            className={`flex-1 border-b-2 py-3 text-sm font-bold transition-colors ${
               activeTab === 'notice'
-                ? 'border-orange-600 text-orange-600'
+                ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
             }`}
           >
@@ -152,10 +156,10 @@ export function CustomerServicePage() {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition-all ${
+                  className={`rounded-xl px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-all ${
                     selectedCategory === cat.id
-                      ? 'bg-orange-600 text-white shadow-md shadow-orange-500/20'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      ? 'bg-brand text-white shadow-md shadow-brand/25'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                   }`}
                 >
                   {cat.icon} {cat.name}
@@ -169,7 +173,7 @@ export function CustomerServicePage() {
             {filteredFaqs.map((faq) => (
               <details key={faq.id} className="group bg-white">
                 <summary className="p-4 cursor-pointer hover:bg-slate-50 flex items-start gap-3 transition-colors">
-                  <span className="text-orange-600 font-black mt-0.5">Q</span>
+                  <span className="mt-0.5 font-black text-brand">Q</span>
                   <div className="flex-1">
                     <div className="font-bold pr-6 text-slate-800">{faq.question}</div>
                   </div>
@@ -187,17 +191,18 @@ export function CustomerServicePage() {
 
           {/* 도움말 */}
           <div className="p-4 mt-4">
-            <div className="bg-orange-50/50 border border-orange-200 rounded-3xl p-5">
+            <div className="rounded-3xl border border-brand/20 bg-brand-soft p-5">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div>
-                  <div className="font-bold mb-1 text-slate-800">원하는 답변을 찾지 못하셨나요?</div>
-                  <div className="text-sm text-slate-600 font-medium mb-3">
+                  <div className="mb-1 font-bold text-slate-800">원하는 답변을 찾지 못하셨나요?</div>
+                  <div className="mb-3 text-sm font-medium text-slate-600">
                     1:1 문의로 자세히 상담받으세요
                   </div>
                   <button
+                    type="button"
                     onClick={() => setActiveTab('inquiry')}
-                    className="bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-orange-700 transition-colors"
+                    className="rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm shadow-brand/20 transition-all hover:opacity-90"
                   >
                     1:1 문의하기
                   </button>
@@ -229,7 +234,7 @@ export function CustomerServicePage() {
               <select
                 value={inquiryCategory}
                 onChange={(e) => setInquiryCategory(e.target.value)}
-                className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 font-medium text-slate-800"
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium text-slate-800 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
                 required
               >
                 <option value="">선택해주세요</option>
@@ -252,7 +257,7 @@ export function CustomerServicePage() {
                 value={inquiryTitle}
                 onChange={(e) => setInquiryTitle(e.target.value)}
                 placeholder="문의 제목을 입력해주세요"
-                className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 font-medium placeholder:text-slate-400"
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
                 required
               />
             </div>
@@ -267,7 +272,7 @@ export function CustomerServicePage() {
                 onChange={(e) => setInquiryContent(e.target.value)}
                 placeholder="문의 내용을 자세히 작성해주세요"
                 rows={6}
-                className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 resize-none font-medium placeholder:text-slate-400"
+                className="w-full resize-none rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
                 required
               />
             </div>
@@ -282,14 +287,14 @@ export function CustomerServicePage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@email.com"
-                className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 font-medium placeholder:text-slate-400"
+                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
                 required
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-600 to-yellow-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+              className="w-full rounded-2xl bg-gradient-to-r from-brand to-brand-bright py-4 font-bold text-white shadow-lg shadow-brand/25 transition-all hover:shadow-brand/35 active:scale-[0.98]"
             >
               문의하기
             </button>
@@ -301,7 +306,7 @@ export function CustomerServicePage() {
             
             <a
               href="tel:1588-1234"
-              className="flex items-center gap-3 p-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 hover:border-orange-100 transition-all"
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
             >
               <span className="text-2xl">📞</span>
               <div className="flex-1">
@@ -313,7 +318,7 @@ export function CustomerServicePage() {
 
             <a
               href="mailto:support@daengdaeng.com"
-              className="flex items-center gap-3 p-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 hover:border-orange-100 transition-all"
+              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
             >
               <span className="text-2xl">✉️</span>
               <div className="flex-1">
@@ -323,7 +328,10 @@ export function CustomerServicePage() {
               <ChevronRight className="w-5 h-5 text-slate-400" />
             </a>
 
-            <button className="flex items-center gap-3 p-4 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 hover:border-orange-100 transition-all w-full">
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
+            >
               <span className="text-2xl">💬</span>
               <div className="flex-1 text-left">
                 <div className="font-bold text-slate-800">카카오톡 상담</div>
@@ -355,7 +363,7 @@ export function CustomerServicePage() {
 
           {/* 더보기 */}
           <div className="p-4 text-center bg-white">
-            <button className="text-sm text-slate-500 font-bold hover:text-orange-600">
+            <button type="button" className="text-sm font-bold text-slate-500 hover:text-brand">
               더보기 +
             </button>
           </div>

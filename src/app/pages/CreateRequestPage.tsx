@@ -69,7 +69,7 @@ export function CreateRequestPage() {
           <div className="text-6xl mb-4">🐾</div>
           <h2 className="mb-3 text-2xl font-extrabold text-slate-900">어디서, 언제 모일까요?</h2>
           <p className="text-base font-medium text-slate-500">
-            만나서 산책·놀이할 댕친을 부르는 글이에요 (유료 맡기기는 댕집사·보호맘 탭)
+            만나서 산책·놀이할 댕친을 부르는 글이에요 (유료 맡기기는 「유료 돌봄」 탭)
           </p>
         </div>
 
@@ -179,7 +179,7 @@ export function CreateRequestPage() {
           </div>
 
           {/* 안내 */}
-          <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 text-center text-sm font-bold text-violet-900">
+          <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4 text-center text-sm font-bold text-orange-950">
             🐾 가까운 동네 댕친에게 먼저 보여요
           </div>
 

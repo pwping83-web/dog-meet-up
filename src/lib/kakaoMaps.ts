@@ -25,14 +25,16 @@ export type KakaoNamespace = {
   };
 };
 
+export type KakaoAddrFields = {
+  address_name: string;
+  region_1depth_name: string;
+  region_2depth_name: string;
+  region_3depth_name: string;
+};
+
 export type KakaoCoord2AddressResult = {
-  address?: {
-    address_name: string;
-    region_1depth_name: string;
-    region_2depth_name: string;
-    region_3depth_name: string;
-  };
-  road_address?: { address_name: string };
+  address?: KakaoAddrFields;
+  road_address?: KakaoAddrFields;
 };
 
 export type KakaoMap = {
@@ -118,9 +120,10 @@ export function coord2AddressParts(
         reject(new Error('주소를 찾지 못했습니다.'));
         return;
       }
-      const addr = result[0].address;
+      const row = result[0];
+      const addr = row.address ?? row.road_address;
       if (!addr) {
-        reject(new Error('지번 주소 정보가 없습니다.'));
+        reject(new Error('주소 정보가 없습니다.'));
         return;
       }
       resolve({

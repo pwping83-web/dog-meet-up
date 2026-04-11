@@ -21,7 +21,6 @@ import {
   Navigation,
   Loader2,
   CheckCircle2,
-  Settings,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
@@ -80,7 +79,7 @@ export function MyPage() {
     replace?: boolean;
   }> = [
     { icon: User, label: '프로필 수정', to: '/profile/edit' },
-    { icon: Baby, label: '인증 보호맘 란', to: '/guard-moms' },
+    { icon: Baby, label: '유료 돌봄 · 인증 보호맘', to: '/sitters?care=guard' },
     ...(user && isAppAdmin(user)
       ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
       : []),
@@ -113,10 +112,10 @@ export function MyPage() {
   const profileName = user ? displayNameFromUser(user) : '로그인 후 이용';
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-24">
+    <div className="min-h-screen bg-slate-50 pb-24">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
-      <header className="sticky top-0 z-50 bg-[#5E43FF] shadow-md">
+      <header className="sticky top-0 z-50 bg-brand shadow-md">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
           <Link
@@ -134,8 +133,8 @@ export function MyPage() {
         {/* 프로필 섹션 · 동네 = UserLocation (헤더와 동일 저장소) */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-100 to-indigo-50 shadow-inner">
-              <User className="h-7 w-7 text-[#5E43FF]" />
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner">
+              <User className="h-7 w-7 text-brand" />
             </div>
             <div className="flex-1 min-w-0 space-y-3">
               <div>
@@ -154,9 +153,8 @@ export function MyPage() {
                       setLocationBasedEnabled(!locationBasedEnabled);
                     }}
                     className={`relative z-10 h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-300 ${
-                      locationBasedEnabled ? 'shadow-inner' : 'bg-slate-300'
+                      locationBasedEnabled ? 'bg-brand shadow-inner' : 'bg-slate-300'
                     }`}
-                    style={locationBasedEnabled ? { backgroundColor: '#5E43FF' } : undefined}
                   >
                     <span
                       className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
@@ -172,7 +170,7 @@ export function MyPage() {
                   className="flex w-full max-w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-left transition-colors hover:bg-slate-100"
                 >
                   <MapPin
-                    className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-[#5E43FF]' : 'text-slate-400'}`}
+                    className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-brand' : 'text-slate-400'}`}
                   />
                   <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-700">{fullLabel}</span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
@@ -189,8 +187,8 @@ export function MyPage() {
                   userLoc.lat != null &&
                   userLoc.lng != null &&
                   (userLoc.source === 'gps' || userLoc.source === 'map') && (
-                    <p className="mt-2 flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/90 px-3 py-2 text-[11px] font-bold text-emerald-800">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                    <p className="mt-2 flex items-center gap-1.5 rounded-xl border border-brand/20 bg-brand/10 px-3 py-2 text-[11px] font-bold text-slate-800">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-brand" aria-hidden />
                       현재 위치로 동네가 맞춰져 있어요 (위치 인증)
                     </p>
                   )}
@@ -199,7 +197,7 @@ export function MyPage() {
                 type="button"
                 disabled={gpsBusy || !locationBasedEnabled}
                 onClick={() => void handleGpsRefresh()}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 py-3 text-sm font-extrabold text-[#5E43FF] transition-colors hover:bg-violet-100 disabled:pointer-events-none disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-brand/25 bg-brand-soft py-3 text-sm font-extrabold text-brand transition-colors hover:bg-brand/15 disabled:pointer-events-none disabled:opacity-50"
               >
                 {gpsBusy ? (
                   <Loader2 className="h-4 w-4 animate-spin shrink-0" />
@@ -214,20 +212,20 @@ export function MyPage() {
 
         {/* 강아지 MBTI 섹션 */}
         {dogMbtiType ? (
-          <div className="rounded-3xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 via-white to-indigo-50 p-6 shadow-md">
+          <div className="rounded-3xl border-2 border-brand/25 bg-gradient-to-br from-brand-soft via-white to-brand-muted p-6 shadow-md">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="text-4xl">{dogMbtiResults[dogMbtiType].emoji}</div>
                 <div>
                   <h3 className="text-lg font-black text-slate-900">{dogMbtiResults[dogMbtiType].name}</h3>
-                  <p className="text-sm font-bold text-[#5E43FF]">{dogMbtiType.toUpperCase()} 타입</p>
+                  <p className="text-sm font-bold text-brand">{dogMbtiType.toUpperCase()} 타입</p>
                 </div>
               </div>
               <Link
                 to="/dog-mbti-test"
                 className="rounded-xl bg-white/60 p-2 transition-colors hover:bg-white"
               >
-                <Sparkles className="h-5 w-5 text-[#5E43FF]" />
+                <Sparkles className="h-5 w-5 text-brand" />
               </Link>
             </div>
             <p className="text-sm text-slate-600 leading-relaxed mb-4">
@@ -237,7 +235,7 @@ export function MyPage() {
               {dogMbtiResults[dogMbtiType].traits.map((trait) => (
                 <span
                   key={trait}
-                  className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-[#5E43FF]"
+                  className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-brand"
                 >
                   {trait}
                 </span>
@@ -245,13 +243,13 @@ export function MyPage() {
             </div>
             <Link
               to="/create-dog"
-              className="block w-full rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 py-3 text-center text-sm font-bold text-white shadow-md transition-all hover:shadow-lg"
+              className="block w-full rounded-xl bg-brand py-3 text-center text-sm font-bold text-white shadow-md shadow-brand/20 transition-all hover:opacity-[0.92]"
             >
               프로필 업데이트하기 🐾
             </Link>
           </div>
         ) : (
-          <div className="rounded-3xl border-2 border-dashed border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-6 text-center">
+          <div className="rounded-3xl border-2 border-dashed border-brand/30 bg-gradient-to-br from-brand-soft to-brand-muted p-6 text-center">
             <div className="text-5xl mb-4">🐕</div>
             <h3 className="font-black text-lg text-slate-900 mb-2">우리 강아지 성격은?</h3>
             <p className="text-sm text-slate-600 mb-5">
@@ -260,7 +258,7 @@ export function MyPage() {
             </p>
             <Link
               to="/dog-mbti-test"
-              className="inline-block rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all active:scale-95"
+              className="inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white shadow-lg shadow-brand/25 transition-all hover:opacity-[0.92] active:scale-95"
             >
               강아지 MBTI 테스트 시작 🎯
             </Link>
@@ -272,8 +270,8 @@ export function MyPage() {
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100">
-                  <Heart className="h-6 w-6 fill-[#5E43FF] text-[#5E43FF]" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10">
+                  <Heart className="h-6 w-6 fill-brand text-brand" />
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-slate-800">유료 돌봄(댕집사)</h3>
@@ -288,19 +286,20 @@ export function MyPage() {
               {/* iOS 스타일 토글 스위치 */}
               <button
                 onClick={handleToggleActive}
-                className={`relative h-8 w-14 rounded-full transition-all duration-300 ${isActive ? 'shadow-inner' : 'bg-slate-200'}`}
-                style={isActive ? { backgroundColor: '#5E43FF' } : undefined}
+                className={`relative h-8 w-14 rounded-full transition-all duration-300 ${isActive ? 'bg-brand shadow-inner' : 'bg-slate-200'}`}
               >
                 <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
               </button>
             </div>
 
             {/* 활동 상태 뱃지 */}
-            <div className={`px-4 py-3.5 rounded-2xl text-sm transition-colors ${isActive ? 'bg-emerald-50 border border-emerald-100' : 'bg-slate-50 border border-slate-100'}`}>
+            <div
+              className={`rounded-2xl border px-4 py-3.5 text-sm transition-colors ${isActive ? 'border-brand/20 bg-brand/10' : 'border border-slate-100 bg-slate-50'}`}
+            >
               <div className="flex items-center gap-3">
-                <div className={`w-2.5 h-2.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'animate-pulse bg-brand' : 'bg-slate-400'}`} />
                 <div>
-                  <p className={`font-bold ${isActive ? 'text-emerald-800' : 'text-slate-600'}`}>
+                  <p className={`font-bold ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
                     {isActive ? '지금 돌봄 의뢰를 받을 수 있어요 🐕' : '돌봄 접수를 잠시 멈췄어요'}
                   </p>
                 </div>
@@ -310,22 +309,22 @@ export function MyPage() {
             {/* 통계 그리드 */}
             <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100">
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-[#5E43FF]">12</p>
+                <p className="text-xl font-black text-brand">12</p>
                 <p className="mt-1 text-[10px] font-bold text-slate-400">들어온 돌봄</p>
               </div>
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-emerald-600">8</p>
+                <p className="text-xl font-black text-brand">8</p>
                 <p className="mt-1 text-[10px] font-bold text-slate-400">완료 돌봄</p>
               </div>
               <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-amber-500">4.8</p>
+                <p className="text-xl font-black text-brand-bright">4.8</p>
                 <p className="text-[10px] font-bold text-slate-400 mt-1">평균 평점</p>
               </div>
             </div>
 
             <Link
               to="/sitter/r1"
-              className="mt-4 block w-full rounded-2xl border-2 border-violet-300 bg-violet-50 py-3.5 text-center text-sm font-bold text-[#5E43FF] shadow-sm underline decoration-[#5E43FF] decoration-2 underline-offset-4 transition-colors hover:border-violet-400 hover:bg-violet-100"
+              className="mt-4 block w-full rounded-2xl border-2 border-brand/30 bg-brand-soft py-3.5 text-center text-sm font-bold text-brand shadow-sm underline decoration-brand decoration-2 underline-offset-4 transition-colors hover:border-brand/40 hover:bg-brand/10"
             >
               내 프로필 미리보기
             </Link>
@@ -340,13 +339,13 @@ export function MyPage() {
               className="group flex items-center justify-between border-b border-slate-100 p-4 transition-colors hover:bg-slate-50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 transition-all group-hover:bg-violet-200/80">
-                  <FileText className="h-[18px] w-[18px] text-[#5E43FF]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
+                  <FileText className="h-[18px] w-[18px] text-brand" />
                 </div>
                 <span className="text-sm font-bold text-slate-900">모이자·만나자 글</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-[#5E43FF]">
+                <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-brand">
                   3건
                 </span>
                 <ChevronRight className="h-4 w-4 text-slate-300" />
@@ -357,13 +356,13 @@ export function MyPage() {
               className="group flex items-center justify-between border-b border-slate-100 p-4 transition-colors hover:bg-slate-50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 transition-all group-hover:bg-violet-200/80">
-                  <MessageCircle className="h-[18px] w-[18px] text-[#5E43FF]" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
+                  <MessageCircle className="h-[18px] w-[18px] text-brand" />
                 </div>
                 <span className="text-sm font-bold text-slate-900">받은 참여 신청</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-bold text-[#5E43FF]">
+                <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-brand">
                   5건
                 </span>
                 <ChevronRight className="h-4 w-4 text-slate-300" />
@@ -374,10 +373,10 @@ export function MyPage() {
               className="group flex items-center justify-between p-4 transition-colors hover:bg-slate-50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 transition-all group-hover:bg-slate-200/80">
-                  <CreditCard className="h-[18px] w-[18px] text-slate-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
+                  <CreditCard className="h-[18px] w-[18px] text-brand" />
                 </div>
-                <span className="text-sm font-bold text-slate-900">결제 · 프리미엄</span>
+                <span className="text-sm font-bold text-slate-900">유료 돌봄 · 노출 결제</span>
               </div>
               <ChevronRight className="h-4 w-4 text-slate-300" />
             </Link>
@@ -397,8 +396,8 @@ export function MyPage() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 transition-all group-hover:bg-violet-100">
-                    <item.icon className="h-[18px] w-[18px] text-slate-600 transition-colors group-hover:text-[#5E43FF]" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 transition-all group-hover:bg-brand/10">
+                    <item.icon className="h-[18px] w-[18px] text-slate-600 transition-colors group-hover:text-brand" />
                   </div>
                   <span className="text-sm font-bold text-slate-900">{item.label}</span>
                 </div>
@@ -422,14 +421,14 @@ export function MyPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      item.label === '회원 탈퇴' ? 'bg-red-50' : 'bg-slate-100 group-hover:bg-violet-100'
+                      item.label === '회원 탈퇴' ? 'bg-red-50' : 'bg-slate-100 group-hover:bg-brand/10'
                     }`}
                   >
                     <item.icon
                       className={`h-[18px] w-[18px] ${
                         item.label === '회원 탈퇴'
                           ? 'text-red-500'
-                          : 'text-slate-600 group-hover:text-[#5E43FF]'
+                          : 'text-slate-600 group-hover:text-brand'
                       } transition-colors`}
                     />
                   </div>
@@ -463,7 +462,7 @@ export function MyPage() {
         {!isRepairer && (
           <Link
             to="/become-sitter"
-            className="group relative block overflow-hidden rounded-3xl bg-gradient-to-br from-[#5E43FF] to-violet-700 p-6 text-white shadow-lg shadow-violet-500/25 transition-all active:scale-[0.99]"
+            className="group relative block overflow-hidden rounded-3xl bg-gradient-to-br from-brand to-brand-bright p-6 text-white shadow-lg shadow-brand/25 transition-all active:scale-[0.99]"
           >
             <div className="relative z-10">
               <h3 className="mb-1.5 flex items-center gap-2 text-xl font-extrabold">
@@ -472,7 +471,7 @@ export function MyPage() {
               <p className="mb-5 text-sm font-medium text-white/85">
                 돈 받고 산책·돌봄을 제공하는 돌보미로 등록해 보세요.
               </p>
-              <div className="inline-block rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md transition-colors group-hover:bg-white group-hover:text-[#5E43FF]">
+              <div className="inline-block rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md transition-colors group-hover:bg-white group-hover:text-brand">
                 지금 1분 만에 신청하기
               </div>
             </div>
@@ -489,7 +488,7 @@ export function MyPage() {
           <Link
             to="/explore"
             className={`flex flex-col items-center gap-1 transition-colors ${
-              location.pathname === '/explore' ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-violet-500'
+              location.pathname === '/explore' ? 'text-brand' : 'text-slate-400 hover:text-brand'
             }`}
           >
             <Home className="h-6 w-6" />
@@ -498,7 +497,7 @@ export function MyPage() {
           <Link
             to="/search"
             className={`flex flex-col items-center gap-1 transition-colors ${
-              location.pathname === '/search' ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-violet-500'
+              location.pathname === '/search' ? 'text-brand' : 'text-slate-400 hover:text-brand'
             }`}
           >
             <Search className="h-6 w-6" />
@@ -506,7 +505,7 @@ export function MyPage() {
           </Link>
 
           <Link to="/create-meetup" className="-mt-2 flex flex-col items-center group">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5E43FF] to-violet-600 shadow-lg shadow-violet-500/35 transition-all group-active:scale-95 group-hover:shadow-violet-500/45">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-bright shadow-lg shadow-brand/35 transition-all group-active:scale-95 group-hover:shadow-brand/40">
               <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
@@ -517,13 +516,13 @@ export function MyPage() {
           <Link
             to="/chats"
             className={`flex flex-col items-center gap-1 transition-colors ${
-              location.pathname.startsWith('/chat') ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-violet-500'
+              location.pathname.startsWith('/chat') ? 'text-brand' : 'text-slate-400 hover:text-brand'
             }`}
           >
             <MessageCircle className="h-6 w-6" />
             <span className="text-[10px] font-bold">채팅</span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-[#5E43FF]">
+          <Link to="/my" className="flex flex-col items-center gap-1 text-brand">
             <User className="h-6 w-6" />
             <span className="text-[10px] font-bold">내댕댕</span>
           </Link>

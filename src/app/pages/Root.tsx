@@ -44,7 +44,7 @@ export function Root() {
                 <Link
                   to="/explore"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/explore' ? 'text-[#5E43FF]' : 'text-gray-500'
+                    location.pathname === '/explore' ? 'text-brand' : 'text-gray-500'
                   }`}
                 >
                   <Home className="h-5 w-5" />
@@ -53,7 +53,7 @@ export function Root() {
                 <Link
                   to="/search"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/search' ? 'text-[#5E43FF]' : 'text-gray-500'
+                    location.pathname === '/search' ? 'text-brand' : 'text-gray-500'
                   }`}
                 >
                   <Search className="h-5 w-5" />
@@ -63,7 +63,7 @@ export function Root() {
                   to="/sitters"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
                     location.pathname.startsWith('/sitter') || location.pathname.startsWith('/guard-mom')
-                      ? 'text-[#5E43FF]'
+                      ? 'text-brand'
                       : 'text-gray-500'
                   }`}
                   aria-label="모임과 유료 돌봄"
@@ -74,7 +74,7 @@ export function Root() {
                 <Link
                   to="/my"
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
-                    location.pathname === '/my' ? 'text-[#5E43FF]' : 'text-gray-500'
+                    location.pathname === '/my' ? 'text-brand' : 'text-gray-500'
                   }`}
                 >
                   <User className="h-5 w-5" />

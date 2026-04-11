@@ -51,7 +51,7 @@ export function BecomeDogSitterPage() {
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-white border-b">
         <div className="flex items-center justify-between h-14 px-4">
-          <button onClick={() => navigate(-1)}>
+          <button onClick={() => navigate('/explore')}>
             <X className="w-6 h-6" />
           </button>
           <h1 style={{ fontWeight: 700 }}>유료 돌봄(댕집사) 등록 🐾</h1>
@@ -73,7 +73,7 @@ export function BecomeDogSitterPage() {
 
         {/* 3가지 핵심 포인트 */}
         <div className="grid grid-cols-3 gap-3 mb-8">
-          <div className="bg-green-50 rounded-2xl p-5 text-center">
+          <div className="bg-orange-50 rounded-2xl p-5 text-center">
             <div className="text-3xl mb-2">💰</div>
             <div className="text-lg mb-1" style={{ fontWeight: 700 }}>3만원~</div>
             <div className="text-xs text-gray-600">건당 수익</div>

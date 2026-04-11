@@ -30,11 +30,11 @@ export function DogSitterProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-28">
+    <div className="min-h-screen bg-white pb-44">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">
-          <button onClick={() => navigate('/sitters')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <button type="button" onClick={() => navigate('/explore')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="홈으로">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>강아지 돌봄 🐾</span>
@@ -133,30 +133,30 @@ export function DogSitterProfilePage() {
         </div>
       </div>
 
-      {/* 하단 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 p-4 pb-safe z-40 max-w-[430px] mx-auto">
-        <div className="max-w-screen-md mx-auto">
-          <button 
-            onClick={() => setShowJoinForm(true)}
-            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-5 rounded-2xl text-lg shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-            style={{ fontWeight: 700 }}
-          >
-            <MessageCircle className="w-6 h-6" />
-            돌봄 문의하기 💬
-          </button>
-        </div>
+      {/* 하단 버튼 — Root 하단 탭(nav ~56px) 위에 두어 가리지 않음 */}
+      <div className="fixed bottom-16 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-100 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl">
+        <button
+          type="button"
+          onClick={() => setShowJoinForm(true)}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 text-base text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] sm:py-5 sm:text-lg"
+          style={{ fontWeight: 700 }}
+        >
+          <MessageCircle className="h-6 w-6 shrink-0" aria-hidden />
+          돌봄 문의하기 💬
+        </button>
       </div>
 
       {/* 돌봄 문의 폼 */}
       {showJoinForm && (
         <>
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm z-50 animate-fadeIn"
+          <div
+            role="presentation"
+            className="fixed inset-0 z-[60] animate-fadeIn bg-black/40 backdrop-blur-sm"
             onClick={() => setShowJoinForm(false)}
           />
-          
-          <div className="absolute inset-x-0 bottom-0 z-50 animate-slideUp">
-            <div className="bg-white rounded-t-[2rem] w-full shadow-2xl">
+
+          <div className="fixed bottom-0 left-1/2 z-[60] w-full max-w-[430px] -translate-x-1/2 animate-slideUp">
+            <div className="w-full rounded-t-[2rem] bg-white pb-[env(safe-area-inset-bottom,0px)] shadow-2xl">
               <div className="flex items-center justify-between p-5 border-b border-slate-100">
                 <h3 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>🐕 돌봄 문의하기</h3>
                 <button 

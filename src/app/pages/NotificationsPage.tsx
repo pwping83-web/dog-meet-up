@@ -10,19 +10,15 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
-import {
-  canUseNotifications,
-  requestNotificationPermission,
-  showDeviceNotification,
-} from '../../lib/deviceNotify';
+import { canUseNotifications, requestNotificationPermission } from '../../lib/deviceNotify';
 import {
   loadNotificationPrefs,
   saveNotificationPrefs,
   type NotificationPrefs,
 } from '../../lib/notificationPreferences';
 
-/** 이수리마켓류 UI — 브랜드 보라 */
-const BRAND = '#5E43FF';
+const CARD_BORDER = 'border-brand/20';
+const ICON_BG = 'bg-brand/10';
 
 function PrefSwitch({
   checked,
@@ -41,13 +37,12 @@ function PrefSwitch({
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={`relative h-8 w-14 shrink-0 rounded-full transition-colors duration-300 disabled:opacity-40 ${
-        checked ? 'shadow-inner' : 'bg-slate-200'
+        checked ? 'bg-brand shadow-inner' : 'bg-slate-200'
       }`}
-      style={checked ? { backgroundColor: BRAND } : undefined}
     >
       <span
-        className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-          checked ? 'translate-x-6' : 'translate-x-0'
+        className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+          checked ? 'right-1 left-auto' : 'left-1 right-auto'
         }`}
       />
     </button>
@@ -56,9 +51,11 @@ function PrefSwitch({
 
 function SectionLabel({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mb-2 px-1 pt-2">
-      <p className="text-xs font-extrabold text-slate-500">{title}</p>
-      {subtitle && <p className="mt-0.5 text-[11px] font-medium text-slate-400">{subtitle}</p>}
+    <div className="mb-2 px-1">
+      <p className="text-xs font-extrabold text-brand">
+        {title}
+      </p>
+      {subtitle && <p className="mt-0.5 text-[11px] font-medium text-slate-500">{subtitle}</p>}
     </div>
   );
 }
@@ -88,8 +85,7 @@ function PrefRow({
     >
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconBg}`}
-          style={{ color: BRAND }}
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brand ${iconBg}`}
         >
           <Icon className="h-[18px] w-[18px]" aria-hidden />
         </div>
@@ -113,10 +109,6 @@ export function NotificationsPage() {
     setPerm(Notification.permission);
   }, []);
 
-  const refreshPerm = useCallback(() => {
-    if (canUseNotifications()) setPerm(Notification.permission);
-  }, []);
-
   const patchPrefs = useCallback((patch: Partial<NotificationPrefs>) => {
     const next = saveNotificationPrefs(patch);
     setPrefs(next);
@@ -126,10 +118,6 @@ export function NotificationsPage() {
     const p = await requestNotificationPermission();
     setPerm(p);
     if (p === 'granted') {
-      await showDeviceNotification('댕댕마켓', '브라우저 알림이 허용됐어요 🐾', {
-        tag: 'daeng-permission-on',
-        bypassPrefs: true,
-      });
       patchPrefs({ popup: true });
     } else if (p === 'denied') {
       alert(
@@ -142,43 +130,38 @@ export function NotificationsPage() {
 
   const setPushMaster = async (on: boolean) => {
     if (!canUseNotifications()) return;
-    if (on) {
-      await handleEnableNotify();
-      return;
-    }
-    patchPrefs({ popup: false });
-  };
+    const livePerm = Notification.permission;
+    setPerm(livePerm);
 
-  const handleTestNotify = async () => {
-    refreshPerm();
-    if (Notification.permission !== 'granted') {
-      await handleEnableNotify();
-      if (Notification.permission !== 'granted') return;
-    }
-    const p = loadNotificationPrefs();
-    if (!p.popup) {
-      alert('알림 표시가 꺼져 있어요. 켠 뒤 다시 시도해 주세요.');
+    if (!on) {
+      patchPrefs({ popup: false });
       return;
     }
-    await showDeviceNotification('댕댕마켓', '테스트 알림이에요.', {
-      tag: `daeng-test-${Date.now()}`,
-    });
+    // 켜기: 이미 허용됐으면 prefs만 바로 반영 (푸시 마스터 스위치 즉시 동작)
+    if (livePerm === 'granted') {
+      patchPrefs({ popup: true });
+      return;
+    }
+    if (livePerm === 'denied') {
+      alert(
+        '브라우저에서 알림이 막혀 있어요.\n\nAndroid: 설정 → 앱 → Chrome(또는 사용 중인 브라우저) → 알림 → 허용\niOS: 설정 → Safari → 웹사이트 설정 → 알림',
+      );
+      return;
+    }
+    await handleEnableNotify();
   };
 
   const canPush = canUseNotifications();
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-28">
-      <header
-        className="sticky top-0 z-10 shadow-sm"
-        style={{ backgroundColor: BRAND }}
-      >
+    <div className="min-h-screen bg-slate-50 pb-28">
+      <header className="sticky top-0 z-10 bg-brand shadow-md">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/explore')}
             className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
-            aria-label="뒤로"
+            aria-label="홈으로"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>
@@ -186,35 +169,39 @@ export function NotificationsPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-screen-md space-y-1 px-4 pt-4">
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-          <PrefRow
-            icon={Bell}
-            iconBg="bg-violet-100"
-            title="푸시 알림"
-            desc="브라우저를 닫아도 만남·채팅 알림을 받을 수 있어요"
-            checked={pushMasterOn}
-            onChange={(v) => void setPushMaster(v)}
-            disabled={!canPush}
-            hideBorder
-          />
-        </div>
+      <div className="mx-auto max-w-screen-md space-y-4 px-4 pt-4">
+        <section>
+          <SectionLabel title="알림 받기" subtitle="푸시를 켜야 만남·채팅 알림이 전달돼요" />
+          <div className={`overflow-hidden rounded-2xl border ${CARD_BORDER} bg-white px-4 shadow-sm`}>
+            <PrefRow
+              icon={Bell}
+              iconBg={ICON_BG}
+              title="푸시 알림"
+              desc="브라우저를 닫아도 만남·채팅 알림을 받을 수 있어요"
+              checked={pushMasterOn}
+              onChange={(v) => void setPushMaster(v)}
+              disabled={!canPush}
+              hideBorder
+            />
+          </div>
+        </section>
 
+        <section>
         <SectionLabel title="알림 방식" subtitle="알림이 올 때 기기에서 어떻게 보일지 골라요" />
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 shadow-sm">
+        <div className={`overflow-hidden rounded-2xl border ${CARD_BORDER} bg-white px-4 shadow-sm`}>
           <PrefRow
             icon={Volume2}
-            iconBg="bg-violet-100"
+            iconBg={ICON_BG}
             title="소리"
-            desc="알림음으로 알려줘요 (기기·브라우저 설정에 따라 달라요)"
+            desc="알림음으로 알려줘요"
             checked={prefs.sound}
             onChange={(v) => patchPrefs({ sound: v })}
             disabled={!canPush}
           />
           <PrefRow
             icon={Smartphone}
-            iconBg="bg-amber-100"
+            iconBg={ICON_BG}
             title="팝업"
             desc="화면에 알림창으로 표시해요"
             checked={prefs.popup}
@@ -223,7 +210,7 @@ export function NotificationsPage() {
           />
           <PrefRow
             icon={Zap}
-            iconBg="bg-amber-100"
+            iconBg={ICON_BG}
             title="진동"
             desc="알림 시 진동으로 알려줘요 (지원 기기만)"
             checked={prefs.vibrate}
@@ -231,13 +218,15 @@ export function NotificationsPage() {
             hideBorder
           />
         </div>
+        </section>
 
+        <section>
         <SectionLabel title="활동 알림" subtitle="받고 싶은 알림 종류를 선택해요" />
 
-        <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 shadow-sm">
+        <div className={`overflow-hidden rounded-2xl border ${CARD_BORDER} bg-white px-4 shadow-sm`}>
           <PrefRow
             icon={CalendarHeart}
-            iconBg="bg-emerald-100"
+            iconBg={ICON_BG}
             title="모이자·만나자 알림"
             desc="만남 글·참여 신청 알림"
             checked={prefs.meetup}
@@ -246,7 +235,7 @@ export function NotificationsPage() {
           />
           <PrefRow
             icon={MessageCircle}
-            iconBg="bg-sky-100"
+            iconBg={ICON_BG}
             title="채팅 알림"
             desc="새 메시지 알림"
             checked={prefs.chat}
@@ -255,16 +244,20 @@ export function NotificationsPage() {
             hideBorder
           />
         </div>
+        </section>
 
+        <section>
         <SectionLabel title="브라우저" subtitle="권한은 기기 설정과 브라우저마다 달라요" />
 
         <button
           type="button"
           onClick={() => void handleEnableNotify()}
-          className="flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border border-slate-200/80 bg-white px-4 py-4 text-left shadow-sm transition-colors active:bg-slate-50"
+          className={`flex w-full items-center justify-between gap-3 overflow-hidden rounded-2xl border ${CARD_BORDER} bg-white px-4 py-4 text-left shadow-sm transition-colors hover:bg-brand/5 active:bg-brand/10`}
         >
           <div className="flex min-w-0 flex-1 items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+            <div
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brand ${ICON_BG}`}
+            >
               <Smartphone className="h-[18px] w-[18px]" aria-hidden />
             </div>
             <div className="min-w-0">
@@ -280,20 +273,11 @@ export function NotificationsPage() {
               </p>
             </div>
           </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" aria-hidden />
+          <ChevronRight className="h-5 w-5 shrink-0 text-brand/35" aria-hidden />
         </button>
+        </section>
 
-        <button
-          type="button"
-          onClick={() => void handleTestNotify()}
-          disabled={!canPush}
-          className="mt-2 w-full rounded-2xl border-2 py-3.5 text-sm font-extrabold transition-all active:scale-[0.99] disabled:opacity-40"
-          style={{ borderColor: BRAND, color: BRAND }}
-        >
-          테스트 알림 보내기
-        </button>
-
-        <p className="pb-6 pt-2 text-center text-[11px] font-medium text-slate-400">
+        <p className="pb-6 pt-2 text-center text-[11px] font-medium text-slate-500">
           만남·채팅 목록은 댕팅에서 확인해요
         </p>
       </div>

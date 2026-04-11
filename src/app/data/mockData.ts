@@ -57,6 +57,23 @@ export const mockMeetups: Meetup[] = [
     userName: '박민수',
   },
   {
+    id: 'explore-dolbom-1',
+    title: '주말 출장이라 댕댕이 맡아주실 돌봄(댕집사) 구해요 🍼',
+    category: '돌봄',
+    description:
+      '5kg 말티즈 남아예요. 예방접종·심장사상충 완료, 배변 패드 잘 쌉니다. 토·일 이틀간 집 방문 돌봄 또는 하루 맡기기 가능한 분 찾아요. 유료 돌봄 탭의 인증 댕집사분도 환영합니다. 사전에 성향·산책 여부만 채팅으로 맞추면 돼요!',
+    location: '서울 마포구',
+    district: '마포구',
+    images: [
+      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    ],
+    estimatedCost: '돌봄·맡기기',
+    status: 'pending',
+    createdAt: new Date('2026-02-10'),
+    userId: 'user-dolbom-1',
+    userName: '김댕댕',
+  },
+  {
     id: '4',
     title: '산책 후 카페 가실 분 🦮☕',
     category: '카페',
@@ -163,7 +180,7 @@ export const mockDogSitters: DogSitter[] = [
     profileImage: '',
     location: '서울 강남구',
     district: '강남구',
-    specialties: ['방문 산책', '당일 맡기기', '소형견 전문'],
+    specialties: ['돌봄', '방문 산책', '당일 맡기기', '소형견 전문'],
     rating: 4.8,
     reviewCount: 127,
     experience: '5년',

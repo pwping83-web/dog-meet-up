@@ -24,7 +24,7 @@ export function MeetupCard({ meetup, joinCount = 0, userDistrict }: MeetupCardPr
 
   const statusColor = {
     pending: 'bg-orange-50 text-orange-600',
-    'in-progress': 'bg-emerald-50 text-emerald-600',
+    'in-progress': 'bg-orange-50 text-orange-600',
     completed: 'bg-slate-50 text-slate-500',
   }[meetup.status];
 
@@ -43,7 +43,7 @@ export function MeetupCard({ meetup, joinCount = 0, userDistrict }: MeetupCardPr
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute top-3 left-3">
-            <span className={`text-xs px-2.5 py-1 rounded-lg backdrop-blur-md bg-white/90 shadow-sm ${meetup.status === 'pending' ? 'text-orange-600' : meetup.status === 'in-progress' ? 'text-emerald-600' : 'text-slate-600'}`} style={{ fontWeight: 700 }}>
+            <span className={`text-xs px-2.5 py-1 rounded-lg backdrop-blur-md bg-white/90 shadow-sm ${meetup.status === 'pending' ? 'text-orange-600' : meetup.status === 'in-progress' ? 'text-orange-600' : 'text-slate-600'}`} style={{ fontWeight: 700 }}>
               {statusText[meetup.status]}
             </span>
           </div>

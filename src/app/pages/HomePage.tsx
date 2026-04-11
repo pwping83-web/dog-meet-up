@@ -70,7 +70,7 @@ export default function HomePage() {
           className="inline-flex items-center gap-1.5 bg-orange-100 text-orange-600 text-[11px] px-3.5 py-1.5 rounded-full mb-5"
           style={{ fontFamily: "'Jua', sans-serif" }}
         >
-          <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+          <span className="w-1.5 h-1.5 bg-orange-400 rounded-full animate-pulse" />
           오늘 237 친구들이 뛰어놀았어요!
         </motion.span>
 

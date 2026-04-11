@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ArrowLeft, CreditCard, Crown, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Baby, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BILLING_PRODUCTS, startStripeCheckout, type BillingProductKey } from '../../lib/billing';
@@ -19,7 +19,7 @@ function orderProductLabel(key: string): string {
   const map: Record<string, string> = {
     premium_month: '댕댕 프리미엄 (월)',
     meetup_boost: '만남 글 부스트 (1회)',
-    guard_mom_listing_7d: '보호맘 란 노출 (7일)',
+    guard_mom_listing_7d: '유료 돌봄 목록 노출 (7일)',
     guard_mom_care_day: '보호맘 돌봄 예약',
   };
   return map[key] ?? key;
@@ -29,7 +29,7 @@ export function BillingPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [premiumUntil, setPremiumUntil] = useState<string | null>(null);
+  const [listingVisibleUntil, setListingVisibleUntil] = useState<string | null>(null);
   const [listLoading, setListLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<BillingProductKey | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -39,20 +39,24 @@ export function BillingPage() {
   const loadBilling = useCallback(async () => {
     if (!user) {
       setOrders([]);
-      setPremiumUntil(null);
+      setListingVisibleUntil(null);
       setListLoading(false);
       return;
     }
     setListLoading(true);
     setPageError(null);
 
-    const [ordersRes, entRes] = await Promise.all([
+    const [ordersRes, gmRes] = await Promise.all([
       supabase
         .from('billing_orders')
         .select('id,product_key,status,created_at,paid_at')
         .order('created_at', { ascending: false })
         .limit(30),
-      supabase.from('user_entitlements').select('premium_until').eq('user_id', user.id).maybeSingle(),
+      supabase
+        .from('certified_guard_moms')
+        .select('listing_visible_until')
+        .eq('user_id', user.id)
+        .maybeSingle(),
     ]);
 
     if (ordersRes.error) {
@@ -64,10 +68,10 @@ export function BillingPage() {
       setOrders((ordersRes.data ?? []) as OrderRow[]);
     }
 
-    if (!entRes.error && entRes.data?.premium_until) {
-      setPremiumUntil(entRes.data.premium_until);
+    if (!gmRes.error && gmRes.data?.listing_visible_until) {
+      setListingVisibleUntil(gmRes.data.listing_visible_until);
     } else {
-      setPremiumUntil(null);
+      setListingVisibleUntil(null);
     }
 
     setListLoading(false);
@@ -102,32 +106,36 @@ export function BillingPage() {
     }
   };
 
-  const isPremium =
-    premiumUntil != null && !Number.isNaN(Date.parse(premiumUntil)) && new Date(premiumUntil) > new Date();
+  const listingActive =
+    listingVisibleUntil != null &&
+    !Number.isNaN(Date.parse(listingVisibleUntil)) &&
+    new Date(listingVisibleUntil) > new Date();
+
+  const product = BILLING_PRODUCTS[0];
 
   return (
-    <div className="min-h-full bg-[#F5F5F7] pb-28">
-      <header className="sticky top-0 z-40 bg-[#5E43FF] shadow-sm">
+    <div className="min-h-full bg-slate-50 pb-28">
+      <header className="sticky top-0 z-40 bg-brand shadow-md">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-3">
           <Link
-            to="/my"
+            to="/explore"
             className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
-            aria-label="뒤로"
+            aria-label="홈으로"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-lg font-extrabold text-white">결제 · 프리미엄</h1>
+          <h1 className="text-lg font-extrabold text-white">유료 돌봄 · 결제</h1>
         </div>
       </header>
 
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-6">
         {checkoutStatus === 'success' && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
-            결제가 완료되었습니다. Stripe 웹훅이 반영되면 아래 상태가 갱신됩니다.
+          <div className="rounded-2xl border border-brand/25 bg-brand-soft px-4 py-3 text-sm font-semibold text-slate-800">
+            결제가 완료되었습니다. Stripe 웹훅이 반영되면 아래 노출 기한이 갱신됩니다.
           </div>
         )}
         {checkoutStatus === 'cancel' && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          <div className="rounded-2xl border border-brand/20 bg-brand-muted px-4 py-3 text-sm font-semibold text-slate-700">
             결제를 취소했습니다.
           </div>
         )}
@@ -138,101 +146,106 @@ export function BillingPage() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-brand/20 bg-white p-5 shadow-sm">
           <div className="mb-3 flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-[#5E43FF]" />
+            <ShieldCheck className="h-5 w-5 shrink-0 text-brand" />
             <h2 className="text-base font-extrabold text-slate-800">실제 과금 안내</h2>
           </div>
           <p className="text-sm leading-relaxed text-slate-600">
-            Stripe Checkout으로 카드 결제가 이루어집니다. Supabase Edge Function에{' '}
-            <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">STRIPE_SECRET_KEY</code>,{' '}
-            <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">PUBLIC_SITE_URL</code>, Price ID
-            시크릿을 넣고, 대시보드에서 웹훅을 <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">stripe-webhook</code>{' '}
-            URL로 연결해야 운영 환경에서 정상 동작합니다.
+            Stripe Checkout으로 카드 결제가 이루어집니다. Edge Function에{' '}
+            <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">STRIPE_SECRET_KEY</code>,{' '}
+            <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">PUBLIC_SITE_URL</code>,{' '}
+            <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">
+              STRIPE_PRICE_GUARD_MOM_LISTING_7D
+            </code>
+            를 설정하고 웹훅을 <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">stripe-webhook</code>에
+            연결하면 운영 환경에서 동작합니다.
           </p>
         </div>
 
         {authLoading ? (
           <div className="flex justify-center py-16 text-slate-500">
-            <Loader2 className="h-8 w-8 animate-spin" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand" />
           </div>
         ) : !user ? (
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-8 text-center shadow-sm">
+          <div className="rounded-2xl border border-brand/15 bg-white p-8 text-center shadow-sm">
             <p className="mb-4 text-sm font-medium text-slate-600">결제하려면 로그인이 필요합니다.</p>
             <Link
               to="/login"
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-[#5E43FF] to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-md"
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-brand to-brand-bright px-6 py-3 text-sm font-bold text-white shadow-md shadow-brand/25 transition-opacity hover:opacity-95"
             >
               로그인하기
             </Link>
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/90 p-5 shadow-sm">
+            <div className="rounded-2xl border-2 border-brand/25 bg-gradient-to-br from-brand-soft to-white p-5 shadow-sm shadow-brand/10">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-inner">
-                  <Crown className="h-6 w-6 text-[#5E43FF]" />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-bright text-white shadow-md shadow-brand/20">
+                  <Baby className="h-6 w-6" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-bold uppercase tracking-wide text-violet-700/90">프리미엄 상태</p>
-                  <p className="mt-1 text-lg font-black text-slate-900">
-                    {isPremium ? '이용 중' : '미가입'}
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wide text-brand">
+                    유료 돌봄 목록 노출
                   </p>
-                  {premiumUntil && (
+                  <p className="mt-1 text-lg font-black text-slate-900">
+                    {listingActive ? '노출 중' : '미노출'}
+                  </p>
+                  {listingVisibleUntil && (
                     <p className="mt-1 text-xs font-semibold text-slate-600">
-                      만료 예정:{' '}
-                      {format(new Date(premiumUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
+                      노출 만료:{' '}
+                      {format(new Date(listingVisibleUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
+                    </p>
+                  )}
+                  {!listingVisibleUntil && (
+                    <p className="mt-1 text-xs font-medium text-slate-500">
+                      결제 후 「유료 돌봄」 탭에서 인증 보호맘으로 보여요. 프로필은 보호맘 등록에서 먼저 완료해 주세요.
                     </p>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h3 className="px-1 text-xs font-extrabold text-slate-500">상품</h3>
-              {BILLING_PRODUCTS.map((p) => (
-                <div
-                  key={p.key}
-                  className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm"
-                >
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-base font-extrabold text-slate-900">{p.title}</h4>
-                        {p.badge && (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
-                            {p.badge}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-slate-600">{p.description}</p>
-                    </div>
-                    <CreditCard className="h-5 w-5 shrink-0 text-slate-300" />
-                  </div>
-                  <button
-                    type="button"
-                    disabled={checkoutLoading !== null}
-                    onClick={() => void handlePay(p.key)}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#5E43FF] to-violet-600 py-3.5 text-sm font-bold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
-                  >
-                    {checkoutLoading === p.key ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        이동 중…
-                      </>
-                    ) : (
-                      'Stripe로 결제하기'
-                    )}
-                  </button>
+            <div className="overflow-hidden rounded-2xl border-2 border-brand/25 bg-white shadow-lg shadow-brand/15">
+              <div className="bg-gradient-to-r from-brand to-brand-bright px-5 py-4 text-white">
+                <p className="text-xs font-bold text-white/90">단일 상품</p>
+                <h3 className="mt-0.5 text-lg font-black tracking-tight">{product.title}</h3>
+              </div>
+              <div className="space-y-4 p-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {product.badge && (
+                    <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-extrabold text-brand">
+                      {product.badge}
+                    </span>
+                  )}
                 </div>
-              ))}
+                <p className="text-sm leading-relaxed text-slate-600">{product.description}</p>
+                <button
+                  type="button"
+                  disabled={checkoutLoading !== null}
+                  onClick={() => void handlePay(product.key)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand to-brand-bright py-3.5 text-sm font-extrabold text-white shadow-md shadow-brand/25 transition-transform active:scale-[0.98] disabled:opacity-60"
+                >
+                  {checkoutLoading === product.key ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      이동 중…
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-5 w-5" />
+                      Stripe로 결제하기
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
               <h3 className="mb-3 text-xs font-extrabold text-slate-500">최근 결제 시도</h3>
               {listLoading ? (
                 <div className="flex justify-center py-8 text-slate-400">
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                  <Loader2 className="h-6 w-6 animate-spin text-brand" />
                 </div>
               ) : orders.length === 0 ? (
                 <p className="text-sm text-slate-500">아직 기록이 없습니다.</p>
@@ -249,9 +262,9 @@ export function BillingPage() {
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-bold ${
                           o.status === 'paid'
-                            ? 'bg-emerald-100 text-emerald-800'
+                            ? 'bg-brand-soft text-brand'
                             : o.status === 'pending'
-                              ? 'bg-amber-100 text-amber-800'
+                              ? 'bg-brand-muted text-slate-700'
                               : 'bg-slate-100 text-slate-600'
                         }`}
                       >

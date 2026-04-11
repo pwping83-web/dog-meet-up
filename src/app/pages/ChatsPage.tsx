@@ -121,7 +121,7 @@ export function ChatDetailPage() {
       <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 flex-shrink-0 z-10">
         <div className="px-2 h-14 flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <Link to="/chats" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+            <Link to="/explore" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="홈으로">
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <div className="flex items-center gap-2.5">

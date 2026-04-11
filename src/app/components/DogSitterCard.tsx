@@ -25,7 +25,7 @@ export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
             <h3 className="text-slate-800 break-words text-base group-hover:text-orange-600 transition-colors" style={{ fontWeight: 800 }}>
               {dogSitter.name}
             </h3>
-            <span className="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 whitespace-nowrap" style={{ fontWeight: 700 }}>
+            <span className="text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 whitespace-nowrap" style={{ fontWeight: 700 }}>
               <ShieldCheck className="w-3 h-3" />
               경력 {dogSitter.experience}
             </span>

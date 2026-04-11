@@ -51,7 +51,7 @@ export function SearchPage() {
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="어떤 댕친을 찾으시나요? 🐾"
-              className="h-12 w-full rounded-2xl border-transparent bg-slate-50/80 pl-11 pr-10 font-bold text-slate-900 transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/15"
+              className="h-12 w-full rounded-2xl border-transparent bg-slate-50/80 pl-11 pr-10 font-bold text-slate-900 transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/15"
               autoFocus
             />
             {searchQuery && (
@@ -69,7 +69,7 @@ export function SearchPage() {
           <div className="p-5">
             <div className="mb-5 flex items-center gap-2">
               <span className="text-sm font-bold text-slate-800">검색 결과</span>
-              <span className="rounded-lg bg-violet-50 px-2 py-0.5 text-sm font-extrabold text-[#5E43FF]">
+              <span className="rounded-lg bg-orange-50 px-2 py-0.5 text-sm font-extrabold text-brand">
                 {filteredRequests.length}건
               </span>
             </div>
@@ -86,7 +86,7 @@ export function SearchPage() {
               <div className="space-y-4">
                 {filteredRequests.map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
-                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-violet-200 active:scale-[0.98]">
+                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-200 active:scale-[0.98]">
                       {request.images && request.images.length > 0 ? (
                         <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
                           <img src={request.images[0]} alt={request.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -97,11 +97,11 @@ export function SearchPage() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0 py-1">
-                        <h3 className="font-extrabold text-base text-slate-800 mb-1.5 line-clamp-2 group-hover:text-[#5E43FF] transition-colors">
+                        <h3 className="font-extrabold text-base text-slate-800 mb-1.5 line-clamp-2 group-hover:text-brand transition-colors">
                           {request.title}
                         </h3>
                         <p className="text-xs font-medium text-slate-500 mb-2.5">{request.district}</p>
-                        <p className="font-black text-lg text-[#5E43FF] tracking-tight">
+                        <p className="font-black text-lg text-brand tracking-tight">
                           {request.estimatedCost || '참여 모집중'}
                         </p>
                       </div>
@@ -123,7 +123,7 @@ export function SearchPage() {
                 <div className="flex flex-wrap gap-2">
                   {recentSearches.map((term, index) => (
                     <div key={index} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:bg-slate-100 transition-colors">
-                      <button onClick={() => handleSearch(term)} className="text-sm font-bold text-slate-600 group-hover:text-[#5E43FF] transition-colors">
+                      <button onClick={() => handleSearch(term)} className="text-sm font-bold text-slate-600 group-hover:text-brand transition-colors">
                         {term}
                       </button>
                       <button className="p-1 text-slate-300 hover:text-slate-500 rounded-full">
@@ -143,7 +143,7 @@ export function SearchPage() {
                   <button
                     key={index}
                     onClick={() => handleSearch(term)}
-                    className="rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-2 text-sm font-bold text-violet-800 transition-colors hover:bg-violet-100 hover:text-violet-900"
+                    className="rounded-xl border border-orange-100 bg-orange-50/60 px-4 py-2 text-sm font-bold text-orange-900 transition-colors hover:bg-orange-100 hover:text-orange-950"
                   >
                     {term}
                   </button>
@@ -164,9 +164,9 @@ export function SearchPage() {
                   { name: '사회화', emoji: '🤝', count: 28 },
                   { name: '놀이', emoji: '⚽', count: 23 },
                 ].map((category) => (
-                  <button key={category.name} onClick={() => handleSearch(category.name)} className="flex flex-col items-center justify-center p-5 bg-white border border-slate-100 rounded-3xl hover:border-violet-200 hover:shadow-md transition-all duration-200 active:scale-95 group">
+                  <button key={category.name} onClick={() => handleSearch(category.name)} className="flex flex-col items-center justify-center p-5 bg-white border border-slate-100 rounded-3xl hover:border-orange-200 hover:shadow-md transition-all duration-200 active:scale-95 group">
                     <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.emoji}</div>
-                    <div className="text-sm font-extrabold text-slate-800 mb-1 group-hover:text-[#5E43FF]">{category.name}</div>
+                    <div className="text-sm font-extrabold text-slate-800 mb-1 group-hover:text-brand">{category.name}</div>
                     <div className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">{category.count}건</div>
                   </button>
                 ))}
@@ -177,12 +177,12 @@ export function SearchPage() {
             <div className="mt-8">
               <div className="flex items-center justify-between mb-4 px-1">
                 <h2 className="text-lg font-extrabold text-slate-900">🙌 모이자 · 만나자</h2>
-                <Link to="/explore" className="text-xs font-bold text-[#5E43FF] hover:underline">더보기</Link>
+                <Link to="/explore" className="text-xs font-bold text-brand hover:underline">더보기</Link>
               </div>
               <div className="space-y-3">
                 {mockRequests.slice(0, 4).map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
-                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-violet-200 active:scale-[0.98]">
+                    <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-200 active:scale-[0.98]">
                       {request.images && request.images.length > 0 ? (
                         <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
                           <img src={request.images[0]} alt={request.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -190,23 +190,24 @@ export function SearchPage() {
                       ) : (
                         <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl flex-shrink-0 flex items-center justify-center border border-slate-100">
                           <span className="text-3xl">
-                            {request.category === '산책' ? '🐕' : 
-                             request.category === '훈련' ? '🎓' : 
+                            {request.category === '산책' ? '🐕' :
+                             request.category === '훈련' ? '🎓' :
                              request.category === '놀이' ? '🎾' :
                              request.category === '카페' ? '☕' :
                              request.category === '교배' ? '🐶' :
+                             request.category === '돌봄' ? '🍼' :
                              request.category === '실종' ? '🚨' :
                              request.category === '대형견' ? '🦮' : '🐾'}
                           </span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0 py-1">
-                        <h3 className="font-bold text-sm text-slate-800 mb-1 line-clamp-1 group-hover:text-[#5E43FF] transition-colors">
+                        <h3 className="font-bold text-sm text-slate-800 mb-1 line-clamp-1 group-hover:text-brand transition-colors">
                           {request.title}
                         </h3>
                         <p className="text-xs font-medium text-slate-500 mb-2">{request.district} · 방금 전</p>
                         {request.estimatedCost && (
-                          <p className="font-extrabold text-base text-[#5E43FF] tracking-tight">
+                          <p className="font-extrabold text-base text-brand tracking-tight">
                             {request.estimatedCost}
                           </p>
                         )}
@@ -226,20 +227,20 @@ export function SearchPage() {
           <Link
             to="/explore"
             className={`flex flex-col items-center gap-1 transition-colors ${
-              location.pathname === '/explore' ? 'text-[#5E43FF]' : 'text-slate-400 hover:text-[#5E43FF]'
+              location.pathname === '/explore' ? 'text-brand' : 'text-slate-400 hover:text-brand'
             }`}
           >
             <Home className="w-6 h-6" />
             <span className="text-[10px] font-bold">홈</span>
           </Link>
-          <Link to="/search" className="flex flex-col items-center gap-1 text-[#5E43FF]">
+          <Link to="/search" className="flex flex-col items-center gap-1 text-brand">
             <Search className="w-6 h-6" />
             <span className="text-[10px] font-bold">검색</span>
           </Link>
           
           {/* Central write button */}
           <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#5E43FF] to-violet-600 shadow-lg shadow-violet-500/35 transition-all group-active:scale-95 group-hover:shadow-violet-500/45">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/35 transition-all group-active:scale-95 group-hover:shadow-orange-500/40">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
@@ -247,11 +248,11 @@ export function SearchPage() {
             <span className="text-[10px] font-bold text-slate-500 mt-1">글쓰기</span>
           </Link>
           
-          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#5E43FF] transition-colors">
+          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-brand transition-colors">
             <MessageCircle className="w-6 h-6" />
             <span className="text-[10px] font-bold">채팅</span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 hover:text-[#5E43FF] transition-colors">
+          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 hover:text-brand transition-colors">
             <User className="w-6 h-6" />
             <span className="text-[10px] font-bold">내댕댕</span>
           </Link>

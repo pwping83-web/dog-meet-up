@@ -1,41 +1,217 @@
-import { useState } from 'react';
-import { Search, MapPin, MessageCircle } from 'lucide-react';
-import { Link, useNavigate } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Search, MapPin, MessageCircle, Plus, Baby, Loader2 } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
 import { DogSitterCard } from '../components/DogSitterCard';
+import { LocationPickerModal } from '../components/LocationPickerModal';
+import { RegionSelector } from '../components/RegionSelector';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
+import { formatRegion } from '../data/regions';
 import { calculateDistance, formatDistance } from '../utils/distance';
+import { useUserLocation } from '../../contexts/UserLocationContext';
+import { supabase } from '../../lib/supabase';
+import type { Database } from '../../lib/supabase';
+import type { DogSitter } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { RegionSelector } from '../components/RegionSelector';
+
+type ExtraRegion = { id: string; city: string; district: string };
+type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
+type CareFilter = 'all' | 'sitter' | 'guard';
+
+type CombinedRow =
+  | { kind: 'sitter'; distance: number; sitter: DogSitter }
+  | { kind: 'guard'; distance: number; mom: GuardMomRow };
 
 export function DogSittersPage() {
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { location, regionFullLabel, locationBasedEnabled } = useUserLocation();
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'meetups' | 'sitters'>('meetups');
+  const [careFilter, setCareFilter] = useState<CareFilter>('all');
+  const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
+  const [guardLoading, setGuardLoading] = useState(true);
+  const [guardErr, setGuardErr] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState('전체');
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
-  const [userCity, setUserCity] = useState('');
-  const [userDistrict, setUserDistrict] = useState('');
   const [category, setCategory] = useState('전체');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [extraLocations, setExtraLocations] = useState<ExtraRegion[]>([]);
+  const [extraCity, setExtraCity] = useState('');
+  const [extraDistrict, setExtraDistrict] = useState('');
+  const [extraHint, setExtraHint] = useState<string | null>(null);
 
   const specialties = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
   const categories = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
 
-  // 댕집사 필터링
-  const filteredSitters = mockDogSitters
-    .filter((sitter) => {
-      if (specialty === '전체') return true;
-      return sitter.specialties.includes(specialty);
-    })
-    .map((sitter) => ({
-      ...sitter,
-      distance: calculateDistance(userDistrict, sitter.district),
-    }))
-    .sort((a, b) => {
+  /** 거리 계산 기준 구 목록: 앱에 저장된 내 위치 + 사용자가 추가한 동네 */
+  const referenceDistricts = useMemo(() => {
+    const primary = location.district?.trim();
+    const fromExtras = extraLocations.map((e) => e.district.trim()).filter(Boolean);
+    return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
+  }, [location.district, extraLocations]);
+
+  const primaryRegionLabel =
+    location.city && location.district
+      ? formatRegion(location.city, location.district)
+      : regionFullLabel;
+
+  const addExtraRegion = () => {
+    setExtraHint(null);
+    if (!extraCity.trim() || !extraDistrict.trim()) {
+      setExtraHint('추가할 시·구를 모두 선택해 주세요.');
+      return;
+    }
+    const d = extraDistrict.trim();
+    if (referenceDistricts.includes(d)) {
+      setExtraHint('이미 기준에 포함된 동네예요.');
+      return;
+    }
+    setExtraLocations((prev) => [
+      ...prev,
+      { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, city: extraCity.trim(), district: d },
+    ]);
+    setExtraCity('');
+    setExtraDistrict('');
+  };
+
+  const removeExtraRegion = (id: string) => {
+    setExtraLocations((prev) => prev.filter((e) => e.id !== id));
+  };
+
+  const distForDistrict = useMemo(() => {
+    return (district: string) => {
+      const d = district?.trim();
+      if (!d || referenceDistricts.length === 0) return 999;
+      return Math.min(...referenceDistricts.map((ref) => calculateDistance(ref, d)));
+    };
+  }, [referenceDistricts]);
+
+  useEffect(() => {
+    const care = searchParams.get('care');
+    if (care === 'guard' || care === 'moms') {
+      setCareFilter('guard');
+      setActiveTab('sitters');
+    } else if (care === 'sitter') {
+      setCareFilter('sitter');
+      setActiveTab('sitters');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setGuardLoading(true);
+      setGuardErr(null);
+      const { data, error } = await supabase
+        .from('certified_guard_moms')
+        .select('*')
+        .order('listing_visible_until', { ascending: false, nullsFirst: false });
+      if (cancelled) return;
+      if (error) {
+        setGuardErr('인증 보호맘 목록을 불러오지 못했습니다.');
+        setGuardMoms([]);
+      } else {
+        const all = (data ?? []) as GuardMomRow[];
+        const now = Date.now();
+        setGuardMoms(
+          all.filter(
+            (r) =>
+              r.certified_at != null &&
+              r.listing_visible_until != null &&
+              new Date(r.listing_visible_until).getTime() > now,
+          ),
+        );
+      }
+      setGuardLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const syncCareToUrl = (next: CareFilter) => {
+    setCareFilter(next);
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === 'all') p.delete('care');
+        else if (next === 'guard') p.set('care', 'guard');
+        else p.set('care', 'sitter');
+        return p;
+      },
+      { replace: true },
+    );
+  };
+
+  const goMeetups = () => {
+    setActiveTab('meetups');
+    setCareFilter('all');
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete('care');
+        return p;
+      },
+      { replace: true },
+    );
+  };
+
+  const goSitters = () => setActiveTab('sitters');
+
+  const q = searchQuery.trim().toLowerCase();
+
+  const combinedRows: CombinedRow[] = useMemo(() => {
+    let sitters = mockDogSitters.filter((s) => {
+      if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
+      if (q) {
+        const blob = `${s.name} ${s.description} ${s.district}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    });
+
+    let moms = guardMoms.filter((m) => {
+      if (q) {
+        const blob = `${m.intro} ${m.region_si ?? ''} ${m.region_gu ?? ''}`.toLowerCase();
+        if (!blob.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if (careFilter === 'sitter') moms = [];
+    if (careFilter === 'guard') sitters = [];
+
+    const sitterRows: CombinedRow[] = sitters.map((sitter) => ({
+      kind: 'sitter',
+      sitter,
+      distance: distForDistrict(sitter.district),
+    }));
+
+    const guardRows: CombinedRow[] = moms.map((mom) => ({
+      kind: 'guard',
+      mom,
+      distance: distForDistrict(mom.region_gu ?? ''),
+    }));
+
+    const rows = [...sitterRows, ...guardRows];
+
+    rows.sort((a, b) => {
       if (sortBy === 'distance') return a.distance - b.distance;
-      if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'reviews') return b.reviewCount - a.reviewCount;
+      if (sortBy === 'rating') {
+        if (a.kind !== b.kind) return a.kind === 'sitter' ? -1 : 1;
+        if (a.kind === 'sitter' && b.kind === 'sitter') return b.sitter.rating - a.sitter.rating;
+        return a.mom.per_day_fee_krw - b.mom.per_day_fee_krw;
+      }
+      if (sortBy === 'reviews') {
+        if (a.kind !== b.kind) return a.kind === 'sitter' ? -1 : 1;
+        if (a.kind === 'sitter' && b.kind === 'sitter') return b.sitter.reviewCount - a.sitter.reviewCount;
+        return a.mom.per_day_fee_krw - b.mom.per_day_fee_krw;
+      }
       return 0;
     });
+
+    return rows;
+  }, [careFilter, specialty, sortBy, distForDistrict, guardMoms, q]);
 
   // 모임 필터링
   const filteredMeetups = mockMeetups
@@ -52,12 +228,13 @@ export function DogSittersPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
+      <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
       {/* 상단 탭 */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex max-w-screen-md mx-auto">
           <button
             type="button"
-            onClick={() => setActiveTab('meetups')}
+            onClick={goMeetups}
             className={`relative flex-1 py-3.5 text-[13px] transition-colors ${
               activeTab === 'meetups' ? 'text-slate-900' : 'text-slate-400'
             }`}
@@ -65,12 +242,12 @@ export function DogSittersPage() {
           >
             모이자·만나자
             {activeTab === 'meetups' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-[#5E43FF]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
             )}
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('sitters')}
+            onClick={goSitters}
             className={`relative flex-1 py-3.5 text-[13px] transition-colors ${
               activeTab === 'sitters' ? 'text-slate-900' : 'text-slate-400'
             }`}
@@ -78,23 +255,15 @@ export function DogSittersPage() {
           >
             유료 돌봄
             {activeTab === 'sitters' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-violet-600 to-[#5E43FF]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
             )}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/guard-moms')}
-            className="relative flex-1 py-3.5 text-[12px] text-slate-400 transition-colors hover:text-slate-600"
-            style={{ fontWeight: 800 }}
-          >
-            보호맘
           </button>
         </div>
       </div>
 
       {activeTab === 'meetups' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
-          <p className="mb-3 rounded-2xl border border-violet-100 bg-violet-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-violet-900">
+          <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
             <strong className="font-extrabold">모이자 · 만나자</strong>는 산책·놀이 등{' '}
             <strong>함께할 댕친을 부르는 글</strong>이에요. 돈 받고 맡아 주는 건 옆의{' '}
             <strong>유료 돌봄</strong> 탭을 이용해 주세요.
@@ -164,64 +333,167 @@ export function DogSittersPage() {
       {activeTab === 'sitters' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            <strong className="font-extrabold">유료 돌봄(댕집사)</strong>는{' '}
-            <strong>돈을 받고 강아지를 맡아 돌봐 주는 돌보미</strong>를 찾는 곳이에요. 같이 놀 만남 모집은{' '}
+            <strong className="font-extrabold">유료 돌봄</strong>에서{' '}
+            <strong>댕집사(산책·방문 돌봄)</strong>와 운영팀이 인증한{' '}
+            <strong>인증 보호맘(맡김·장기 돌봄)</strong>을 한곳에서 찾을 수 있어요. 무료로 같이 놀 만남은{' '}
             <strong>모이자·만나자</strong> 탭이에요.
           </p>
-          <div className="mb-4 rounded-3xl border-2 border-amber-200/80 bg-amber-50/50 p-4">
-            <div className="mb-2">
-              <label
-                className="mb-2 flex items-center gap-2 text-xs text-slate-700"
-                style={{ fontWeight: 700 }}
-              >
-                <MapPin className="h-4 w-4 shrink-0 text-amber-700" />
-                내 위치
-              </label>
-              <RegionSelector
-                selectedCity={userCity}
-                selectedDistrict={userDistrict}
-                onCityChange={setUserCity}
-                onDistrictChange={setUserDistrict}
-              />
-            </div>
-            <p className="mt-2 text-xs font-bold text-amber-900">가까운 돌보미 순으로 보여요</p>
-          </div>
 
-          <div className="relative mb-4">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="돌보미 검색 · 산책·돌봄 🐕"
-              className="w-full pl-11 pr-4 h-12 text-sm border-transparent bg-slate-50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 focus:bg-white transition-all placeholder:text-slate-400"
-              style={{ fontWeight: 500 }}
-            />
-          </div>
+          <Link
+            to="/guard-mom/register"
+            className="mb-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 py-3.5 text-sm font-extrabold text-brand shadow-sm transition-transform active:scale-[0.99]"
+          >
+            <Baby className="h-4 w-4 shrink-0" aria-hidden />
+            인증 보호맘으로 등록 · 노출 결제
+          </Link>
 
-          <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-            {specialties.map((spec) => (
+          <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {(
+              [
+                { id: 'all' as const, label: '전체' },
+                { id: 'sitter' as const, label: '댕집사' },
+                { id: 'guard' as const, label: '인증 보호맘' },
+              ] as const
+            ).map(({ id, label }) => (
               <button
-                key={spec}
-                onClick={() => setSpecialty(spec)}
-                className={`px-4 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all ${
-                  specialty === spec
-                    ? 'bg-orange-600 text-white shadow-md shadow-orange-500/20'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                key={id}
+                type="button"
+                onClick={() => syncCareToUrl(id)}
+                className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm transition-all ${
+                  careFilter === id
+                    ? 'bg-brand-deep text-white shadow-md shadow-orange-500/25'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                 }`}
                 style={{ fontWeight: 700 }}
               >
-                {spec}
+                {label}
               </button>
             ))}
           </div>
 
-          <div className="flex justify-between items-center mb-4">
+          <div className="mb-4 rounded-3xl border-2 border-amber-200/80 bg-amber-50/50 p-4 space-y-4">
+            <div>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <label className="flex items-center gap-2 text-xs text-slate-700" style={{ fontWeight: 700 }}>
+                  <MapPin className="h-4 w-4 shrink-0 text-amber-700" />
+                  내 위치 (기본)
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setLocationPickerOpen(true)}
+                  className="rounded-full border border-amber-300/80 bg-white px-3 py-1.5 text-[11px] font-extrabold text-amber-950 shadow-sm active:scale-[0.98]"
+                >
+                  동네 설정
+                </button>
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl border border-amber-200/90 bg-white px-4 py-3">
+                <MapPin className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-extrabold text-slate-900">{primaryRegionLabel}</p>
+                  {!locationBasedEnabled && (
+                    <p className="mt-0.5 text-[11px] font-semibold text-amber-800/90">
+                      위치 기반은 꺼져 있어도, 저장된 동네를 거리 기준으로 씁니다.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-amber-200/60 pt-3">
+              <p className="mb-2 text-xs font-extrabold text-slate-800">추가 위치</p>
+              <p className="mb-2 text-[11px] font-semibold leading-relaxed text-slate-600">
+                직장·부모님 댁 등 다른 동네를 넣으면, 그 중 <strong className="text-slate-800">가장 가까운 거리</strong>로
+                돌보미를 보여 드려요.
+              </p>
+              <RegionSelector
+                selectedCity={extraCity}
+                selectedDistrict={extraDistrict}
+                onCityChange={setExtraCity}
+                onDistrictChange={setExtraDistrict}
+                placeholder="추가할 시·구 선택"
+              />
+              <button
+                type="button"
+                onClick={addExtraRegion}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-400 bg-amber-100/40 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
+              >
+                <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                이 동네 추가
+              </button>
+              {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
+              {extraLocations.length > 0 && (
+                <ul className="mt-3 flex flex-wrap gap-2">
+                  {extraLocations.map((ex) => (
+                    <li
+                      key={ex.id}
+                      className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white pl-3 pr-1 py-1 text-[11px] font-bold text-slate-800 shadow-sm"
+                    >
+                      {formatRegion(ex.city, ex.district)}
+                      <button
+                        type="button"
+                        onClick={() => removeExtraRegion(ex.id)}
+                        className="rounded-full p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-900"
+                        aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <p className="text-xs font-bold text-amber-900">
+              기준 동네마다 거리를 잰 뒤, <strong>더 가까운 쪽</strong>을 표시하고 정렬해요.
+            </p>
+          </div>
+
+          <div className="relative mb-4">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="이름·소개·동네 검색 🐕"
+              className="h-12 w-full rounded-2xl border-transparent bg-slate-50 pl-11 pr-4 text-sm transition-all placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10"
+              style={{ fontWeight: 500 }}
+            />
+          </div>
+
+          {careFilter !== 'guard' && (
+            <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {specialties.map((spec) => (
+                <button
+                  key={spec}
+                  type="button"
+                  onClick={() => setSpecialty(spec)}
+                  className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm transition-all ${
+                    specialty === spec
+                      ? 'bg-orange-600 text-white shadow-md shadow-orange-500/20'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                  }`}
+                  style={{ fontWeight: 700 }}
+                >
+                  {spec}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {careFilter === 'all' && (sortBy === 'rating' || sortBy === 'reviews') && (
+            <p className="mb-3 text-[11px] font-semibold leading-relaxed text-slate-500">
+              평점·리뷰 정렬은 댕집사에 먼저 적용되고, 인증 보호맘은 일당이 낮은 순으로 이어져요.
+            </p>
+          )}
+
+          <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm text-slate-600" style={{ fontWeight: 700 }}>
-              총 {filteredSitters.length}명
+              총 {combinedRows.length}명
             </p>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as 'distance' | 'rating' | 'reviews')}
-              className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white text-slate-700 focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
               style={{ fontWeight: 700 }}
             >
               <option value="distance">🎯 거리 가까운 순</option>
@@ -230,29 +502,111 @@ export function DogSittersPage() {
             </select>
           </div>
 
-          <div className="space-y-3">
-            {filteredSitters.map((sitter) => (
-              <div key={sitter.id} className="relative">
-                <DogSitterCard dogSitter={sitter} />
-                <div className="absolute top-4 right-4 flex flex-col items-end gap-1">
-                  <div className={`px-3 py-1.5 rounded-xl text-xs shadow-sm ${
-                    sitter.distance < 2
-                      ? 'bg-emerald-500 text-white'
-                      : sitter.distance < 5
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-slate-300 text-slate-700'
-                  }`} style={{ fontWeight: 800 }}>
-                    {formatDistance(sitter.distance)}
+          {guardErr && (
+            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
+              {guardErr}
+            </div>
+          )}
+
+          {guardLoading && careFilter === 'guard' ? (
+            <div className="flex justify-center py-16 text-slate-400">
+              <Loader2 className="h-8 w-8 animate-spin" aria-label="불러오는 중" />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {guardLoading && careFilter === 'all' && (
+                <p className="text-center text-[11px] font-semibold text-slate-400">인증 보호맘 목록을 불러오는 중…</p>
+              )}
+              {combinedRows.map((row) =>
+                row.kind === 'sitter' ? (
+                  <div key={`s-${row.sitter.id}`} className="relative">
+                    <DogSitterCard dogSitter={row.sitter} />
+                    <div
+                      className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1"
+                      aria-hidden
+                    >
+                      <div
+                        className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
+                          row.distance < 2
+                            ? 'bg-orange-500 text-white'
+                            : row.distance < 5
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-slate-300 text-slate-700'
+                        }`}
+                        style={{ fontWeight: 800 }}
+                      >
+                        {formatDistance(row.distance)}
+                      </div>
+                      {row.distance < 2 && (
+                        <span
+                          className="rounded-lg bg-orange-50 px-2 py-0.5 text-xs text-orange-600"
+                          style={{ fontWeight: 800 }}
+                        >
+                          초근거리!
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  {sitter.distance < 2 && (
-                    <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg" style={{ fontWeight: 800 }}>
-                      초근거리!
-                    </span>
-                  )}
+                ) : (
+                  <div key={`g-${row.mom.id}`} className="relative">
+                    <Link
+                      to={`/guard-mom/${row.mom.id}`}
+                      className="block rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-orange-200 hover:shadow-md active:scale-[0.98]"
+                    >
+                      <div className="flex gap-4">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 text-2xl shadow-inner">
+                          🍼
+                        </div>
+                        <div className="min-w-0 flex-1 pt-0.5">
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-brand">
+                            인증 보호맘
+                          </p>
+                          <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-800">
+                            {row.mom.intro.trim() || '소개를 준비 중이에요.'}
+                          </p>
+                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+                            <span className="inline-flex items-center gap-1">
+                              <MapPin className="h-3.5 w-3.5 shrink-0" />
+                              {[row.mom.region_si, row.mom.region_gu].filter(Boolean).join(' ') || '동네 미입력'}
+                            </span>
+                            <span className="text-brand">
+                              1일 {row.mom.per_day_fee_krw.toLocaleString('ko-KR')}원부터
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                    <div
+                      className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1"
+                      aria-hidden
+                    >
+                      <div
+                        className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
+                          row.distance < 2
+                            ? 'bg-orange-500 text-white'
+                            : row.distance < 5
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-slate-300 text-slate-700'
+                        }`}
+                        style={{ fontWeight: 800 }}
+                      >
+                        {formatDistance(row.distance)}
+                      </div>
+                    </div>
+                  </div>
+                ),
+              )}
+
+              {!guardLoading && combinedRows.length === 0 && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+                  <p className="text-sm font-bold text-slate-700">조건에 맞는 돌보미가 없어요</p>
+                  <p className="mt-2 text-xs font-medium text-slate-500">
+                    필터·검색어를 바꾸거나, 인증 보호맘 등록을 눌러 노출을 시작해 보세요.
+                  </p>
                 </div>
-              </div>
-            ))}
-          </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

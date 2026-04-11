@@ -43,9 +43,9 @@ const dogProfiles = [
 // MBTI 타입 프리뷰
 const mbtiTypes = [
   { type: '활발한아이', emoji: '🔥', color: 'from-red-400 to-orange-400', desc: '에너지 폭발! 달리기 러버' },
-  { type: '소심한아이', emoji: '🥺', color: 'from-violet-400 to-purple-400', desc: '조용한 산책을 좋아해요' },
+  { type: '소심한아이', emoji: '🥺', color: 'from-amber-400 to-orange-400', desc: '조용한 산책을 좋아해요' },
   { type: '사교적아이', emoji: '🥳', color: 'from-yellow-400 to-amber-400', desc: '댕친 만드는게 취미!' },
-  { type: '듬직한아이', emoji: '🛡️', color: 'from-emerald-400 to-teal-400', desc: '든든한 동네 형/누나' },
+  { type: '듬직한아이', emoji: '🛡️', color: 'from-orange-400 to-amber-500', desc: '든든한 동네 형/누나' },
 ];
 
 const fadeUp = {
@@ -337,8 +337,8 @@ export function LandingPage() {
         <div className="space-y-3 max-md:space-y-3.5">
           {[
             { step: '01', icon: <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
-            { step: '02', icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-pink-500 to-rose-400' },
-            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '만나서 친해지기', desc: '모이자·만나자로 친해지면, 여행·출장 때 서로 집에 잠시 맡아줄 수도 있어요', color: 'from-emerald-500 to-teal-400' },
+            { step: '02', icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-orange-400 to-amber-500' },
+            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '만나서 친해지기', desc: '모이자·만나자로 친해지면, 여행·출장 때 서로 집에 잠시 맡아줄 수도 있어요', color: 'from-orange-500 to-amber-400' },
           ].map((item, i) => (
             <motion.div
               key={item.step}
@@ -414,7 +414,7 @@ export function LandingPage() {
               🙌 모이자 · 만나자
             </h2>
             <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-              같이 산책·놀이할 댕친을 부르는 글이에요
+              산책·놀이 모임도 있고, 잠시 맡기는 돌봄 글도 섞여 있어요
             </p>
           </div>
           <Link to="/sitters" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
@@ -441,7 +441,13 @@ export function LandingPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-2xl">
-                        {req.category === '산책' ? '🐕' : req.category === '훈련' ? '🎓' : '🐾'}
+                        {req.category === '산책'
+                          ? '🐕'
+                          : req.category === '훈련'
+                            ? '🎓'
+                            : req.category === '돌봄'
+                              ? '🍼'
+                              : '🐾'}
                       </div>
                     )}
                   </div>
@@ -698,8 +704,8 @@ export function LandingPage() {
                 onClick={closeExploreMenu}
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
               >
-                <CreditCard className="h-5 w-5 text-slate-500" />
-                결제 · 프리미엄
+                <CreditCard className="h-5 w-5 text-brand" />
+                유료 돌봄 · 노출 결제
               </Link>
               <Link
                 to="/customer-service"

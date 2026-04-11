@@ -22,7 +22,8 @@ export function getCurrentBrowserPosition(): Promise<{ lat: number; lng: number 
           reject(new Error('위치를 가져오지 못했습니다.'));
         }
       },
-      { enableHighAccuracy: true, maximumAge: 30_000, timeout: 20_000 },
+      // maximumAge: 0 — 이전에 본 기본 지도 좌표(예: 강남)가 캐시로 재사용되는 것을 줄임
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 25_000 },
     );
   });
 }

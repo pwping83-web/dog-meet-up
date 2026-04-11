@@ -10,7 +10,7 @@ export function MyJoinRequestsPage() {
     <div className="min-h-screen bg-slate-50/50 pb-24">
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="px-4 h-14 flex items-center gap-3 max-w-screen-md mx-auto">
-          <Link to="/my" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors">
+          <Link to="/explore" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="홈으로">
             <ArrowLeft className="w-6 h-6" />
           </Link>
           <h1 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>받은 참여 신청</h1>
@@ -90,9 +90,9 @@ export function MyJoinRequestsPage() {
                       <p className="text-xs text-orange-600 mb-1" style={{ fontWeight: 700 }}>참여 메시지</p>
                       <p className="text-xl text-orange-700" style={{ fontWeight: 900 }}>{jr.estimatedCost}</p>
                     </div>
-                    <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-center">
-                      <p className="text-xs text-emerald-600 mb-1" style={{ fontWeight: 700 }}>가능 일정</p>
-                      <p className="text-xl text-emerald-700" style={{ fontWeight: 900 }}>{jr.estimatedDuration}</p>
+                    <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-4 text-center">
+                      <p className="text-xs text-orange-600 mb-1" style={{ fontWeight: 700 }}>가능 일정</p>
+                      <p className="text-xl text-orange-700" style={{ fontWeight: 900 }}>{jr.estimatedDuration}</p>
                     </div>
                   </div>
 

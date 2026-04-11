@@ -24,7 +24,7 @@ const pages: PageInfo[] = [
   
   // 댕집사
   { path: '/sitters', name: '모임·유료돌봄', emoji: '🐕', category: '댕집사' },
-  { path: '/guard-moms', name: '인증 보호맘 란', emoji: '🍼', category: '댕집사' },
+  { path: '/sitters?care=guard', name: '유료 돌봄 · 보호맘', emoji: '🍼', category: '댕집사' },
   { path: '/guard-mom/register', name: '보호맘 등록', emoji: '✍️', category: '댕집사' },
   { path: '/sitter/r1', name: '댕친 프로필', emoji: '👤', category: '댕집사' },
   { path: '/become-sitter', name: '유료 돌봄 등록', emoji: '✍️', category: '댕집사' },
@@ -36,7 +36,7 @@ const pages: PageInfo[] = [
   
   // 사용자
   { path: '/my', name: '마이페이지', emoji: '👤', category: '사용자' },
-  { path: '/billing', name: '결제·프리미엄', emoji: '💳', category: '사용자' },
+  { path: '/billing', name: '인증 보호맘 결제', emoji: '💳', category: '사용자' },
   { path: '/login', name: '로그인', emoji: '🔐', category: '사용자' },
   { path: '/signup', name: '회원가입', emoji: '📝', category: '사용자' },
   { path: '/delete-account', name: '회원탈퇴', emoji: '🗑️', category: '사용자' },

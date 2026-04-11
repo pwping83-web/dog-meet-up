@@ -56,6 +56,28 @@ function pickDistrict(city: string, depth2: string, depth3: string): string | nu
 }
 
 /**
+ * BigDataCloud 등에서 오는 행정구역 이름 배열(국→도시→구 순 등)로 시·구 추정.
+ * `city`/`locality` 단일 필드만 쓸 때 강남 등으로 잘못 고정되는 경우를 줄입니다.
+ */
+export function matchAdministrativeNames(adminNames: string[]): {
+  city: string;
+  district: string;
+  matched: boolean;
+} {
+  const list = adminNames.map((s) => s.trim()).filter(Boolean);
+  for (let i = 0; i < list.length; i++) {
+    const city = normalizeCity(list[i]);
+    if (!city) continue;
+    for (let j = 0; j < list.length; j++) {
+      if (i === j) continue;
+      const d = pickDistrict(city, list[j], '');
+      if (d) return { city, district: d, matched: true };
+    }
+  }
+  return { city: '', district: '', matched: false };
+}
+
+/**
  * 카카오 coord2Address 결과를 앱의 (city, district)로 맞춤.
  * 매칭 실패 시에도 표시용으로 추정 city + depth2 를 돌려줄 수 있음.
  */
