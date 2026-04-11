@@ -4,6 +4,8 @@
  * - iOS Safari: 홈 화면에 추가한 PWA에서 알림이 더 잘 되고, 웹 진동은 제한적일 수 있습니다.
  */
 
+import { loadNotificationPrefs } from './notificationPreferences';
+
 const DEFAULT_VIBRATE = [200, 100, 200, 100, 200] as const;
 
 export function canUseNotifications(): boolean {
@@ -42,10 +44,14 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   }
 }
 
-type NotifyOpts = {
+export type NotifyOpts = {
   tag?: string;
-  /** false면 진동만 생략 */
+  /** false면 진동만 생략 (prefs 무시하고 강제) */
   vibrate?: boolean;
+  /** 권한 안내·테스트 등 사용자 설정 무시 */
+  bypassPrefs?: boolean;
+  /** 모임/채팅 수신 여부 prefs 적용 */
+  category?: 'meetup' | 'chat';
 };
 
 /**
@@ -60,7 +66,18 @@ export async function showDeviceNotification(
     return false;
   }
 
-  if (opts.vibrate !== false) {
+  const pref = opts.bypassPrefs ? null : loadNotificationPrefs();
+  if (pref) {
+    if (!pref.popup) return false;
+    if (opts.category === 'meetup' && !pref.meetup) return false;
+    if (opts.category === 'chat' && !pref.chat) return false;
+  }
+
+  const useSound = opts.bypassPrefs || !pref ? true : pref.sound;
+  const useVibrate =
+    opts.vibrate !== false && (opts.bypassPrefs || !pref ? true : pref.vibrate);
+
+  if (useVibrate) {
     pulseVibrate();
   }
 
@@ -73,8 +90,9 @@ export async function showDeviceNotification(
         badge: '/favicon.svg',
         tag: opts.tag ?? 'daeng-notification',
         renotify: true,
-        vibrate: [...DEFAULT_VIBRATE],
+        vibrate: useVibrate ? [...DEFAULT_VIBRATE] : undefined,
         requireInteraction: false,
+        silent: !useSound,
       });
       return true;
     }
@@ -88,6 +106,7 @@ export async function showDeviceNotification(
       icon: '/favicon.svg',
       badge: '/favicon.svg',
       tag: opts.tag ?? 'daeng-notification',
+      silent: !useSound,
     });
     n.onclick = () => {
       window.focus();
