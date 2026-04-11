@@ -13,7 +13,9 @@ import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserLocation } from '../../contexts/UserLocationContext';
 import { isAppAdmin } from '../../lib/appAdmin';
+import { LocationPickerModal } from '../components/LocationPickerModal';
 import type { User } from '@supabase/supabase-js';
 
 function shortProfileLabel(user: User): string {
@@ -59,7 +61,9 @@ export function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
+  const { shortLabel: locationShortLabel } = useUserLocation();
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
   const [dbDogs, setDbDogs] = useState<any[]>([]);
@@ -107,6 +111,7 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-orange-50/30 pb-20 overflow-x-hidden">
+      <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
 
       {/* ─── HERO SECTION ─── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 pt-4 pb-10 px-4">
@@ -118,85 +123,88 @@ export function LandingPage() {
           <span className="absolute bottom-8 left-6 text-4xl opacity-10 -rotate-12 select-none">🦴</span>
         </div>
 
-        {/* 헤더 */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="relative z-10 flex items-center justify-between mb-6"
-        >
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl">🐕</span>
-            <span className="text-lg text-white/90 tracking-tight" style={{ fontWeight: 900 }}>댕댕마켓</span>
+        {/* 모바일: 하단 탭(~5rem) 제외 높이에서 제목↑ / CTA(모임 만들기)↓ · md 이상은 기존처럼 자연 높이 */}
+        <div className="relative z-10 flex min-h-[calc(100dvh-5rem)] flex-col md:min-h-0">
+          {/* 헤더 */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex shrink-0 items-center justify-between pb-4"
+          >
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl">🐕</span>
+              <span className="text-lg text-white/90 tracking-tight" style={{ fontWeight: 900 }}>댕댕마켓</span>
+            </div>
+            {authLoading ? (
+              <span className="flex h-8 w-16 items-center justify-center rounded-lg border border-white/20 bg-white/10">
+                <Loader2 className="h-4 w-4 animate-spin text-white" aria-hidden />
+              </span>
+            ) : user ? (
+              <button
+                type="button"
+                onClick={() => setExploreMenuOpen(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/40 bg-white/20 text-white backdrop-blur-md active:scale-95 transition-all"
+                aria-label="메뉴·설정"
+                aria-expanded={exploreMenuOpen}
+              >
+                <Menu className="h-5 w-5" strokeWidth={2.5} aria-hidden />
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs border border-white/30 active:scale-95 transition-all"
+                style={{ fontWeight: 700 }}
+              >
+                로그인
+              </Link>
+            )}
+          </motion.div>
+
+          <div className="flex min-h-0 flex-1 flex-col justify-between gap-6 md:block md:flex-none">
+            {/* 히어로 텍스트 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-full mb-3 border border-white/20" style={{ fontWeight: 800 }}>
+                <Sparkles className="w-3 h-3" />
+                강아지 MBTI 매칭 시스템
+              </span>
+              <h1 className="text-white text-2xl mb-2 leading-tight tracking-tight" style={{ fontWeight: 900 }}>
+                우리 동네<br />
+                <span className="text-yellow-200">댕친</span>을 찾아보세요
+              </h1>
+              <p className="text-orange-100/90 text-xs md:mb-5 leading-relaxed" style={{ fontWeight: 600 }}>
+                성격이 맞는 댕댕이 친구를 찾고<br />
+                산책·훈련 모임에 함께 참여해요 🐾
+              </p>
+            </motion.div>
+
+            {/* CTA — 모바일에서 히어로 블록 하단에 정렬 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="flex gap-2.5 pb-1 md:mt-0"
+            >
+              <Link
+                to={!authLoading && user ? '/create-meetup' : '/signup'}
+                className="flex-1 bg-white text-orange-600 py-3.5 rounded-xl text-center text-sm shadow-xl shadow-orange-600/20 active:scale-[0.97] transition-all touch-manipulation"
+                style={{ fontWeight: 800 }}
+              >
+                {!authLoading && user ? '모임 만들기' : '시작하기'}
+              </Link>
+              <Link
+                to="/sitters"
+                className="flex-1 bg-white/15 backdrop-blur-md text-white py-3.5 rounded-xl text-center text-sm border border-white/25 active:scale-[0.97] transition-all touch-manipulation"
+                style={{ fontWeight: 800 }}
+              >
+                둘러보기
+              </Link>
+            </motion.div>
           </div>
-          {authLoading ? (
-            <span className="flex h-8 w-16 items-center justify-center rounded-lg border border-white/20 bg-white/10">
-              <Loader2 className="h-4 w-4 animate-spin text-white" aria-hidden />
-            </span>
-          ) : user ? (
-            <button
-              type="button"
-              onClick={() => setExploreMenuOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/40 bg-white/20 text-white backdrop-blur-md active:scale-95 transition-all"
-              aria-label="메뉴·설정"
-              aria-expanded={exploreMenuOpen}
-            >
-              <Menu className="h-5 w-5" strokeWidth={2.5} aria-hidden />
-            </button>
-          ) : (
-            <Link
-              to="/login"
-              className="bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs border border-white/30 active:scale-95 transition-all"
-              style={{ fontWeight: 700 }}
-            >
-              로그인
-            </Link>
-          )}
-        </motion.div>
-
-        {/* 히어로 텍스트 */}
-        <div className="relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-          >
-            <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-full mb-3 border border-white/20" style={{ fontWeight: 800 }}>
-              <Sparkles className="w-3 h-3" />
-              강아지 MBTI 매칭 시스템
-            </span>
-            <h1 className="text-white text-2xl mb-2 leading-tight tracking-tight" style={{ fontWeight: 900 }}>
-              우리 동네<br />
-              <span className="text-yellow-200">댕친</span>을 찾아보세요
-            </h1>
-            <p className="text-orange-100/90 text-xs mb-5 leading-relaxed" style={{ fontWeight: 600 }}>
-              성격이 맞는 댕댕이 친구를 찾고<br />
-              산책·훈련 모임에 함께 참여해요 🐾
-            </p>
-          </motion.div>
-
-          {/* CTA 버튼 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="flex gap-2.5"
-          >
-            <Link
-              to={!authLoading && user ? '/create-meetup' : '/signup'}
-              className="flex-1 bg-white text-orange-600 py-3 rounded-xl text-center text-sm shadow-xl shadow-orange-600/20 active:scale-[0.97] transition-all"
-              style={{ fontWeight: 800 }}
-            >
-              {!authLoading && user ? '모임 만들기' : '시작하기'}
-            </Link>
-            <Link
-              to="/sitters"
-              className="flex-1 bg-white/15 backdrop-blur-md text-white py-3 rounded-xl text-center text-sm border border-white/25 active:scale-[0.97] transition-all"
-              style={{ fontWeight: 800 }}
-            >
-              둘러보기
-            </Link>
-          </motion.div>
         </div>
 
         {/* 댕친 프로필 카드 가로 스크롤 */}
@@ -317,7 +325,7 @@ export function LandingPage() {
 
         <div className="space-y-3">
           {[
-            { step: '01', icon: <MapPin className="w-5 h-5" />, title: '동네 설정', desc: '우리 동네를 선택하면 가까운 댕친들이 보여요', color: 'from-orange-500 to-amber-400' },
+            { step: '01', icon: <MapPin className="w-5 h-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
             { step: '02', icon: <Heart className="w-5 h-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-pink-500 to-rose-400' },
             { step: '03', icon: <Users className="w-5 h-5" />, title: '모임 참여', desc: '산책, 훈련, 놀이 모임에 참여 신청해요', color: 'from-emerald-500 to-teal-400' },
           ].map((item, i) => (
@@ -576,9 +584,15 @@ export function LandingPage() {
             <Home className="w-5 h-5" />
             <span className="text-[9px]" style={{ fontWeight: 800 }}>홈</span>
           </Link>
-          <Link to="/sitters" className="flex flex-col items-center gap-0.5 text-slate-400">
-            <MapPin className="w-5 h-5" /><span className="text-[9px]" style={{ fontWeight: 800 }}>동네번개</span>
-          </Link>
+          <button
+            type="button"
+            onClick={() => setLocationPickerOpen(true)}
+            className="flex flex-col items-center gap-0.5 text-slate-400 active:opacity-80"
+            aria-label={`위치·동네 설정. 현재 ${locationShortLabel}`}
+          >
+            <MapPin className="w-5 h-5" />
+            <span className="text-[9px]" style={{ fontWeight: 800 }}>위치</span>
+          </button>
           <Link to="/create-meetup" className="flex flex-col items-center -mt-5 group">
             <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-400 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-400/40 group-active:scale-90 transition-all border-[3px] border-white">
               <PlusCircle className="w-6 h-6 text-white" />
@@ -628,6 +642,17 @@ export function LandingPage() {
                 <User className="h-5 w-5 text-orange-500" />
                 마이페이지
               </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  closeExploreMenu();
+                  setLocationPickerOpen(true);
+                }}
+                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <MapPin className="h-5 w-5 text-orange-500" />
+                위치·동네 설정
+              </button>
               <Link
                 to="/profile/edit"
                 onClick={closeExploreMenu}
