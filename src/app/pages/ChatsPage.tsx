@@ -165,7 +165,12 @@ export function ChatDetailPage() {
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             placeholder="메시지 보내기..."
             className="flex-1 pl-5 pr-12 h-12 bg-slate-50/80 border-transparent focus:border-orange-500 focus:bg-white rounded-full focus:ring-4 focus:ring-orange-500/10 transition-all text-slate-900 font-medium placeholder:text-slate-400"
           />

@@ -1,7 +1,7 @@
-import { Outlet, useLocation, Link } from 'react-router';
-import { Header } from '../components/Header';
-import { Home, Wrench, User, Compass } from 'lucide-react';
 import { useEffect } from 'react';
+import { Outlet, useLocation, Link } from 'react-router';
+import { Home, Wrench, User, Compass } from 'lucide-react';
+import { Header } from '../components/Header';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
 import { InstallPwaFab } from '../components/InstallPwaFab';
@@ -47,19 +47,24 @@ export function Root() {
     svgLink.type = 'image/svg+xml';
     svgLink.rel = 'icon';
     svgLink.href = faviconURL;
+    svgLink.setAttribute('data-app-favicon', '1');
     document.head.appendChild(svgLink);
-    
-    // Apple Touch Icon
+
     const appleLink = document.createElement('link');
     appleLink.rel = 'apple-touch-icon';
     appleLink.href = faviconURL;
+    appleLink.setAttribute('data-app-favicon', '1');
     document.head.appendChild(appleLink);
-    
-    // Shortcut icon (추가 호환성)
+
     const shortcutLink = document.createElement('link');
     shortcutLink.rel = 'shortcut icon';
     shortcutLink.href = faviconURL;
+    shortcutLink.setAttribute('data-app-favicon', '1');
     document.head.appendChild(shortcutLink);
+
+    return () => {
+      document.querySelectorAll('link[data-app-favicon="1"]').forEach((el) => el.remove());
+    };
   }, []);
 
   // 하단 네비게이션이 필요없는 페이지들 (LandingPage가 자체 네비게이션 포함)
@@ -117,30 +122,39 @@ export function Root() {
               <div className="flex items-center justify-around">
                 <Link
                   to="/"
-                  className={`flex flex-1 flex-col items-center gap-1 py-2 ${
+                  className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
                     location.pathname === '/' ? 'text-orange-600' : 'text-gray-500'
                   }`}
                 >
-                  <Home className="h-6 w-6" />
-                  <span className="text-xs">홈</span>
+                  <Home className="h-5 w-5" />
+                  <span className="text-[10px] font-semibold">홈</span>
+                </Link>
+                <Link
+                  to="/explore"
+                  className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
+                    location.pathname === '/explore' ? 'text-orange-600' : 'text-gray-500'
+                  }`}
+                >
+                  <Compass className="h-5 w-5" />
+                  <span className="text-[10px] font-semibold">탐색</span>
                 </Link>
                 <Link
                   to="/sitters"
-                  className={`flex flex-1 flex-col items-center gap-1 py-2 ${
+                  className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
                     location.pathname.startsWith('/sitter') ? 'text-orange-600' : 'text-gray-500'
                   }`}
                 >
-                  <Wrench className="h-6 w-6" />
-                  <span className="text-xs">댕집사</span>
+                  <Wrench className="h-5 w-5" />
+                  <span className="text-[10px] font-semibold">댕집사</span>
                 </Link>
                 <Link
                   to="/my"
-                  className={`flex flex-1 flex-col items-center gap-1 py-2 ${
+                  className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
                     location.pathname === '/my' ? 'text-orange-600' : 'text-gray-500'
                   }`}
                 >
-                  <User className="h-6 w-6" />
-                  <span className="text-xs">내정보</span>
+                  <User className="h-5 w-5" />
+                  <span className="text-[10px] font-semibold">내정보</span>
                 </Link>
               </div>
             </nav>

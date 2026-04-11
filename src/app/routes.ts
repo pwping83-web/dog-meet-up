@@ -1,3 +1,6 @@
+import { createElement } from 'react';
+import { RouteErrorPage } from './pages/RouteErrorPage';
+
 /**
  * React Router Configuration
  * 
@@ -49,6 +52,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     Component: Root,
+    errorElement: createElement(RouteErrorPage),
     children: [
       { index: true, Component: HomePage },                       // Home (simple, vibrant landing)
       { path: 'explore', Component: ExplorePage },                 // Community explorer (meetups, MBTI, profiles)
