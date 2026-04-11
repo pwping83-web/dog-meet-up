@@ -128,7 +128,7 @@ export function LandingPage() {
         <div className="relative z-10 flex flex-col md:min-h-0">
           {/* 헤더 */}
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="flex shrink-0 items-center justify-between pb-4 max-md:pb-5"
@@ -165,7 +165,7 @@ export function LandingPage() {
           <div className="flex flex-col gap-6 pb-1 max-md:gap-7 md:gap-5">
             {/* 히어로 텍스트 — 모바일 당근형: 큰 제목·배지 */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               className="order-1"
@@ -196,7 +196,7 @@ export function LandingPage() {
 
             {/* 댕친 프로필 — 모바일: CTA 위 / md: CTA 아래 */}
             <motion.div
-              initial={{ opacity: 0, x: 40 }}
+              initial={false}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.25 }}
               className="order-2 md:order-3"
@@ -226,7 +226,7 @@ export function LandingPage() {
 
             {/* CTA — 모바일: 사진 아래 / md: 사진 위 */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.35 }}
               className="order-3 flex w-full flex-col gap-3 max-md:gap-3.5 md:order-2 md:flex-row md:gap-2.5"
@@ -251,17 +251,8 @@ export function LandingPage() {
       </section>
 
       {/* ─── STATS BAR ─── */}
-      <motion.section
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-50px' }}
-        className="-mt-5 px-4 relative z-20 max-md:-mt-4"
-      >
-        <motion.div
-          variants={fadeUp}
-          custom={0}
-          className="grid grid-cols-3 gap-2 rounded-3xl border border-slate-100 bg-white p-5 shadow-lg shadow-slate-200/50 max-md:gap-3 max-md:p-5 md:gap-3 md:rounded-2xl md:p-4"
-        >
+      <section className="-mt-5 px-4 relative z-20 max-md:-mt-4">
+        <div className="grid grid-cols-3 gap-2 rounded-3xl border border-slate-100 bg-white p-5 shadow-lg shadow-slate-200/50 max-md:gap-3 max-md:p-5 md:gap-3 md:rounded-2xl md:p-4">
           {[
             { num: '2,847', label: '등록 댕댕이', icon: '🐕' },
             { num: '1,230', label: '이번 달 만남', icon: '📅' },
@@ -273,8 +264,8 @@ export function LandingPage() {
               <p className="text-slate-400 text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 700 }}>{stat.label}</p>
             </div>
           ))}
-        </motion.div>
-      </motion.section>
+        </div>
+      </section>
 
       {/* ─── REAL REGISTERED DOGS (Supabase) ─── */}
       {(!dogsLoading && dbDogs.length > 0) && (
