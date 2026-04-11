@@ -1,4 +1,4 @@
-/** 하단 탭 — 모이자·만나자 + 유료 강아지 돌봄(댕집사) 메뉴 */
+/** 하단 탭 — 모이자·만나자 + 인증 돌봄(댕집사·보호맘) 메뉴 */
 export function PawTabIcon({ className }: { className?: string }) {
   return (
     <svg

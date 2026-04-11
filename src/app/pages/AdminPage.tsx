@@ -17,7 +17,7 @@ function billingProductLabel(key: string): string {
   const map: Record<string, string> = {
     premium_month: '댕댕 프리미엄 (월)',
     meetup_boost: '만남 글 부스트 (1회)',
-    guard_mom_listing_7d: '유료 돌봄 목록 노출 (7일)',
+    guard_mom_listing_7d: '인증 돌봄 목록 노출 (7일)',
     guard_mom_care_day: '보호맘 돌봄 예약',
   };
   return map[key] ?? key;

@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, MapPin, MessageCircle, Plus, Baby, Loader2 } from 'lucide-react';
+import { Search, MapPin, MessageCircle, Loader2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router';
 import { DogSitterCard } from '../components/DogSitterCard';
-import { LocationPickerModal } from '../components/LocationPickerModal';
-import { RegionSelector } from '../components/RegionSelector';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
-import { formatRegion } from '../data/regions';
 import { calculateDistance, formatDistance } from '../utils/distance';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { supabase } from '../../lib/supabase';
@@ -13,21 +10,40 @@ import type { Database } from '../../lib/supabase';
 import type { DogSitter } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
-
-type ExtraRegion = { id: string; city: string; district: string };
+import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
+
+/** 모이자: 모여서 하는 활동 / 만나자: 맞춤·급구·교배 등 */
+const MOIJA_CATEGORIES = new Set(['산책', '훈련', '놀이', '카페']);
+const MANNAJA_CATEGORIES = new Set(['돌봄', '교배', '실종']);
+
+type TopTab = 'moija' | 'mannaja' | 'certified';
 
 type CombinedRow =
   | { kind: 'sitter'; distance: number; sitter: DogSitter }
   | { kind: 'guard'; distance: number; mom: GuardMomRow };
 
+function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
+  if (typeof window === 'undefined') return { topTab: 'moija', care: 'all' };
+  const p = new URLSearchParams(window.location.search);
+  const view = p.get('view');
+  const care = p.get('care');
+  if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter') {
+    let cf: CareFilter = 'all';
+    if (care === 'guard' || care === 'moms') cf = 'guard';
+    else if (care === 'sitter') cf = 'sitter';
+    return { topTab: 'certified', care: cf };
+  }
+  if (view === 'mannaja') return { topTab: 'mannaja', care: 'all' };
+  return { topTab: 'moija', care: 'all' };
+}
+
 export function DogSittersPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { location, regionFullLabel, locationBasedEnabled } = useUserLocation();
-  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'meetups' | 'sitters'>('meetups');
-  const [careFilter, setCareFilter] = useState<CareFilter>('all');
+  const { location } = useUserLocation();
+  const [topTab, setTopTab] = useState<TopTab>(() => readInitialSittersUrl().topTab);
+  const [careFilter, setCareFilter] = useState<CareFilter>(() => readInitialSittersUrl().care);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
   const [guardErr, setGuardErr] = useState<string | null>(null);
@@ -35,13 +51,14 @@ export function DogSittersPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
-  const [extraLocations, setExtraLocations] = useState<ExtraRegion[]>([]);
-  const [extraCity, setExtraCity] = useState('');
-  const [extraDistrict, setExtraDistrict] = useState('');
-  const [extraHint, setExtraHint] = useState<string | null>(null);
+  const [extraLocations, setExtraLocations] = useState<ExtraCareRegion[]>(() => readExtraCareRegions());
 
   const specialties = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
-  const categories = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
+  const meetupCategoryChips = useMemo(() => {
+    if (topTab === 'mannaja') return ['전체', '돌봄', '교배', '실종'] as const;
+    if (topTab === 'moija') return ['전체', '산책', '훈련', '놀이', '카페'] as const;
+    return ['전체'] as const;
+  }, [topTab]);
 
   /** 거리 계산 기준 구 목록: 앱에 저장된 내 위치 + 사용자가 추가한 동네 */
   const referenceDistricts = useMemo(() => {
@@ -50,33 +67,16 @@ export function DogSittersPage() {
     return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
   }, [location.district, extraLocations]);
 
-  const primaryRegionLabel =
-    location.city && location.district
-      ? formatRegion(location.city, location.district)
-      : regionFullLabel;
+  useEffect(() => {
+    const load = () => setExtraLocations(readExtraCareRegions());
+    load();
+    window.addEventListener('daeng-extra-care-regions', load);
+    return () => window.removeEventListener('daeng-extra-care-regions', load);
+  }, []);
 
-  const addExtraRegion = () => {
-    setExtraHint(null);
-    if (!extraCity.trim() || !extraDistrict.trim()) {
-      setExtraHint('추가할 시·구를 모두 선택해 주세요.');
-      return;
-    }
-    const d = extraDistrict.trim();
-    if (referenceDistricts.includes(d)) {
-      setExtraHint('이미 기준에 포함된 동네예요.');
-      return;
-    }
-    setExtraLocations((prev) => [
-      ...prev,
-      { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, city: extraCity.trim(), district: d },
-    ]);
-    setExtraCity('');
-    setExtraDistrict('');
-  };
-
-  const removeExtraRegion = (id: string) => {
-    setExtraLocations((prev) => prev.filter((e) => e.id !== id));
-  };
+  useEffect(() => {
+    if (topTab === 'certified') setExtraLocations(readExtraCareRegions());
+  }, [topTab]);
 
   const distForDistrict = useMemo(() => {
     return (district: string) => {
@@ -87,15 +87,23 @@ export function DogSittersPage() {
   }, [referenceDistricts]);
 
   useEffect(() => {
+    const view = searchParams.get('view');
     const care = searchParams.get('care');
-    if (care === 'guard' || care === 'moms') {
-      setCareFilter('guard');
-      setActiveTab('sitters');
-    } else if (care === 'sitter') {
-      setCareFilter('sitter');
-      setActiveTab('sitters');
+    if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter') {
+      setTopTab('certified');
+      if (care === 'guard' || care === 'moms') setCareFilter('guard');
+      else if (care === 'sitter') setCareFilter('sitter');
+      else setCareFilter('all');
+    } else if (view === 'mannaja') {
+      setTopTab('mannaja');
+    } else {
+      setTopTab('moija');
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (topTab === 'moija' || topTab === 'mannaja') setCategory('전체');
+  }, [topTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,9 +139,11 @@ export function DogSittersPage() {
 
   const syncCareToUrl = (next: CareFilter) => {
     setCareFilter(next);
+    setTopTab('certified');
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev);
+        p.set('view', 'care');
         if (next === 'all') p.delete('care');
         else if (next === 'guard') p.set('care', 'guard');
         else p.set('care', 'sitter');
@@ -143,12 +153,13 @@ export function DogSittersPage() {
     );
   };
 
-  const goMeetups = () => {
-    setActiveTab('meetups');
-    setCareFilter('all');
+  const goMoija = () => {
+    setCategory('전체');
+    setTopTab('moija');
     setSearchParams(
       (prev) => {
         const p = new URLSearchParams(prev);
+        p.delete('view');
         p.delete('care');
         return p;
       },
@@ -156,7 +167,33 @@ export function DogSittersPage() {
     );
   };
 
-  const goSitters = () => setActiveTab('sitters');
+  const goMannaja = () => {
+    setCategory('전체');
+    setTopTab('mannaja');
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.set('view', 'mannaja');
+        p.delete('care');
+        return p;
+      },
+      { replace: true },
+    );
+  };
+
+  const goCertifiedCare = () => {
+    setTopTab('certified');
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.set('view', 'care');
+        const hadCare = prev.get('care');
+        if (!hadCare || hadCare === 'all') p.delete('care');
+        return p;
+      },
+      { replace: true },
+    );
+  };
 
   const q = searchQuery.trim().toLowerCase();
 
@@ -213,9 +250,15 @@ export function DogSittersPage() {
     return rows;
   }, [careFilter, specialty, sortBy, distForDistrict, guardMoms, q]);
 
-  // 모임 필터링
   const filteredMeetups = mockMeetups
-    .filter(req => {
+    .filter((req) => {
+      const inTab =
+        topTab === 'moija'
+          ? MOIJA_CATEGORIES.has(req.category)
+          : topTab === 'mannaja'
+            ? MANNAJA_CATEGORIES.has(req.category)
+            : false;
+      if (!inTab) return false;
       const categoryMatch = category === '전체' || req.category === category;
       return categoryMatch;
     })
@@ -228,50 +271,73 @@ export function DogSittersPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
       {/* 상단 탭 */}
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex max-w-screen-md mx-auto">
           <button
             type="button"
-            onClick={goMeetups}
-            className={`relative flex-1 py-3.5 text-[13px] transition-colors ${
-              activeTab === 'meetups' ? 'text-slate-900' : 'text-slate-400'
+            onClick={goMoija}
+            className={`relative flex-1 py-3.5 text-[12px] max-sm:text-[11px] transition-colors ${
+              topTab === 'moija' ? 'text-slate-900' : 'text-slate-400'
             }`}
             style={{ fontWeight: 800 }}
           >
-            모이자·만나자
-            {activeTab === 'meetups' && (
+            모이자
+            {topTab === 'moija' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
             )}
           </button>
           <button
             type="button"
-            onClick={goSitters}
-            className={`relative flex-1 py-3.5 text-[13px] transition-colors ${
-              activeTab === 'sitters' ? 'text-slate-900' : 'text-slate-400'
+            onClick={goMannaja}
+            className={`relative flex-1 py-3.5 text-[12px] max-sm:text-[11px] transition-colors ${
+              topTab === 'mannaja' ? 'text-slate-900' : 'text-slate-400'
             }`}
             style={{ fontWeight: 800 }}
           >
-            유료 돌봄
-            {activeTab === 'sitters' && (
+            만나자
+            {topTab === 'mannaja' && (
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={goCertifiedCare}
+            className={`relative flex-1 py-3.5 text-[12px] max-sm:text-[11px] transition-colors ${
+              topTab === 'certified' ? 'text-slate-900' : 'text-slate-400'
+            }`}
+            style={{ fontWeight: 800 }}
+          >
+            인증 돌봄
+            {topTab === 'certified' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
             )}
           </button>
         </div>
       </div>
 
-      {activeTab === 'meetups' && (
+      {(topTab === 'moija' || topTab === 'mannaja') && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
-            <strong className="font-extrabold">모이자 · 만나자</strong>는 산책·놀이 등{' '}
-            <strong>함께할 댕친을 부르는 글</strong>이에요. 돈 받고 맡아 주는 건 옆의{' '}
-            <strong>유료 돌봄</strong> 탭을 이용해 주세요.
+            {topTab === 'moija' ? (
+              <>
+                <strong className="font-extrabold">모이자</strong>는 산책·놀이·카페 등{' '}
+                <strong>여럿이 모여 즐기는 글</strong>만 보여요. 맡기기·교배·실종 안내는{' '}
+                <strong>만나자</strong> 탭, 댕집사·인증 보호맘은 <strong>인증 돌봄</strong> 탭이에요.
+              </>
+            ) : (
+              <>
+                <strong className="font-extrabold">만나자</strong>는 맡기 도움·교배·실종 등{' '}
+                <strong>맞춤 만남·급구 글</strong>만 보여요. 모임성 산책·놀이는{' '}
+                <strong>모이자</strong> 탭을 눌러 주세요.
+              </>
+            )}
           </p>
           <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((cat) => (
+            {meetupCategoryChips.map((cat) => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setCategory(cat)}
                 className={`px-4 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all ${
                   category === cat
@@ -330,22 +396,21 @@ export function DogSittersPage() {
         </div>
       )}
 
-      {activeTab === 'sitters' && (
+      {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            <strong className="font-extrabold">유료 돌봄</strong>에서{' '}
+            <strong className="font-extrabold">인증 돌봄</strong>에서는{' '}
             <strong>댕집사(산책·방문 돌봄)</strong>와 운영팀이 인증한{' '}
-            <strong>인증 보호맘(맡김·장기 돌봄)</strong>을 한곳에서 찾을 수 있어요. 무료로 같이 놀 만남은{' '}
-            <strong>모이자·만나자</strong> 탭이에요.
+            <strong>인증 보호맘(맡김·장기 돌봄)</strong>만 보여요. 무료 모임·만남 글은{' '}
+            <strong>모이자</strong>·<strong>만나자</strong> 탭에서 확인해 주세요.
+            <span className="mt-2 block border-t border-amber-200/80 pt-2 text-[11px] font-semibold text-amber-900/95">
+              기본 동네·추가 동네·보호맘 등록·노출 결제는{' '}
+              <Link to="/my" className="font-extrabold text-brand underline underline-offset-2">
+                내댕댕
+              </Link>
+              에서 설정해요.
+            </span>
           </p>
-
-          <Link
-            to="/guard-mom/register"
-            className="mb-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 py-3.5 text-sm font-extrabold text-brand shadow-sm transition-transform active:scale-[0.99]"
-          >
-            <Baby className="h-4 w-4 shrink-0" aria-hidden />
-            인증 보호맘으로 등록 · 노출 결제
-          </Link>
 
           <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {(
@@ -369,83 +434,6 @@ export function DogSittersPage() {
                 {label}
               </button>
             ))}
-          </div>
-
-          <div className="mb-4 rounded-3xl border-2 border-amber-200/80 bg-amber-50/50 p-4 space-y-4">
-            <div>
-              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <label className="flex items-center gap-2 text-xs text-slate-700" style={{ fontWeight: 700 }}>
-                  <MapPin className="h-4 w-4 shrink-0 text-amber-700" />
-                  내 위치 (기본)
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setLocationPickerOpen(true)}
-                  className="rounded-full border border-amber-300/80 bg-white px-3 py-1.5 text-[11px] font-extrabold text-amber-950 shadow-sm active:scale-[0.98]"
-                >
-                  동네 설정
-                </button>
-              </div>
-              <div className="flex items-center gap-2 rounded-2xl border border-amber-200/90 bg-white px-4 py-3">
-                <MapPin className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-extrabold text-slate-900">{primaryRegionLabel}</p>
-                  {!locationBasedEnabled && (
-                    <p className="mt-0.5 text-[11px] font-semibold text-amber-800/90">
-                      위치 기반은 꺼져 있어도, 저장된 동네를 거리 기준으로 씁니다.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-amber-200/60 pt-3">
-              <p className="mb-2 text-xs font-extrabold text-slate-800">추가 위치</p>
-              <p className="mb-2 text-[11px] font-semibold leading-relaxed text-slate-600">
-                직장·부모님 댁 등 다른 동네를 넣으면, 그 중 <strong className="text-slate-800">가장 가까운 거리</strong>로
-                돌보미를 보여 드려요.
-              </p>
-              <RegionSelector
-                selectedCity={extraCity}
-                selectedDistrict={extraDistrict}
-                onCityChange={setExtraCity}
-                onDistrictChange={setExtraDistrict}
-                placeholder="추가할 시·구 선택"
-              />
-              <button
-                type="button"
-                onClick={addExtraRegion}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-400 bg-amber-100/40 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
-              >
-                <Plus className="h-4 w-4 shrink-0" aria-hidden />
-                이 동네 추가
-              </button>
-              {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
-              {extraLocations.length > 0 && (
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {extraLocations.map((ex) => (
-                    <li
-                      key={ex.id}
-                      className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-white pl-3 pr-1 py-1 text-[11px] font-bold text-slate-800 shadow-sm"
-                    >
-                      {formatRegion(ex.city, ex.district)}
-                      <button
-                        type="button"
-                        onClick={() => removeExtraRegion(ex.id)}
-                        className="rounded-full p-1 text-slate-400 hover:bg-amber-50 hover:text-amber-900"
-                        aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <p className="text-xs font-bold text-amber-900">
-              기준 동네마다 거리를 잰 뒤, <strong>더 가까운 쪽</strong>을 표시하고 정렬해요.
-            </p>
           </div>
 
           <div className="relative mb-4">

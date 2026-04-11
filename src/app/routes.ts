@@ -10,7 +10,7 @@ import { RouteErrorPage } from './pages/RouteErrorPage';
  * Route Structure:
  * - / : Home (simple, vibrant landing)
  * - /explore : Community explorer (meetups, MBTI, dog profiles)
- * - /sitters : 모이자·만나자 + 유료 돌봄(댕집사·인증 보호맘 통합)
+ * - /sitters : 모이자·만나자 + 인증 돌봄(댕집사·인증 보호맘 통합)
  * - /create-meetup : Create new meetup
  * - /meetup/:id : Meetup detail + join requests
  * - /sitter/:id : Dog sitter profile
@@ -68,7 +68,7 @@ export const router = createBrowserRouter([
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration
       { path: 'dog-mbti-test', Component: DogMbtiTestPage },      // Dog MBTI test
       { path: 'billing', Component: BillingPage },               // 인증 보호맘 란 7일 노출 Stripe
-      { path: 'guard-moms', Component: GuardMomsPage },            // → /sitters?care=guard 리다이렉트
+      { path: 'guard-moms', Component: GuardMomsPage },            // → /sitters?view=care&care=guard 리다이렉트
       { path: 'guard-mom/register', Component: GuardMomRegisterPage },
       { path: 'guard-mom/:id', Component: GuardMomDetailPage },
       { path: 'admin', Component: AdminGatePage },                 // Admin (Kakao + 지정 이메일만)

@@ -69,7 +69,7 @@ export function CreateRequestPage() {
           <div className="text-6xl mb-4">🐾</div>
           <h2 className="mb-3 text-2xl font-extrabold text-slate-900">어디서, 언제 모일까요?</h2>
           <p className="text-base font-medium text-slate-500">
-            만나서 산책·놀이할 댕친을 부르는 글이에요 (유료 맡기기는 「유료 돌봄」 탭)
+            만나서 산책·놀이할 댕친을 부르는 글이에요 (맡기기·댕집사는 「인증 돌봄」 탭)
           </p>
         </div>
 

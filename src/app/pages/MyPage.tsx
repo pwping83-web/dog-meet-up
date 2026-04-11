@@ -21,13 +21,17 @@ import {
   Navigation,
   Loader2,
   CheckCircle2,
+  Plus,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { dogMbtiResults, DogMbtiType } from '../data/dogMbtiData';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { LocationPickerModal } from '../components/LocationPickerModal';
+import { RegionSelector } from '../components/RegionSelector';
+import { formatRegion } from '../data/regions';
+import { readExtraCareRegions, writeExtraCareRegions } from '../../lib/extraCareRegions';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 import { isAppAdmin } from '../../lib/appAdmin';
 
@@ -49,6 +53,43 @@ export function MyPage() {
   const [isRepairer, setIsRepairer] = useState(true); 
   const [isActive, setIsActive] = useState(true); 
   const [dogMbtiType, setDogMbtiType] = useState<DogMbtiType | null>(null);
+  const [extraCareRegions, setExtraCareRegions] = useState(() => readExtraCareRegions());
+  const [extraCity, setExtraCity] = useState('');
+  const [extraDistrict, setExtraDistrict] = useState('');
+  const [extraHint, setExtraHint] = useState<string | null>(null);
+
+  const referenceDistrictsForExtras = useMemo(() => {
+    const primary = userLoc.district?.trim();
+    const fromExtras = extraCareRegions.map((e) => e.district.trim()).filter(Boolean);
+    return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
+  }, [userLoc.district, extraCareRegions]);
+
+  const addExtraCareRegion = () => {
+    setExtraHint(null);
+    if (!extraCity.trim() || !extraDistrict.trim()) {
+      setExtraHint('추가할 시·구를 모두 선택해 주세요.');
+      return;
+    }
+    const d = extraDistrict.trim();
+    if (referenceDistrictsForExtras.includes(d)) {
+      setExtraHint('이미 기준에 포함된 동네예요.');
+      return;
+    }
+    const next = [
+      ...extraCareRegions,
+      { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, city: extraCity.trim(), district: d },
+    ];
+    writeExtraCareRegions(next);
+    setExtraCareRegions(next);
+    setExtraCity('');
+    setExtraDistrict('');
+  };
+
+  const removeExtraCareRegion = (id: string) => {
+    const next = extraCareRegions.filter((e) => e.id !== id);
+    writeExtraCareRegions(next);
+    setExtraCareRegions(next);
+  };
 
   const handleLogout = async () => {
     try {
@@ -79,7 +120,7 @@ export function MyPage() {
     replace?: boolean;
   }> = [
     { icon: User, label: '프로필 수정', to: '/profile/edit' },
-    { icon: Baby, label: '유료 돌봄 · 인증 보호맘', to: '/sitters?care=guard' },
+    { icon: Baby, label: '인증 돌봄 · 인증 보호맘', to: '/sitters?view=care&care=guard' },
     ...(user && isAppAdmin(user)
       ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
       : []),
@@ -210,6 +251,74 @@ export function MyPage() {
           </div>
         </div>
 
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
+              <MapPin className="h-5 w-5 text-amber-700" aria-hidden />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-extrabold text-slate-900">인증 돌봄 · 거리 기준</h3>
+              <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600">
+                위에서 저장한 <strong className="text-slate-800">기본 동네</strong>와 아래 <strong className="text-slate-800">추가 동네</strong> 중
+                가까운 쪽으로 「모임·돌봄」 인증 돌봄 목록 거리를 계산해요.
+              </p>
+            </div>
+          </div>
+          <p className="mb-2 text-xs font-extrabold text-slate-800">추가 동네</p>
+          <RegionSelector
+            selectedCity={extraCity}
+            selectedDistrict={extraDistrict}
+            onCityChange={setExtraCity}
+            onDistrictChange={setExtraDistrict}
+            placeholder="추가할 시·구 선택"
+          />
+          <button
+            type="button"
+            onClick={addExtraCareRegion}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
+          >
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+            이 동네 추가
+          </button>
+          {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
+          {extraCareRegions.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {extraCareRegions.map((ex) => (
+                <li
+                  key={ex.id}
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 pl-3 pr-1 py-1 text-[11px] font-bold text-slate-800"
+                >
+                  {formatRegion(ex.city, ex.district)}
+                  <button
+                    type="button"
+                    onClick={() => removeExtraCareRegion(ex.id)}
+                    className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
+                    aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+            <Link
+              to="/guard-mom/register"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 py-3 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
+            >
+              <Baby className="h-4 w-4 shrink-0" aria-hidden />
+              인증 보호맘 등록
+            </Link>
+            <Link
+              to="/billing"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-800 active:scale-[0.99]"
+            >
+              <CreditCard className="h-4 w-4 shrink-0 text-brand" aria-hidden />
+              인증 돌봄 노출 결제
+            </Link>
+          </div>
+        </div>
+
         {/* 강아지 MBTI 섹션 */}
         {dogMbtiType ? (
           <div className="rounded-3xl border-2 border-brand/25 bg-gradient-to-br from-brand-soft via-white to-brand-muted p-6 shadow-md">
@@ -265,7 +374,7 @@ export function MyPage() {
           </div>
         )}
 
-        {/* 유료 돌봄(댕집사): 강아지 돌봄 의뢰 수락 — 모임 글과 무관 */}
+        {/* 인증 돌봄(댕집사): 강아지 돌봄 의뢰 수락 — 모임 글과 무관 */}
         {isRepairer && (
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
@@ -274,7 +383,7 @@ export function MyPage() {
                   <Heart className="h-6 w-6 fill-brand text-brand" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-slate-800">유료 돌봄(댕집사)</h3>
+                  <h3 className="text-base font-extrabold text-slate-800">인증 돌봄(댕집사)</h3>
                   <p className="mt-0.5 text-xs font-bold text-slate-500">
                     {isActive
                       ? '강아지 돌봄·산책 의뢰를 받고 있어요'
@@ -376,7 +485,7 @@ export function MyPage() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
                   <CreditCard className="h-[18px] w-[18px] text-brand" />
                 </div>
-                <span className="text-sm font-bold text-slate-900">유료 돌봄 · 노출 결제</span>
+                <span className="text-sm font-bold text-slate-900">인증 돌봄 · 노출 결제</span>
               </div>
               <ChevronRight className="h-4 w-4 text-slate-300" />
             </Link>
@@ -458,7 +567,7 @@ export function MyPage() {
           </button>
         )}
 
-        {/* 유료 돌봄(댕집사) 등록 배너 */}
+        {/* 인증 돌봄(댕집사) 등록 배너 */}
         {!isRepairer && (
           <Link
             to="/become-sitter"
@@ -466,7 +575,7 @@ export function MyPage() {
           >
             <div className="relative z-10">
               <h3 className="mb-1.5 flex items-center gap-2 text-xl font-extrabold">
-                유료 돌봄(댕집사)로 활동하기 <Play className="h-4 w-4 fill-white" />
+                인증 돌봄(댕집사)로 활동하기 <Play className="h-4 w-4 fill-white" />
               </h3>
               <p className="mb-5 text-sm font-medium text-white/85">
                 돈 받고 산책·돌봄을 제공하는 돌보미로 등록해 보세요.

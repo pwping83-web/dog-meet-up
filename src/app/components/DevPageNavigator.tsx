@@ -23,11 +23,11 @@ const pages: PageInfo[] = [
   { path: '/meetup/1', name: '모임 상세', emoji: '📝', category: '모임' },
   
   // 댕집사
-  { path: '/sitters', name: '모임·유료돌봄', emoji: '🐕', category: '댕집사' },
-  { path: '/sitters?care=guard', name: '유료 돌봄 · 보호맘', emoji: '🍼', category: '댕집사' },
+  { path: '/sitters', name: '모이자·만나자·인증돌봄', emoji: '🐕', category: '댕집사' },
+  { path: '/sitters?view=care&care=guard', name: '인증 돌봄 · 보호맘', emoji: '🍼', category: '댕집사' },
   { path: '/guard-mom/register', name: '보호맘 등록', emoji: '✍️', category: '댕집사' },
   { path: '/sitter/r1', name: '댕친 프로필', emoji: '👤', category: '댕집사' },
-  { path: '/become-sitter', name: '유료 돌봄 등록', emoji: '✍️', category: '댕집사' },
+  { path: '/become-sitter', name: '인증 돌봄 등록', emoji: '✍️', category: '댕집사' },
   
   // 채팅 & 알림
   { path: '/chats', name: '채팅 목록', emoji: '💬', category: '소통' },

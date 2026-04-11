@@ -54,7 +54,12 @@ export function MeetupDetailPage() {
       {/* 글래스모피즘 헤더 */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center h-14 px-2 max-w-screen-md mx-auto">
-          <button type="button" onClick={() => navigate('/explore')} className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors" aria-label="메인으로">
+          <button
+            type="button"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/explore'))}
+            className="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+            aria-label="뒤로"
+          >
             <ArrowLeft className="w-6 h-6" />
           </button>
           <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>만남 상세 🐾</span>
@@ -92,10 +97,10 @@ export function MeetupDetailPage() {
           </div>
           {meetup.category === '돌봄' && (
             <Link
-              to="/sitters?care=guard"
+              to="/sitters?view=care&care=guard"
               className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200/80 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 px-4 py-3 text-sm font-extrabold text-orange-600 transition-colors hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100"
             >
-              인증 댕집사·유료 돌봄 목록 보기 →
+              인증 댕집사·인증 돌봄 목록 보기 →
             </Link>
           )}
         </div>

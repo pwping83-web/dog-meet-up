@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, Link } from 'react-router';
 import { Home, User, Search } from 'lucide-react';
 import { Header } from '../components/Header';
+import { CommunityBottomNav } from '../components/CommunityBottomNav';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
@@ -18,7 +19,23 @@ export function Root() {
   const isHomePage = location.pathname === '/';
   const isAdminPage = location.pathname === '/admin';
   const isExplorePage = location.pathname === '/explore';
-  const hasOwnNav = isHomePage || isExplorePage; // 자체 네비게이션을 가진 페이지
+  const isMeetupDetailPage = location.pathname.startsWith('/meetup/');
+  const isCreateMeetupPage = location.pathname === '/create-meetup';
+  /** 모이자·만나자·인증 돌봄(/sitters) 및 댕집사·보호맘 상세 */
+  const isSittersCareFlow =
+    location.pathname === '/sitters' ||
+    location.pathname.startsWith('/sitter/') ||
+    location.pathname.startsWith('/guard-mom');
+
+  const showCommunityBottom =
+    isExplorePage || isMeetupDetailPage || isCreateMeetupPage || isSittersCareFlow;
+
+  const hasOwnNav =
+    isHomePage ||
+    isExplorePage ||
+    isMeetupDetailPage ||
+    isCreateMeetupPage ||
+    isSittersCareFlow;
 
   // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
   useEffect(() => {
@@ -37,6 +54,8 @@ export function Root() {
           <main className="relative min-h-0 flex-1 overflow-x-hidden">
             <Outlet />
           </main>
+
+          {showCommunityBottom && <CommunityBottomNav />}
 
           {showPrimaryNav && (
             <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200/90 bg-white/95 backdrop-blur-md">
@@ -66,7 +85,7 @@ export function Root() {
                       ? 'text-brand'
                       : 'text-gray-500'
                   }`}
-                  aria-label="모임과 유료 돌봄"
+                  aria-label="모임과 인증 돌봄"
                 >
                   <PawTabIcon className="h-5 w-5" />
                   <span className="text-[10px] font-semibold">모임·돌봄</span>
@@ -90,7 +109,7 @@ export function Root() {
             <InstallPwaFab hidden={isAdminPage} />
             <PlayStoreInstallBar
               hidden={isAdminPage}
-              reserveSpaceForBottomNav={showPrimaryNav}
+              reserveSpaceForBottomNav={showPrimaryNav || showCommunityBottom}
             />
           </>
         )}

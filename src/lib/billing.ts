@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-/** 결제·상품 화면에서 노출하는 Stripe 상품 (유료 돌봄 목록 7일 노출 등) */
+/** 결제·상품 화면에서 노출하는 Stripe 상품 (인증 돌봄 목록 7일 노출 등) */
 export type BillingProductKey = 'guard_mom_listing_7d';
 
 export const BILLING_PRODUCTS: {
@@ -13,7 +13,7 @@ export const BILLING_PRODUCTS: {
     key: 'guard_mom_listing_7d',
     title: '인증 보호맘 란 노출 (7일)',
     description:
-      '운영팀 인증을 받은 보호맘만 구매할 수 있어요. 「유료 돌봄」 탭에 7일간 노출되며, 잔여 기간이 있으면 이어서 연장돼요.',
+      '운영팀 인증을 받은 보호맘만 구매할 수 있어요. 「인증 돌봄」 탭에 7일간 노출되며, 잔여 기간이 있으면 이어서 연장돼요.',
     badge: '7일',
   },
 ];

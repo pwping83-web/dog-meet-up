@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import {
   MapPin, Users, Heart, ArrowRight, Star,
   Shield, MessageCircle, ChevronRight, Sparkles,
-  Home, PlusCircle, User, Bell, Loader2,
+  User, Bell, Loader2,
   Menu, X, Settings, LogOut, CreditCard,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -13,7 +13,6 @@ import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUserLocation } from '../../contexts/UserLocationContext';
 import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import type { User } from '@supabase/supabase-js';
@@ -61,7 +60,6 @@ export function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { shortLabel: locationShortLabel } = useUserLocation();
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -487,7 +485,7 @@ export function LandingPage() {
               </p>
             </div>
             <Link
-              to="/sitters?care=guard"
+              to="/sitters?view=care&care=guard"
               className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs"
               style={{ fontWeight: 800 }}
             >
@@ -676,46 +674,6 @@ export function LandingPage() {
         </p>
       </footer>
 
-      {/* ─── BOTTOM NAV ─── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 mx-auto max-w-[430px] border-t border-orange-50 bg-white/95 pb-safe backdrop-blur-xl max-md:border-slate-200/80">
-        <div className="flex h-[3.75rem] items-center justify-around px-1 max-md:h-16 max-md:px-2 md:h-14">
-          <Link
-            to="/explore"
-            className={`flex flex-col items-center gap-1 max-md:gap-1 ${location.pathname === '/explore' ? 'text-orange-600' : 'text-slate-400'}`}
-          >
-            <Home className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
-            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>홈</span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setLocationPickerOpen(true)}
-            className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1 active:opacity-80"
-            aria-label={`위치·동네 설정. 현재 ${locationShortLabel}`}
-          >
-            <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
-            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>위치</span>
-          </button>
-          <Link
-            to="/create-meetup"
-            className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
-            aria-label="모이자 · 만나자 글 올리기"
-            title="모이자 · 만나자 글 올리기"
-          >
-            <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-gradient-to-br from-orange-500 to-yellow-400 shadow-lg shadow-orange-400/45 transition-all group-active:scale-90 max-md:h-[3.65rem] max-md:w-[3.65rem] md:h-12 md:w-12 md:rounded-2xl">
-              <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7 md:h-6 md:w-6" />
-            </div>
-          </Link>
-          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
-            <MessageCircle className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
-            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>댕팅</span>
-          </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
-            <User className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
-            <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>내댕댕</span>
-          </Link>
-        </div>
-      </nav>
-
       {exploreMenuOpen && user && (
         <div className="fixed inset-0 z-[200] flex justify-end" role="dialog" aria-modal="true" aria-labelledby="explore-menu-title">
           <button
@@ -784,7 +742,7 @@ export function LandingPage() {
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
               >
                 <CreditCard className="h-5 w-5 text-brand" />
-                유료 돌봄 · 노출 결제
+                인증 돌봄 · 노출 결제
               </Link>
               <Link
                 to="/customer-service"

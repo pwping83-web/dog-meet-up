@@ -19,7 +19,7 @@ function orderProductLabel(key: string): string {
   const map: Record<string, string> = {
     premium_month: '댕댕 프리미엄 (월)',
     meetup_boost: '만남 글 부스트 (1회)',
-    guard_mom_listing_7d: '유료 돌봄 목록 노출 (7일)',
+    guard_mom_listing_7d: '인증 돌봄 목록 노출 (7일)',
     guard_mom_care_day: '보호맘 돌봄 예약',
   };
   return map[key] ?? key;
@@ -124,7 +124,7 @@ export function BillingPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-lg font-extrabold text-white">유료 돌봄 · 결제</h1>
+          <h1 className="text-lg font-extrabold text-white">인증 돌봄 · 결제</h1>
         </div>
       </header>
 
@@ -186,7 +186,7 @@ export function BillingPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-brand">
-                    유료 돌봄 목록 노출
+                    인증 돌봄 목록 노출
                   </p>
                   <p className="mt-1 text-lg font-black text-slate-900">
                     {listingActive ? '노출 중' : '미노출'}
@@ -199,7 +199,7 @@ export function BillingPage() {
                   )}
                   {!listingVisibleUntil && (
                     <p className="mt-1 text-xs font-medium text-slate-500">
-                      결제 후 「유료 돌봄」 탭에서 인증 보호맘으로 보여요. 프로필은 보호맘 등록에서 먼저 완료해 주세요.
+                      결제 후 「인증 돌봄」 탭에서 인증 보호맘으로 보여요. 프로필은 보호맘 등록에서 먼저 완료해 주세요.
                     </p>
                   )}
                 </div>
