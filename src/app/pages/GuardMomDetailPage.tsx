@@ -85,9 +85,11 @@ export function GuardMomDetailPage() {
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => navigate('/sitters?view=care&care=guard')}
+            onClick={() =>
+              window.history.length > 1 ? navigate(-1) : navigate('/sitters?view=care&care=guard')
+            }
             className="-ml-1 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
-            aria-label="인증 돌봄 목록으로"
+            aria-label="뒤로"
           >
             <ArrowLeft className="h-6 w-6" />
           </button>

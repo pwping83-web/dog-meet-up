@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../contexts/AuthContext";
+import { DAENG_AUTH_RETURN_KEY, DAENG_AUTH_RETURN_TS } from "../components/AuthReturnRedirect";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -17,8 +18,18 @@ export function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // 로그인 처리
-    navigate("/explore");
+    let to = "/explore";
+    try {
+      const p = sessionStorage.getItem(DAENG_AUTH_RETURN_KEY);
+      if (p && p.startsWith("/") && !p.startsWith("//")) {
+        to = p;
+        sessionStorage.removeItem(DAENG_AUTH_RETURN_KEY);
+        sessionStorage.removeItem(DAENG_AUTH_RETURN_TS);
+      }
+    } catch {
+      /* ignore */
+    }
+    navigate(to);
   };
 
   const handleKakaoLogin = async () => {

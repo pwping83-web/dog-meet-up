@@ -1,11 +1,15 @@
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { MapPin, Star, ArrowLeft, MessageCircle, X } from 'lucide-react';
 import { mockDogSitters } from '../data/mockData';
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 
 export function DogSitterProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const dogSitter = mockDogSitters.find((r) => r.id === id);
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [joinData, setJoinData] = useState({
@@ -16,6 +20,7 @@ export function DogSitterProfilePage() {
 
   const handleSubmitJoin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     alert(`돌봄 문의를 보냈어요 🎉\n\n맡기기 일시: ${joinData.estimatedCost}\n돌봄 기간: ${joinData.estimatedDuration}\n메시지: ${joinData.message}`);
     setShowJoinForm(false);
     setJoinData({ message: '', estimatedCost: '', estimatedDuration: '' });
@@ -142,12 +147,21 @@ export function DogSitterProfilePage() {
       <div className="fixed bottom-16 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-100 bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.06)] backdrop-blur-xl">
         <button
           type="button"
-          onClick={() => setShowJoinForm(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 text-base text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] sm:py-5 sm:text-lg"
+          disabled={authLoading}
+          onClick={() => {
+            if (authLoading) return;
+            if (!user) {
+              setAuthReturnPath(`${location.pathname}${location.search}`);
+              navigate('/login');
+              return;
+            }
+            setShowJoinForm(true);
+          }}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 text-base text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] enabled:cursor-pointer disabled:opacity-60 sm:py-5 sm:text-lg"
           style={{ fontWeight: 700 }}
         >
           <MessageCircle className="h-6 w-6 shrink-0" aria-hidden />
-          돌봄 문의하기 💬
+          {authLoading ? '확인 중…' : user ? '돌봄 문의하기 💬' : '로그인 후 문의하기 💬'}
         </button>
       </div>
 

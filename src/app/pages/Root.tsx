@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link } from 'react-router';
 import { Home, User, Search } from 'lucide-react';
 import { Header } from '../components/Header';
 import { CommunityBottomNav } from '../components/CommunityBottomNav';
+import { AuthReturnRedirect } from '../components/AuthReturnRedirect';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
@@ -48,6 +49,7 @@ export function Root() {
 
   return (
     <div className="flex min-h-[100dvh] justify-center bg-[#ECECF0]">
+      <AuthReturnRedirect />
       <div className="relative flex min-h-[100dvh] w-full max-w-[min(100%,480px)] flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {!hasOwnNav && !isAdminPage && <Header />}

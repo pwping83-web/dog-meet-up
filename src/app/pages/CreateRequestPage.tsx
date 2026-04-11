@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Camera, X, Trash2 } from 'lucide-react';
 import { RegionSelector } from '../components/RegionSelector';
+import { useAuth } from '../../contexts/AuthContext';
+import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 
 export function CreateRequestPage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     category: '',
@@ -13,6 +16,14 @@ export function CreateRequestPage() {
     district: '',
   });
   const [previewImages, setPreviewImages] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setAuthReturnPath('/create-meetup');
+      navigate('/login', { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const categories = [
     { name: '산책', emoji: '🐕' },
@@ -46,9 +57,18 @@ export function CreateRequestPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
     navigate('/explore');
   };
+
+  if (authLoading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white text-sm font-medium text-slate-500">
+        {authLoading ? '잠시만요…' : '로그인 페이지로 이동 중…'}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white pb-24">

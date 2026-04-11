@@ -1,15 +1,18 @@
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation, Link } from 'react-router';
 import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck } from 'lucide-react';
 import { mockMeetups, mockJoinRequests, mockDogSitters } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { calculateDistance, formatDistance } from '../utils/distance';
-import { Link } from 'react-router';
 import { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 
 export function MeetupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const meetup = mockMeetups.find((r) => r.id === id);
   const joinRequests = mockJoinRequests.filter((q) => q.meetupId === id);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -41,12 +44,28 @@ export function MeetupDetailPage() {
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 3);
 
+  const requireLoginForAction = () => {
+    if (authLoading) return false;
+    if (!user) {
+      setAuthReturnPath(`${location.pathname}${location.search}`);
+      navigate('/login');
+      return false;
+    }
+    return true;
+  };
+
   const handleAccept = (requestId: string) => {
+    if (!requireLoginForAction()) return;
     setSelectedRequestId(requestId);
     setTimeout(() => {
       alert('🐾 참여 확정! 댕친과 즐거운 시간 보내세요!');
       navigate('/my');
     }, 500);
+  };
+
+  const handleInvite = (sitterName: string) => {
+    if (!requireLoginForAction()) return;
+    alert(`${sitterName}님에게 초대 보냄!`);
   };
 
   return (
@@ -67,6 +86,20 @@ export function MeetupDetailPage() {
       </div>
 
       <div className="max-w-screen-md mx-auto px-5 py-6">
+        {!authLoading && !user && (
+          <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
+            글은 모두 볼 수 있어요. <strong className="font-extrabold">함께하기</strong>·<strong className="font-extrabold">초대하기</strong>는{' '}
+            <Link
+              to="/login"
+              onClick={() => setAuthReturnPath(`${location.pathname}${location.search}`)}
+              className="font-extrabold text-brand underline underline-offset-2"
+            >
+              로그인
+            </Link>
+            후에만 가능해요.
+          </p>
+        )}
+
         {/* 1. 모임 정보 */}
         <div className="mb-10">
           {meetup.images && meetup.images.length > 0 && (
@@ -169,7 +202,13 @@ export function MeetupDetailPage() {
                           >
                             프로필 보기
                           </Link>
-                          <button onClick={() => handleAccept(request.id)} className={`flex-[2] py-3.5 rounded-2xl text-white transition-all active:scale-[0.98] ${isFirst ? 'bg-gradient-to-r from-orange-500 to-yellow-500 shadow-md shadow-orange-500/20' : 'bg-slate-800 hover:bg-slate-900'}`} style={{ fontWeight: 700 }}>
+                          <button
+                            type="button"
+                            onClick={() => handleAccept(request.id)}
+                            disabled={authLoading}
+                            className={`flex-[2] py-3.5 rounded-2xl text-white transition-all active:scale-[0.98] disabled:opacity-50 ${isFirst ? 'bg-gradient-to-r from-orange-500 to-yellow-500 shadow-md shadow-orange-500/20' : 'bg-slate-800 hover:bg-slate-900'}`}
+                            style={{ fontWeight: 700 }}
+                          >
                             함께하기 🐾
                           </button>
                         </div>
@@ -235,7 +274,13 @@ export function MeetupDetailPage() {
                         >
                           프로필
                         </Link>
-                        <button onClick={() => alert(`${sitter.name}님에게 초대 보냄!`)} className={`flex-1 py-3 rounded-2xl text-sm text-white transition-all active:scale-[0.98] ${isVeryClose ? 'bg-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800'}`} style={{ fontWeight: 700 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleInvite(sitter.name)}
+                          disabled={authLoading}
+                          className={`flex-1 rounded-2xl py-3 text-sm text-white transition-all active:scale-[0.98] disabled:opacity-50 ${isVeryClose ? 'bg-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800'}`}
+                          style={{ fontWeight: 700 }}
+                        >
                           초대하기
                         </button>
                       </div>
