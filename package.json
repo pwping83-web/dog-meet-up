@@ -20,6 +20,7 @@
     "dev": "vite",
     "preview": "vite preview",
     "git:push": "node scripts/git-commit-push.mjs",
+    "push": "node scripts/git-commit-push.mjs",
     "supabase:link": "npx --yes supabase@latest link --project-ref silbyvmcuymjewurkrfn"
   },
   "dependencies": {

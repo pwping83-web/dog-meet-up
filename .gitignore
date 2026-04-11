@@ -7,3 +7,4 @@ dist
 .env.server.local
 *.log
 .DS_Store
+.cursor/disable-auto-push

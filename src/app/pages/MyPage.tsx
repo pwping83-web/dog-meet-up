@@ -1,13 +1,30 @@
 // src/app/pages/MyPage.tsx 전체 교체
-import { User, FileText, MessageCircle, Settings, ChevronRight, Play, Shield, Bell, Heart, Power, Home, Search, Sparkles, CreditCard } from 'lucide-react';
-import { Link } from 'react-router';
+import { User, FileText, MessageCircle, Settings, ChevronRight, Play, Shield, Bell, Heart, Power, Home, Search, Sparkles, CreditCard, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
 import { dogMbtiResults, DogMbtiType } from '../data/dogMbtiData';
+import { useAuth } from '../../contexts/AuthContext';
 
 export function MyPage() {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
   const [isRepairer, setIsRepairer] = useState(true); 
   const [isActive, setIsActive] = useState(true); 
   const [dogMbtiType, setDogMbtiType] = useState<DogMbtiType | null>(null);
+
+  const handleLogout = async () => {
+    try {
+      setLoggingOut(true);
+      await signOut();
+      navigate('/');
+    } catch (e) {
+      console.error(e);
+      alert('로그아웃에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   // MBTI 로드
   useEffect(() => {
@@ -228,6 +245,18 @@ export function MyPage() {
             </Link>
           ))}
         </div>
+
+        {user && (
+          <button
+            type="button"
+            onClick={() => void handleLogout()}
+            disabled={loggingOut}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-slate-200 bg-white font-bold text-sm text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50 shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
+          >
+            <LogOut className="w-5 h-5 shrink-0" />
+            {loggingOut ? '로그아웃 중…' : '로그아웃'}
+          </button>
+        )}
 
         {/* 댕집사 신청 배너 (아닐 때만 노출) */}
         {!isRepairer && (
