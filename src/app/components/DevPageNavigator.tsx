@@ -24,6 +24,8 @@ const pages: PageInfo[] = [
   
   // 댕집사
   { path: '/sitters', name: '댕친 목록', emoji: '🐕', category: '댕집사' },
+  { path: '/guard-moms', name: '인증 보호맘 란', emoji: '🍼', category: '댕집사' },
+  { path: '/guard-mom/register', name: '보호맘 등록', emoji: '✍️', category: '댕집사' },
   { path: '/sitter/r1', name: '댕친 프로필', emoji: '👤', category: '댕집사' },
   { path: '/become-sitter', name: '댕집사 등록', emoji: '✍️', category: '댕집사' },
   

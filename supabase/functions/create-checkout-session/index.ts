@@ -7,10 +7,15 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type ProductKey = "premium_month" | "meetup_boost";
+type ProductKey =
+  | "premium_month"
+  | "meetup_boost"
+  | "guard_mom_listing_7d"
+  | "guard_mom_care_day";
 
 type Body = {
   productKey: ProductKey;
+  bookingId?: string;
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -19,6 +24,13 @@ function jsonResponse(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
+
+const ALLOWED_KEYS: ProductKey[] = [
+  "premium_month",
+  "meetup_boost",
+  "guard_mom_listing_7d",
+  "guard_mom_care_day",
+];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -35,6 +47,7 @@ Deno.serve(async (req) => {
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const pricePremiumMonth = Deno.env.get("STRIPE_PRICE_PREMIUM_MONTHLY");
   const priceMeetupBoost = Deno.env.get("STRIPE_PRICE_MEETUP_BOOST");
+  const priceGuardMomListing = Deno.env.get("STRIPE_PRICE_GUARD_MOM_LISTING_7D");
 
   if (!stripeSecret || !supabaseUrl || !supabaseAnonKey) {
     return jsonResponse({ error: "서버 환경 변수(Supabase/Stripe)가 설정되지 않았습니다." }, 503);
@@ -59,8 +72,15 @@ Deno.serve(async (req) => {
   }
 
   const productKey = parsed?.productKey;
-  if (productKey !== "premium_month" && productKey !== "meetup_boost") {
+  if (!productKey || !ALLOWED_KEYS.includes(productKey)) {
     return jsonResponse({ error: "지원하지 않는 상품입니다." }, 400);
+  }
+
+  if (productKey === "guard_mom_care_day") {
+    const bookingId = typeof parsed.bookingId === "string" ? parsed.bookingId.trim() : "";
+    if (!bookingId) {
+      return jsonResponse({ error: "bookingId가 필요합니다." }, 400);
+    }
   }
 
   const stripe = new Stripe(stripeSecret, { apiVersion: "2023-10-16" });
@@ -77,21 +97,70 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "인증에 실패했습니다." }, 401);
   }
 
-  const priceId =
-    productKey === "premium_month" ? pricePremiumMonth : priceMeetupBoost;
-  if (!priceId) {
-    return jsonResponse(
-      {
-        error:
-          productKey === "premium_month"
-            ? "STRIPE_PRICE_PREMIUM_MONTHLY 가 설정되지 않았습니다."
-            : "STRIPE_PRICE_MEETUP_BOOST 가 설정되지 않았습니다.",
-      },
-      503,
-    );
-  }
+  let lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
+  let mode: Stripe.Checkout.SessionCreateParams.Mode;
+  let bookingIdForMeta = "";
 
-  const mode = productKey === "premium_month" ? "subscription" : "payment";
+  if (productKey === "guard_mom_care_day") {
+    const bookingId = parsed.bookingId!.trim();
+    const { data: booking, error: bErr } = await supabase
+      .from("guard_mom_bookings")
+      .select("id, applicant_id, days, per_day_fee_snapshot, total_krw, status")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (bErr || !booking) {
+      return jsonResponse({ error: "예약 정보를 찾을 수 없습니다." }, 400);
+    }
+    if (booking.applicant_id !== user.id) {
+      return jsonResponse({ error: "본인 예약만 결제할 수 있습니다." }, 403);
+    }
+    if (booking.status !== "pending_payment") {
+      return jsonResponse({ error: "이미 처리된 예약입니다." }, 400);
+    }
+    const days = booking.days as number;
+    const unit = booking.per_day_fee_snapshot as number;
+    const total = days * unit;
+    if (total !== booking.total_krw || days < 1 || days > 30 || unit < 1000 || unit > 500000) {
+      return jsonResponse({ error: "예약 금액이 올바르지 않습니다." }, 400);
+    }
+
+    lineItems = [
+      {
+        price_data: {
+          currency: "krw",
+          unit_amount: unit,
+          product_data: {
+            name: "인증 보호맘 돌봄 (1일 단위)",
+            description: `${days}일 · 보호맘 예약`,
+          },
+        },
+        quantity: days,
+      },
+    ];
+    mode = "payment";
+    bookingIdForMeta = bookingId;
+  } else {
+    const priceId =
+      productKey === "premium_month"
+        ? pricePremiumMonth
+        : productKey === "meetup_boost"
+          ? priceMeetupBoost
+          : priceGuardMomListing;
+
+    if (!priceId) {
+      const msg =
+        productKey === "premium_month"
+          ? "STRIPE_PRICE_PREMIUM_MONTHLY 가 설정되지 않았습니다."
+          : productKey === "meetup_boost"
+            ? "STRIPE_PRICE_MEETUP_BOOST 가 설정되지 않았습니다."
+            : "STRIPE_PRICE_GUARD_MOM_LISTING_7D 가 설정되지 않았습니다.";
+      return jsonResponse({ error: msg }, 503);
+    }
+
+    lineItems = [{ price: priceId, quantity: 1 }];
+    mode = productKey === "premium_month" ? "subscription" : "payment";
+  }
 
   const { data: order, error: orderError } = await supabase
     .from("billing_orders")
@@ -119,13 +188,14 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       mode,
       customer_email: user.email ?? undefined,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: lineItems,
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
         order_id: order.id,
         user_id: user.id,
         product_key: productKey,
+        booking_id: bookingIdForMeta,
       },
       ...(mode === "subscription"
         ? {

@@ -99,6 +99,42 @@ Deno.serve(async (req) => {
           }
         }
       }
+
+      if (productKey === "guard_mom_listing_7d") {
+        const { data: row, error: gmErr } = await admin
+          .from("certified_guard_moms")
+          .select("listing_visible_until")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (gmErr) {
+          console.error("certified_guard_moms select", gmErr);
+        } else if (row) {
+          const now = Date.now();
+          const cur = row.listing_visible_until
+            ? new Date(row.listing_visible_until as string).getTime()
+            : 0;
+          const startMs = Math.max(now, cur);
+          const until = new Date(startMs + 7 * 24 * 60 * 60 * 1000).toISOString();
+          const { error: upGm } = await admin
+            .from("certified_guard_moms")
+            .update({ listing_visible_until: until })
+            .eq("user_id", userId);
+          if (upGm) console.error("certified_guard_moms update listing", upGm);
+        }
+      }
+
+      if (productKey === "guard_mom_care_day") {
+        const bookingId = session.metadata?.booking_id?.trim();
+        if (bookingId) {
+          const { error: bkErr } = await admin
+            .from("guard_mom_bookings")
+            .update({ status: "paid" })
+            .eq("id", bookingId)
+            .eq("applicant_id", userId);
+          if (bkErr) console.error("guard_mom_bookings paid", bkErr);
+        }
+      }
     }
 
     if (event.type === "customer.subscription.updated") {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, MapPin, MessageCircle } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { DogSitterCard } from '../components/DogSitterCard';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
 import { calculateDistance, formatDistance } from '../utils/distance';
@@ -9,6 +9,7 @@ import { ko } from 'date-fns/locale';
 import { RegionSelector } from '../components/RegionSelector';
 
 export function DogSittersPage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'meetups' | 'sitters'>('meetups');
   const [specialty, setSpecialty] = useState('전체');
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
@@ -55,8 +56,9 @@ export function DogSittersPage() {
       <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex max-w-screen-md mx-auto">
           <button
+            type="button"
             onClick={() => setActiveTab('meetups')}
-            className={`flex-1 py-4 text-base transition-colors relative ${
+            className={`flex-1 py-3.5 text-sm transition-colors relative ${
               activeTab === 'meetups'
                 ? 'text-slate-900'
                 : 'text-slate-400'
@@ -69,8 +71,9 @@ export function DogSittersPage() {
             )}
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('sitters')}
-            className={`flex-1 py-4 text-base transition-colors relative ${
+            className={`flex-1 py-3.5 text-sm transition-colors relative ${
               activeTab === 'sitters'
                 ? 'text-slate-900'
                 : 'text-slate-400'
@@ -81,6 +84,14 @@ export function DogSittersPage() {
             {activeTab === 'sitters' && (
               <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-yellow-500"></div>
             )}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/guard-moms')}
+            className="flex-1 py-3.5 text-sm text-slate-400 transition-colors relative hover:text-slate-600"
+            style={{ fontWeight: 700 }}
+          >
+            🍼 보호맘
           </button>
         </div>
       </div>

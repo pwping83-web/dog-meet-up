@@ -47,6 +47,9 @@ import { ProfileEditPage } from './pages/ProfileEditPage';
 import { DogCreatePage } from './pages/DogCreatePage';
 import { DogMbtiTestPage } from './pages/DogMbtiTestPage';
 import { BillingPage } from './pages/BillingPage';
+import { GuardMomsPage } from './pages/GuardMomsPage';
+import { GuardMomDetailPage } from './pages/GuardMomDetailPage';
+import { GuardMomRegisterPage } from './pages/GuardMomRegisterPage';
 
 export const router = createBrowserRouter([
   {
@@ -65,6 +68,9 @@ export const router = createBrowserRouter([
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration
       { path: 'dog-mbti-test', Component: DogMbtiTestPage },      // Dog MBTI test
       { path: 'billing', Component: BillingPage },               // Stripe billing / premium
+      { path: 'guard-moms', Component: GuardMomsPage },            // 인증 보호맘 란
+      { path: 'guard-mom/register', Component: GuardMomRegisterPage },
+      { path: 'guard-mom/:id', Component: GuardMomDetailPage },
       { path: 'admin', Component: AdminGatePage },                 // Admin (Kakao + 지정 이메일만)
       { path: 'become-sitter', Component: BecomeDogSitterPage },  // Register as dog sitter
       { path: 'login', Component: LoginPage },                    // Login

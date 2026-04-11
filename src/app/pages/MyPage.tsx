@@ -14,6 +14,7 @@ import {
   Search,
   Sparkles,
   CreditCard,
+  Baby,
   LogOut,
   MapPin,
   ChevronDown,
@@ -78,6 +79,7 @@ export function MyPage() {
     replace?: boolean;
   }> = [
     { icon: User, label: '프로필 수정', to: '/profile/edit' },
+    { icon: Baby, label: '인증 보호맘 란', to: '/guard-moms' },
     ...(user && isAppAdmin(user)
       ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
       : []),

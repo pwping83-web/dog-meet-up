@@ -314,6 +314,79 @@ export interface Database {
           updated_at?: string;
         };
       };
+      certified_guard_moms: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+          intro: string;
+          region_si: string;
+          region_gu: string;
+          per_day_fee_krw: number;
+          certified_at: string | null;
+          listing_visible_until: string | null;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id: string;
+          intro?: string;
+          region_si?: string;
+          region_gu?: string;
+          per_day_fee_krw?: number;
+          certified_at?: string | null;
+          listing_visible_until?: string | null;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id?: string;
+          intro?: string;
+          region_si?: string;
+          region_gu?: string;
+          per_day_fee_krw?: number;
+          certified_at?: string | null;
+          listing_visible_until?: string | null;
+        };
+      };
+      guard_mom_bookings: {
+        Row: {
+          id: string;
+          created_at: string;
+          guard_mom_id: string;
+          applicant_id: string;
+          days: number;
+          message: string;
+          per_day_fee_snapshot: number;
+          total_krw: number;
+          status: 'pending_payment' | 'paid' | 'cancelled';
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          guard_mom_id: string;
+          applicant_id: string;
+          days: number;
+          message?: string;
+          per_day_fee_snapshot: number;
+          total_krw: number;
+          status?: 'pending_payment' | 'paid' | 'cancelled';
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          guard_mom_id?: string;
+          applicant_id?: string;
+          days?: number;
+          message?: string;
+          per_day_fee_snapshot?: number;
+          total_krw?: number;
+          status?: 'pending_payment' | 'paid' | 'cancelled';
+        };
+      };
     };
   };
 }

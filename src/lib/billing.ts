@@ -1,6 +1,9 @@
 import { supabase } from './supabase';
 
-export type BillingProductKey = 'premium_month' | 'meetup_boost';
+export type BillingProductKey =
+  | 'premium_month'
+  | 'meetup_boost'
+  | 'guard_mom_listing_7d';
 
 export const BILLING_PRODUCTS: {
   key: BillingProductKey;
@@ -20,12 +23,19 @@ export const BILLING_PRODUCTS: {
     description: '내 모임을 탐색·검색 상단에 더 자주 노출(Stripe 일회 결제)',
     badge: '1회',
   },
+  {
+    key: 'guard_mom_listing_7d',
+    title: '인증 보호맘 노출 (7일)',
+    description:
+      '운영팀 인증을 받은 보호맘만 이용 가능. 소액으로 「보호맘 란」에 7일 동안 노출돼요 (잔여 기간이 있으면 이어서 연장)',
+    badge: '7일',
+  },
 ];
 
-export async function startStripeCheckout(productKey: BillingProductKey): Promise<void> {
+async function invokeCheckoutSession(body: Record<string, unknown>): Promise<void> {
   const { data, error } = await supabase.functions.invoke<{ url?: string; error?: string }>(
     'create-checkout-session',
-    { body: { productKey } },
+    { body },
   );
 
   if (error) {
@@ -42,4 +52,12 @@ export async function startStripeCheckout(productKey: BillingProductKey): Promis
   }
 
   window.location.assign(url);
+}
+
+export async function startStripeCheckout(productKey: BillingProductKey): Promise<void> {
+  await invokeCheckoutSession({ productKey });
+}
+
+export async function startGuardMomCareCheckout(bookingId: string): Promise<void> {
+  await invokeCheckoutSession({ productKey: 'guard_mom_care_day', bookingId });
 }

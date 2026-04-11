@@ -15,6 +15,16 @@ type OrderRow = {
   paid_at: string | null;
 };
 
+function orderProductLabel(key: string): string {
+  const map: Record<string, string> = {
+    premium_month: '댕댕 프리미엄 (월)',
+    meetup_boost: '모임 부스트 (1회)',
+    guard_mom_listing_7d: '보호맘 란 노출 (7일)',
+    guard_mom_care_day: '보호맘 돌봄 예약',
+  };
+  return map[key] ?? key;
+}
+
 export function BillingPage() {
   const { user, loading: authLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -231,7 +241,7 @@ export function BillingPage() {
                   {orders.map((o) => (
                     <li key={o.id} className="flex items-center justify-between gap-3 py-3 text-sm">
                       <div>
-                        <p className="font-bold text-slate-800">{o.product_key}</p>
+                        <p className="font-bold text-slate-800">{orderProductLabel(o.product_key)}</p>
                         <p className="text-xs text-slate-500">
                           {format(new Date(o.created_at), 'M월 d일 HH:mm', { locale: ko })}
                         </p>
