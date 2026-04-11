@@ -227,20 +227,11 @@ export function LocationPickerModal({ open, onClose }: Props) {
             </p>
           )}
 
-          {!hasKey && (
-            <div className="rounded-2xl border border-amber-100 bg-amber-50/90 px-3 py-2.5 text-xs font-medium leading-relaxed text-slate-700">
-              <p>
-                <strong className="text-slate-900">카카오맵 키가 없어도</strong> 아래{' '}
-                <strong>현재 위치로 시·구 맞추기</strong>로 GPS 동네 맞춤을 쓸 수 있어요. 지도만 비활성입니다.
-                시·구를 직접 고르려면 목록에서 선택 후 저장하세요.
-              </p>
-              {import.meta.env.DEV && (
-                <p className="mt-2 border-t border-amber-200/70 pt-2 text-[11px] text-slate-600">
-                  지도까지 쓰려면 <code className="rounded bg-white/90 px-1">.env</code>에{' '}
-                  <code className="rounded bg-white/90 px-1">VITE_KAKAO_MAP_APP_KEY</code>를 넣으세요.
-                </p>
-              )}
-            </div>
+          {/* 카카오/키 관련 설명은 고객 화면에 노출하지 않음 — 로컬 개발 시에만 힌트 */}
+          {import.meta.env.DEV && !hasKey && (
+            <p className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-2.5 py-1.5 font-mono text-[10px] text-amber-900">
+              [dev] 지도: .env에 VITE_KAKAO_MAP_APP_KEY
+            </p>
           )}
 
           {hasKey && (
