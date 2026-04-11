@@ -11,6 +11,22 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import type { User } from '@supabase/supabase-js';
+
+function shortProfileLabel(user: User): string {
+  const m = user.user_metadata ?? {};
+  for (const key of ['nickname', 'name', 'full_name'] as const) {
+    const v = m[key];
+    if (typeof v === 'string' && v.trim()) {
+      const t = v.trim();
+      return t.length > 8 ? `${t.slice(0, 8)}…` : t;
+    }
+  }
+  const local = user.email?.split('@')[0]?.trim();
+  if (local) return local.length > 10 ? `${local.slice(0, 10)}…` : local;
+  return '내 정보';
+}
 
 // 댕친 프로필 데이터
 const dogProfiles = [
@@ -38,6 +54,7 @@ const fadeUp = {
 };
 
 export function LandingPage() {
+  const { user, loading: authLoading } = useAuth();
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
   const [dbDogs, setDbDogs] = useState<any[]>([]);
   const [dogsLoading, setDogsLoading] = useState(true);
@@ -90,13 +107,28 @@ export function LandingPage() {
             <span className="text-xl">🐕</span>
             <span className="text-lg text-white/90 tracking-tight" style={{ fontWeight: 900 }}>댕댕마켓</span>
           </div>
-          <Link
-            to="/login"
-            className="bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs border border-white/30 active:scale-95 transition-all"
-            style={{ fontWeight: 700 }}
-          >
-            로그인
-          </Link>
+          {authLoading ? (
+            <span className="flex h-8 w-16 items-center justify-center rounded-lg border border-white/20 bg-white/10">
+              <Loader2 className="h-4 w-4 animate-spin text-white" aria-hidden />
+            </span>
+          ) : user ? (
+            <Link
+              to="/my"
+              className="max-w-[7rem] truncate bg-white/25 px-3 py-1.5 text-xs text-white backdrop-blur-md rounded-lg border border-white/40 active:scale-95 transition-all"
+              style={{ fontWeight: 700 }}
+              title="마이페이지"
+            >
+              {shortProfileLabel(user)}
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="bg-white/20 backdrop-blur-md text-white px-3 py-1.5 rounded-lg text-xs border border-white/30 active:scale-95 transition-all"
+              style={{ fontWeight: 700 }}
+            >
+              로그인
+            </Link>
+          )}
         </motion.div>
 
         {/* 히어로 텍스트 */}
@@ -486,10 +518,21 @@ export function LandingPage() {
               무료로 가입하기 →
             </Link>
             <p className="text-orange-100/60 text-[11px] mt-3" style={{ fontWeight: 600 }}>
-              이미 계정이 있나요?{' '}
-              <Link to="/login" className="text-white underline underline-offset-2" style={{ fontWeight: 800 }}>
-                로그인
-              </Link>
+              {user ? (
+                <>
+                  환영해요!{' '}
+                  <Link to="/my" className="text-white underline underline-offset-2" style={{ fontWeight: 800 }}>
+                    내댕댕
+                  </Link>
+                </>
+              ) : (
+                <>
+                  이미 계정이 있나요?{' '}
+                  <Link to="/login" className="text-white underline underline-offset-2" style={{ fontWeight: 800 }}>
+                    로그인
+                  </Link>
+                </>
+              )}
             </p>
           </div>
         </motion.div>
