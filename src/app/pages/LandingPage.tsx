@@ -603,11 +603,15 @@ export function LandingPage() {
             <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
             <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>위치</span>
           </button>
-          <Link to="/create-meetup" className="group -mt-2 flex flex-col items-center max-md:-mt-1">
+          <Link
+            to="/create-meetup"
+            className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
+            aria-label="모임 만들기"
+            title="모임 만들기"
+          >
             <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-gradient-to-br from-orange-500 to-yellow-400 shadow-lg shadow-orange-400/45 transition-all group-active:scale-90 max-md:h-[3.65rem] max-md:w-[3.65rem] md:h-12 md:w-12 md:rounded-2xl">
               <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7 md:h-6 md:w-6" />
             </div>
-            <span className="mt-1 text-[11px] text-slate-500 max-md:text-xs md:mt-0.5 md:text-[9px]" style={{ fontWeight: 800 }}>등록하기</span>
           </Link>
           <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
             <MessageCircle className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
