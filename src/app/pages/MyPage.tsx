@@ -151,6 +151,7 @@ export function MyPage() {
   ];
 
   const supportItems = [
+    { icon: Sparkles, label: '개선해 주세요', to: '/feedback' },
     { icon: MessageCircle, label: '고객센터', to: '/customer-service' },
     { icon: Power, label: '회원 탈퇴', to: '/delete-account' },
   ];
@@ -569,20 +570,30 @@ export function MyPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      item.label === '회원 탈퇴' ? 'bg-red-50' : 'bg-slate-100 group-hover:bg-brand/10'
+                      item.label === '회원 탈퇴'
+                        ? 'bg-red-50'
+                        : item.label === '개선해 주세요'
+                          ? 'bg-amber-50 group-hover:bg-amber-100'
+                          : 'bg-slate-100 group-hover:bg-brand/10'
                     }`}
                   >
                     <item.icon
                       className={`h-[18px] w-[18px] ${
                         item.label === '회원 탈퇴'
                           ? 'text-red-500'
-                          : 'text-slate-600 group-hover:text-brand'
+                          : item.label === '개선해 주세요'
+                            ? 'text-amber-600 group-hover:text-amber-700'
+                            : 'text-slate-600 group-hover:text-brand'
                       } transition-colors`}
                     />
                   </div>
                   <span
                     className={`text-sm font-bold ${
-                      item.label === '회원 탈퇴' ? 'text-red-500' : 'text-slate-900'
+                      item.label === '회원 탈퇴'
+                        ? 'text-red-500'
+                        : item.label === '개선해 주세요'
+                          ? 'text-slate-900'
+                          : 'text-slate-900'
                     }`}
                   >
                     {item.label}

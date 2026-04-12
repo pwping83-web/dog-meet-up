@@ -16,10 +16,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import type { User } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { MOCK_IMG_HANGANG_HERO, MOCK_IMG_LANDING_BORI, MOCK_IMG_LANDING_PPORI } from '../data/mockPromoImages';
 
 function shortProfileLabel(user: User): string {
   const m = user.user_metadata ?? {};
@@ -35,12 +37,11 @@ function shortProfileLabel(user: User): string {
   return '내 정보';
 }
 
-// 댕친 프로필 데이터 — 시드별로 가상 풀 인덱스가 달라지며, 일부 Unsplash 슬롯은 로드 실패 시 회색 박스가 남음.
-// 뽀삐·보리는 풀에서 안정적으로 열리는 슬롯을 쓰도록 시드만 조정(landing-hero-* 해시는 virtualDogPhotos와 동일 규칙).
+// 댕친 프로필 데이터 — 뽀삐·보리는 Pixabay 고정 URL + ImageWithFallback 폴백.
 const dogProfiles = [
-  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: virtualDogPhotoForSeed('landing-hero-26') },
+  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: MOCK_IMG_LANDING_PPORI },
   { name: '초코', breed: '웰시코기', img: virtualDogPhotoForSeed('landing-dog-choco'), age: '3살', mbti: '사교적아이' },
-  { name: '보리', breed: '골든리트리버', img: virtualDogPhotoForSeed('landing-hero-25'), age: '5살', mbti: '듬직한아이' },
+  { name: '보리', breed: '골든리트리버', img: MOCK_IMG_LANDING_BORI, age: '5살', mbti: '듬직한아이' },
   { name: '콩이', breed: '비글', img: virtualDogPhotoForSeed('landing-dog-kong'), age: '1살', mbti: '호기심아이' },
 ];
 
@@ -64,6 +65,7 @@ const fadeUp = {
 export function LandingPage() {
   const location = useLocation();
   const navigate = useNavigate();
+  const promoFree = usePromoFreeListings();
   const { user, loading: authLoading, signOut } = useAuth();
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
@@ -107,7 +109,7 @@ export function LandingPage() {
 
   const getQuoteCount = (id: string) => mockQuotes.filter((q) => q.meetupId === id).length;
   const meetupFeedItems = mergedRequests
-    .filter((r) => r.category !== '돌봄' && meetupVisibleInPublicFeed(r))
+    .filter((r) => r.category !== '돌봄' && meetupVisibleInPublicFeed(r, promoFree))
     .slice(0, 6);
   const dolbomFeedItems = mergedRequests.filter((r) => r.category === '돌봄');
 
@@ -578,8 +580,9 @@ export function LandingPage() {
           className="relative rounded-2xl overflow-hidden shadow-xl"
         >
           <ImageWithFallback
-            src={virtualDogPhotoForSeed('landing-hero-banner')}
-            alt="댕댕이 모임"
+            src={MOCK_IMG_HANGANG_HERO}
+            fallbackSrc={virtualDogPhotoForSeed('landing-hero-banner')}
+            alt="한강공원 대형견 산책 모임"
             className="w-full h-40 object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
@@ -761,6 +764,14 @@ export function LandingPage() {
               >
                 <CreditCard className="h-5 w-5 text-brand" />
                 인증 돌봄 · 목록 노출
+              </Link>
+              <Link
+                to="/feedback"
+                onClick={closeExploreMenu}
+                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
+              >
+                <Sparkles className="h-5 w-5 text-amber-500" />
+                개선해 주세요
               </Link>
               <Link
                 to="/customer-service"

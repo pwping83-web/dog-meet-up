@@ -317,6 +317,23 @@ export interface Database {
           updated_at?: string;
         };
       };
+      app_settings: {
+        Row: {
+          id: string;
+          is_promo_mode: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          is_promo_mode?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          is_promo_mode?: boolean;
+          updated_at?: string;
+        };
+      };
       certified_guard_moms: {
         Row: {
           id: string;

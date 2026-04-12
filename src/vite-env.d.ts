@@ -21,6 +21,8 @@ interface ImportMetaEnv {
   /** 전화 데모(000000) 폴백: 익명 로그인이 꺼져 있을 때 사용할 이메일 계정(클라이언트에 노출됨—전용 데모 계정만) */
   readonly VITE_PHONE_DEMO_EMAIL?: string;
   readonly VITE_PHONE_DEMO_PASSWORD?: string;
+  /** 개선·오류 접수 메일 수신 주소(비우면 support@daengdaeng.com) */
+  readonly VITE_FEEDBACK_INBOX_EMAIL?: string;
 }
 
 interface ImportMeta {

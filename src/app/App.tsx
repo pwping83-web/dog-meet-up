@@ -32,14 +32,17 @@
 import { RouterProvider } from 'react-router';
 import { router } from './routes';
 import { AuthProvider } from '../contexts/AuthContext';
+import { PromoModeProvider } from '../contexts/PromoModeProvider';
 import { UserLocationProvider } from '../contexts/UserLocationContext';
 
 export default function App() {
   return (
     <AuthProvider>
-      <UserLocationProvider>
-        <RouterProvider router={router} />
-      </UserLocationProvider>
+      <PromoModeProvider>
+        <UserLocationProvider>
+          <RouterProvider router={router} />
+        </UserLocationProvider>
+      </PromoModeProvider>
     </AuthProvider>
   );
 }

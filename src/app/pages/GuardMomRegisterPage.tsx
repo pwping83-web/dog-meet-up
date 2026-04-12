@@ -18,7 +18,7 @@ import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { startStripeCheckout } from '../../lib/billing';
-import { isPromoFreeListings } from '../../lib/promoFlags';
+import { usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
@@ -43,6 +43,7 @@ function friendlyCertifiedGuardMomsError(message: string): string {
 }
 
 export function GuardMomRegisterPage() {
+  const promoFree = usePromoFreeListings();
   const { user, loading: authLoading } = useAuth();
   const [row, setRow] = useState<GuardMomRow | null>(null);
   const [loading, setLoading] = useState(true);
@@ -138,7 +139,6 @@ export function GuardMomRegisterPage() {
   };
 
   const certified = row?.certified_at != null;
-  const promoFree = isPromoFreeListings();
   const paidListingWindow =
     row?.listing_visible_until != null && new Date(row.listing_visible_until).getTime() > Date.now();
   const visible = (promoFree && certified) || paidListingWindow;
@@ -178,6 +178,12 @@ export function GuardMomRegisterPage() {
             {loadErr && (
               <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold leading-relaxed text-red-900">
                 {loadErr}
+              </div>
+            )}
+
+            {promoFree && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-3 text-center text-sm font-extrabold leading-snug text-emerald-950">
+                🎉 현재 런칭 기념 무료 노출 프로모션 중입니다!
               </div>
             )}
 

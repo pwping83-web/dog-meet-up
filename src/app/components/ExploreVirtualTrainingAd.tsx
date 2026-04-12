@@ -7,10 +7,10 @@ type ExploreVirtualTrainingAdProps = {
   variant?: 'default' | 'compact';
 };
 
-const AD_TITLE = '[가상] 댕댕케어 직업훈련센터 — 돌봄·맡기기 직업 훈련';
+const AD_TITLE = '댕댕케어 직업훈련센터 — 돌봄·맡기기 직업 훈련';
 
 const AD_BODY =
-  '반려견 방문 돌봄·맡기기를 직업으로 하고 싶은 분을 위한 기초·실무 훈련을 안내합니다. 산책·배변·안전·보호자 소통까지, 가르치는 직업(강사)과 돌보는 직업(돌봄 제공자)이 함께 늘어나 일자리가 하나 더 생기는 구조를 목표로 합니다.';
+  '반려견 방문 돌봄·맡기기를 직업으로 하고 싶은 분을 위한 기초·실무 훈련을 안내합니다. 산책·배변·안전·보호자 소통까지, 가르치는 직업(강사)과 돌보는 직업(돌봄 제공자)이 함께 늘어나 일자리 창출을 목표로 합니다.';
 
 const GUARD_MOM_TITLE = '인증 보호맘이란?';
 
@@ -19,11 +19,11 @@ const GUARD_MOM_BODY =
 
 /**
  * 탐색 화면용 **가상 광고** UI 예시 (실제 업체·결제 아님).
- * `compact`: 돌봄·맡기기 블록 바로 위 — 기본 펼침으로 본문이 잘 보이게 함.
+ * 기본은 접힘 — 헤더(광고·모집 + 제목)만 보이고, 탭하면 본문·버튼이 펼쳐짐.
  */
 export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtualTrainingAdProps) {
   const compact = variant === 'compact';
-  const [open, setOpen] = useState(compact);
+  const [open, setOpen] = useState(false);
 
   return (
     <article

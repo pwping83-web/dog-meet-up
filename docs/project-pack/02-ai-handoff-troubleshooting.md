@@ -14,6 +14,7 @@
 - **AI:** Edge Function `daeng-ai-assist` — Secrets `GROQ_API_KEY`(우선) 또는 `GEMINI_API_KEY`. 게이트 `verify_jwt = false`, **함수 내부**에서 `createClient` + 요청 `Authorization`·`apikey`로 `auth.getUser()` 검증.
 - **프론트 AI 호출:** `src/lib/daengAiAssist.ts`, 버튼은 `AiDoumiButton` 등 각 페이지.
 - **법적 고지 상수:** `src/lib/platformLegalCopy.ts` — 글 올리기 체크박스 등.
+- **비즈니스·아키텍처 필수:** `docs/project-pack/09-business-dev-guidelines.md`(Promo 무료 우선, 하이퍼로컬, 보호맘 검증 상태, 마이그레이션·스택). Cursor 규칙: `.cursor/rules/daeng-business-architecture.mdc`.
 
 ## B. 디렉터리 맵 (복사용)
 

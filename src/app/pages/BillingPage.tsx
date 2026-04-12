@@ -7,7 +7,7 @@ import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BILLING_PRODUCTS, startStripeCheckout, type BillingProductKey } from '../../lib/billing';
-import { isPromoFreeListings } from '../../lib/promoFlags';
+import { usePromoFreeListings } from '../../lib/promoFlags';
 import { BILLING_LEGAL_NOTICE_PARAGRAPH } from '../../lib/platformLegalCopy';
 
 type OrderRow = {
@@ -41,7 +41,7 @@ export function BillingPage() {
   const [guardCertifiedAt, setGuardCertifiedAt] = useState<string | null>(null);
 
   const checkoutStatus = searchParams.get('checkout');
-  const promoFree = isPromoFreeListings();
+  const promoFree = usePromoFreeListings();
 
   const loadBilling = useCallback(async () => {
     if (!user) {
@@ -183,9 +183,12 @@ export function BillingPage() {
         </div>
 
         {promoFree && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-xs font-semibold leading-relaxed text-emerald-950">
-            <span className="font-extrabold">한시 무료</span>예요. 보호맘 목록·교배 노출은 결제 없이 쓸 수 있어요. 나중엔
-            유료로 바뀔 수 있어요.
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-semibold leading-relaxed text-emerald-950">
+            <p className="text-center font-extrabold">🎉 현재 런칭 기념 무료 노출 프로모션 중입니다!</p>
+            <p className="mt-2 text-xs font-semibold">
+              인증만 완료되면 인증 돌봄 목록에 바로 노출돼요. 교배 글도 같은 기간 동안 무료로 피드에 올라갈 수 있어요. 정책이
+              바뀌면 사전에 안내할게요.
+            </p>
           </div>
         )}
 

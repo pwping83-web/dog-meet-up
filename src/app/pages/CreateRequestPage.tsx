@@ -20,7 +20,7 @@ import { useUserLocation } from '../../contexts/UserLocationContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import { supabase } from '../../lib/supabase';
 import { startStripeCheckout } from '../../lib/billing';
-import { isPromoFreeListings } from '../../lib/promoFlags';
+import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getBreedingLeakInNonBreedingPost } from '../utils/breedingContentGuard';
 import type { Meetup } from '../types';
 import type { User } from '@supabase/supabase-js';
@@ -70,6 +70,7 @@ export function CreateRequestPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { applyGpsLocation, locationBasedEnabled } = useUserLocation();
+  const promoFree = usePromoFreeListings();
   const kind = parseKind(searchParams.get('kind'));
 
   const [formData, setFormData] = useState({
@@ -302,7 +303,7 @@ export function CreateRequestPage() {
   }, [kind, formData.category, formData.title, formData.description]);
 
   const breedingListingActive =
-    isPromoFreeListings() ||
+    promoFree ||
     (breedingListingUntil != null &&
       !Number.isNaN(Date.parse(breedingListingUntil)) &&
       new Date(breedingListingUntil) > new Date());
@@ -343,7 +344,7 @@ export function CreateRequestPage() {
     if (breedingLeakLabel) {
       alert(
         `다른 주제에는 ${breedingLeakLabel} 표현을 쓸 수 없어요.\n` +
-          (isPromoFreeListings()
+          (promoFree
             ? '만나자 → 교배를 골라 작성해 주세요.'
             : '만나자 → 교배를 골라 작성·결제해 주세요.'),
       );
@@ -401,7 +402,7 @@ export function CreateRequestPage() {
       formData.category === '교배' &&
       breedingListingUntil &&
       breedingListingActive &&
-      !isPromoFreeListings()
+      !promoFree
     ) {
       newMeetup.listingVisibleUntil = breedingListingUntil;
     }
@@ -420,7 +421,7 @@ export function CreateRequestPage() {
         /* ignore */
       }
       alert(
-        isPromoFreeListings()
+        promoFree
           ? '교배 글이 올라갔어요. 지금은 한시 무료로 피드에도 보여요. 1:1·실종은 무료예요.'
           : '교배 글이 올라갔어요. 결제한 7일 동안 피드에 보여요. 1:1·실종은 무료예요.',
       );
@@ -650,7 +651,7 @@ export function CreateRequestPage() {
           {kind === 'mannaja' && formData.category === '교배' && (
             <div className="rounded-2xl border border-pink-200 bg-pink-50/90 px-3 py-3 text-xs font-semibold leading-relaxed text-pink-950">
               <p className="font-extrabold">
-                {isPromoFreeListings()
+                {promoFree
                   ? '교배 글 · 한시 무료(목록·피드)'
                   : '교배 글 · 유료 7일(목록·피드)'}
               </p>
@@ -658,7 +659,7 @@ export function CreateRequestPage() {
                 견종·성별·나이, 상대 조건, 접종·건강, 연락 방법을 짧게 적어 주세요.
               </p>
               <p className="mt-1.5">
-                {isPromoFreeListings() ? (
+                {promoFree ? (
                   <>지금은 무료예요. 나중엔 유료로 바뀔 수 있어요. 1:1·실종 글은 무료예요.</>
                 ) : (
                   <>
@@ -667,7 +668,7 @@ export function CreateRequestPage() {
                   </>
                 )}
               </p>
-              {!isPromoFreeListings() && breedingListingActive && breedingListingUntil && (
+              {!promoFree && breedingListingActive && breedingListingUntil && (
                 <p className="mt-2 font-bold text-pink-900">
                   이번 노출권 만료:{' '}
                   {format(new Date(breedingListingUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}

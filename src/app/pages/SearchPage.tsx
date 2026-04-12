@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { mockRequests } from '../data/mockData';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
@@ -58,6 +59,7 @@ function upsertRecent(prev: string[], term: string): string[] {
 
 export function SearchPage() {
   const { user } = useAuth();
+  const promoFree = usePromoFreeListings();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const dogsListView = searchParams.get('view') === 'dogs';
@@ -109,7 +111,7 @@ export function SearchPage() {
 
   const filteredRequests = mergedRequests.filter(
     (request) =>
-      meetupVisibleInPublicFeed(request) &&
+      meetupVisibleInPublicFeed(request, promoFree) &&
       (request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.description.toLowerCase().includes(searchQuery.toLowerCase())),

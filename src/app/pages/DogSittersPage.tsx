@@ -35,7 +35,7 @@ import {
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
-import { isPromoFreeListings, showCertifiedGuardMomDemosWhenEmpty } from '../../lib/promoFlags';
+import { showCertifiedGuardMomDemosWhenEmpty, usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
@@ -74,7 +74,8 @@ function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
 
 export function DogSittersPage() {
   const { user } = useAuth();
-  const { location } = useUserLocation();
+  const { location, locationBasedEnabled } = useUserLocation();
+  const promoFree = usePromoFreeListings();
   const routerLocation = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [meetupFeedTick, setMeetupFeedTick] = useState(0);
@@ -127,8 +128,13 @@ export function DogSittersPage() {
   const distForDistrict = useMemo(() => {
     const userRefs =
       referenceDistricts.length > 0 ? referenceDistricts : [ANYANG_MANAN_DISTANCE_ORIGIN];
-    /** 인증 돌봄(맡아주는) 목록은 안양 만안 기준으로 거리 표기 */
-    const effectiveRefs = topTab === 'certified' ? [ANYANG_MANAN_DISTANCE_ORIGIN] : userRefs;
+    /** 인증 돌봄 탭: 저장된 동네(없으면 안양 만안) 기준 거리 표기 */
+    const effectiveRefs =
+      topTab === 'certified'
+        ? referenceDistricts.length > 0
+          ? referenceDistricts
+          : [ANYANG_MANAN_DISTANCE_ORIGIN]
+        : userRefs;
 
     return (district: string) => {
       const d = district?.trim();
@@ -252,18 +258,29 @@ export function DogSittersPage() {
     guardMoms.length === 0 &&
     showCertifiedGuardMomDemosWhenEmpty();
 
+  const guardMomsRegionFiltered = useMemo(() => {
+    if (!locationBasedEnabled) return guardMoms;
+    const setD = new Set(referenceDistricts.map((x) => x.trim()).filter(Boolean));
+    if (setD.size === 0) return guardMoms;
+    return guardMoms.filter((m) => setD.has((m.region_gu ?? '').trim()));
+  }, [guardMoms, locationBasedEnabled, referenceDistricts]);
+
   /** DB에서 온 인증 행만 쓰고, 데모 모드일 때만 목업을 이어 붙임. */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
     if (guardMomsLoadError) return [];
-    if (guardMoms.length > 0) return guardMoms;
+    if (guardMomsRegionFiltered.length > 0) return guardMomsRegionFiltered;
     if (guardMomUiDemoFill) return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
     return [];
-  }, [guardMoms, guardMomsLoadError, guardMomUiDemoFill]);
+  }, [guardMomsRegionFiltered, guardMomsLoadError, guardMomUiDemoFill]);
 
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
 
     let sitters = mockDogSitters.filter((s) => {
+      if (locationBasedEnabled) {
+        const d = s.district?.trim();
+        if (!d || !referenceDistricts.includes(d)) return false;
+      }
       if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
       if (q) {
         const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
@@ -319,28 +336,53 @@ export function DogSittersPage() {
     });
 
     return rows;
-  }, [careFilter, specialty, sortBy, distForDistrict, guardMomsForList, q]);
+  }, [
+    careFilter,
+    specialty,
+    sortBy,
+    distForDistrict,
+    guardMomsForList,
+    q,
+    locationBasedEnabled,
+    referenceDistricts,
+  ]);
 
-  const filteredMeetups = allMeetups
-    .filter((req) => {
-      const inTab =
-        topTab === 'moija'
-          ? MOIJA_CATEGORY_SET.has(req.category)
-          : topTab === 'mannaja'
-            ? MANNAJA_CATEGORY_SET.has(req.category)
-            : false;
-      if (!inTab) return false;
-      if (!meetupVisibleInPublicFeed(req)) return false;
-      const categoryMatch = category === '전체' || req.category === category;
-      return categoryMatch;
-    })
-    .slice(0, 20);
+  const meetupMatchesRegion = useCallback(
+    (district: string) => {
+      if (!locationBasedEnabled) return true;
+      const d = district?.trim();
+      if (!d) return false;
+      return referenceDistricts.includes(d);
+    },
+    [locationBasedEnabled, referenceDistricts],
+  );
+
+  const filteredMeetups = useMemo(
+    () =>
+      allMeetups
+        .filter((req) => {
+          const inTab =
+            topTab === 'moija'
+              ? MOIJA_CATEGORY_SET.has(req.category)
+              : topTab === 'mannaja'
+                ? MANNAJA_CATEGORY_SET.has(req.category)
+                : false;
+          if (!inTab) return false;
+          if (!meetupVisibleInPublicFeed(req, promoFree)) return false;
+          if (!meetupMatchesRegion(req.district)) return false;
+          const categoryMatch = category === '전체' || req.category === category;
+          return categoryMatch;
+        })
+        .slice(0, 20),
+    [allMeetups, topTab, category, promoFree, meetupMatchesRegion],
+  );
 
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
   const filteredCareNeedMeetups = useMemo(() => {
     return allMeetups
       .filter((req) => req.category === '돌봄')
-      .filter((req) => meetupVisibleInPublicFeed(req))
+      .filter((req) => meetupVisibleInPublicFeed(req, promoFree))
+      .filter((req) => meetupMatchesRegion(req.district))
       .filter((req) => {
         if (!q) return true;
         const blob = `${displayPublicDolbomMeetupTitle(req)} ${displayPublicDolbomMeetupDescription(req)} ${req.title} ${req.description} ${req.district} ${req.userName}`
@@ -348,7 +390,7 @@ export function DogSittersPage() {
         return blob.includes(q);
       })
       .slice(0, 50);
-  }, [allMeetups, q]);
+  }, [allMeetups, q, promoFree, meetupMatchesRegion]);
 
   // 신청 수 계산
   const getJoinCount = (meetupId: string) => {
@@ -413,7 +455,7 @@ export function DogSittersPage() {
             ) : (
               <>
                 <strong className="font-extrabold">만나자</strong>는 1:1·교배·실종 글만 보여요. 교배는{' '}
-                {isPromoFreeListings() ? (
+                {promoFree ? (
                   <>지금 무료 노출. </>
                 ) : (
                   <>결제 후 7일 노출. </>

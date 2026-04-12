@@ -11,6 +11,10 @@
 
 import { Meetup, DogSitter, JoinRequest } from '../types';
 import { virtualDogPhotoForSeed } from './virtualDogPhotos';
+import {
+  MOCK_IMG_DOLBOM_MALTESE_TRIP,
+  MOCK_IMG_HANGANG_LARGE_WALK,
+} from './mockPromoImages';
 
 function mockMeetupImages(id: string, category: Meetup['category']): string[] {
   const seed = category === '돌봄' ? `dolbom-${id}` : `meetup-${id}`;
@@ -20,6 +24,21 @@ function mockMeetupImages(id: string, category: Meetup['category']): string[] {
 // Sample dog meetup requests from owners
 // 모이자: 공원·장소 모임, 산책·놀이, 카페·체험, 훈련·사회화 / 만나자: 1:1 만남, 교배, 실종 / 돌봄: 맡기기(랜딩 돌봄 섹션)
 export const mockMeetups: Meetup[] = [
+  {
+    id: 'hangang-large-walk-1',
+    title: '한강공원 대형견 산책 모임',
+    category: '산책·놀이',
+    description:
+      '대형견 가족이에요! 주말 오전 여의도·망원 한강변에서 느긋하게 산책해요. 무리한 뛰기보다 냄새 맡기 위주예요. 입마개·당김 줄 맞춰서 안전하게 가요 🦮',
+    location: '서울 영등포구',
+    district: '영등포구',
+    images: [MOCK_IMG_HANGANG_LARGE_WALK],
+    estimatedCost: '토요일 오전 9시',
+    status: 'pending',
+    createdAt: new Date('2026-04-12'),
+    userId: 'user-hangang-lg',
+    userName: '대형견산책',
+  },
   {
     id: 'moija-park-1',
     title: '올림픽공원 일요일 오전 🌳 소형견 댕댕이들 모이자!',
@@ -85,10 +104,7 @@ export const mockMeetups: Meetup[] = [
       '5kg 말티즈 남아예요. 예방접종·심장사상충 완료, 배변 패드 잘 쌉니다. 토·일 이틀간 집 방문 돌봄 또는 하루 맡기기 가능한 분 찾아요. 인증 돌봄 탭의 인증 댕집사분도 환영합니다. 사전에 성향·산책 여부만 채팅으로 맞추면 돼요!',
     location: '서울 마포구',
     district: '마포구',
-    /** Unsplash 가상 풀은 일부 시드에서 썸네일 로드 실패 시 회색 박스가 되어, 맡기는 사람 목록용으로 비-Unsplash 고정 URL 사용 */
-    images: [
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/960px-YellowLabradorLooking_new.jpg',
-    ],
+    images: [MOCK_IMG_DOLBOM_MALTESE_TRIP],
     estimatedCost: '돌봄·맡기기',
     status: 'pending',
     createdAt: new Date('2026-02-10'),

@@ -8,7 +8,7 @@ import { mockRequests, mockRepairers, mockQuotes } from '../data/mockData';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
-import { isPromoFreeListings } from '../../lib/promoFlags';
+import { usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
 type AdminView = 'main' | 'requests' | 'repairers' | 'quotes' | 'guardCare';
@@ -354,6 +354,7 @@ function QuotesView() {
 }
 
 function GuardCareAdminView() {
+  const promoFree = usePromoFreeListings();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [certifyingId, setCertifyingId] = useState<string | null>(null);
@@ -567,7 +568,6 @@ function GuardCareAdminView() {
                     g.certified_at != null &&
                     g.certified_at !== '' &&
                     !Number.isNaN(new Date(g.certified_at as string).getTime());
-                  const promoFree = isPromoFreeListings();
                   const paidListingActive =
                     g.listing_visible_until != null && new Date(g.listing_visible_until).getTime() > Date.now();
                   const visible = (promoFree && certified) || paidListingActive;

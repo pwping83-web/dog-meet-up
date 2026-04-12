@@ -1,0 +1,27 @@
+---
+description: 댕댕마켓 — 비즈니스·아키텍처 필수 준수(Promo, 하이퍼로컬, 보호맘 검증, 마이그레이션)
+alwaysApply: true
+---
+
+# 비즈니스·아키텍처 (코드·DB 설계 시 필수)
+
+전문은 **`docs/project-pack/09-business-dev-guidelines.md`** 를 따른다.
+
+## 1. Promo Mode / 수익화 홀드
+
+- Stripe·유료 노출 **코드 삭제 금지**. 기본은 **무료 프로모션 우회**.
+- 유/무료 전환은 **`src/lib/promoFlags.ts`** (`VITE_PROMO_FREE_LISTINGS`) 및 **RLS 마이그레이션**으로만 스위칭하도록 유지·확장한다.
+
+## 2. 하이퍼로컬
+
+- 모이자·만나자·돌봄·보호맘 **목록/쿼리는 지역 필터 최우선**. DB로 옮길 때 **구/동·행정단위 컬럼 + 복합 인덱스**를 설계한다.
+- 좌표 검색이 필요하면 **PostGIS는 별도 마이그레이션**으로 검토(스택은 여전히 Supabase PG).
+
+## 3. 인증 보호맘
+
+- `certified_at` + 관리자 **RPC 패턴 유지**. 오프라인 검증 반영을 위해 **`verification_status` ENUM(PENDING/APPROVED/REJECTED 등)** 세분화는 **마이그레이션**으로 도입하고 Admin UI와 맞춘다.
+
+## 4. 스택·마이그레이션
+
+- **React(Vite) + Supabase(Auth, RLS, Edge) PWA** 유지.
+- 스키마·RLS·RPC 변경은 반드시 **`supabase/migrations/`** 에 타임스탬프 SQL로 추가한다.

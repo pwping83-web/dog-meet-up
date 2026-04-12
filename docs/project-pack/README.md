@@ -10,6 +10,8 @@
 | 04 | [04-ops-and-deployment.md](./04-ops-and-deployment.md) | 배포·Secrets·마이그레이션·운영 체크 |
 | 05 | [05-virtual-partner-ad-sample.md](./05-virtual-partner-ad-sample.md) | 가상 업체 광고 예시(한시 무료 → 월 유료 전환 스토리) |
 | 06 | [06-patents-and-ip.md](./06-patents-and-ip.md) | 특허 가능 여부(일반론), 출원 흐름, 상표·저작권 등 IP 정리 |
+| 08 | [08-bm-monetization-strategy.md](./08-bm-monetization-strategy.md) | BM·수익화: 초기 무료 락, 공급자 우선 성장, 유료 전환 체크리스트 |
+| 09 | [09-business-dev-guidelines.md](./09-business-dev-guidelines.md) | **개발·리팩터링 필수:** Promo, 하이퍼로컬, 보호맘 검증, 마이그레이션·스택 |
 
 **기존 문서와의 관계**
 
