@@ -4,13 +4,12 @@ import {
   ArrowLeft,
   Search,
   X,
-  ChevronRight,
   Home,
   MessageCircle,
   User,
   PlusCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { mockRequests } from '../data/mockData';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
@@ -20,14 +19,45 @@ const popularSearches = [
   '훈련', '사회화', '퍼피', '시니어',
 ];
 
-const recentSearches = [
-  '강아지 산책', '퍼피 사회화', '대형견 모임',
-];
+const RECENT_SEARCHES_KEY = 'daeng-recent-searches';
+const DEFAULT_RECENT = ['강아지 산책', '퍼피 사회화', '대형견 모임'];
+
+function readRecentFromStorage(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_SEARCHES_KEY);
+    if (raw === null) return [...DEFAULT_RECENT];
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed) && parsed.every((x) => typeof x === 'string')) {
+      return parsed.slice(0, 20);
+    }
+  } catch {
+    /* ignore */
+  }
+  return [...DEFAULT_RECENT];
+}
+
+function persistRecent(next: string[]) {
+  try {
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+  } catch {
+    /* ignore */
+  }
+}
+
+function upsertRecent(prev: string[], term: string): string[] {
+  const t = term.trim();
+  if (!t) return prev;
+  const without = prev.filter((x) => x !== t);
+  return [t, ...without].slice(0, 15);
+}
 
 export function SearchPage() {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>(() =>
+    typeof window !== 'undefined' ? readRecentFromStorage() : [...DEFAULT_RECENT],
+  );
 
   const filteredRequests = mockRequests.filter(
     (request) =>
@@ -37,9 +67,36 @@ export function SearchPage() {
         request.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    setShowResults(true);
+  /** 입력창 타이핑 — 최근 검색 목록에는 넣지 않음 */
+  const handleInputChange = (value: string) => {
+    setSearchQuery(value);
+    setShowResults(value.trim().length > 0);
+  };
+
+  /** 칩·카테고리·엔터 확정 시 검색 + 최근 검색에 반영 */
+  const selectSearch = useCallback((query: string) => {
+    const q = query.trim();
+    setSearchQuery(q);
+    setShowResults(q.length > 0);
+    if (!q) return;
+    setRecentSearches((prev) => {
+      const next = upsertRecent(prev, q);
+      persistRecent(next);
+      return next;
+    });
+  }, []);
+
+  const removeRecent = (term: string) => {
+    setRecentSearches((prev) => {
+      const next = prev.filter((x) => x !== term);
+      persistRecent(next);
+      return next;
+    });
+  };
+
+  const clearAllRecent = () => {
+    setRecentSearches([]);
+    persistRecent([]);
   };
 
   const clearSearch = () => {
@@ -61,7 +118,14 @@ export function SearchPage() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const q = searchQuery.trim();
+                  if (q) selectSearch(q);
+                }
+              }}
               placeholder="어떤 댕친을 찾으시나요? 🐾"
               className="h-12 w-full rounded-2xl border-transparent bg-slate-50/80 pl-11 pr-10 font-bold text-slate-900 transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/15"
               autoFocus
@@ -130,15 +194,36 @@ export function SearchPage() {
               <div className="mb-10">
                 <div className="flex items-center justify-between mb-4 px-1">
                   <h2 className="font-extrabold text-lg text-slate-900">최근 검색어</h2>
-                  <button className="text-xs font-bold text-slate-400 hover:text-slate-600">전체 삭제</button>
+                  <button
+                    type="button"
+                    onClick={clearAllRecent}
+                    className="text-xs font-bold text-slate-400 hover:text-slate-600"
+                  >
+                    전체 삭제
+                  </button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {recentSearches.map((term, index) => (
-                    <div key={index} className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:bg-slate-100 transition-colors">
-                      <button onClick={() => handleSearch(term)} className="text-sm font-bold text-slate-600 group-hover:text-brand transition-colors">
+                  {recentSearches.map((term) => (
+                    <div
+                      key={term}
+                      className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:bg-slate-100 transition-colors"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => selectSearch(term)}
+                        className="text-sm font-bold text-slate-600 group-hover:text-brand transition-colors"
+                      >
                         {term}
                       </button>
-                      <button className="p-1 text-slate-300 hover:text-slate-500 rounded-full">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeRecent(term);
+                        }}
+                        className="p-1 text-slate-300 hover:text-slate-500 rounded-full"
+                        aria-label={`${term} 삭제`}
+                      >
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -154,7 +239,8 @@ export function SearchPage() {
                 {popularSearches.map((term, index) => (
                   <button
                     key={index}
-                    onClick={() => handleSearch(term)}
+                    type="button"
+                    onClick={() => selectSearch(term)}
                     className="rounded-xl border border-orange-100 bg-orange-50/60 px-4 py-2 text-sm font-bold text-orange-900 transition-colors hover:bg-orange-100 hover:text-orange-950"
                   >
                     {term}
@@ -174,9 +260,13 @@ export function SearchPage() {
                   { name: '산책', emoji: '🐾', count: 55 },
                   { name: '훈련', emoji: '🎓', count: 32 },
                   { name: '사회화', emoji: '🤝', count: 28 },
-                  { name: '놀이', emoji: '⚽', count: 23 },
                 ].map((category) => (
-                  <button key={category.name} onClick={() => handleSearch(category.name)} className="flex flex-col items-center justify-center p-5 bg-white border border-slate-100 rounded-3xl hover:border-orange-200 hover:shadow-md transition-all duration-200 active:scale-95 group">
+                  <button
+                    key={category.name}
+                    type="button"
+                    onClick={() => selectSearch(category.name)}
+                    className="flex flex-col items-center justify-center p-5 bg-white border border-slate-100 rounded-3xl hover:border-orange-200 hover:shadow-md transition-all duration-200 active:scale-95 group"
+                  >
                     <div className="text-4xl mb-3 transform group-hover:scale-110 transition-transform">{category.emoji}</div>
                     <div className="text-sm font-extrabold text-slate-800 mb-1 group-hover:text-brand">{category.name}</div>
                     <div className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded-md">{category.count}건</div>

@@ -66,9 +66,7 @@ export function BecomeDogSitterPage() {
           <h2 className="text-2xl mb-3" style={{ fontWeight: 700 }}>
             이웃 강아지 집에 찾아가 방문 돌봄해요
           </h2>
-          <p className="text-gray-600 text-base">
-            산책·밥·놀이 등 주인 집을 기준으로 돌봐 주는 댕집사예요
-          </p>
+          <p className="text-gray-600 text-base">댕집사는 주인 집 방문, 돌봄이에요</p>
         </div>
 
         {/* 3가지 핵심 포인트 */}
