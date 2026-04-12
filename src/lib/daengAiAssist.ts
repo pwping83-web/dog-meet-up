@@ -21,6 +21,22 @@ export type DaengAiAssistResult =
   | { ok: true; text: string; fields?: DaengAiFields }
   | { ok: false; error: string };
 
+/** OpenAI 429·quota 등일 때 사용자에게 보이는 문구 */
+const OPENAI_QUOTA_USER_MESSAGE = 'ai토큰? 이 떨어졌습니다 충전해 주세요';
+
+function isLikelyOpenAiQuotaMessage(text: string): boolean {
+  const l = text.toLowerCase();
+  return (
+    l.includes("429") ||
+    l.includes("quota") ||
+    l.includes("insufficient_quota") ||
+    l.includes("rate_limit") ||
+    l.includes("rate limit") ||
+    l.includes("billing_hard_cap") ||
+    l.includes("exceeded your current quota")
+  );
+}
+
 function explainEdgeInvokeFailure(raw: string): string {
   const m = raw.trim();
   const lower = m.toLowerCase();
@@ -86,6 +102,10 @@ export async function invokeDaengAiAssist(
   });
 
   if (error) {
+    const raw = `${error.message || ''} ${typeof data === 'string' ? data : JSON.stringify(data ?? '')}`;
+    if (isLikelyOpenAiQuotaMessage(raw)) {
+      return { ok: false, error: OPENAI_QUOTA_USER_MESSAGE };
+    }
     return {
       ok: false,
       error: explainEdgeInvokeFailure(error.message || 'Edge Function 호출 실패'),
@@ -104,7 +124,11 @@ export async function invokeDaengAiAssist(
   }
 
   if (!d.ok) {
-    return { ok: false, error: d.error || 'AI 도우미 처리 실패' };
+    const errText = d.error || '';
+    if (isLikelyOpenAiQuotaMessage(errText)) {
+      return { ok: false, error: OPENAI_QUOTA_USER_MESSAGE };
+    }
+    return { ok: false, error: errText || 'AI 도우미 처리 실패' };
   }
 
   return { ok: true, text: typeof d.text === 'string' ? d.text : '', fields: d.fields };
