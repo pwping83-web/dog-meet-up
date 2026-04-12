@@ -278,15 +278,23 @@ export function CreateRequestPage() {
           {kind === 'dolbom' && (
             <>
               <h2 className="mb-2 text-xl font-extrabold text-slate-900">필요한 돌봄을 적어 주세요</h2>
-              <p className="text-sm font-medium text-slate-500">
-                댕집사는 주인 집 <strong className="font-bold text-slate-600">방문 돌봄</strong>, 보호맘은{' '}
-                <strong className="font-bold text-slate-600">돌봄 집 맡기기</strong>예요. 인수인계·픽업·기간 후 데려다 주기·주인
-                픽업 등은 서로 조율하면 돼요. 인증 댕집사·보호맘은{' '}
-                <Link to="/sitters?view=care" className="font-bold text-brand underline underline-offset-2">
-                  인증 돌봄
-                </Link>
-                에서도 찾을 수 있어요
-              </p>
+              <div className="space-y-2 text-sm font-medium leading-relaxed text-slate-500">
+                <p>
+                  <strong className="font-extrabold text-slate-800">댕집사</strong>는 주인 집 방문,{' '}
+                  <strong className="font-extrabold text-slate-800">돌봄</strong>
+                </p>
+                <p>
+                  <strong className="font-extrabold text-slate-800">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집
+                  기준으로 서로 맞추면 돼요.
+                </p>
+                <p>
+                  인증 댕집사·보호맘은{' '}
+                  <Link to="/sitters?view=care" className="font-bold text-brand underline underline-offset-2">
+                    인증 돌봄
+                  </Link>
+                  에서도 찾을 수 있어요
+                </p>
+              </div>
             </>
           )}
         </div>
@@ -312,8 +320,9 @@ export function CreateRequestPage() {
 
           {kind === 'dolbom' && (
             <div className="rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-sky-950">
-              이 글은 홈·목록에서 <strong className="font-extrabold">돌봄·맡기기</strong>로 모여 보여요. 방문을 원하면 댕집사,
-              집에 맡기기를 원하면 보호맘 쪽 일정에 맞춰 주세요.
+              이 글은 홈·목록에서 <strong className="font-extrabold">돌봄·맡기기</strong>로 모여 보여요.{' '}
+              <strong className="font-extrabold">댕집사</strong>(방문·돌봄) 또는{' '}
+              <strong className="font-extrabold">보호맘</strong>(맡기기) 쪽 일정에 맞춰 주세요.
             </div>
           )}
 

@@ -408,9 +408,15 @@ export function DogSittersPage() {
       {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            <strong className="font-extrabold">댕집사</strong>는 주인 집 방문 돌봄,{' '}
-            <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
-            맞추면 돼요. 무료 모임·만남은{' '}
+            <span className="mb-1.5 block">
+              <strong className="font-extrabold">댕집사</strong>는 주인 집 방문,{' '}
+              <strong className="font-extrabold">돌봄</strong>
+            </span>
+            <span className="mb-1.5 block">
+              <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
+              맞추면 돼요.
+            </span>
+            무료 모임·만남은{' '}
             <Link to="/sitters" className="font-extrabold text-brand underline underline-offset-2">
               모이자 · 만나자
             </Link>
