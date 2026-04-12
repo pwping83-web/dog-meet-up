@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { MapPin, Star, ArrowLeft, MessageCircle, X } from 'lucide-react';
+import { formatDistrictWithDong } from '../data/regions';
 import { mockDogSitters } from '../data/mockData';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -72,7 +73,7 @@ export function DogSitterProfilePage() {
           <div className="flex items-center justify-center gap-3 text-sm text-slate-500" style={{ fontWeight: 700 }}>
             <div className="flex items-center gap-1">
               <MapPin className="w-4 h-4" />
-              <span>{[dogSitter.district, dogSitter.dong].filter(Boolean).join(' ')}</span>
+              <span>{formatDistrictWithDong(dogSitter.district, dogSitter.dong)}</span>
             </div>
             <span>•</span>
             <span>경력 {dogSitter.experience}</span>
@@ -194,7 +195,7 @@ export function DogSitterProfilePage() {
                     <div>
                       <p className="text-slate-800" style={{ fontWeight: 800 }}>{dogSitter.name}</p>
                       <p className="text-xs text-slate-500" style={{ fontWeight: 700 }}>
-                        {[dogSitter.district, dogSitter.dong].filter(Boolean).join(' ')}
+                        {formatDistrictWithDong(dogSitter.district, dogSitter.dong)}
                       </p>
                     </div>
                   </div>

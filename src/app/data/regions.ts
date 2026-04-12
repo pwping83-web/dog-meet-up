@@ -165,11 +165,21 @@ export function getTotalRegions(): number {
   return regions.reduce((sum, region) => sum + region.districts.length, 0);
 }
 
-// 지역명 포맷팅 (예: "서울 강남구", 동 있으면 "서울 송파구 잠실동")
-export function formatRegion(city: string, district: string, dong?: string): string {
+/** 구·동 짧은 표기 (예: "강남구 (역삼동)", 동 없으면 "강남구") */
+export function formatDistrictWithDong(district: string, dong?: string | null): string {
+  const dist = (district ?? '').trim();
   const d = (dong ?? '').trim();
-  if (d) return `${city} ${district} ${d}`.trim();
-  return `${city} ${district}`.trim();
+  if (!dist) return d || '';
+  if (!d) return dist;
+  return `${dist} (${d})`;
+}
+
+// 지역명 포맷팅 (예: "서울 강남구", 동 있으면 "서울 강남구 (잠실동)")
+export function formatRegion(city: string, district: string, dong?: string): string {
+  const base = `${(city ?? '').trim()} ${(district ?? '').trim()}`.trim();
+  const d = (dong ?? '').trim();
+  if (d) return `${base} (${d})`.trim();
+  return base;
 }
 
 /** 인증 보호맘: 시·구 + 선택 동 (DB에 동 컬럼이 없으면 생략) */
@@ -178,8 +188,11 @@ export function formatCertifiedGuardMomLocation(mom: {
   region_gu: string;
   region_dong?: string | null;
 }): string {
+  const si = (mom.region_si ?? '').trim();
+  const gu = (mom.region_gu ?? '').trim();
   const dong = (mom.region_dong ?? '').trim();
-  const parts = [mom.region_si, mom.region_gu, dong].filter(Boolean);
+  const guLine = formatDistrictWithDong(gu, dong || undefined);
+  const parts = [si, guLine].filter(Boolean);
   return parts.length > 0 ? parts.join(' ') : '동네 미입력';
 }
 

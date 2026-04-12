@@ -36,7 +36,7 @@ export interface DogSitter {
   profileImage: string;
   location: string;                 // Full location
   district: string;                 // District for matching (거리 계산)
-  /** 있으면 카드 등에 "강남구 역삼동"처럼 구·동 표시 */
+  /** 있으면 카드 등에 "강남구 (역삼동)"처럼 구·동 표시 */
   dong?: string;
   specialties: string[];            // Types of activities they do
   rating: number;                   // Average rating (0-5 stars)

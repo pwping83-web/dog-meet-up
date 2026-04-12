@@ -16,6 +16,9 @@ interface ImportMetaEnv {
   readonly VITE_PLAY_STORE_URL?: string;
   /** true/1 이면 PWA·스토어 설치 유도 UI 표시 (출시 전에는 비워두기) */
   readonly VITE_SHOW_APP_INSTALL?: string;
+  /** 전화 데모(000000) 폴백: 익명 로그인이 꺼져 있을 때 사용할 이메일 계정(클라이언트에 노출됨—전용 데모 계정만) */
+  readonly VITE_PHONE_DEMO_EMAIL?: string;
+  readonly VITE_PHONE_DEMO_PASSWORD?: string;
 }
 
 interface ImportMeta {

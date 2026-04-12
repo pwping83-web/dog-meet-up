@@ -11,7 +11,11 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signInWithKakao: () => Promise<void>;
-  /** 데모: 인증번호 000000 + Supabase 익명 로그인(대시보드에서 Anonymous 활성화 필요) */
+  /**
+   * 데모: 인증번호 000000
+   * - 1순위: Supabase 익명 로그인(대시보드 Authentication → Providers → Anonymous ON)
+   * - 익명이 꺼져 있으면: VITE_PHONE_DEMO_EMAIL + VITE_PHONE_DEMO_PASSWORD 로 signInWithPassword 폴백
+   */
   signInWithPhoneDemo: (phone: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -99,13 +103,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   };
 
+  const isAnonymousDisabledError = (err: unknown) => {
+    const m = err instanceof Error ? err.message : String(err);
+    return /anonymous sign[-\s]?ins? are disabled/i.test(m) || /anonymous provider is disabled/i.test(m);
+  };
+
   const signInWithPhoneDemo = async (phone: string, code: string) => {
     const trimmed = code.trim();
     if (trimmed !== '000000') {
       throw new Error('데모 환경에서는 인증번호 000000을 입력해 주세요.');
     }
+
+    const demoEmail = import.meta.env.VITE_PHONE_DEMO_EMAIL?.trim();
+    const demoPassword = import.meta.env.VITE_PHONE_DEMO_PASSWORD?.trim();
+
     const { error: anonError } = await supabase.auth.signInAnonymously();
-    if (anonError) throw anonError;
+    if (anonError) {
+      if (isAnonymousDisabledError(anonError) && demoEmail && demoPassword) {
+        const { error: pwError } = await supabase.auth.signInWithPassword({
+          email: demoEmail,
+          password: demoPassword,
+        });
+        if (pwError) {
+          throw new Error(
+            `전화 데모 폴백 로그인 실패: ${pwError.message}\n데모 계정 이메일·비밀번호(VITE_PHONE_DEMO_*)를 Supabase에 만든 사용자와 맞춰 주세요.`,
+          );
+        }
+      } else if (isAnonymousDisabledError(anonError)) {
+        throw new Error(
+          '전화 데모 로그인을 쓰려면 Supabase 대시보드 → Authentication → Providers에서 Anonymous(익명) 로그인을 켜 주세요.\n' +
+            '또는 배포 설정에 VITE_PHONE_DEMO_EMAIL, VITE_PHONE_DEMO_PASSWORD를 넣어 데모용 계정으로 폴백할 수 있어요.\n' +
+            '실서비스 로그인은 카카오를 이용해 주세요.',
+        );
+      } else {
+        throw anonError;
+      }
+    }
+
     const {
       data: { user: u },
     } = await supabase.auth.getUser();

@@ -18,7 +18,7 @@ import {
   MOIJA_CATEGORY_SET,
   MOIJA_MEETUP_CATEGORIES,
 } from '../utils/meetupCategory';
-import { formatCertifiedGuardMomLocation } from '../data/regions';
+import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
 
@@ -198,7 +198,7 @@ export function DogSittersPage() {
     let sitters = mockDogSitters.filter((s) => {
       if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
       if (q) {
-        const blob = `${s.name} ${s.description} ${s.district} ${s.dong ?? ''}`.toLowerCase();
+        const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;
@@ -412,11 +412,9 @@ export function DogSittersPage() {
       {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            <strong className="font-extrabold">댕집사</strong>는 주인 집에 찾아가는{' '}
-            <strong className="font-extrabold">방문 돌봄</strong>(산책·케어)이에요. 운영 인증{' '}
-            <strong className="font-extrabold">보호맘</strong> 맡기기는 돌봄하는 집에 아이를 맡기거나 거기서 픽업하고, 기간이
-            끝나면 <strong className="font-extrabold">보호맘이 주인 집까지 데려다 드리거나</strong> 주인이{' '}
-            <strong className="font-extrabold">찾아가는</strong> 식으로 조율해요. 무료 모임·만남은{' '}
+            <strong className="font-extrabold">댕집사</strong>는 주인 집 방문 돌봄,{' '}
+            <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
+            맞추면 돼요. 무료 모임·만남은{' '}
             <Link to="/sitters" className="font-extrabold text-brand underline underline-offset-2">
               모이자 · 만나자
             </Link>

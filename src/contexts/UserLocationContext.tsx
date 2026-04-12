@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { formatRegion } from '../app/data/regions';
+import { formatDistrictWithDong, formatRegion } from '../app/data/regions';
 import { getCurrentBrowserPosition } from '../lib/browserGeolocation';
 import { coord2AddressParts, loadKakaoMapScript } from '../lib/kakaoMaps';
 import { matchKakaoAdministrative } from '../lib/matchKakaoToRegion';
@@ -41,7 +41,7 @@ type UserLocationContextValue = {
 const DEFAULT: UserLocationSnapshot = {
   city: '서울',
   district: '강남구',
-  dong: '',
+  dong: '역삼동',
   lat: 37.4979,
   lng: 127.0276,
   source: 'default',
@@ -185,9 +185,9 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   const value = useMemo<UserLocationContextValue>(() => {
     const dongTrim = (location.dong ?? '').trim();
     const regionShortLabel =
-      dongTrim && location.district
-        ? `${location.district} ${dongTrim}`
-        : location.district || location.city || '지역';
+      location.district || dongTrim
+        ? formatDistrictWithDong(location.district, dongTrim || undefined) || location.city || '지역'
+        : location.city || '지역';
     const regionFullLabel =
       location.city && location.district
         ? formatRegion(location.city, location.district, dongTrim || undefined)

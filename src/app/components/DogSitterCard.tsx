@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { MapPin, Star, ShieldCheck } from 'lucide-react';
+import { formatDistrictWithDong } from '../data/regions';
 import { DogSitter } from '../types';
 
 interface DogSitterCardProps {
@@ -41,7 +42,7 @@ export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
             <div className="flex items-center gap-1 text-xs text-slate-400" style={{ fontWeight: 500 }}>
               <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="whitespace-nowrap">
-                {[dogSitter.district, dogSitter.dong].filter(Boolean).join(' ')}
+                {formatDistrictWithDong(dogSitter.district, dogSitter.dong)}
               </span>
             </div>
           </div>
