@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, Home, CarFront, PawPrint, MessageCircle, CalendarDays } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -183,16 +183,31 @@ export function GuardMomDetailPage() {
             ) : isMockGuardMomId(mom.id) ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center shadow-sm">
                 <p className="text-sm font-bold text-slate-700">체험용 가상 프로필이에요</p>
-                <p className="mt-2 text-xs font-medium text-slate-500">
-                  체험용이라 예약·진행은 연결되지 않아요. 실제 등록된 인증 보호맘은 신청 후 안내됩니다.
-                </p>
+                <p className="mt-2 text-xs font-medium text-slate-500">데모라 예약은 연결 안 돼요. 진짜 보호맘은 신청 후 채팅으로 이어져요.</p>
               </div>
             ) : (
               <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50/95 to-amber-50/80 p-5 shadow-sm">
-                <h2 className="text-sm font-extrabold text-slate-900">돌봄 일정 신청</h2>
-                <p className="mt-1 text-xs font-medium text-slate-600">
-                  일수 × 1일 요금으로 안내됩니다. 돌봄 집에 맡기거나 픽업하는 방식, 기간이 끝난 뒤 보호맘이 주인 집까지
-                  데려다 드릴지·주인이 찾아갈지 등은 채팅으로 조율해 주세요.
+                <div className="mb-3 flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-orange-500" aria-hidden />
+                  <h2 className="text-sm font-extrabold text-slate-900">돌봄 일정 신청</h2>
+                </div>
+                <div className="mb-3 grid grid-cols-3 gap-1.5 text-center">
+                  <div className="rounded-lg bg-white/90 py-1.5 shadow-sm">
+                    <Home className="mx-auto h-3.5 w-3.5 text-orange-500" aria-hidden />
+                    <p className="mt-0.5 text-[9px] font-extrabold leading-tight">맡기기</p>
+                  </div>
+                  <div className="rounded-lg bg-white/90 py-1.5 shadow-sm">
+                    <CarFront className="mx-auto h-3.5 w-3.5 text-orange-500" aria-hidden />
+                    <p className="mt-0.5 text-[9px] font-extrabold leading-tight">픽업</p>
+                  </div>
+                  <div className="rounded-lg bg-white/90 py-1.5 shadow-sm">
+                    <PawPrint className="mx-auto h-3.5 w-3.5 text-orange-500" aria-hidden />
+                    <p className="mt-0.5 text-[9px] font-extrabold leading-tight">집으로</p>
+                  </div>
+                </div>
+                <p className="flex items-start gap-1.5 text-[11px] font-medium leading-snug text-slate-600">
+                  <MessageCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-400" aria-hidden />
+                  요금은 일수 × 1일 요금이에요. 끝나면 집까지 같이 가요·데리러 오기 등은 채팅으로 천천히 정하면 돼요 ~~
                 </p>
                 <label className="mt-4 block text-xs font-extrabold text-slate-700">
                   맡길 일수 (1~30)

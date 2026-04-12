@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, BadgeCheck, ListTree, Home, CarFront, PawPrint, MessagesSquare } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
@@ -168,38 +168,45 @@ export function GuardMomRegisterPage() {
               </div>
             )}
 
-            <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-4 py-3 text-xs font-medium leading-relaxed text-orange-950">
-              <p>
-                운영 확인이 끝나면 <strong className="font-extrabold">인증 보호맘</strong>으로 표시돼요.
-                {promoFree ? (
-                  <>
-                    {' '}
-                    지금은 <strong className="font-extrabold">한시적 무료</strong>로 인증 후 목록에 올라가요. 프로필은 지금부터
-                    저장해 두셔도 돼요.
-                  </>
-                ) : (
-                  <>
-                    {' '}
-                    확인 전에는 <strong className="font-extrabold">7일 목록 노출</strong> 신청만 잠시 막혀 있고, 프로필은
-                    지금부터 저장해 두셔도 돼요.
-                  </>
-                )}
+            <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-3 py-3 text-orange-950">
+              <div className="mb-3 flex flex-wrap justify-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-extrabold shadow-sm">
+                  <BadgeCheck className="h-3.5 w-3.5 text-orange-500" aria-hidden />
+                  인증 후 뱃지
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-extrabold shadow-sm">
+                  <ListTree className="h-3.5 w-3.5 text-orange-500" aria-hidden />
+                  {promoFree ? '지금 무료 노출' : '목록 노출(유료)'}
+                </span>
+              </div>
+              <p className="mb-2 text-center text-[11px] font-extrabold text-orange-900">돌봄은 이렇게 맞춰요</p>
+              <div className="grid grid-cols-3 gap-1.5">
+                <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                  <Home className="mx-auto h-4 w-4 text-orange-500" aria-hidden />
+                  <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">맡기기</p>
+                </div>
+                <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                  <CarFront className="mx-auto h-4 w-4 text-orange-500" aria-hidden />
+                  <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">픽업</p>
+                </div>
+                <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                  <PawPrint className="mx-auto h-4 w-4 text-orange-500" aria-hidden />
+                  <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">끝나면 집으로</p>
+                </div>
+              </div>
+              <p className="mt-2 flex items-start justify-center gap-1.5 text-center text-[11px] font-medium leading-snug text-orange-900/90">
+                <MessagesSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-orange-500" aria-hidden />
+                픽업·바래다주기 등은 맡기는 분이랑 채팅으로 편한 대로 정해 주세요 ~~
               </p>
-              <p className="mt-2 border-t border-orange-200/80 pt-2 text-[11px] font-semibold leading-relaxed">
-                맡기기·픽업·데려다주기 등은 <strong className="font-extrabold">보호맘님과 맡기는 분</strong>이 직접 정해
-                주세요. 돌봄·거래 책임도 함께 조율해 주시면 돼요.
-                {promoFree ? (
-                  <>
-                    {' '}
-                    <strong className="font-extrabold">지금은 한시적 무료</strong>로 인증된 보호맘은 목록에 노출돼요.
-                  </>
-                ) : (
-                  <>
-                    {' '}
-                    <strong className="font-extrabold">유료(목록 노출)</strong>는 목록에 보이는 기간에만 해당해요.
-                  </>
-                )}
-              </p>
+              {promoFree ? (
+                <p className="mt-1.5 text-center text-[10px] font-semibold text-orange-800/90">
+                  운영 인증이 끝나면 뱃지 달리고, 지금은 무료로 목록에도 올라가요.
+                </p>
+              ) : (
+                <p className="mt-1.5 text-center text-[10px] font-semibold text-orange-800/90">
+                  인증 전에는 7일 노출 신청만 잠깐 막혀 있어요. 프로필은 미리 저장해 두셔도 돼요.
+                </p>
+              )}
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
@@ -303,7 +310,7 @@ export function GuardMomRegisterPage() {
                 <span>
                   <span className="block text-xs font-extrabold text-slate-800">댕댕 픽업</span>
                   <span className="mt-0.5 block text-[11px] font-medium leading-relaxed text-slate-600">
-                    맡기기 시 주인 집까지 찾아가 강아지를 픽업해 갈 수 있어요. 가능하면 체크해 주세요.
+                    집까지 가서 아이 모셔 올 수 있을 때만 체크해 주세요 ~~
                   </span>
                 </span>
               </label>

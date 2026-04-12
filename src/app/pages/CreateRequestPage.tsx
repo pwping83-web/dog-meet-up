@@ -2,7 +2,18 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ArrowLeft, Bone, Camera, LocateFixed, X, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  BellRing,
+  Camera,
+  LocateFixed,
+  X,
+  Trash2,
+  Home,
+  CarFront,
+  PawPrint,
+  MapPin,
+} from 'lucide-react';
 import { RegionSelector } from '../components/RegionSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
@@ -504,7 +515,7 @@ export function CreateRequestPage() {
         <div className="mb-8 text-center">
           <div className="mb-4 flex justify-center">
             {kind === 'dolbom' ? (
-              <Bone className="h-14 w-14 text-sky-600" strokeWidth={1.6} aria-hidden />
+              <BellRing className="h-14 w-14 text-sky-600" strokeWidth={1.6} aria-hidden />
             ) : (
               <span className="text-5xl" aria-hidden>
                 🐾
@@ -527,22 +538,37 @@ export function CreateRequestPage() {
           )}
           {kind === 'dolbom' && (
             <>
-              <h2 className="mb-2 text-xl font-extrabold text-slate-900">필요한 돌봄을 적어 주세요</h2>
-              <div className="space-y-2 text-sm font-medium leading-relaxed text-slate-500">
-                <p>
-                  <strong className="font-extrabold text-slate-800">댕집사</strong>는{' '}
-                  <strong className="font-extrabold text-slate-800">근처에 사는 이웃</strong>이 주인 집에 와서 강아지를
-                  돌봐 주는 방식이에요.
-                </p>
-                <p>
-                  <strong className="font-extrabold text-slate-800">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집
-                  기준으로 서로 맞추면 돼요.
-                </p>
-                <p className="border-t border-slate-200/80 pt-2 text-[13px] leading-relaxed text-slate-600">
-                  이 글은 아래에서 <strong className="font-extrabold text-slate-800">맡길 지역(시·구)</strong>을 고른 뒤 올려
-                  주세요. 내 집이 아니라 <strong className="font-extrabold text-slate-800">엄마 집·출장지</strong>에서 맡길
-                  거면 그쪽을 골라 주시고, 제목·본문에도 적어 두면 찾기 쉬워요.
-                </p>
+              <h2 className="mb-3 text-xl font-extrabold text-slate-900">필요한 돌봄을 적어 주세요</h2>
+              <div className="space-y-2.5 text-left">
+                <div className="flex gap-3 rounded-2xl border border-sky-100 bg-sky-50/90 px-3 py-2.5">
+                  <Home className="mt-0.5 h-6 w-6 shrink-0 text-sky-600" aria-hidden />
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">댕집사</p>
+                    <p className="mt-0.5 text-xs font-medium text-slate-600">이웃이 우리 집에 와서 돌봐 줘요.</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-2xl border border-amber-100 bg-amber-50/80 px-3 py-2.5">
+                  <div className="mt-0.5 flex shrink-0 gap-0.5" aria-hidden>
+                    <Home className="h-4 w-4 text-amber-600" />
+                    <CarFront className="h-4 w-4 text-amber-600" />
+                    <PawPrint className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">보호맘</p>
+                    <p className="mt-0.5 text-xs font-medium text-slate-600">
+                      맡기기 → 필요하면 픽업 → 끝나면 집으로. 보호맘 집 기준으로 서로 맞추면 돼요 ~~
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-3 rounded-2xl border border-slate-100 bg-slate-50/90 px-3 py-2.5">
+                  <MapPin className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" aria-hidden />
+                  <div>
+                    <p className="text-sm font-extrabold text-slate-900">맡길 동네</p>
+                    <p className="mt-0.5 text-xs font-medium text-slate-600">
+                      아래에서 시·구 골라 주세요. 출장지·부모님 집이면 그쪽으로요.
+                    </p>
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -610,14 +636,53 @@ export function CreateRequestPage() {
           )}
 
           {kind === 'dolbom' && (
-            <div className="space-y-2 rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-3 text-xs font-semibold leading-relaxed text-sky-950">
-              <p>
-                이 글은 홈·목록에서 <strong className="font-extrabold">돌봄·맡기기</strong>로 모여 보여요.
-              </p>
-              <p className="text-[11px] font-medium leading-relaxed text-sky-900/95">
-                아래에서 고른 시·구가 이 글의 <strong className="font-extrabold">맡길 지역</strong>이에요. ①은 지금 계신
-                곳, 맡길 곳이 다르면 ②로 골라 주세요.
-              </p>
+            <div className="overflow-hidden rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-white to-sky-50/40 p-4 shadow-sm ring-1 ring-sky-100/90">
+              <div className="flex gap-3.5">
+                <div
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-md shadow-sky-500/20"
+                  aria-hidden
+                >
+                  <LocateFixed className="h-5 w-5" strokeWidth={2.2} />
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <p className="text-[13px] font-medium leading-[1.65] tracking-tight text-slate-700">
+                    이 글은{' '}
+                    <span className="font-extrabold text-slate-900">홈·목록</span>에서{' '}
+                    <span className="whitespace-nowrap rounded-md bg-sky-100 px-2 py-0.5 text-[12px] font-extrabold text-sky-900">
+                      돌봄·맡기기
+                    </span>
+                    로 모여 보여요.
+                  </p>
+                  <p className="text-[13px] font-medium leading-[1.65] tracking-tight text-slate-700">
+                    아래에서 고른{' '}
+                    <span className="font-extrabold text-slate-900">시·구</span>가{' '}
+                    이 글의 <span className="font-extrabold text-sky-800">맡길 지역</span>이에요.
+                  </p>
+                  <ul className="space-y-2.5 border-t border-sky-100 pt-3 text-left text-[12px] leading-[1.6] text-slate-600">
+                    <li className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[11px] font-black text-sky-900">
+                        ①
+                      </span>
+                      <span>
+                        지금 계신 곳이 곧 맡길 곳이면
+                        <br />
+                        <span className="font-semibold text-slate-800">「지금 위치로 찾기」</span>만 눌러 주세요.
+                      </span>
+                    </li>
+                    <li className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[11px] font-black text-sky-900">
+                        ②
+                      </span>
+                      <span>
+                        맡길 동네가 다르면
+                        <br />
+                        <span className="font-semibold text-slate-800">「수기로 맡길 지역 선택」</span>에서 시·구를 골라
+                        주세요.
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           )}
 
@@ -632,7 +697,7 @@ export function CreateRequestPage() {
               <span>
                 <span className="block text-sm font-extrabold text-slate-900">댕댕 픽업 희망</span>
                 <span className="mt-0.5 block text-xs font-medium leading-relaxed text-slate-600">
-                  맡기기 시 보호맘이 우리 집까지 와서 픽업해 주길 원해요. 세부 일정은 연락 후 조율하면 돼요.
+                  보호맘이 우리 집까지 와서 아이 모셔 가 주길 바랄 때 체크~~ 일정은 채팅으로 맞춰요.
                 </span>
               </span>
             </label>
@@ -733,7 +798,7 @@ export function CreateRequestPage() {
                 </button>
                 {kind === 'dolbom' && (
                   <p className="mt-2 text-[10px] font-medium leading-relaxed text-slate-500">
-                    맡길 곳이 지금 위치와 같을 때 쓰세요. 집·출장지 등 따로 있으면 ②에서 맡길 지역을 고르세요.
+                    ①과 같아요. 지금 위치 = 맡길 곳일 때만 쓰면 돼요.
                   </p>
                 )}
               </div>

@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Search, MapPin, MessageCircle, Loader2 } from 'lucide-react';
+import {
+  Search,
+  MapPin,
+  MessageCircle,
+  Loader2,
+  ClipboardList,
+  Home,
+  CarFront,
+  PawPrint,
+} from 'lucide-react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { DogSitterCard } from '../components/DogSitterCard';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
@@ -486,18 +495,40 @@ export function DogSittersPage() {
       {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           {careFilter === 'need' ? (
-            <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
-              <strong className="font-extrabold">맡기는 사람</strong>은 집 방문 돌봄·맡기기 등을 구하는 돌봄 글이에요
-            </p>
+            <div className="mb-3 flex items-center gap-2.5 rounded-2xl border border-orange-100 bg-orange-50/90 px-3 py-2.5 text-orange-950">
+              <ClipboardList className="h-5 w-5 shrink-0 text-orange-500" aria-hidden />
+              <p className="text-xs font-medium leading-snug">
+                <span className="font-extrabold">맡기는 사람</span> — 방문 돌봄·맡기기 같은 글이 모여 있어요.
+              </p>
+            </div>
           ) : careFilter === 'sitter' ? (
-            <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-              <strong className="font-extrabold">댕집사</strong>는 이웃이 주인 집에 와서 돌봐 주는 방식이에요.
-            </p>
+            <div className="mb-3 flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-amber-950">
+              <Home className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
+              <p className="text-xs font-medium leading-snug">
+                <span className="font-extrabold">댕집사</span> — 이웃이 우리 집에 와서 돌봐 줘요.
+              </p>
+            </div>
           ) : (
-            <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-              <strong className="font-extrabold">인증 보호맘</strong>은 맡기기·픽업·기간 후 인수까지, 보호맘 집에 댕댕이를
-              맡기는 방식이에요.
-            </p>
+            <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-3 text-amber-950">
+              <p className="mb-2 text-center text-[11px] font-extrabold text-amber-900">보호맘은 보통 이렇게 맞춰요</p>
+              <div className="grid grid-cols-3 gap-1.5 text-center">
+                <div className="rounded-xl bg-white/85 px-1 py-2 shadow-sm">
+                  <Home className="mx-auto h-4 w-4 text-amber-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight">돌봄 집에 맡기기</p>
+                </div>
+                <div className="rounded-xl bg-white/85 px-1 py-2 shadow-sm">
+                  <CarFront className="mx-auto h-4 w-4 text-amber-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight">필요하면 픽업</p>
+                </div>
+                <div className="rounded-xl bg-white/85 px-1 py-2 shadow-sm">
+                  <PawPrint className="mx-auto h-4 w-4 text-amber-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight">끝나면 집으로</p>
+                </div>
+              </div>
+              <p className="mt-2 text-center text-[11px] font-medium leading-snug text-amber-900/90">
+                아이는 소중하니까, 바래다주기·데리러 오기 등은 보호맘님이랑 채팅으로 천천히 정하면 돼요 ~~
+              </p>
+            </div>
           )}
 
           <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
