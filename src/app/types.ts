@@ -13,7 +13,7 @@
 export interface Meetup {
   id: string;
   title: string;                    // Short description of meetup
-  category: string;                 // Meetup type (산책, 훈련, 놀이, 카페, etc.)
+  category: string;                 // 모이자: 공원·장소 모임, 산책·놀이, … / 만나자: 1:1 만남, 교배, 실종 / 돌봄(맡기기)
   description: string;              // Detailed meetup description
   location: string;                 // Full location (e.g., "서울 강남구")
   district: string;                 // District only (e.g., "강남구")

@@ -11,12 +11,14 @@ import type { DogSitter } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
+import {
+  MANNAJA_CATEGORY_SET,
+  MANNAJA_MEETUP_CATEGORIES,
+  MOIJA_CATEGORY_SET,
+  MOIJA_MEETUP_CATEGORIES,
+} from '../utils/meetupCategory';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
-
-/** 모이자: 모여서 하는 활동 / 만나자: 맞춤·급구·교배 등 */
-const MOIJA_CATEGORIES = new Set(['산책', '훈련', '놀이', '카페']);
-const MANNAJA_CATEGORIES = new Set(['돌봄', '교배', '실종']);
 
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
@@ -55,8 +57,8 @@ export function DogSittersPage() {
 
   const specialties = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
   const meetupCategoryChips = useMemo(() => {
-    if (topTab === 'mannaja') return ['전체', '돌봄', '교배', '실종'] as const;
-    if (topTab === 'moija') return ['전체', '산책', '훈련', '놀이', '카페'] as const;
+    if (topTab === 'mannaja') return ['전체', ...MANNAJA_MEETUP_CATEGORIES] as const;
+    if (topTab === 'moija') return ['전체', ...MOIJA_MEETUP_CATEGORIES] as const;
     return ['전체'] as const;
   }, [topTab]);
 
@@ -240,9 +242,9 @@ export function DogSittersPage() {
     .filter((req) => {
       const inTab =
         topTab === 'moija'
-          ? MOIJA_CATEGORIES.has(req.category)
+          ? MOIJA_CATEGORY_SET.has(req.category)
           : topTab === 'mannaja'
-            ? MANNAJA_CATEGORIES.has(req.category)
+            ? MANNAJA_CATEGORY_SET.has(req.category)
             : false;
       if (!inTab) return false;
       const categoryMatch = category === '전체' || req.category === category;
@@ -315,9 +317,9 @@ export function DogSittersPage() {
           <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
             {topTab === 'moija' ? (
               <>
-                <strong className="font-extrabold">모이자</strong>는 산책·놀이·카페 등{' '}
-                <strong>여럿이 모여 즐기는 글</strong>만 보여요. 맡기기·교배·실종 안내는 위의{' '}
-                <strong>만나자</strong>, 댕집사·인증 보호맘은{' '}
+                <strong className="font-extrabold">모이자</strong>는 공원·카페 등{' '}
+                <strong>장소와 일정 정해서 여럿이 모이는 글</strong>만 보여요. 포메 남아 찾기·교배·실종은 위의{' '}
+                <strong>만나자</strong>, 맡기기·댕집사는{' '}
                 <Link to="/sitters?view=care" className="font-extrabold text-brand underline underline-offset-2">
                   인증 돌봄
                 </Link>
@@ -325,8 +327,8 @@ export function DogSittersPage() {
               </>
             ) : (
               <>
-                <strong className="font-extrabold">만나자</strong>는 맡기 도움·교배·실종 등{' '}
-                <strong>맞춤 만남·급구 글</strong>만 보여요. 모임성 산책·놀이는 위의{' '}
+                <strong className="font-extrabold">만나자</strong>는 1:1로 친구 찾기·교배·실종 등{' '}
+                <strong>개별 맞춤 글</strong>만 보여요. 공원에서 모여 놀기 글은 위의{' '}
                 <strong>모이자</strong>를 눌러 주세요.
               </>
             )}

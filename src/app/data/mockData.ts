@@ -12,12 +12,29 @@
 import { Meetup, DogSitter, JoinRequest } from '../types';
 
 // Sample dog meetup requests from owners
-// Categories: 산책 (Walk), 훈련 (Training), 놀이 (Play), 카페 (Cafe), 교배 (Breeding)
+// 모이자: 공원·장소 모임, 산책·놀이, 카페·체험, 훈련·사회화 / 만나자: 1:1 만남, 교배, 실종 / 돌봄: 맡기기(랜딩 돌봄 섹션)
 export const mockMeetups: Meetup[] = [
+  {
+    id: 'moija-park-1',
+    title: '올림픽공원 일요일 오전 🌳 소형견 댕댕이들 모이자!',
+    category: '공원·장소 모임',
+    description:
+      '말티즈·포메·비숑 등 소형견 가족이에요. 잔디광장 근처 10시쯤 모여서 같이 놀다 가요. 참석 가능하신 분 채팅 주세요 🐾',
+    location: '서울 송파구',
+    district: '송파구',
+    images: [
+      'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    ],
+    estimatedCost: '일요일 10시',
+    status: 'pending',
+    createdAt: new Date('2026-04-08'),
+    userId: 'user-moija-park',
+    userName: '공원모임맘',
+  },
   {
     id: '1',
     title: '주말 산책 메이트 구해요 🐕',
-    category: '산책',
+    category: '산책·놀이',
     description: '3살 웰시코기 키우고 있어요! 주말 오전에 한강공원 산책 함께 하실 분 찾아요. 활발한 성격이라 에너지 넘치는 댕댕이 환영합니다 💪',
     location: '서울 강남구',
     district: '강남구',
@@ -31,7 +48,7 @@ export const mockMeetups: Meetup[] = [
   {
     id: '2',
     title: '강아지 사회화 훈련 함께해요 🐾',
-    category: '훈련',
+    category: '훈련·사회화',
     description: '5개월 골든리트리버 퍼피 키워요! 사회화 훈련이 필요한 시기라 비슷한 나이대 강아지와 만나고 싶어요. 매주 토요일 오후 2시 예정입니다.',
     location: '서울 서초구',
     district: '서초구',
@@ -45,7 +62,7 @@ export const mockMeetups: Meetup[] = [
   {
     id: '3',
     title: '퍼피 놀이 모임 (소형견 환영) 🎾',
-    category: '놀이',
+    category: '산책·놀이',
     description: '말티즈 6개월이에요. 소형견끼리 모여서 안전하게 놀 수 있는 모임 만들고 싶어요! 공놀이 좋아하는 친구들 모여라~',
     location: '서울 강남구',
     district: '강남구',
@@ -76,7 +93,7 @@ export const mockMeetups: Meetup[] = [
   {
     id: '4',
     title: '산책 후 카페 가실 분 🦮☕',
-    category: '카페',
+    category: '카페·체험',
     description: '반려견 동반 카페 다녀오실 분! 2살 비글이에요. 온순하고 사람 좋아해요. 새로운 댕친 만들고 싶어요 😊',
     location: '서울 송파구',
     district: '송파구',
@@ -118,7 +135,7 @@ export const mockMeetups: Meetup[] = [
   {
     id: '7',
     title: '애견 수영장에서 놀아요 🏊‍♂️',
-    category: '놀이',
+    category: '공원·장소 모임',
     description: '수영 좋아하는 강아지들 모여라! 이번 주말 애견 수영장 예약했어요. 같이 가실 분~',
     location: '경기 성남시',
     district: '분당구',
@@ -146,7 +163,7 @@ export const mockMeetups: Meetup[] = [
   {
     id: '9',
     title: '푸들 미용 같이 가실 분 ✂️',
-    category: '카페',
+    category: '카페·체험',
     description: '매달 미용하는데 항상 같이 가면 재밌을 것 같아요! 미용 후 카페 가요~',
     location: '서울 강남구',
     district: '강남구',
@@ -170,6 +187,23 @@ export const mockMeetups: Meetup[] = [
     createdAt: new Date('2026-02-17'),
     userId: 'user10',
     userName: '김하율',
+  },
+  {
+    id: 'mannaja-pome-1',
+    title: '포메 여아예요 · 포메 남아 1:1 만나고 싶어요 💬',
+    category: '1:1 만남',
+    description:
+      '3살 포메 여아 건강해요. 산책 겸 비슷한 아이랑 천천히 친해지고 싶어요. 교배 목적은 아니에요. 포메 가족 편하게 연락 주세요!',
+    location: '서울 강남구',
+    district: '강남구',
+    images: [
+      'https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+    ],
+    estimatedCost: '주말 오후',
+    status: 'pending',
+    createdAt: new Date('2026-04-09'),
+    userId: 'user-mannaja-pome',
+    userName: '포메맘',
   },
 ];
 

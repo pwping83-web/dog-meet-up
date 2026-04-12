@@ -25,14 +25,49 @@ export function CreateRequestPage() {
     }
   }, [authLoading, user, navigate]);
 
-  const categories = [
-    { name: '산책', emoji: '🐕' },
-    { name: '훈련', emoji: '🎓' },
-    { name: '사회화', emoji: '🐾' },
-    { name: '놀이', emoji: '⚽' },
-    { name: '미용', emoji: '✂️' },
-    { name: '기타', emoji: '💭' },
-  ];
+  const moijaCategories = [
+    { name: '공원·장소 모임', emoji: '🌳' },
+    { name: '산책·놀이', emoji: '🐕' },
+    { name: '카페·체험', emoji: '☕' },
+    { name: '훈련·사회화', emoji: '🎓' },
+  ] as const;
+
+  const mannajaCategories = [
+    { name: '1:1 만남', emoji: '💬' },
+    { name: '교배', emoji: '💕' },
+    { name: '실종', emoji: '🚨' },
+  ] as const;
+
+  const allCategoryNames = [...moijaCategories.map((c) => c.name), ...mannajaCategories.map((c) => c.name)];
+
+  const renderCategoryGrid = (
+    items: readonly { name: string; emoji: string }[],
+    colsClass: string,
+  ) => (
+    <div className={`grid gap-2 ${colsClass}`}>
+      {items.map((cat) => (
+        <button
+          key={cat.name}
+          type="button"
+          onClick={() => setFormData({ ...formData, category: cat.name })}
+          className={`rounded-2xl py-4 text-center shadow-sm transition-all ${
+            formData.category === cat.name
+              ? 'scale-[1.02] bg-orange-500 text-white shadow-md shadow-orange-500/20'
+              : 'border border-slate-100 bg-slate-50 hover:bg-slate-100'
+          }`}
+        >
+          <div className="mb-1 text-2xl">{cat.emoji}</div>
+          <div
+            className={`px-1 text-xs font-bold leading-tight ${
+              formData.category === cat.name ? 'text-white' : 'text-slate-700'
+            }`}
+          >
+            {cat.name}
+          </div>
+        </button>
+      ))}
+    </div>
+  );
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -58,6 +93,10 @@ export function CreateRequestPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+    if (!formData.category || !allCategoryNames.includes(formData.category)) {
+      alert('모이자 또는 만나자 주제를 하나 골라 주세요 🐾');
+      return;
+    }
     alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
     navigate('/explore');
   };
@@ -87,36 +126,36 @@ export function CreateRequestPage() {
         {/* 메인 메시지 */}
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🐾</div>
-          <h2 className="mb-3 text-2xl font-extrabold text-slate-900">어디서, 언제 모일까요?</h2>
+          <h2 className="mb-3 text-2xl font-extrabold text-slate-900">모이자 / 만나자 골라 올려요</h2>
           <p className="text-base font-medium text-slate-500">
-            만나서 산책·놀이할 댕친을 부르는 글이에요 (맡기기·댕집사는 「인증 돌봄」 탭)
+            <strong className="text-slate-700">모이자</strong>는 공원·일정 정하고 여럿이 모이는 글,{' '}
+            <strong className="text-slate-700">만나자</strong>는 1:1·교배·실종 글이에요. 맡기기는 내댕댕·인증 돌봄을
+            이용해 주세요.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* 카테고리 선택 */}
-          <div>
-            <p className="mb-3 px-1 text-sm font-bold text-slate-700">주제 골라요 🐾</p>
-            <div className="grid grid-cols-3 gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.name}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, category: cat.name })}
-                  className={`py-5 rounded-2xl text-center transition-all shadow-sm ${
-                    formData.category === cat.name
-                      ? 'bg-orange-500 text-white scale-105 shadow-md shadow-orange-500/20'
-                      : 'bg-slate-50 border border-slate-100 hover:bg-slate-100'
-                  }`}
-                >
-                  <div className="text-3xl mb-1">{cat.emoji}</div>
-                  <div className={`text-sm font-bold ${
-                    formData.category === cat.name ? 'text-white' : 'text-slate-700'
-                  }`}>
-                    {cat.name}
-                  </div>
-                </button>
-              ))}
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-6"
+        >
+          <div className="space-y-5">
+            <div>
+              <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-orange-600">
+                모이자
+              </p>
+              <p className="mb-2 px-1 text-xs font-semibold text-slate-500">
+                어디 공원·카페에서, 몇 시에 모일지 정하고 여럿이 오는 글
+              </p>
+              {renderCategoryGrid(moijaCategories, 'grid-cols-2')}
+            </div>
+            <div>
+              <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-amber-700">
+                만나자
+              </p>
+              <p className="mb-2 px-1 text-xs font-semibold text-slate-500">
+                견종 맞춤 1:1 만남·교배·실종 안내 글
+              </p>
+              {renderCategoryGrid(mannajaCategories, 'grid-cols-3')}
             </div>
           </div>
 
@@ -206,9 +245,10 @@ export function CreateRequestPage() {
           {/* 제출 버튼 */}
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-5 rounded-2xl text-lg font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+            disabled={!formData.category || !allCategoryNames.includes(formData.category)}
+            className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-5 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-50"
           >
-            올리기 · 모이자 🚀
+            올리기 · 모이자 / 만나자 🚀
           </button>
         </form>
       </div>

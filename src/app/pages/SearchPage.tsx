@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { ArrowLeft, Search, X, ChevronRight, Home, MessageCircle, User } from 'lucide-react';
 import { useState } from 'react';
 import { mockRequests } from '../data/mockData';
+import { meetupCategoryEmoji } from '../utils/meetupCategory';
 
 const popularSearches = [
   '소형견', '중형견', '대형견', '산책',
@@ -189,16 +190,7 @@ export function SearchPage() {
                         </div>
                       ) : (
                         <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl flex-shrink-0 flex items-center justify-center border border-slate-100">
-                          <span className="text-3xl">
-                            {request.category === '산책' ? '🐕' :
-                             request.category === '훈련' ? '🎓' :
-                             request.category === '놀이' ? '🎾' :
-                             request.category === '카페' ? '☕' :
-                             request.category === '교배' ? '🐶' :
-                             request.category === '돌봄' ? '🍼' :
-                             request.category === '실종' ? '🚨' :
-                             request.category === '대형견' ? '🦮' : '🐾'}
-                          </span>
+                          <span className="text-3xl">{meetupCategoryEmoji(request.category)}</span>
                         </div>
                       )}
                       <div className="flex-1 min-w-0 py-1">

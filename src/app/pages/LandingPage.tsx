@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
+import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import type { User } from '@supabase/supabase-js';
 
 function shortProfileLabel(user: User): string {
@@ -404,7 +405,7 @@ export function LandingPage() {
               🙌 모이자 · 만나자
             </h2>
             <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-              같이 산책·놀이할 댕친을 부르는 글이에요
+              모이자는 공원·모임, 만나자는 1:1·교배·실종 글이에요
             </p>
           </div>
           <Link to="/sitters" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
@@ -430,14 +431,8 @@ export function LandingPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">
-                        {req.category === '산책'
-                          ? '🐕'
-                          : req.category === '훈련'
-                            ? '🎓'
-                            : req.category === '돌봄'
-                              ? '🍼'
-                              : '🐾'}
+                      <div className="flex h-full w-full items-center justify-center text-2xl">
+                        {meetupCategoryEmoji(req.category)}
                       </div>
                     )}
                   </div>
