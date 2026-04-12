@@ -418,15 +418,15 @@ function GuardCareAdminView() {
     setError(null);
     setCertBanner(null);
     try {
-      const { data, error: upErr } = await supabase
-        .from('certified_guard_moms')
-        .update({ certified_at: certify ? new Date().toISOString() : null })
-        .eq('id', id)
-        .select('id,certified_at');
-      if (upErr) throw upErr;
-      if (!data?.length) {
+      const { data, error: rpcErr } = await supabase.rpc('admin_set_guard_mom_certified', {
+        p_guard_mom_id: id,
+        p_certified: certify,
+      });
+      if (rpcErr) throw rpcErr;
+      const rows = (data ?? []) as { id: string; certified_at: string | null }[];
+      if (!rows.length) {
         throw new Error(
-          '변경된 행이 없어요. Supabase에 ① 20260416120000_guard_mom_admin_certify_update ② 20260416130000_is_app_admin_kakao_metadata_email SQL을 적용했는지, 로그인 계정이 pwping83@gmail.com(카카오 메타 이메일 포함)인지 확인하세요.',
+          '변경된 행이 없어요. Supabase SQL에 ① 20260416130000_is_app_admin_kakao_metadata_email ② 20260416140000_admin_set_guard_mom_certified_rpc 를 적용했는지, 로그인이 pwping83@gmail.com 인지 확인하세요.',
         );
       }
       await load({ silent: true });
@@ -496,10 +496,11 @@ function GuardCareAdminView() {
               <span className="text-sm font-semibold text-gray-500">({guardMoms.length}명)</span>
             </h2>
             <p className="mb-3 text-xs font-medium text-gray-600">
-              미인증 행은 <span className="font-bold text-gray-800">인증 통과</span>로{' '}
-              <code className="rounded bg-gray-100 px-1">certified_at</code>을 넣습니다. DB에{' '}
-              <code className="rounded bg-gray-100 px-1 text-[10px]">20260416120000_guard_mom_admin_certify_update</code>{' '}
-              마이그레이션이 적용돼 있어야 해요.
+              <span className="font-bold text-gray-800">인증 통과</span>는 DB 함수{' '}
+              <code className="rounded bg-gray-100 px-1 text-[10px]">admin_set_guard_mom_certified</code>를
+              호출해요. Supabase에{' '}
+              <code className="rounded bg-gray-100 px-1 text-[10px]">20260416130000</code>·
+              <code className="rounded bg-gray-100 px-1 text-[10px]">20260416140000</code> SQL을 적용해 주세요.
             </p>
             {guardMoms.length === 0 ? (
               <p className="rounded-xl bg-white p-4 text-sm text-gray-500">등록된 행이 없습니다.</p>

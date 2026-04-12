@@ -247,3 +247,26 @@ CREATE POLICY "certified_guard_moms_update_admin"
   TO authenticated
   USING (public.is_app_admin())
   WITH CHECK (public.is_app_admin());
+
+-- 관리자 인증 RPC (RLS 우회·클라이언트는 이걸 호출하는 것을 권장)
+CREATE OR REPLACE FUNCTION public.admin_set_guard_mom_certified(p_guard_mom_id uuid, p_certified boolean)
+RETURNS TABLE(id uuid, certified_at timestamptz)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT public.is_app_admin() THEN
+    RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
+  UPDATE public.certified_guard_moms cg
+  SET certified_at = CASE WHEN p_certified THEN NOW() ELSE NULL END
+  WHERE cg.id = p_guard_mom_id
+  RETURNING cg.id, cg.certified_at;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.admin_set_guard_mom_certified(uuid, boolean) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.admin_set_guard_mom_certified(uuid, boolean) TO authenticated;
