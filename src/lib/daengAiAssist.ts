@@ -21,6 +21,24 @@ export type DaengAiAssistResult =
   | { ok: true; text: string; fields?: DaengAiFields }
   | { ok: false; error: string };
 
+function explainEdgeInvokeFailure(raw: string): string {
+  const m = raw.trim();
+  const lower = m.toLowerCase();
+  if (
+    lower.includes('failed to send a request to the edge function') ||
+    lower.includes('edge function') && lower.includes('failed')
+  ) {
+    return (
+      `${m}\n\n` +
+      '【조치】Supabase 프로젝트에 `daeng-ai-assist` 함수가 배포돼 있는지 확인하세요.\n' +
+      '· CLI: `npx supabase functions deploy daeng-ai-assist`\n' +
+      '· Dashboard → Edge Functions → Secrets에 `OPENAI_API_KEY` 등록\n' +
+      '· 로그인한 상태에서만 호출됩니다(`verify_jwt = true`).'
+    );
+  }
+  return m;
+}
+
 export async function invokeDaengAiAssist(
   task: DaengAiTask,
   payload: Record<string, unknown>,
@@ -30,7 +48,10 @@ export async function invokeDaengAiAssist(
   });
 
   if (error) {
-    return { ok: false, error: error.message || 'Edge Function 호출 실패' };
+    return {
+      ok: false,
+      error: explainEdgeInvokeFailure(error.message || 'Edge Function 호출 실패'),
+    };
   }
 
   const d = data as {

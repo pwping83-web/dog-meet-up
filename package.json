@@ -1,19 +1,19 @@
 {
-  "name": "@figma/my-make-file",
-  "description": "Chinese Product Repair Marketplace - P2P repair service platform inspired by Karrot Market",
+  "name": "daengdaeng-market",
+  "description": "댕댕마켓 — 반려견 모임·돌봄 커뮤니티 (React + Vite + Supabase + Stripe PWA)",
   "private": true,
   "version": "0.0.1",
   "type": "module",
   "keywords": [
-    "repair",
-    "marketplace",
-    "p2p",
-    "chinese-products",
-    "e-scooter",
-    "drone",
-    "karrot-market",
-    "location-based",
-    "bidding-system"
+    "dog",
+    "pet",
+    "meetup",
+    "south-korea",
+    "supabase",
+    "pwa",
+    "community",
+    "stripe",
+    "react"
   ],
   "scripts": {
     "build": "vite build",

@@ -160,7 +160,7 @@ const EMAILJS_SERVICE_ID = 'service_abc1234'; // ✅ 실제 Service ID로 변경
           <a href="#">수신거부</a>
         </div>
         <p style="color: #94a3b8; font-size: 12px;">
-          © 2026 수리마켓. All rights reserved.
+          © 2026 댕댕마켓. All rights reserved.
         </p>
       </div>
     </div>
@@ -172,11 +172,11 @@ const EMAILJS_SERVICE_ID = 'service_abc1234'; // ✅ 실제 Service ID로 변경
 ### 4단계: 테스트!
 
 ```bash
-# 방법 1: 웹 앱에서 테스트
-http://localhost:5173/email-test
-
-# 방법 2: EmailJS 대시보드에서 테스트
+# 방법 1: EmailJS 대시보드에서 테스트
 Template → Test → Service 선택 → Send Test
+
+# 방법 2: 앱에서 실제로 emailjs.send 를 호출하는 화면(예: 고객센터·문의)에서 확인
+# (전용 /email-test 페이지는 제거됨 — 댕댕마켓 정리)
 ```
 
 ---
@@ -190,7 +190,7 @@ Template → Test → Service 선택 → Send Test
 - [ ] `/src/lib/emailjs.ts` 파일에 Service ID 입력
 - [ ] EmailJS 템플릿에 HTML 적용
 - [ ] 템플릿 저장 완료
-- [ ] `/email-test` 페이지에서 테스트 이메일 발송
+- [ ] 대시보드 Test 또는 앱 내 EmailJS 호출로 테스트 이메일 발송
 - [ ] `tseizou@naver.com` 메일함 확인 (스팸함도 확인!)
 
 ---
@@ -231,13 +231,10 @@ Template → Test → Service 선택 → Send Test
 
 ## 🎯 다음 단계
 
-설정이 완료되면:
+설정이 완료되면(예시 — 실제 연동은 `emailjs.ts`·각 페이지 코드 기준):
 
-1. **회원가입** → 환영 이메일 자동 발송 ✅
-2. **수리 요청 등록** → 등록 완료 이메일 ✅
-3. **견적 제출** → 고객에게 알림 이메일 ✅
-4. **견적 채택** → 수리기사에게 알림 이메일 ✅
-5. **메시지** → 새 메시지 알림 이메일 ✅
+1. **회원가입·문의** 등에서 `emailjs.send` 호출로 알림 발송
+2. 모임·돌봄 관련 이벤트에 맞춰 템플릿 추가 가능
 
 ---
 
@@ -255,7 +252,7 @@ Template → Test → Service 선택 → Send Test
 1. EmailJS 대시보드에서 Service 추가
 2. Service ID 복사
 3. `/src/lib/emailjs.ts` 파일 수정
-4. 저장 후 `/email-test` 페이지 접속
+4. 저장 후 EmailJS 대시보드에서 Test 발송 또는 앱 연동 화면에서 확인
 5. 이메일 발송 테스트!
 
 완료! 🎉

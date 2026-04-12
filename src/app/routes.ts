@@ -13,8 +13,8 @@ import { RouteErrorPage } from './pages/RouteErrorPage';
  * - /sitters : 모이자·만나자 / ?view=care 인증 돌봄 — care=need|sitter|guard (구 care=all → sitter)
  * - /create-meetup : 글 올리기(모이자·만나자·돌봄 맡기기 선택 → 작성)
  * - /meetup/:id : Meetup detail + join requests
- * - /sitter/:id : Dog sitter profile
- * - /chats : Message inbox
+ * - /sitter/:id : Dog sitter profile (목업)
+ * - /chats : 채팅(데모 대화)
  * - /my : User profile and settings
  * - /login, /signup : Authentication
  * 
@@ -31,7 +31,6 @@ import { DogSitterProfilePage } from './pages/DogSitterProfilePage';
 import { MeetupDetailPage } from './pages/MeetupDetailPage';
 import { MyPage } from './pages/MyPage';
 import { AdminGatePage } from './pages/AdminGatePage';
-import { BecomeDogSitterPage } from './pages/BecomeDogSitterPage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
 import { DeleteAccountPage } from './pages/DeleteAccountPage';
@@ -40,7 +39,6 @@ import { ChatsPage, ChatDetailPage } from './pages/ChatsPage';
 import { SearchPage } from './pages/SearchPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { NotFound } from './pages/NotFound';
-import { EmailTestPage } from './pages/EmailTestPage';
 import { MyMeetupsPage } from './pages/MyMeetupsPage';
 import { MyJoinRequestsPage } from './pages/MyJoinRequestsPage';
 import { ProfileEditPage } from './pages/ProfileEditPage';
@@ -74,7 +72,6 @@ export const router = createBrowserRouter([
       { path: 'guard-mom/register', Component: GuardMomRegisterPage },
       { path: 'guard-mom/:id', Component: GuardMomDetailPage },
       { path: 'admin', Component: AdminGatePage },                 // Admin (Kakao + 지정 이메일만)
-      { path: 'become-sitter', Component: BecomeDogSitterPage },  // Register as dog sitter
       { path: 'login', Component: LoginPage },                    // Login
       { path: 'signup', Component: SignupPage },                   // Sign up
       { path: 'delete-account', Component: DeleteAccountPage },   // Account deletion
@@ -83,7 +80,6 @@ export const router = createBrowserRouter([
       { path: 'chat/:id', Component: ChatDetailPage },            // Chat conversation
       { path: 'search', Component: SearchPage },                   // Search meetups
       { path: 'notifications', Component: NotificationsPage },    // Notifications
-      { path: 'email-test', Component: EmailTestPage },           // EmailJS Test
       { path: 'my/meetups', Component: MyMeetupsPage },           // My meetups
       { path: 'my/join-requests', Component: MyJoinRequestsPage }, // My join requests
       { path: '*', Component: NotFound },                          // 404 page

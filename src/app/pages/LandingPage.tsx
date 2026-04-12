@@ -103,7 +103,7 @@ export function LandingPage() {
     [location.key, location.pathname, meetupFeedTick],
   );
 
-  const getQuoteCount = (id: string) => mockQuotes.filter(q => q.repairRequestId === id).length;
+  const getQuoteCount = (id: string) => mockQuotes.filter((q) => q.meetupId === id).length;
   const meetupFeedItems = mergedRequests
     .filter((r) => r.category !== '돌봄' && meetupVisibleInPublicFeed(r))
     .slice(0, 6);

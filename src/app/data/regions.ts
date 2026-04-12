@@ -2,12 +2,12 @@
  * South Korea Regional Data
  * 
  * Complete list of 17 cities/provinces (시/도) and 228 districts (구/군)
- * Used for location-based matching in the repair platform
+ * Used for location-based matching (댕댕마켓 — 모임·돌봄 거리 표시 등)
  * 
  * Key features:
- * - Distance calculation between user and repairer
+ * - Distance calculation between user and sitter / meetup district
  * - Special badge for ultra-close matches (<2km)
- * - Regional filtering for repair requests
+ * - Regional filtering for meetups and care listings
  */
 
 export interface Region {

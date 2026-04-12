@@ -51,7 +51,8 @@ export function MyPage() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [isRepairer, setIsRepairer] = useState(true); 
+  /** 댕집사 DB 연동 전까지 비활성 — 인증 돌봄 안내 배너 표시 */
+  const [isRepairer] = useState(false);
   const [isActive, setIsActive] = useState(true); 
   const [dogMbtiType, setDogMbtiType] = useState<DogMbtiType | null>(null);
   const [extraCareRegions, setExtraCareRegions] = useState(() => readExtraCareRegions());
@@ -573,21 +574,20 @@ export function MyPage() {
         {/* 인증 돌봄(댕집사) 등록 배너 */}
         {!isRepairer && (
           <Link
-            to="/become-sitter"
+            to="/sitters?view=care&care=guard"
             className="group relative block overflow-hidden rounded-3xl bg-market-header p-6 text-white shadow-market-lg transition-all active:scale-[0.99]"
           >
             <div className="relative z-10">
               <h3 className="mb-1.5 flex items-center gap-2 text-xl font-extrabold">
-                인증 돌봄(댕집사)로 활동하기 <Play className="h-4 w-4 fill-white" />
+                인증 돌봄 살펴보기 <Play className="h-4 w-4 fill-white" />
               </h3>
               <p className="mb-5 text-sm font-medium text-white/85">
-                돈 받고 산책·돌봄을 제공하는 돌보미로 등록해 보세요.
+                인증 보호맘은 프로필 등록 후 운영자 인증을 거쳐요. 댕집사(방문 돌봄) 목록은 탭에서 확인할 수 있어요.
               </p>
               <div className="inline-block rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md transition-colors group-hover:bg-white group-hover:text-brand">
-                지금 1분 만에 신청하기
+                인증 돌봄 탭으로 이동
               </div>
             </div>
-            {/* 배경 장식 */}
             <Heart className="absolute -right-4 -bottom-4 w-32 h-32 text-white opacity-10 transform -rotate-12 fill-white" />
           </Link>
         )}
