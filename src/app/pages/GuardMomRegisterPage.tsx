@@ -9,17 +9,21 @@ import { startStripeCheckout } from '../../lib/billing';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
-/** PostgREST 영문 오류 → 운영자·배포 시 조치 안내 */
+/** PostgREST 영문 오류 → 한글 안내 (배포 담당자용 파일 경로 포함) */
 function friendlyCertifiedGuardMomsError(message: string): string {
   const m = message.toLowerCase();
-  if (
+  const tableMissing =
     m.includes('certified_guard_moms') &&
-    (m.includes('could not find') || m.includes('schema cache') || m.includes('does not exist'))
-  ) {
-    return 'Supabase에 보호맘 테이블(certified_guard_moms)이 아직 없어요. Dashboard → SQL Editor에서 저장소의 supabase/migrations/20260411120000_guard_moms.sql을 실행한 뒤, 이어서 20260412120000_daeng_pickup.sql도 실행해 주세요.';
+    (m.includes('could not find') ||
+      m.includes('schema cache') ||
+      m.includes('does not exist') ||
+      m.includes('relation') ||
+      m.includes('pgrst'));
+  if (tableMissing) {
+    return '지금은 프로필을 저장할 수 없어요. 사이트 DB에 보호맘용 테이블이 아직 없을 때 나는 메시지예요. 배포 담당자가 Supabase → SQL Editor에서 supabase/migrations/20260411120000_guard_moms.sql 을 실행한 뒤, 20260412120000_daeng_pickup.sql 도 실행해 주세요.';
   }
   if (m.includes('offers_daeng_pickup') || (m.includes('column') && m.includes('does not exist'))) {
-    return 'DB에 댕댕 픽업 컬럼(offers_daeng_pickup)이 없어요. supabase/migrations/20260412120000_daeng_pickup.sql을 SQL Editor에서 실행해 주세요.';
+    return '「댕댕 픽업」 저장을 위해 DB를 한 번 더 업데이트해야 해요. supabase/migrations/20260412120000_daeng_pickup.sql 을 SQL Editor에서 실행해 주세요.';
   }
   return message;
 }
@@ -155,14 +159,23 @@ export function GuardMomRegisterPage() {
           </div>
         ) : (
           <>
+            {loadErr && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold leading-relaxed text-red-900">
+                {loadErr}
+              </div>
+            )}
+
             <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-4 py-3 text-xs font-medium leading-relaxed text-orange-950">
-              <strong>인증</strong>은 운영자가 Supabase에서 <code className="rounded bg-white/80 px-1">certified_at</code>을
-              넣어 드린 뒤에 가능해요. 인증 전에는 「7일 노출」 신청만 막히고, 프로필 저장은 미리 해 두셔도 됩니다.
-              <span className="mt-2 block border-t border-orange-200/80 pt-2 text-[11px] font-semibold leading-relaxed">
-                인증 후 <strong>돌봄·거래 책임은 보호맘 본인</strong>이에요. 맡기기는 돌봄 집에 데려다 맡기거나 픽업하고, 기간이
-                끝나면 <strong>데려다 드리거나 주인이 찾아가는</strong> 방식 등을 <strong>맡기는 분과 직접</strong> 정해 주세요.{' '}
-                <strong>유료는 목록에 보이는 기간</strong>에만 해당해요.
-              </span>
+              <p>
+                운영 확인이 끝나면 <strong className="font-extrabold">인증 보호맘</strong>으로 표시돼요. 확인 전에는{' '}
+                <strong className="font-extrabold">7일 목록 노출</strong> 신청만 잠시 막혀 있고, 프로필은 지금부터 저장해
+                두셔도 돼요.
+              </p>
+              <p className="mt-2 border-t border-orange-200/80 pt-2 text-[11px] font-semibold leading-relaxed">
+                맡기기·픽업·데려다주기 등은 <strong className="font-extrabold">보호맘님과 맡기는 분</strong>이 직접 정해
+                주세요. 돌봄·거래 책임도 함께 조율해 주시면 돼요. <strong className="font-extrabold">유료(목록 노출)</strong>는
+                목록에 보이는 기간에만 해당해요.
+              </p>
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
