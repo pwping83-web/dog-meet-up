@@ -56,7 +56,7 @@ function explainEdgeInvokeFailure(raw: string): string {
     return (
       `${m}\n\n` +
       '【의미】Supabase Edge Function이 2xx가 아닌 HTTP 상태(404·401·500·503 등)로 응답했습니다.\n\n' +
-      '【401 Unauthorized 인 경우】`verify_jwt=true`일 때 세션 JWT가 거절된 것입니다.\n' +
+      '【401 Unauthorized 인 경우】세션 JWT가 거절된 것입니다(함수 내부 검증 또는 게이트).\n' +
       '· 로그아웃 후 다시 로그인, 또는 시크릿 창에서 재시도\n' +
       '· 배포 사이트 환경변수의 VITE_SUPABASE_URL·VITE_SUPABASE_ANON_KEY가 이 프로젝트 것과 같은지 확인\n\n' +
       '【그 외】\n' +
@@ -75,7 +75,7 @@ function explainEdgeInvokeFailure(raw: string): string {
       '【조치】Supabase 프로젝트에 `daeng-ai-assist` 함수가 배포돼 있는지 확인하세요.\n' +
       '· CLI: `npx supabase functions deploy daeng-ai-assist`\n' +
       '· Dashboard → Edge Functions → Secrets에 `GEMINI_API_KEY` 등록\n' +
-      '· 로그인한 상태에서만 호출됩니다(`verify_jwt = true`).'
+      '· 로그인한 상태에서만 호출됩니다(함수에서 세션 검증).'
     );
   }
   return m;

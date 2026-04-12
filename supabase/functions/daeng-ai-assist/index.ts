@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -91,6 +92,26 @@ Deno.serve(async (req) => {
   }
   if (req.method !== "POST") {
     return jsonResponse({ ok: false, error: "POST only" }, 405);
+  }
+
+  const authHeader = req.headers.get("Authorization") ?? "";
+  if (!authHeader.startsWith("Bearer ")) {
+    return jsonResponse({ ok: false, error: "로그인이 필요합니다." }, 401);
+  }
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
+  const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")?.trim();
+  if (!supabaseUrl || !supabaseAnon) {
+    return jsonResponse({ ok: false, error: "서버 설정 오류(SUPABASE_URL / SUPABASE_ANON_KEY)" }, 500);
+  }
+  const supabaseAuth = createClient(supabaseUrl, supabaseAnon, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: authData, error: authErr } = await supabaseAuth.auth.getUser();
+  if (authErr || !authData.user) {
+    return jsonResponse(
+      { ok: false, error: "세션이 유효하지 않습니다. 다시 로그인해 주세요." },
+      401,
+    );
   }
 
   let task: string;

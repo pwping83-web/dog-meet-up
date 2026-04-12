@@ -64,7 +64,7 @@ npx supabase secrets set GEMINI_API_KEY=AIza여기에_본인_키
 npx supabase functions deploy daeng-ai-assist --use-api
 ```
 
-4. `supabase/config.toml` 의 `[functions.daeng-ai-assist] verify_jwt = true` 이므로 **로그인한 사용자**만 호출됩니다. **`--no-verify-jwt`는 누구나 API를 태울 수 있어 권장하지 않습니다.**
+4. `daeng-ai-assist`는 게이트 `verify_jwt=false`이고, **함수 안에서 `auth.getUser()`** 로 로그인 여부를 검사합니다(ES256 세션에서 게이트만 켤 때 401 나는 경우 대비).
 
 ---
 

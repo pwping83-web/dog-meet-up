@@ -7,5 +7,6 @@ verify_jwt = true
 [functions.stripe-webhook]
 verify_jwt = false
 
+# 게이트 verify_jwt만 켜면 ES256 세션에서 401이 나는 경우가 있어, 함수 내부에서 getUser()로 검증합니다.
 [functions.daeng-ai-assist]
-verify_jwt = true
+verify_jwt = false
