@@ -191,7 +191,7 @@ export function LandingPage() {
                 style={{ fontWeight: 600 }}
               >
                 성향이 맞는 댕댕이 친구를 찾고 있어요<br />
-                산책·모임으로 사교성 넓히는 댕댕이를 키워요 🐾<br />
+                산책·모임으로 사교성 넓혀줘요 🐾<br />
                 친해진 댕친 집에 맡기고 오기도 해요
               </p>
             </motion.div>
