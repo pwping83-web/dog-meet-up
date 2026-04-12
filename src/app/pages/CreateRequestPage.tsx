@@ -837,7 +837,7 @@ export function CreateRequestPage() {
             className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-5 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-50"
           >
             {kind === 'dolbom'
-              ? '올리기 · 돌봄 · 맡기기 🚀'
+              ? '돌봄 · 맡기기 🚀'
               : kind === 'mannaja' && formData.category === '교배' && !breedingListingActive
                 ? '결제 후 올리기'
                 : '올리기 🚀'}
