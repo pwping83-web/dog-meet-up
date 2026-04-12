@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, MapPin, MessageCircle, Loader2 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { DogSitterCard } from '../components/DogSitterCard';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
 import { calculateDistance, formatDistance } from '../utils/distance';
@@ -21,6 +21,7 @@ import {
 import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { isPromoFreeListings } from '../../lib/promoFlags';
+import { getMergedMeetups } from '../../lib/userMeetupsStore';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
 
@@ -46,8 +47,20 @@ function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
 }
 
 export function DogSittersPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { location } = useUserLocation();
+  const routerLocation = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [meetupFeedTick, setMeetupFeedTick] = useState(0);
+  useEffect(() => {
+    const onMeetups = () => setMeetupFeedTick((t) => t + 1);
+    window.addEventListener('daeng-user-meetups-changed', onMeetups);
+    return () => window.removeEventListener('daeng-user-meetups-changed', onMeetups);
+  }, []);
+
+  const allMeetups = useMemo(
+    () => getMergedMeetups(mockMeetups),
+    [routerLocation.key, routerLocation.pathname, meetupFeedTick],
+  );
   const [topTab, setTopTab] = useState<TopTab>(() => readInitialSittersUrl().topTab);
   const [careFilter, setCareFilter] = useState<CareFilter>(() => readInitialSittersUrl().care);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
@@ -252,7 +265,7 @@ export function DogSittersPage() {
     return rows;
   }, [careFilter, specialty, sortBy, distForDistrict, guardMomsForList, q]);
 
-  const filteredMeetups = mockMeetups
+  const filteredMeetups = allMeetups
     .filter((req) => {
       const inTab =
         topTab === 'moija'
@@ -420,7 +433,7 @@ export function DogSittersPage() {
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
             <span className="mb-1.5 block">
-              <strong className="font-extrabold">댕집사</strong>는 주인 집 방문, 돌봄
+              <strong className="font-extrabold">댕집사</strong>는 근처에 사는 이웃이 주인 집에 와서 돌봐 주는 방식이에요
             </span>
             <span className="block">
               <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
@@ -553,7 +566,7 @@ export function DogSittersPage() {
                     >
                       <div className="flex gap-4">
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 text-2xl shadow-inner">
-                          🍼
+                          🦴
                         </div>
                         <div className="min-w-0 flex-1 pt-0.5">
                           <p className="text-[10px] font-extrabold uppercase tracking-wide text-brand">

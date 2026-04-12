@@ -1,10 +1,11 @@
 import { useParams, useNavigate, useLocation, Link } from 'react-router';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag } from 'lucide-react';
 import { mockMeetups, mockJoinRequests, mockDogSitters } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { calculateDistance, formatDistance } from '../utils/distance';
-import { useState } from 'react';
+import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { useAuth } from '../../contexts/AuthContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import {
@@ -17,7 +18,17 @@ export function MeetupDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const meetup = mockMeetups.find((r) => r.id === id);
+  const [meetupFeedTick, setMeetupFeedTick] = useState(0);
+  useEffect(() => {
+    const onMeetups = () => setMeetupFeedTick((t) => t + 1);
+    window.addEventListener('daeng-user-meetups-changed', onMeetups);
+    return () => window.removeEventListener('daeng-user-meetups-changed', onMeetups);
+  }, []);
+
+  const meetup = useMemo(
+    () => (id ? getMergedMeetups(mockMeetups).find((r) => r.id === id) : undefined),
+    [id, meetupFeedTick, location.key],
+  );
   const joinRequests = mockJoinRequests.filter((q) => q.meetupId === id);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);

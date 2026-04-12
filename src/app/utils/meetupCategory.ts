@@ -24,7 +24,7 @@ export function meetupCategoryEmoji(category: string): string {
     case '실종':
       return '🚨';
     case '돌봄':
-      return '🍼';
+      return '🦴';
     default:
       return '🐾';
   }

@@ -71,7 +71,7 @@ function MainView({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
   ];
 
   const menuItems = [
-    { id: 'guardCare' as AdminView, label: '돌봄 회원·결제', icon: '🍼', count: null as number | null },
+    { id: 'guardCare' as AdminView, label: '돌봄 회원·결제', icon: '🦴', count: null as number | null },
     { id: 'requests' as AdminView, label: '모임 관리', icon: '📝', count: mockRequests.length },
     { id: 'repairers' as AdminView, label: '댕집사 관리', icon: '🐕', count: mockRepairers.length },
     { id: 'quotes' as AdminView, label: '참여 신청 관리', icon: '💰', count: mockQuotes.length },

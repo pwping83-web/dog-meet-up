@@ -1,5 +1,6 @@
 // src/app/pages/SearchPage.tsx 전체 교체
 import { Link, useLocation } from 'react-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Search,
@@ -9,10 +10,10 @@ import {
   User,
   PlusCircle,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
 import { mockRequests } from '../data/mockData';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { getMergedMeetups } from '../../lib/userMeetupsStore';
 
 const popularSearches = [
   '소형견', '중형견', '대형견', '산책',
@@ -59,7 +60,19 @@ export function SearchPage() {
     typeof window !== 'undefined' ? readRecentFromStorage() : [...DEFAULT_RECENT],
   );
 
-  const filteredRequests = mockRequests.filter(
+  const [meetupFeedTick, setMeetupFeedTick] = useState(0);
+  useEffect(() => {
+    const onMeetups = () => setMeetupFeedTick((t) => t + 1);
+    window.addEventListener('daeng-user-meetups-changed', onMeetups);
+    return () => window.removeEventListener('daeng-user-meetups-changed', onMeetups);
+  }, []);
+
+  const mergedRequests = useMemo(
+    () => getMergedMeetups(mockRequests),
+    [location.key, location.pathname, meetupFeedTick],
+  );
+
+  const filteredRequests = mergedRequests.filter(
     (request) =>
       meetupVisibleInPublicFeed(request) &&
       (request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -282,7 +295,7 @@ export function SearchPage() {
                 <Link to="/explore" className="text-xs font-bold text-brand hover:underline">더보기</Link>
               </div>
               <div className="space-y-3">
-                {mockRequests.slice(0, 4).map((request) => (
+                {mergedRequests.slice(0, 4).map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
                     <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-200 active:scale-[0.98]">
                       {request.images && request.images.length > 0 ? (

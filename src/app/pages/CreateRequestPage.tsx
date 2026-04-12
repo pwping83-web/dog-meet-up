@@ -1,15 +1,19 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link, useNavigate, useSearchParams, useLocation } from 'react-router';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ArrowLeft, Camera, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Bone, Camera, LocateFixed, X, Trash2 } from 'lucide-react';
 import { RegionSelector } from '../components/RegionSelector';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserLocation } from '../../contexts/UserLocationContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import { supabase } from '../../lib/supabase';
 import { startStripeCheckout } from '../../lib/billing';
 import { isPromoFreeListings } from '../../lib/promoFlags';
 import { getBreedingLeakInNonBreedingPost } from '../utils/breedingContentGuard';
+import type { Meetup } from '../types';
+import type { User } from '@supabase/supabase-js';
+import { appendUserMeetup } from '../../lib/userMeetupsStore';
 
 const MOIJA_CATEGORIES = [
   { name: '공원·장소 모임', emoji: '🌳' },
@@ -29,6 +33,17 @@ const mannajaNames = MANNAJA_CATEGORIES.map((c) => c.name);
 
 const BREEDING_DRAFT_KEY = 'daeng-breeding-draft';
 
+function meetupAuthorDisplayName(u: User): string {
+  const m = u.user_metadata ?? {};
+  for (const key of ['nickname', 'name', 'full_name'] as const) {
+    const v = m[key];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+  }
+  const local = u.email?.split('@')[0]?.trim();
+  if (local) return local.length > 12 ? `${local.slice(0, 12)}…` : local;
+  return '댕댕이 집사';
+}
+
 type WriteKind = 'moija' | 'mannaja' | 'dolbom';
 
 function parseKind(raw: string | null): WriteKind | null {
@@ -41,6 +56,7 @@ export function CreateRequestPage() {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
+  const { applyGpsLocation, locationBasedEnabled } = useUserLocation();
   const kind = parseKind(searchParams.get('kind'));
 
   const [formData, setFormData] = useState({
@@ -56,6 +72,7 @@ export function CreateRequestPage() {
   const [breedingListingUntil, setBreedingListingUntil] = useState<string | null>(null);
   const [breedingEntLoadFailed, setBreedingEntLoadFailed] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
+  const [regionGpsBusy, setRegionGpsBusy] = useState(false);
   const draftRestoredRef = useRef(false);
   const breedingPaidHandledRef = useRef(false);
 
@@ -181,6 +198,26 @@ export function CreateRequestPage() {
     setSearchParams({ kind: k }, { replace: true });
   };
 
+  const applyGpsToFormRegion = useCallback(async () => {
+    if (!locationBasedEnabled) {
+      alert('내댕댕에서 「위치 기반」을 켜 주신 뒤 다시 시도해 주세요.');
+      return;
+    }
+    setRegionGpsBusy(true);
+    try {
+      const snap = await applyGpsLocation();
+      setFormData((prev) => ({
+        ...prev,
+        city: snap.city,
+        district: snap.district,
+      }));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '위치를 확인할 수 없어요.');
+    } finally {
+      setRegionGpsBusy(false);
+    }
+  }, [applyGpsLocation, locationBasedEnabled]);
+
   const renderCategoryGrid = (
     items: readonly { name: string; emoji: string }[],
     colsClass: string,
@@ -279,7 +316,7 @@ export function CreateRequestPage() {
     if (!categoryOk) {
       alert(
         kind === 'dolbom'
-          ? '돌봄·맡기기 글을 이어서 작성해 주세요 🍼'
+          ? '돌봄·맡기기 글을 이어서 작성해 주세요 🦴'
           : '주제를 하나 골라 주세요 🐾',
       );
       return;
@@ -312,10 +349,51 @@ export function CreateRequestPage() {
       return;
     }
 
+    if (!formData.city.trim() || !formData.district.trim()) {
+      alert('시·구(동네)를 선택해 주세요.');
+      return;
+    }
+
+    const locationLabel = `${formData.city.trim()} ${formData.district.trim()}`;
+    const estimatedCostLabel =
+      kind === 'dolbom'
+        ? wantDaengPickup
+          ? '돌봄·맡기기 · 댕댕 픽업 희망'
+          : '돌봄·맡기기'
+        : kind === 'moija'
+          ? `모이자 · ${formData.category}`
+          : `만나자 · ${formData.category}`;
+
+    const newMeetup: Meetup = {
+      id: `local-${crypto.randomUUID()}`,
+      title: formData.title.trim(),
+      description: formData.description.trim(),
+      category: formData.category,
+      location: locationLabel,
+      district: formData.district.trim(),
+      images: [...previewImages],
+      estimatedCost: estimatedCostLabel,
+      status: 'pending',
+      createdAt: new Date(),
+      userId: user.id,
+      userName: meetupAuthorDisplayName(user),
+    };
+
+    if (
+      formData.category === '교배' &&
+      breedingListingUntil &&
+      breedingListingActive &&
+      !isPromoFreeListings()
+    ) {
+      newMeetup.listingVisibleUntil = breedingListingUntil;
+    }
+
+    appendUserMeetup(newMeetup);
+
     if (kind === 'dolbom') {
       const pickupNote = wantDaengPickup ? '\n댕댕 픽업 희망으로 함께 표시돼요.' : '';
       alert(
-        `🍼 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
+        `🦴 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
       );
     } else if (isBreedingPost) {
       try {
@@ -393,7 +471,7 @@ export function CreateRequestPage() {
             >
               <p className="text-lg font-extrabold text-slate-900">돌봄 · 맡기기</p>
               <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
-                맡기기(돌봄 집)·방문 돌봄(주인 집) 등 돌봄이 필요할 때 올리는 글
+                맡길 지역을 고른 뒤 맡기기(돌봄 집) 또는 근처 댕집사 방문(주인 집) 등 돌봄이 필요할 때 올리는 글
               </p>
             </button>
           </div>
@@ -424,7 +502,15 @@ export function CreateRequestPage() {
 
       <div className="mx-auto max-w-screen-md px-4 py-8">
         <div className="mb-8 text-center">
-          <div className="mb-4 text-5xl">{kind === 'dolbom' ? '🍼' : '🐾'}</div>
+          <div className="mb-4 flex justify-center">
+            {kind === 'dolbom' ? (
+              <Bone className="h-14 w-14 text-sky-600" strokeWidth={1.6} aria-hidden />
+            ) : (
+              <span className="text-5xl" aria-hidden>
+                🐾
+              </span>
+            )}
+          </div>
           {kind === 'moija' && (
             <>
               <h2 className="mb-2 text-xl font-extrabold text-slate-900">여럿이 모이는 글</h2>
@@ -444,11 +530,18 @@ export function CreateRequestPage() {
               <h2 className="mb-2 text-xl font-extrabold text-slate-900">필요한 돌봄을 적어 주세요</h2>
               <div className="space-y-2 text-sm font-medium leading-relaxed text-slate-500">
                 <p>
-                  <strong className="font-extrabold text-slate-800">댕집사</strong>는 주인 집 방문, 돌봄
+                  <strong className="font-extrabold text-slate-800">댕집사</strong>는{' '}
+                  <strong className="font-extrabold text-slate-800">근처에 사는 이웃</strong>이 주인 집에 와서 강아지를
+                  돌봐 주는 방식이에요.
                 </p>
                 <p>
                   <strong className="font-extrabold text-slate-800">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집
                   기준으로 서로 맞추면 돼요.
+                </p>
+                <p className="border-t border-slate-200/80 pt-2 text-[13px] leading-relaxed text-slate-600">
+                  이 글은 아래에서 <strong className="font-extrabold text-slate-800">맡길 지역(시·구)</strong>을 고른 뒤 올려
+                  주세요. 내 집이 아니라 <strong className="font-extrabold text-slate-800">엄마 집·출장지</strong>에서 맡길
+                  거면 그쪽을 골라 주시고, 제목·본문에도 적어 두면 찾기 쉬워요.
                 </p>
               </div>
             </>
@@ -522,8 +615,14 @@ export function CreateRequestPage() {
           )}
 
           {kind === 'dolbom' && (
-            <div className="rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-sky-950">
-              이 글은 홈·목록에서 <strong className="font-extrabold">돌봄·맡기기</strong>로 모여 보여요.
+            <div className="space-y-2 rounded-2xl border border-sky-100 bg-sky-50/80 px-3 py-3 text-xs font-semibold leading-relaxed text-sky-950">
+              <p>
+                이 글은 홈·목록에서 <strong className="font-extrabold">돌봄·맡기기</strong>로 모여 보여요.
+              </p>
+              <p className="text-[11px] font-medium leading-relaxed text-sky-900/95">
+                아래에서 고른 시·구가 이 글의 <strong className="font-extrabold">맡길 지역</strong>이에요. ①은 지금 계신
+                곳, 맡길 곳이 다르면 ②로 골라 주세요.
+              </p>
             </div>
           )}
 
@@ -552,7 +651,7 @@ export function CreateRequestPage() {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={
                 kind === 'dolbom'
-                  ? '예: 주말 출장이라 집 방문 돌봄 구해요 🍼'
+                  ? '예: 주말 부산 출장이라 부산에서 맡기기 구해요 / 집은 강남이에요 🦴'
                   : kind === 'mannaja' && formData.category === '교배'
                     ? '예: 포메 여아입니다 · 흰색 포메 남아 사진 보내주세요 💕'
                     : '예: 주말 오전 한강에서 산책 같이 해요 🐕'
@@ -568,7 +667,7 @@ export function CreateRequestPage() {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder={
                 kind === 'dolbom'
-                  ? '기간, 견종·체중, 산책·배변, 예방접종 여부 등 적어 주세요 🐶'
+                  ? '기간, 견종·체중, 산책·배변, 예방접종 여부와 함께 맡기는 장소(내 집 / 엄마 집 / 출장지 등)도 적어 주세요 🐶'
                   : kind === 'mannaja' && formData.category === '교배'
                     ? '견종·성별·나이, 건강·혈통·접종, 희망 상대 조건, 사진 교환 여부, 연락처(채팅·전화) 등 적어 주세요 🐶'
                     : '몇 시에 어디서 만날지, 견종·성향 등 자유롭게 적어 주세요 🐶'
@@ -617,13 +716,45 @@ export function CreateRequestPage() {
             )}
           </div>
 
-          <div>
-            <RegionSelector
-              selectedCity={formData.city}
-              selectedDistrict={formData.district}
-              onCityChange={(city) => setFormData({ ...formData, city })}
-              onDistrictChange={(district) => setFormData({ ...formData, district })}
-            />
+          <div className="space-y-2">
+            <p className="px-1 text-xs font-extrabold uppercase tracking-wide text-slate-500">
+              {kind === 'dolbom' ? '맡길 지역(시·구)' : '모이는 동네'}
+            </p>
+            <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+              <div>
+                <p className="mb-2 text-[11px] font-bold text-slate-600">
+                  {kind === 'dolbom'
+                    ? '① 지금 계신 곳(GPS)으로 시·구 맞추기'
+                    : '① 현재 위치로 시·구 맞추기'}
+                </p>
+                <button
+                  type="button"
+                  disabled={regionGpsBusy}
+                  onClick={() => void applyGpsToFormRegion()}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-extrabold text-white shadow-md transition-opacity active:scale-[0.99] disabled:opacity-50"
+                >
+                  <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
+                  {regionGpsBusy ? '위치 확인 중…' : '지금 위치로 찾기'}
+                </button>
+                {kind === 'dolbom' && (
+                  <p className="mt-2 text-[10px] font-medium leading-relaxed text-slate-500">
+                    맡길 곳이 지금 위치와 같을 때 쓰세요. 집·출장지 등 따로 있으면 ②에서 맡길 지역을 고르세요.
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="mb-2 text-[11px] font-bold text-slate-600">
+                  {kind === 'dolbom' ? '② 수기로 맡길 지역 선택' : '② 직접 선택'}
+                </p>
+                <RegionSelector
+                  selectedCity={formData.city}
+                  selectedDistrict={formData.district}
+                  onCityChange={(city) => setFormData({ ...formData, city })}
+                  onDistrictChange={(district) => setFormData({ ...formData, district })}
+                  placeholder={kind === 'dolbom' ? '맡길 지역(시·구)을 선택해 주세요' : undefined}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4 text-center text-sm font-bold text-orange-950">

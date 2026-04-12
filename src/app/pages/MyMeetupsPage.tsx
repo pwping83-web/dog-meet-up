@@ -1,9 +1,24 @@
-import { Link } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { ArrowLeft, MessageCircle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { mockMeetups } from '../data/mockData';
+import { useAuth } from '../../contexts/AuthContext';
+import { getMergedMeetups } from '../../lib/userMeetupsStore';
 
 export function MyMeetupsPage() {
-  const myMeetups = mockMeetups.filter(req => req.userId === 'user1');
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
+  const [meetupFeedTick, setMeetupFeedTick] = useState(0);
+  useEffect(() => {
+    const onMeetups = () => setMeetupFeedTick((t) => t + 1);
+    window.addEventListener('daeng-user-meetups-changed', onMeetups);
+    return () => window.removeEventListener('daeng-user-meetups-changed', onMeetups);
+  }, []);
+
+  const myMeetups = useMemo(() => {
+    if (!user) return [];
+    return getMergedMeetups(mockMeetups).filter((req) => req.userId === user.id);
+  }, [user, location.key, location.pathname, meetupFeedTick]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -27,6 +42,28 @@ export function MyMeetupsPage() {
     }
   };
 
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50/50 text-sm font-medium text-slate-500">
+        잠시만요…
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50/50 px-4">
+        <p className="text-center text-sm font-semibold text-slate-600">로그인 후 내가 올린 글을 볼 수 있어요.</p>
+        <Link
+          to="/login"
+          className="rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 text-sm font-bold text-white shadow-lg"
+        >
+          로그인
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50/50 pb-24">
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-50">
@@ -34,7 +71,7 @@ export function MyMeetupsPage() {
           <Link to="/explore" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="홈으로">
             <ArrowLeft className="w-6 h-6" />
           </Link>
-          <h1 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>모이자·만나자</h1>
+          <h1 className="text-lg text-slate-800" style={{ fontWeight: 800 }}>내가 올린 글</h1>
         </div>
       </header>
 
@@ -63,9 +100,9 @@ export function MyMeetupsPage() {
             <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-5">
               <MessageCircle className="w-10 h-10 text-slate-300" />
             </div>
-            <p className="mb-2 text-lg text-slate-600" style={{ fontWeight: 700 }}>올린 만남 글이 없어요</p>
+            <p className="mb-2 text-lg text-slate-600" style={{ fontWeight: 700 }}>올린 글이 없어요</p>
             <p className="mb-6 text-sm text-slate-400" style={{ fontWeight: 500 }}>
-              모이자·만나자로 같이 놀 댕친을 불러보세요
+              모이자·만나자·돌봄 맡기기로 댕친을 불러보세요
             </p>
             <Link to="/create-meetup" className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-6 py-3 rounded-2xl text-sm shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all" style={{ fontWeight: 700 }}>
               글 올리기

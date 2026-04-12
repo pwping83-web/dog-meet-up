@@ -6,7 +6,7 @@ import {
   User, Bell, Loader2,
   Menu, X, Settings, LogOut, CreditCard,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { mockRequests, mockQuotes } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -17,6 +17,7 @@ import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import type { User } from '@supabase/supabase-js';
 
 function shortProfileLabel(user: User): string {
@@ -90,11 +91,23 @@ export function LandingPage() {
     fetchDogs();
   }, []);
 
+  const [meetupFeedTick, setMeetupFeedTick] = useState(0);
+  useEffect(() => {
+    const onMeetups = () => setMeetupFeedTick((t) => t + 1);
+    window.addEventListener('daeng-user-meetups-changed', onMeetups);
+    return () => window.removeEventListener('daeng-user-meetups-changed', onMeetups);
+  }, []);
+
+  const mergedRequests = useMemo(
+    () => getMergedMeetups(mockRequests),
+    [location.key, location.pathname, meetupFeedTick],
+  );
+
   const getQuoteCount = (id: string) => mockQuotes.filter(q => q.repairRequestId === id).length;
-  const meetupFeedItems = mockRequests
+  const meetupFeedItems = mergedRequests
     .filter((r) => r.category !== '돌봄' && meetupVisibleInPublicFeed(r))
     .slice(0, 6);
-  const dolbomFeedItems = mockRequests.filter((r) => r.category === '돌봄');
+  const dolbomFeedItems = mergedRequests.filter((r) => r.category === '돌봄');
 
   const closeExploreMenu = () => setExploreMenuOpen(false);
 
@@ -452,7 +465,7 @@ export function LandingPage() {
           <motion.div variants={fadeUp} custom={0} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
             <div>
               <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>
-                🍼 돌봄 · 맡기기
+                🦴 돌봄 · 맡기기
               </h2>
               <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
                 맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
@@ -485,7 +498,7 @@ export function LandingPage() {
                         />
                       ) : (
                         <span className="text-2xl" aria-hidden>
-                          🍼
+                          🦴
                         </span>
                       )}
                     </div>

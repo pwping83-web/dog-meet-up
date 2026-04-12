@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, MapPin, X } from 'lucide-react';
 import { regions, formatRegion } from '../data/regions';
 
@@ -20,8 +20,25 @@ export function RegionSelector({
   placeholder = '지역을 선택해주세요',
   layout = 'inline',
 }: RegionSelectorProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<'city' | 'district'>('city');
+
+  useEffect(() => {
+    if (!isOpen || layout === 'modal') return;
+    const onPointerDown = (e: MouseEvent | TouchEvent) => {
+      const root = rootRef.current;
+      if (root?.contains(e.target as Node)) return;
+      setIsOpen(false);
+      setStep('city');
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('touchstart', onPointerDown, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('touchstart', onPointerDown);
+    };
+  }, [isOpen, layout]);
 
   const handleCitySelect = (city: string) => {
     onCityChange(city);
@@ -43,7 +60,7 @@ export function RegionSelector({
   const selectedRegion = regions.find(r => r.city === selectedCity);
 
   return (
-    <div className="relative">
+    <div ref={rootRef} className="relative">
       {/* 선택된 지역 표시 또는 선택 버튼 */}
       <button
         type="button"
@@ -78,22 +95,20 @@ export function RegionSelector({
       {/* 드롭다운 */}
       {isOpen && (
         <>
-          <div
-            className={
-              layout === 'modal'
-                ? 'fixed inset-0 z-[110] bg-black/25'
-                : 'fixed inset-0 z-40'
-            }
-            onClick={() => {
-              setIsOpen(false);
-              setStep('city');
-            }}
-          />
+          {layout === 'modal' && (
+            <div
+              className="fixed inset-0 z-[110] bg-black/25"
+              onClick={() => {
+                setIsOpen(false);
+                setStep('city');
+              }}
+            />
+          )}
           <div
             className={
               layout === 'modal'
                 ? 'fixed bottom-6 left-1/2 z-[120] w-[min(100%-2rem,28rem)] max-h-[55vh] -translate-x-1/2 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl'
-                : 'absolute top-full left-0 right-0 z-50 mt-2 max-h-80 overflow-y-auto rounded-xl border bg-white shadow-lg'
+                : 'absolute top-full left-0 right-0 z-50 mt-2 max-h-[min(20rem,calc(100dvh-10rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-xl'
             }
           >
             {step === 'city' ? (
