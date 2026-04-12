@@ -207,13 +207,99 @@ export const mockMeetups: Meetup[] = [
     userId: 'user-mannaja-pome',
     userName: '포메맘',
   },
+  {
+    id: 'daeng-friend-2026-01',
+    title: '반포한강 🌇 저녁 느린 산책 같이 해요 (중·대형 환영)',
+    category: '산책·놀이',
+    description:
+      '4살 보더콜리 키워요. 당김 줄·입마개 준비돼 있어요. 19시쯤 만나서 40분 정도 천천히 걷고 헤어져요. 무리한 뛰기보다 냄새 맡기·친해지기 위주로 가요 🦮',
+    location: '서울 서초구',
+    district: '서초구',
+    images: [
+      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=1080&h=1080&fit=crop&q=80',
+    ],
+    estimatedCost: '평일 저녁 7시',
+    status: 'pending',
+    createdAt: new Date('2026-04-11'),
+    userId: 'user-daeng-01',
+    userName: '한강산책러',
+  },
+  {
+    id: 'daeng-friend-2026-02',
+    title: '퍼피 사회화 클래스 🎓 같이 등록·다녀요 (송파)',
+    category: '훈련·사회화',
+    description:
+      '골든 4개월 퍼피예요. 주말 오전 반려견 센터 기초반 열리는데 혼자 가기 부끄워요 😅 비슷한 월령 아이 부모님이랑 같이 듣고 산책도 번갈아 하면 좋겠어요.',
+    location: '서울 송파구',
+    district: '송파구',
+    images: [
+      'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=1080&h=1080&fit=crop&q=80',
+    ],
+    estimatedCost: '토요일 10시',
+    status: 'pending',
+    createdAt: new Date('2026-04-11'),
+    userId: 'user-daeng-02',
+    userName: '퍼피아빠',
+  },
+  {
+    id: 'daeng-friend-2026-03',
+    title: '닥스훈트 친구 1:1 산책·플레이데이트 구해요 🌭',
+    category: '1:1 만남',
+    description:
+      '2살 표준 닥스 남아예요. 비슷한 체형 닥스나 소형견이면 좋아요. 첫 만남은 단골 산책로에서 짧게, 서로 괜찮으면 카페도 가요. 예민한 편이라 천천히 맞춰 주실 분!',
+    location: '서울 마포구',
+    district: '마포구',
+    images: [
+      'https://images.unsplash.com/photo-1587300003388-59208cc96262?w=1080&h=1080&fit=crop&q=80',
+    ],
+    estimatedCost: '주말 오후',
+    status: 'pending',
+    createdAt: new Date('2026-04-10'),
+    userId: 'user-daeng-03',
+    userName: '닥스맘D',
+  },
+  {
+    id: 'daeng-friend-2026-04',
+    title: '내일 하루 🦴 맡기기 가능한 분 (안양·군포)',
+    category: '돌봄',
+    description:
+      '7kg 비숑 여아, 중성화·접종 완료예요. 집에 CCTV 있어요. 하루 종일 맡기기 또는 오전·오후 나눠 방문 돌봄도 괜찮아요. 성향 맞춰 채팅으로 먼저 이야기 나눠요!',
+    location: '경기 안양시',
+    district: '안양시 만안구',
+    images: [
+      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=1080&h=1080&fit=crop&q=80',
+    ],
+    estimatedCost: '4/12 하루',
+    status: 'pending',
+    createdAt: new Date('2026-04-10'),
+    userId: 'user-daeng-04',
+    userName: '안양댕댕',
+  },
+  {
+    id: 'daeng-friend-2026-05',
+    title: '잠실 애견 팝업 🛍️ 주말에 같이 가실 댕친 구해요',
+    category: '카페·체험',
+    description:
+      '이번 주 토요일 한정 팝업이래요! 굿즈·간식 구경하고 근처 잔디에서 잠깐 놀아요. 소형견 위주로 모이면 좋겠어요. 인원 맞춰서 시간만 정하면 돼요 ✨',
+    location: '서울 송파구',
+    district: '송파구',
+    images: [
+      'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1080&h=1080&fit=crop&q=80',
+    ],
+    estimatedCost: '토요일 오후 2시',
+    status: 'pending',
+    createdAt: new Date('2026-04-09'),
+    userId: 'user-daeng-05',
+    userName: '성수댕집',
+  },
 ];
 
 export const mockDogSitters: DogSitter[] = [
   {
     id: 'r1',
     name: '미미맘 🐩',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?w=400&h=400&fit=crop&q=80',
     location: '서울 강남구 (역삼동)',
     district: '강남구',
     dong: '역삼동',
@@ -231,7 +317,8 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r2',
     name: '훈련사 민호 🎓',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop&q=80',
     location: '서울 서초구',
     district: '서초구',
     specialties: ['방문 훈련', '사회화', '기본교육'],
@@ -248,7 +335,8 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r3',
     name: '댕시터 하늘 🌤️',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1693897004115-7fbd4f1ae96e?w=400&h=400&fit=crop&q=80',
     location: '서울 강남구',
     district: '강남구',
     specialties: ['종일 돌봄', '반나절', '대형견 OK'],
@@ -265,7 +353,8 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r4',
     name: '산책메이트 지수 🦮',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&q=80',
     location: '서울 송파구',
     district: '송파구',
     specialties: ['산책 대행', '아침·저녁 방문', '활동량 큰 아이'],
@@ -282,7 +371,8 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r5',
     name: '부산댕집사 🌊',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1727302700512-e053b331d61c?w=400&h=400&fit=crop&q=80',
     location: '부산 해운대구',
     district: '해운대구',
     specialties: ['해변 산책', '대형견', '당일·주말 맡기기'],
@@ -298,7 +388,8 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r6',
     name: '인천펫시터 🐶',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=400&fit=crop&q=80',
     location: '인천 남동구',
     district: '남동구',
     specialties: ['노견 케어', '투약 보조', '방문 돌봄'],
@@ -314,7 +405,8 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r7',
     name: '대구댕집사 🐾',
-    profileImage: '',
+    profileImage:
+      'https://images.unsplash.com/photo-1704227170709-5e5ddefcb4f7?w=400&h=400&fit=crop&q=80',
     location: '대구 수성구',
     district: '수성구',
     specialties: ['소형견 맡기기', '정기 산책 대행', '방문 돌봄'],

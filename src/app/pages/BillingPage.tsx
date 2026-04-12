@@ -179,8 +179,8 @@ export function BillingPage() {
 
         {promoFree && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-xs font-semibold leading-relaxed text-emerald-950">
-            <span className="font-extrabold">한시적 무료</span> 기간이에요. 인증 보호맘 목록·교배 글 노출은 결제 없이
-            이용할 수 있어요. 이용이 늘면 유료로 전환될 수 있어요.
+            <span className="font-extrabold">한시 무료</span>예요. 보호맘 목록·교배 노출은 결제 없이 쓸 수 있어요. 나중엔
+            유료로 바뀔 수 있어요.
           </div>
         )}
 
@@ -302,9 +302,7 @@ export function BillingPage() {
                     </p>
                   )}
                   {!breedingListingUntil && !promoFree && (
-                    <p className="mt-1 font-medium text-pink-900/80">
-                      결제를 완료하면 7일간 「만나자」 목록·홈 피드에 교배 글을 올릴 수 있어요.
-                    </p>
+                    <p className="mt-1 font-medium text-pink-900/80">결제 시 7일간 만나자·피드에 교배 글을 올릴 수 있어요.</p>
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

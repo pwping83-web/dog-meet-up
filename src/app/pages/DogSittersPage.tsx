@@ -11,7 +11,7 @@ import type { DogSitter } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
-import { mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
+import { getCertifiedGuardMomPhotoUrl, mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
 import {
   MANNAJA_CATEGORY_SET,
   MANNAJA_MEETUP_CATEGORIES,
@@ -25,8 +25,8 @@ import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { isPromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
-/** need: 돌봄 맡기기 글(주인) / all·sitter·guard: 맡아주는 쪽(댕집사·보호맘) */
-type CareFilter = 'need' | 'all' | 'sitter' | 'guard';
+/** need: 돌봄 맡기기 글(주인) / sitter·guard: 맡아주는 쪽 */
+type CareFilter = 'need' | 'sitter' | 'guard';
 
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
@@ -35,19 +35,26 @@ type CombinedRow =
   | { kind: 'guard'; distance: number; mom: GuardMomRow };
 
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
-  if (typeof window === 'undefined') return { topTab: 'moija', care: 'all' };
+  if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
   const p = new URLSearchParams(window.location.search);
   const view = p.get('view');
   const care = p.get('care');
-  if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter' || care === 'need') {
-    let cf: CareFilter = 'all';
+  if (
+    view === 'care' ||
+    care === 'guard' ||
+    care === 'moms' ||
+    care === 'sitter' ||
+    care === 'need' ||
+    care === 'all'
+  ) {
+    let cf: CareFilter = 'sitter';
     if (care === 'need') cf = 'need';
     else if (care === 'guard' || care === 'moms') cf = 'guard';
     else if (care === 'sitter') cf = 'sitter';
     return { topTab: 'certified', care: cf };
   }
-  if (view === 'mannaja') return { topTab: 'mannaja', care: 'all' };
-  return { topTab: 'moija', care: 'all' };
+  if (view === 'mannaja') return { topTab: 'mannaja', care: 'sitter' };
+  return { topTab: 'moija', care: 'sitter' };
 }
 
 export function DogSittersPage() {
@@ -121,12 +128,19 @@ export function DogSittersPage() {
   useEffect(() => {
     const view = searchParams.get('view');
     const care = searchParams.get('care');
-    if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter' || care === 'need') {
+    if (
+      view === 'care' ||
+      care === 'guard' ||
+      care === 'moms' ||
+      care === 'sitter' ||
+      care === 'need' ||
+      care === 'all'
+    ) {
       setTopTab('certified');
       if (care === 'need') setCareFilter('need');
       else if (care === 'guard' || care === 'moms') setCareFilter('guard');
       else if (care === 'sitter') setCareFilter('sitter');
-      else setCareFilter('all');
+      else setCareFilter('sitter');
     } else if (view === 'mannaja') {
       setTopTab('mannaja');
     } else {
@@ -177,8 +191,7 @@ export function DogSittersPage() {
       (prev) => {
         const p = new URLSearchParams(prev);
         p.set('view', 'care');
-        if (next === 'all') p.delete('care');
-        else if (next === 'need') p.set('care', 'need');
+        if (next === 'need') p.set('care', 'need');
         else if (next === 'guard') p.set('care', 'guard');
         else p.set('care', 'sitter');
         return p;
@@ -379,19 +392,18 @@ export function DogSittersPage() {
                 <strong className="font-extrabold">모이자</strong>는 공원·카페 등 장소·일정 잡고{' '}
                 <strong>여럿이 모이는 글</strong>만 보여요. 1:1·교배·실종은{' '}
                 <strong>만나자</strong>, 맡기기(보호맘 집)·방문 돌봄(댕집사)는{' '}
-                <Link to="/sitters?view=care" className="font-extrabold text-brand underline underline-offset-2">
+                <Link to="/sitters?view=care&care=sitter" className="font-extrabold text-brand underline underline-offset-2">
                   인증 돌봄
                 </Link>
                 .
               </>
             ) : (
               <>
-                <strong className="font-extrabold">만나자</strong>는 1:1 친구 찾기·교배·실종{' '}
-                <strong>맞춤 글</strong>만 보여요. <strong className="font-extrabold">교배</strong> 신청 글은{' '}
+                <strong className="font-extrabold">만나자</strong>는 1:1·교배·실종 글만 보여요. 교배는{' '}
                 {isPromoFreeListings() ? (
-                  <>지금은 한시적으로 무료로 목록·피드에도 올라가요. </>
+                  <>지금 무료 노출. </>
                 ) : (
-                  <>결제 후 7일간만 목록에 올라가요. </>
+                  <>결제 후 7일 노출. </>
                 )}
                 공원 모임은 <strong>모이자</strong>.
               </>
@@ -475,19 +487,16 @@ export function DogSittersPage() {
         <div className="mx-auto max-w-screen-md px-4 py-4">
           {careFilter === 'need' ? (
             <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
-              <strong className="font-extrabold">맡기는 사람</strong>은 집 방문 돌봄·맡기기 등을 구하는{' '}
-              <strong>돌봄 글</strong>이에요. 댕집사·보호맘은 아래 <strong>맡아주는 사람</strong> 탭에서 볼 수 있어요.
+              <strong className="font-extrabold">맡기는 사람</strong>은 집 방문 돌봄·맡기기 등을 구하는 돌봄 글이에요
+            </p>
+          ) : careFilter === 'sitter' ? (
+            <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
+              <strong className="font-extrabold">댕집사</strong>는 이웃이 주인 집에 와서 돌봐 주는 방식이에요.
             </p>
           ) : (
             <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-              <span className="mb-1.5 block">
-                <strong className="font-extrabold">맡아주는 사람</strong> —{' '}
-                <strong className="font-extrabold">댕집사</strong>는 이웃이 주인 집에 와서 돌봐 주는 방식이에요.
-              </span>
-              <span className="block">
-                <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
-                맞추면 돼요.
-              </span>
+              <strong className="font-extrabold">인증 보호맘</strong>은 맡기기·픽업·기간 후 인수까지, 보호맘 집에 댕댕이를
+              맡기는 방식이에요.
             </p>
           )}
 
@@ -495,7 +504,6 @@ export function DogSittersPage() {
             {(
               [
                 { id: 'need' as const, label: '맡기는 사람' },
-                { id: 'all' as const, label: '맡아주는 · 전체' },
                 { id: 'sitter' as const, label: '댕집사' },
                 { id: 'guard' as const, label: '인증 보호맘' },
               ] as const
@@ -548,12 +556,6 @@ export function DogSittersPage() {
                 </button>
               ))}
             </div>
-          )}
-
-          {careFilter === 'all' && (sortBy === 'rating' || sortBy === 'reviews') && (
-            <p className="mb-3 text-[11px] font-semibold leading-relaxed text-slate-500">
-              평점·리뷰 정렬은 댕집사에 먼저 적용되고, 인증 보호맘은 일당이 낮은 순으로 이어져요.
-            </p>
           )}
 
           <div className="mb-4 flex items-center justify-between gap-3">
@@ -664,9 +666,6 @@ export function DogSittersPage() {
             </div>
           ) : (
             <div className="space-y-3">
-              {guardLoading && careFilter === 'all' && (
-                <p className="text-center text-[11px] font-semibold text-slate-400">인증 보호맘 목록을 불러오는 중…</p>
-              )}
               {combinedRows.map((row) =>
                 row.kind === 'sitter' ? (
                   <div key={`s-${row.sitter.id}`} className="relative">
@@ -704,8 +703,22 @@ export function DogSittersPage() {
                       className="block rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-orange-200 hover:shadow-md active:scale-[0.98]"
                     >
                       <div className="flex gap-4">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 text-2xl shadow-inner">
-                          🦴
+                        <div className="flex h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-inner">
+                          {(() => {
+                            const photo = getCertifiedGuardMomPhotoUrl(row.mom.id);
+                            return photo ? (
+                              <ImageWithFallback
+                                src={photo}
+                                alt="인증 보호맘"
+                                className="h-full w-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <span className="flex h-full w-full items-center justify-center text-2xl" aria-hidden>
+                                🦴
+                              </span>
+                            );
+                          })()}
                         </div>
                         <div className="min-w-0 flex-1 pt-0.5">
                           <p className="text-[10px] font-extrabold uppercase tracking-wide text-brand">

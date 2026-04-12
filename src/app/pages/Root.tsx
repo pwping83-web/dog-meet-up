@@ -22,6 +22,10 @@ export function Root() {
   const isExplorePage = location.pathname === '/explore';
   const isMeetupDetailPage = location.pathname.startsWith('/meetup/');
   const isCreateMeetupPage = location.pathname === '/create-meetup';
+  /** 1:1 채팅방 — 하단 탭이 입력창을 가리지 않도록 숨김 (/chats 목록은 제외) */
+  const isChatDetailPage = location.pathname.startsWith('/chat/');
+  /** dog_profiles 공개 카드 상세 (/dog/:uuid) */
+  const isDogPublicProfilePage = location.pathname.startsWith('/dog/');
   /** 모이자·만나자(/sitters)·인증 돌봄(?view=care) 및 댕집사·보호맘 상세 */
   const isSittersCareFlow =
     location.pathname === '/sitters' ||
@@ -29,14 +33,20 @@ export function Root() {
     location.pathname.startsWith('/guard-mom');
 
   const showCommunityBottom =
-    isExplorePage || isMeetupDetailPage || isCreateMeetupPage || isSittersCareFlow;
+    isExplorePage ||
+    isMeetupDetailPage ||
+    isCreateMeetupPage ||
+    isSittersCareFlow ||
+    isDogPublicProfilePage;
 
   const hasOwnNav =
     isHomePage ||
     isExplorePage ||
     isMeetupDetailPage ||
     isCreateMeetupPage ||
-    isSittersCareFlow;
+    isSittersCareFlow ||
+    isChatDetailPage ||
+    isDogPublicProfilePage;
 
   // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
   useEffect(() => {

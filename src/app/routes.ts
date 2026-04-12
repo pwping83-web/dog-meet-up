@@ -10,7 +10,7 @@ import { RouteErrorPage } from './pages/RouteErrorPage';
  * Route Structure:
  * - / : Home (simple, vibrant landing)
  * - /explore : Community explorer (meetups, MBTI, dog profiles)
- * - /sitters : 모이자·만나자 / ?view=care 인증 돌봄 — care=need(맡기는 글)·all|sitter|guard(맡아주는)
+ * - /sitters : 모이자·만나자 / ?view=care 인증 돌봄 — care=need|sitter|guard (구 care=all → sitter)
  * - /create-meetup : 글 올리기(모이자·만나자·돌봄 맡기기 선택 → 작성)
  * - /meetup/:id : Meetup detail + join requests
  * - /sitter/:id : Dog sitter profile
@@ -45,6 +45,7 @@ import { MyMeetupsPage } from './pages/MyMeetupsPage';
 import { MyJoinRequestsPage } from './pages/MyJoinRequestsPage';
 import { ProfileEditPage } from './pages/ProfileEditPage';
 import { DogCreatePage } from './pages/DogCreatePage';
+import { DogProfilePublicPage } from './pages/DogProfilePublicPage';
 import { DogMbtiTestPage } from './pages/DogMbtiTestPage';
 import { BillingPage } from './pages/BillingPage';
 import { GuardMomsPage } from './pages/GuardMomsPage';
@@ -66,6 +67,7 @@ export const router = createBrowserRouter([
       { path: 'my', Component: MyPage },                          // User profile
       { path: 'profile/edit', Component: ProfileEditPage },       // Profile edit page
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration
+      { path: 'dog/:id', Component: DogProfilePublicPage },       // Public dog profile from dog_profiles
       { path: 'dog-mbti-test', Component: DogMbtiTestPage },      // Dog MBTI test
       { path: 'billing', Component: BillingPage },               // 인증 보호맘 란 7일 노출 Stripe
       { path: 'guard-moms', Component: GuardMomsPage },            // → /sitters?view=care&care=guard 리다이렉트

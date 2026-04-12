@@ -324,10 +324,10 @@ export function CreateRequestPage() {
 
     if (breedingLeakLabel) {
       alert(
-        `자동 검사: 무료·다른 주제 글에는 ${breedingLeakLabel} 같은 교배·번식 표현을 쓸 수 없어요.\n` +
+        `다른 주제에는 ${breedingLeakLabel} 표현을 쓸 수 없어요.\n` +
           (isPromoFreeListings()
-            ? '교배·번식 상담은 「만나자」에서 주제를 「교배」로 선택한 뒤 작성해 주세요.'
-            : '교배·번식 상담은 「만나자」에서 주제를 「교배」로 선택한 뒤 작성·결제해 주세요.'),
+            ? '만나자 → 교배를 골라 작성해 주세요.'
+            : '만나자 → 교배를 골라 작성·결제해 주세요.'),
       );
       return;
     }
@@ -403,8 +403,8 @@ export function CreateRequestPage() {
       }
       alert(
         isPromoFreeListings()
-          ? '💕 교배 신청 글이 올라갔어요!\n지금은 한시적으로 만나자·홈 피드에서도 보여요. 1:1 만남·실종은 무료예요.'
-          : '💕 교배 신청 글이 올라갔어요!\n결제로 열린 7일 노출 기간 동안 만나자·홈 피드에서 보여요. 1:1 만남·실종은 무료예요.',
+          ? '교배 글이 올라갔어요. 지금은 한시 무료로 피드에도 보여요. 1:1·실종은 무료예요.'
+          : '교배 글이 올라갔어요. 결제한 7일 동안 피드에 보여요. 1:1·실종은 무료예요.',
       );
     } else {
       alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
@@ -571,23 +571,19 @@ export function CreateRequestPage() {
             <div className="rounded-2xl border border-pink-200 bg-pink-50/90 px-3 py-3 text-xs font-semibold leading-relaxed text-pink-950">
               <p className="font-extrabold">
                 {isPromoFreeListings()
-                  ? '교배 신청 글 · 지금은 한시적 무료로 목록·피드 노출'
-                  : '교배 신청 글은 유료 · 7일간 목록·피드 노출'}
+                  ? '교배 글 · 한시 무료(목록·피드)'
+                  : '교배 글 · 유료 7일(목록·피드)'}
               </p>
               <p className="mt-1.5">
-                견종·성별·나이, 희망하는 상대 조건, 건강·접종 여부, 연락 방법 등을 적어 주세요. 예: 포메 여아입니다. 흰색
-                포메 남아 사진 보내주세요.
+                견종·성별·나이, 상대 조건, 접종·건강, 연락 방법을 짧게 적어 주세요.
               </p>
               <p className="mt-1.5">
                 {isPromoFreeListings() ? (
-                  <>
-                    <strong className="font-extrabold">지금은 한시적으로 무료</strong>로 올릴 수 있어요. 이용이 늘면 유료로
-                    바뀔 수 있어요. 1:1 만남·실종 글은 무료예요.
-                  </>
+                  <>지금은 무료예요. 나중엔 유료로 바뀔 수 있어요. 1:1·실종 글은 무료예요.</>
                 ) : (
                   <>
-                    <strong className="font-extrabold">결제를 마쳐야</strong> 글이 올라가요. 노출 기간이 남아 있으면 「올리기」만
-                    누르면 됩니다. 1:1 만남·실종 글은 무료예요.
+                    <strong className="font-extrabold">결제(또는 남은 노출)</strong>이 있어야 올라가요. 1:1·실종 글은
+                    무료예요.
                   </>
                 )}
               </p>
@@ -602,13 +598,12 @@ export function CreateRequestPage() {
                   <Link to="/billing" className="font-extrabold text-pink-700 underline underline-offset-2">
                     인증 돌봄·결제
                   </Link>
-                  에서도 교배 7일 노출을 구매할 수 있어요.
+                  에서 7일 노출을 살 수 있어요.
                 </p>
               )}
               {breedingEntLoadFailed && (
                 <p className="mt-2 text-[11px] font-medium text-amber-900">
-                  노출 권한을 불러오지 못했어요. Supabase에 교배 노출용 컬럼(breeding_listing_until) 마이그레이션을 적용했는지
-                  확인해 주세요.
+                  노출 권한을 불러오지 못했어요. DB 마이그레이션(breeding_listing_until)을 확인해 주세요.
                 </p>
               )}
             </div>
@@ -766,9 +761,8 @@ export function CreateRequestPage() {
               role="alert"
               className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-950"
             >
-              <span className="font-extrabold">자동 검사</span>: 지금 고른 주제에는{' '}
-              <span className="font-extrabold">{breedingLeakLabel}</span> 표현을 쓸 수 없어요. 교배·번식 내용은{' '}
-              <strong className="font-extrabold">만나자 → 교배</strong>를 선택한 뒤 작성해 주세요.
+              이 주제에는 <span className="font-extrabold">{breedingLeakLabel}</span>를 쓸 수 없어요.{' '}
+              <strong className="font-extrabold">만나자 → 교배</strong>에서 작성해 주세요.
             </div>
           )}
 
@@ -780,7 +774,7 @@ export function CreateRequestPage() {
             {kind === 'dolbom'
               ? '올리기 · 돌봄 · 맡기기 🚀'
               : kind === 'mannaja' && formData.category === '교배' && !breedingListingActive
-                ? '결제하고 7일 노출 올리기 💳'
+                ? '결제 후 올리기'
                 : '올리기 🚀'}
           </button>
         </form>

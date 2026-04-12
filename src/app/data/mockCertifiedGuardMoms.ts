@@ -108,3 +108,24 @@ export function getMockCertifiedGuardMomById(id: string | undefined) {
 export function isMockGuardMomId(id: string) {
   return MOCK_GUARD_MOM_IDS.has(id);
 }
+
+/** 목록·상세용 데모 프로필 사진 (실 DB 행에는 없음) */
+const MOCK_GUARD_MOM_PHOTO_BY_ID: Record<string, string> = {
+  'a1000000-0000-4000-8000-000000000001':
+    'https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?w=400&h=400&fit=crop&q=80',
+  'a1000000-0000-4000-8000-000000000002':
+    'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=400&h=400&fit=crop&q=80',
+  'a1000000-0000-4000-8000-000000000003':
+    'https://images.unsplash.com/photo-1587300003388-59208cc96262?w=400&h=400&fit=crop&q=80',
+  'a1000000-0000-4000-8000-000000000004':
+    'https://images.unsplash.com/photo-1672838565001-3e7e1e96bb52?w=400&h=400&fit=crop&q=80',
+  'a1000000-0000-4000-8000-000000000005':
+    'https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?w=400&h=400&fit=crop&q=80',
+  'a1000000-0000-4000-8000-000000000006':
+    'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=400&fit=crop&q=80',
+};
+
+export function getCertifiedGuardMomPhotoUrl(id: string | undefined): string | null {
+  if (!id) return null;
+  return MOCK_GUARD_MOM_PHOTO_BY_ID[id] ?? null;
+}

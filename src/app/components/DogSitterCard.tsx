@@ -2,12 +2,15 @@ import { Link } from 'react-router';
 import { MapPin, Star, ShieldCheck } from 'lucide-react';
 import { formatDistrictWithDong } from '../data/regions';
 import { DogSitter } from '../types';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface DogSitterCardProps {
   dogSitter: DogSitter;
 }
 
 export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
+  const profilePhoto = dogSitter.profileImage?.trim() ?? '';
+
   return (
     <Link
       to={`/sitter/${dogSitter.id}`}
@@ -15,10 +18,19 @@ export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
       style={{ minWidth: '280px' }}
     >
       <div className="flex gap-4 mb-4">
-        <div className="w-14 h-14 bg-gradient-to-br from-orange-100 to-yellow-50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-inner border border-white">
-          <span className="text-orange-600 text-xl" style={{ fontWeight: 800 }}>
-            {dogSitter.name.charAt(0)}
-          </span>
+        <div className="flex h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-white bg-gradient-to-br from-orange-100 to-yellow-50 shadow-inner">
+          {profilePhoto ? (
+            <ImageWithFallback
+              src={profilePhoto}
+              alt={dogSitter.name}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center text-xl text-orange-600" style={{ fontWeight: 800 }}>
+              {dogSitter.name.charAt(0)}
+            </span>
+          )}
         </div>
         
         <div className="flex-1 min-w-0 pt-0.5">

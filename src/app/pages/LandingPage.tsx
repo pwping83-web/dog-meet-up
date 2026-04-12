@@ -284,19 +284,24 @@ export function LandingPage() {
                 key={dog.id}
                 variants={fadeUp}
                 custom={i + 1}
-                className="min-w-[7.25rem] flex-shrink-0 rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-transform active:scale-95 max-md:min-w-[7.5rem] max-md:p-4 md:min-w-[100px] md:rounded-2xl md:p-3"
+                className="min-w-[7.25rem] flex-shrink-0 max-md:min-w-[7.5rem] md:min-w-[100px]"
               >
-                <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 text-3xl shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
-                  {dog.photo_url ? (
-                    <ImageWithFallback src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
-                  ) : (
-                    '🐶'
-                  )}
-                </div>
-                <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{dog.name}</p>
-                <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
-                  {dog.breed}{dog.age ? ` · ${dog.age}살` : ''}
-                </p>
+                <Link
+                  to={`/dog/${dog.id}`}
+                  className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-transform active:scale-95 max-md:p-4 md:rounded-2xl md:p-3"
+                >
+                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 text-3xl shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
+                    {dog.photo_url ? (
+                      <ImageWithFallback src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
+                    ) : (
+                      '🐶'
+                    )}
+                  </div>
+                  <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{dog.name}</p>
+                  <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
+                    {dog.breed}{dog.age ? ` · ${dog.age}살` : ''}
+                  </p>
+                </Link>
               </motion.div>
             ))}
           </div>
