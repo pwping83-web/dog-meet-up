@@ -31,7 +31,7 @@ import {
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
-import { isPromoFreeListings } from '../../lib/promoFlags';
+import { isPromoFreeListings, showCertifiedGuardMomDemosWhenEmpty } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { useAuth } from '../../contexts/AuthContext';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
@@ -240,12 +240,20 @@ export function DogSittersPage() {
 
   const q = searchQuery.trim().toLowerCase();
 
-  /** DB에 노출 중인 보호맘이 없거나 조회 실패 시 가상 프로필 표시(데모) */
+  /** 인증 보호맘 탭 + DB 0명일 때만 목업 카드(로컬 기본). 운영은 promoFlags 참고. */
+  const guardMomUiDemoFill =
+    careFilter === 'guard' &&
+    !guardMomsLoadError &&
+    guardMoms.length === 0 &&
+    showCertifiedGuardMomDemosWhenEmpty();
+
+  /** DB에서 온 인증 행만 쓰고, 데모 모드일 때만 목업을 이어 붙임. */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
     if (guardMomsLoadError) return [];
     if (guardMoms.length > 0) return guardMoms;
-    return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
-  }, [guardMoms, guardMomsLoadError]);
+    if (guardMomUiDemoFill) return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
+    return [];
+  }, [guardMoms, guardMomsLoadError, guardMomUiDemoFill]);
 
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
@@ -592,11 +600,18 @@ export function DogSittersPage() {
           )}
 
           <div className="mb-4 flex items-center justify-between gap-3">
-            <p className="text-sm text-slate-600" style={{ fontWeight: 700 }}>
-              {careFilter === 'need'
-                ? `총 ${filteredCareNeedMeetups.length}건`
-                : `총 ${combinedRows.length}명`}
-            </p>
+            <div className="min-w-0">
+              <p className="text-sm text-slate-600" style={{ fontWeight: 700 }}>
+                {careFilter === 'need'
+                  ? `총 ${filteredCareNeedMeetups.length}건`
+                  : careFilter === 'guard' && guardMomUiDemoFill
+                    ? `예시 ${combinedRows.length}명`
+                    : `총 ${combinedRows.length}명`}
+              </p>
+              {careFilter === 'guard' && guardMomUiDemoFill && (
+                <p className="mt-0.5 text-[11px] font-semibold text-sky-800">실제 DB 노출 0명 · 카드는 UI 데모</p>
+              )}
+            </div>
             {careFilter !== 'need' && (
               <select
                 value={sortBy}
@@ -714,11 +729,12 @@ export function DogSittersPage() {
               {!guardMomsLoadError &&
                 !guardLoading &&
                 careFilter === 'guard' &&
-                guardMoms.length === 0 &&
+                guardMomUiDemoFill &&
                 !searchQuery.trim() && (
                   <p className="rounded-2xl border border-sky-100 bg-sky-50/90 px-3 py-2 text-center text-[11px] font-medium text-sky-900">
-                    아직 DB에 <span className="font-extrabold">인증 완료</span>된 보호맘이 없어요. 아래는 예시예요. 운영에서
-                    인증하면 실제 프로필이 올라가요.
+                    DB에는 아직 인증된 보호맘이 없어요. 아래 카드는{' '}
+                    <span className="font-extrabold">로컬·데모 전용 예시</span>예요. 운영 빌드에서는 예시를 숨기고, 관리자
+                    인증 후 실제 행만 보여요.
                   </p>
                 )}
               {combinedRows.map((row) =>
@@ -822,10 +838,29 @@ export function DogSittersPage() {
 
               {!guardLoading && combinedRows.length === 0 && (
                 <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-                  <p className="text-sm font-bold text-slate-700">조건에 맞는 돌보미가 없어요</p>
-                  <p className="mt-2 text-xs font-medium text-slate-500">
-                    필터·검색어를 바꾸거나, 인증 보호맘 등록을 눌러 노출을 시작해 보세요.
-                  </p>
+                  {careFilter === 'guard' && guardMoms.length === 0 && !guardMomUiDemoFill ? (
+                    <>
+                      <p className="text-sm font-bold text-slate-700">표시할 인증 보호맘이 없어요</p>
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        {searchQuery.trim()
+                          ? '검색어를 바꿔 보세요.'
+                          : 'DB에 certified_at이 채워진 행이 없거나, 목록용 RLS·161200 트리거·관리자 인증을 확인해 보세요. 등록 후 운영에서 인증하면 여기에 올라와요.'}
+                      </p>
+                      <Link
+                        to="/guard-mom/register"
+                        className="mt-4 inline-block rounded-2xl bg-orange-500 px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.98]"
+                      >
+                        인증 보호맘 등록하기
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-bold text-slate-700">조건에 맞는 돌보미가 없어요</p>
+                      <p className="mt-2 text-xs font-medium text-slate-500">
+                        필터·검색어를 바꾸거나, 인증 보호맘 등록을 눌러 노출을 시작해 보세요.
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
