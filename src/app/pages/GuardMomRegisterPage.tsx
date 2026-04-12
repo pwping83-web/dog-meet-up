@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { ArrowLeft, Baby, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,6 +17,7 @@ export function GuardMomRegisterPage() {
   const [regionSi, setRegionSi] = useState('');
   const [regionGu, setRegionGu] = useState('');
   const [fee, setFee] = useState(20000);
+  const [offersDaengPickup, setOffersDaengPickup] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -36,12 +38,14 @@ export function GuardMomRegisterPage() {
       setRegionSi(r.region_si);
       setRegionGu(r.region_gu);
       setFee(r.per_day_fee_krw);
+      setOffersDaengPickup(Boolean(r.offers_daeng_pickup));
     } else {
       setRow(null);
       setIntro('');
       setRegionSi('');
       setRegionGu('');
       setFee(20000);
+      setOffersDaengPickup(false);
     }
     setLoading(false);
   }, [user]);
@@ -62,6 +66,7 @@ export function GuardMomRegisterPage() {
         region_si: regionSi.trim(),
         region_gu: regionGu.trim(),
         per_day_fee_krw: Math.min(500000, Math.max(1000, Math.round(fee))),
+        offers_daeng_pickup: offersDaengPickup,
       };
       const { error } = await supabase.from('certified_guard_moms').upsert(payload, { onConflict: 'user_id' });
       if (error) throw new Error(error.message);
@@ -123,13 +128,18 @@ export function GuardMomRegisterPage() {
         ) : (
           <>
             <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-4 py-3 text-xs font-medium leading-relaxed text-orange-950">
-              <strong>인증</strong>은 운영자가 Supabase에서 <code className="rounded bg-white/80 px-1">certified_at</code>{' '}
-              을 넣어 드린 뒤에 가능해요. 인증 전에는 「7일 노출」 결제만 막히고, 프로필 저장은 해두면 됩니다.
+              <strong>인증</strong>은 운영자가 Supabase에서 <code className="rounded bg-white/80 px-1">certified_at</code>을
+              넣어 드린 뒤에 가능해요. 인증 전에는 「7일 노출」 신청만 막히고, 프로필 저장은 미리 해 두셔도 됩니다.
+              <span className="mt-2 block border-t border-orange-200/80 pt-2 text-[11px] font-semibold leading-relaxed">
+                인증 후 <strong>돌봄·거래 책임은 보호맘 본인</strong>이에요. 맡기기는 돌봄 집에 데려다 맡기거나 픽업하고, 기간이
+                끝나면 <strong>데려다 드리거나 주인이 찾아가는</strong> 방식 등을 <strong>맡기는 분과 직접</strong> 정해 주세요.{' '}
+                <strong>유료는 목록에 보이는 기간</strong>에만 해당해요.
+              </span>
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
-                <Baby className="h-5 w-5 text-brand" />
+                <PawTabIcon className="h-5 w-5 text-brand" />
                 <h2 className="text-sm font-extrabold text-slate-800">상태</h2>
               </div>
               <ul className="space-y-2 text-xs font-semibold text-slate-600">
@@ -154,7 +164,7 @@ export function GuardMomRegisterPage() {
                 onClick={() => void handleListingPay()}
                 className="mt-4 w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 text-sm font-extrabold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {listingBusy ? '이동 중…' : '7일 노출권 Stripe 결제'}
+                {listingBusy ? '이동 중…' : '7일 목록 노출 신청'}
               </button>
               {!certified && (
                 <p className="mt-2 text-[11px] font-medium text-slate-500">인증 완료 후 버튼이 활성화됩니다.</p>
@@ -204,6 +214,21 @@ export function GuardMomRegisterPage() {
                   onChange={(e) => setFee(Number(e.target.value) || 0)}
                   className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-900"
                 />
+              </label>
+
+              <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3">
+                <input
+                  type="checkbox"
+                  checked={offersDaengPickup}
+                  onChange={(e) => setOffersDaengPickup(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-brand focus:ring-brand"
+                />
+                <span>
+                  <span className="block text-xs font-extrabold text-slate-800">댕댕 픽업</span>
+                  <span className="mt-0.5 block text-[11px] font-medium leading-relaxed text-slate-600">
+                    맡기기 시 주인 집까지 찾아가 강아지를 픽업해 갈 수 있어요. 가능하면 체크해 주세요.
+                  </span>
+                </span>
               </label>
 
               {saveErr && <p className="mt-3 text-xs font-semibold text-red-600">{saveErr}</p>}

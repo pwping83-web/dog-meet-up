@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { ArrowLeft, Baby, CreditCard, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
+import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BILLING_PRODUCTS, startStripeCheckout, type BillingProductKey } from '../../lib/billing';
@@ -61,7 +62,7 @@ export function BillingPage() {
 
     if (ordersRes.error) {
       setPageError(
-        '결제 내역을 불러오지 못했습니다. Supabase에 billing_orders 마이그레이션을 적용했는지 확인하세요.',
+        '이용 내역을 불러오지 못했습니다. Supabase에 billing_orders 마이그레이션을 적용했는지 확인하세요.',
       );
       setOrders([]);
     } else {
@@ -124,19 +125,19 @@ export function BillingPage() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <h1 className="text-lg font-extrabold text-white">인증 돌봄 · 결제</h1>
+          <h1 className="text-lg font-extrabold text-white">인증 돌봄</h1>
         </div>
       </header>
 
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-6">
         {checkoutStatus === 'success' && (
           <div className="rounded-2xl border border-brand/25 bg-brand-soft px-4 py-3 text-sm font-semibold text-slate-800">
-            결제가 완료되었습니다. Stripe 웹훅이 반영되면 아래 노출 기한이 갱신됩니다.
+            처리가 완료되었습니다. 잠시 후 아래 노출 기한이 갱신됩니다.
           </div>
         )}
         {checkoutStatus === 'cancel' && (
           <div className="rounded-2xl border border-brand/20 bg-brand-muted px-4 py-3 text-sm font-semibold text-slate-700">
-            결제를 취소했습니다.
+            진행을 취소했습니다.
           </div>
         )}
 
@@ -146,30 +147,13 @@ export function BillingPage() {
           </div>
         )}
 
-        <div className="rounded-2xl border border-brand/20 bg-white p-5 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 shrink-0 text-brand" />
-            <h2 className="text-base font-extrabold text-slate-800">실제 과금 안내</h2>
-          </div>
-          <p className="text-sm leading-relaxed text-slate-600">
-            Stripe Checkout으로 카드 결제가 이루어집니다. Edge Function에{' '}
-            <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">STRIPE_SECRET_KEY</code>,{' '}
-            <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">PUBLIC_SITE_URL</code>,{' '}
-            <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">
-              STRIPE_PRICE_GUARD_MOM_LISTING_7D
-            </code>
-            를 설정하고 웹훅을 <code className="rounded bg-brand/10 px-1 py-0.5 text-xs text-brand">stripe-webhook</code>에
-            연결하면 운영 환경에서 동작합니다.
-          </p>
-        </div>
-
         {authLoading ? (
           <div className="flex justify-center py-16 text-slate-500">
             <Loader2 className="h-8 w-8 animate-spin text-brand" />
           </div>
         ) : !user ? (
           <div className="rounded-2xl border border-brand/15 bg-white p-8 text-center shadow-sm">
-            <p className="mb-4 text-sm font-medium text-slate-600">결제하려면 로그인이 필요합니다.</p>
+            <p className="mb-4 text-sm font-medium text-slate-600">이용하려면 로그인이 필요합니다.</p>
             <Link
               to="/login"
               className="inline-flex items-center justify-center rounded-xl bg-market-cta px-6 py-3 text-sm font-bold text-white shadow-market transition-opacity hover:opacity-95"
@@ -182,7 +166,7 @@ export function BillingPage() {
             <div className="rounded-2xl border-2 border-orange-200/60 bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm shadow-orange-200/25">
               <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-market-header text-white shadow-market">
-                  <Baby className="h-6 w-6" />
+                  <PawTabIcon className="h-6 w-6" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-brand">
@@ -199,7 +183,8 @@ export function BillingPage() {
                   )}
                   {!listingVisibleUntil && (
                     <p className="mt-1 text-xs font-medium text-slate-500">
-                      결제 후 「인증 돌봄」 탭에서 인증 보호맘으로 보여요. 프로필은 보호맘 등록에서 먼저 완료해 주세요.
+                      노출을 신청하면 「인증 돌봄」 탭 목록에 보여요. 프로필은 보호맘 등록에서 먼저 완료해 주세요. 과금은
+                      노출 기간에만 해당하며, 돌봄·맡김 이후는 이용자 간 책임이에요.
                     </p>
                   )}
                 </div>
@@ -234,7 +219,7 @@ export function BillingPage() {
                   ) : (
                     <>
                       <CreditCard className="h-5 w-5" />
-                      Stripe로 결제하기
+                      노출 신청하기
                     </>
                   )}
                 </button>
@@ -242,7 +227,7 @@ export function BillingPage() {
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-              <h3 className="mb-3 text-xs font-extrabold text-slate-500">최근 결제 시도</h3>
+              <h3 className="mb-3 text-xs font-extrabold text-slate-500">최근 기록</h3>
               {listLoading ? (
                 <div className="flex justify-center py-8 text-slate-400">
                   <Loader2 className="h-6 w-6 animate-spin text-brand" />

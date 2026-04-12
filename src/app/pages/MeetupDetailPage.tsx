@@ -65,7 +65,7 @@ export function MeetupDetailPage() {
 
   const handleInvite = (sitterName: string) => {
     if (!requireLoginForAction()) return;
-    alert(`${sitterName}님에게 초대 보냄!`);
+    alert(`${sitterName}님과 채팅을 시작해요!`);
   };
 
   return (
@@ -88,7 +88,7 @@ export function MeetupDetailPage() {
       <div className="max-w-screen-md mx-auto px-5 py-6">
         {!authLoading && !user && (
           <p className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            글은 모두 볼 수 있어요. <strong className="font-extrabold">함께하기</strong>·<strong className="font-extrabold">초대하기</strong>는{' '}
+            글은 모두 볼 수 있어요. <strong className="font-extrabold">함께하기</strong>·<strong className="font-extrabold">채팅하기</strong>는{' '}
             <Link
               to="/login"
               onClick={() => setAuthReturnPath(`${location.pathname}${location.search}`)}
@@ -133,7 +133,7 @@ export function MeetupDetailPage() {
               to="/sitters?view=care&care=guard"
               className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200/80 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 px-4 py-3 text-sm font-extrabold text-orange-600 transition-colors hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100"
             >
-              인증 댕집사·인증 돌봄 목록 보기 →
+              인증 댕집사(방문)·인증 보호맘(맡기기) 보기 →
             </Link>
           )}
         </div>
@@ -281,7 +281,7 @@ export function MeetupDetailPage() {
                           className={`flex-1 rounded-2xl py-3 text-sm text-white transition-all active:scale-[0.98] disabled:opacity-50 ${isVeryClose ? 'bg-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800'}`}
                           style={{ fontWeight: 700 }}
                         >
-                          초대하기
+                          채팅하기
                         </button>
                       </div>
                     )}

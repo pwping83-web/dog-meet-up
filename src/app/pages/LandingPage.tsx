@@ -167,7 +167,6 @@ export function LandingPage() {
               initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="order-1"
             >
               <span
                 className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-white px-3 py-2 rounded-full mb-4 border border-white/25 text-xs max-md:text-[13px] md:mb-3 md:px-2.5 md:py-1 md:text-[10px]"
@@ -193,12 +192,11 @@ export function LandingPage() {
               </p>
             </motion.div>
 
-            {/* 댕친 프로필 — 모바일: CTA 위 / md: CTA 아래 */}
+            {/* 댕친 프로필 */}
             <motion.div
               initial={false}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.7, delay: 0.25 }}
-              className="order-2 md:order-3"
             >
               <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar -mx-1 px-1 max-md:gap-3.5 md:gap-2">
                 {dogProfiles.map((dog, i) => (
@@ -221,29 +219,6 @@ export function LandingPage() {
                   </motion.div>
                 ))}
               </div>
-            </motion.div>
-
-            {/* CTA — 모바일: 사진 아래 / md: 사진 위 */}
-            <motion.div
-              initial={false}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.35 }}
-              className="order-3 flex w-full flex-col gap-3 max-md:gap-3.5 md:order-2 md:flex-row md:gap-2.5"
-            >
-              <Link
-                to={!authLoading && user ? '/create-meetup' : '/signup'}
-                className="w-full rounded-2xl bg-white py-4 text-center text-base text-orange-600 shadow-xl shadow-orange-600/25 active:scale-[0.98] transition-all touch-manipulation md:flex-1 md:rounded-xl md:py-3.5 md:text-sm"
-                style={{ fontWeight: 800 }}
-              >
-                {!authLoading && user ? '모이자 · 글 올리기' : '시작하기'}
-              </Link>
-              <Link
-                to="/sitters"
-                className="w-full rounded-2xl border-2 border-white/35 bg-white/15 py-4 text-center text-base text-white backdrop-blur-md active:scale-[0.98] transition-all touch-manipulation md:flex-1 md:rounded-xl md:border md:py-3.5 md:text-sm"
-                style={{ fontWeight: 800 }}
-              >
-                둘러보기
-              </Link>
             </motion.div>
           </div>
         </div>
@@ -329,7 +304,7 @@ export function LandingPage() {
           {[
             { step: '01', icon: <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
             { step: '02', icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-orange-400 to-amber-500' },
-            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '만나서 친해지기', desc: '모이자·만나자로 친해지면, 여행·출장 때 서로 집에 잠시 맡아줄 수도 있어요', color: 'from-orange-500 to-amber-400' },
+            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '만나 친해지기', desc: '모이자·만나자로 친해지면 출장·여행 때 서로 잠시 맡기기도 해요', color: 'from-orange-500 to-amber-400' },
           ].map((item, i) => (
             <motion.div
               key={item.step}
@@ -476,7 +451,7 @@ export function LandingPage() {
                 🍼 돌봄 · 맡기기
               </h2>
               <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-                맡기기·집 방문 돌봄이 필요할 때 올리는 글이에요
+                맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
               </p>
             </div>
             <Link
@@ -737,7 +712,7 @@ export function LandingPage() {
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
               >
                 <CreditCard className="h-5 w-5 text-brand" />
-                인증 돌봄 · 노출 결제
+                인증 돌봄 · 목록 노출
               </Link>
               <Link
                 to="/customer-service"

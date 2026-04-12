@@ -307,13 +307,14 @@ export function ProfileEditPage() {
           <div className="animate-fadeIn rounded-3xl border-2 border-brand/20 bg-brand-soft p-5">
             <h3 className="mb-2 text-sm font-extrabold text-slate-900">🐕 도와드릴 수 있는 돌봄</h3>
             <p className="mb-3 text-xs font-medium leading-relaxed text-slate-700">
-              모임 글과는 달리, <strong className="font-bold text-slate-900">잠시 맡아 돌봐 주시는</strong> 활동이에요. 산책·집 방문·하루 맡기기 등 편하신 방식을 적어 주세요.
+              모임 글과는 달리, <strong className="font-bold text-slate-900">주인 집에 찾아가 방문 돌봄·산책</strong>을 도와주시는
+              활동이에요. 제공 가능한 일정·서비스를 적어 주세요.
             </p>
             <input
               type="text"
               value={formData.specialty}
               onChange={(e) => setFormData({...formData, specialty: e.target.value})}
-              placeholder="예: 주간 방문 돌봄, 산책 대행, 퍼피 케어"
+              placeholder="예: 주간 방문 산책·배식, 당일 방문 돌봄"
               className="w-full rounded-2xl border border-brand/25 bg-white px-4 py-3.5 font-bold text-slate-800 transition-all focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
             />
           </div>

@@ -1,4 +1,5 @@
 // src/app/pages/MyPage.tsx 전체 교체
+import type { ComponentType } from 'react';
 import {
   User,
   FileText,
@@ -13,8 +14,6 @@ import {
   Home,
   Search,
   Sparkles,
-  CreditCard,
-  Baby,
   LogOut,
   MapPin,
   ChevronDown,
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
+import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { dogMbtiResults, DogMbtiType } from '../data/dogMbtiData';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
@@ -113,14 +113,14 @@ export function MyPage() {
   }, []);
 
   const menuItems: Array<{
-    icon: typeof User;
+    icon: ComponentType<{ className?: string }>;
     label: string;
     to: string;
     disabled?: boolean;
     replace?: boolean;
   }> = [
     { icon: User, label: '프로필 수정', to: '/profile/edit' },
-    { icon: Baby, label: '인증 돌봄 · 인증 보호맘', to: '/sitters?view=care&care=guard' },
+    { icon: PawTabIcon, label: '인증 돌봄 · 인증 보호맘', to: '/sitters?view=care&care=guard' },
     ...(user && isAppAdmin(user)
       ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
       : []),
@@ -306,15 +306,15 @@ export function MyPage() {
               to="/guard-mom/register"
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 py-3 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
             >
-              <Baby className="h-4 w-4 shrink-0" aria-hidden />
+              <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
               인증 보호맘 등록
             </Link>
             <Link
               to="/billing"
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-800 active:scale-[0.99]"
             >
-              <CreditCard className="h-4 w-4 shrink-0 text-brand" aria-hidden />
-              인증 돌봄 노출 결제
+              <PawTabIcon className="h-4 w-4 shrink-0 text-brand" aria-hidden />
+              인증 돌봄 · 목록 노출
             </Link>
           </div>
         </div>
@@ -374,7 +374,7 @@ export function MyPage() {
           </div>
         )}
 
-        {/* 인증 돌봄(댕집사): 강아지 돌봄 의뢰 수락 — 모임 글과 무관 */}
+        {/* 인증 돌봄(댕집사): 주인 집 방문 돌봄 의뢰 — 모임 글과 무관 */}
         {isRepairer && (
           <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
@@ -386,8 +386,8 @@ export function MyPage() {
                   <h3 className="text-base font-extrabold text-slate-800">인증 돌봄(댕집사)</h3>
                   <p className="mt-0.5 text-xs font-bold text-slate-500">
                     {isActive
-                      ? '강아지 돌봄·산책 의뢰를 받고 있어요'
-                      : '돌봄 의뢰 받기를 쉬는 중이에요'}
+                      ? '주인 집 방문 돌봄·산책 의뢰를 받고 있어요'
+                      : '방문 돌봄 의뢰 받기를 쉬는 중이에요'}
                   </p>
                 </div>
               </div>
@@ -409,7 +409,7 @@ export function MyPage() {
                 <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'animate-pulse bg-yellow-300' : 'bg-slate-400'}`} />
                 <div>
                   <p className={`font-bold ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
-                    {isActive ? '지금 돌봄 의뢰를 받을 수 있어요 🐕' : '돌봄 접수를 잠시 멈췄어요'}
+                    {isActive ? '지금 방문 돌봄 의뢰를 받을 수 있어요 🐕' : '방문 돌봄 접수를 잠시 멈췄어요'}
                   </p>
                 </div>
               </div>
@@ -483,9 +483,9 @@ export function MyPage() {
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
-                  <CreditCard className="h-[18px] w-[18px] text-brand" />
+                  <PawTabIcon className="h-[18px] w-[18px] text-brand" />
                 </div>
-                <span className="text-sm font-bold text-slate-900">인증 돌봄 · 노출 결제</span>
+                <span className="text-sm font-bold text-slate-900">인증 돌봄 · 목록 노출</span>
               </div>
               <ChevronRight className="h-4 w-4 text-slate-300" />
             </Link>

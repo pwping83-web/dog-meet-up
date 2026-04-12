@@ -81,21 +81,37 @@ export function matchAdministrativeNames(adminNames: string[]): {
  * 카카오 coord2Address 결과를 앱의 (city, district)로 맞춤.
  * 매칭 실패 시에도 표시용으로 추정 city + depth2 를 돌려줄 수 있음.
  */
+function deriveDong(district: string, depth3: string): string {
+  const d3 = (depth3 || '').trim();
+  if (!d3 || !district) return '';
+  if (d3 === district) return '';
+  if (district.endsWith(d3)) return '';
+  return d3;
+}
+
 export function matchKakaoAdministrative(depth1: string, depth2: string, depth3: string) {
   const city = normalizeCity(depth1);
   if (!city) {
     return {
       city: depth1.replace(/특별시|광역시|특별자치시|도$/g, '').trim() || '기타',
       district: [depth2, depth3].filter(Boolean).join(' ').trim() || '',
+      dong: '',
       matched: false as const,
     };
   }
 
   const district = pickDistrict(city, depth2, depth3);
   if (district) {
-    return { city, district, matched: true as const };
+    return { city, district, dong: deriveDong(district, depth3), matched: true as const };
   }
 
-  const fallback = [depth2, depth3].filter(Boolean).join(' ').trim();
-  return { city, district: fallback || depth2 || '', matched: false as const };
+  const d2 = (depth2 || '').trim();
+  const d3 = (depth3 || '').trim();
+  const fallback = [d2, d3].filter(Boolean).join(' ').trim();
+  const distOnly = fallback || d2 || '';
+  // depth2=구·시, depth3=동 인데 regions 매칭 실패 시에도 동까지 표시
+  if (d2 && d3 && d3 !== d2) {
+    return { city, district: d2, dong: deriveDong(d2, d3), matched: false as const };
+  }
+  return { city, district: distOnly, dong: '', matched: false as const };
 }

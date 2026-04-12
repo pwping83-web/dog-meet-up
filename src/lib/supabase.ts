@@ -324,6 +324,7 @@ export interface Database {
           region_si: string;
           region_gu: string;
           per_day_fee_krw: number;
+          offers_daeng_pickup: boolean;
           certified_at: string | null;
           listing_visible_until: string | null;
         };
@@ -336,6 +337,7 @@ export interface Database {
           region_si?: string;
           region_gu?: string;
           per_day_fee_krw?: number;
+          offers_daeng_pickup?: boolean;
           certified_at?: string | null;
           listing_visible_until?: string | null;
         };
@@ -348,6 +350,7 @@ export interface Database {
           region_si?: string;
           region_gu?: string;
           per_day_fee_krw?: number;
+          offers_daeng_pickup?: boolean;
           certified_at?: string | null;
           listing_visible_until?: string | null;
         };

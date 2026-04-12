@@ -11,12 +11,14 @@ import type { DogSitter } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
+import { mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
 import {
   MANNAJA_CATEGORY_SET,
   MANNAJA_MEETUP_CATEGORIES,
   MOIJA_CATEGORY_SET,
   MOIJA_MEETUP_CATEGORIES,
 } from '../utils/meetupCategory';
+import { formatCertifiedGuardMomLocation } from '../data/regions';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
 
@@ -185,19 +187,31 @@ export function DogSittersPage() {
 
   const q = searchQuery.trim().toLowerCase();
 
+  /** DB에 노출 중인 보호맘이 없으면 가상 3명 표시(데모) */
+  const guardMomsForList = useMemo((): GuardMomRow[] => {
+    if (guardErr) return guardMoms;
+    if (guardMoms.length > 0) return guardMoms;
+    return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
+  }, [guardMoms, guardErr]);
+
   const combinedRows: CombinedRow[] = useMemo(() => {
     let sitters = mockDogSitters.filter((s) => {
       if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
       if (q) {
-        const blob = `${s.name} ${s.description} ${s.district}`.toLowerCase();
+        const blob = `${s.name} ${s.description} ${s.district} ${s.dong ?? ''}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;
     });
 
-    let moms = guardMoms.filter((m) => {
+    let moms = guardMomsForList.filter((m) => {
       if (q) {
-        const blob = `${m.intro} ${m.region_si ?? ''} ${m.region_gu ?? ''}`.toLowerCase();
+        const dong = 'region_dong' in m ? String((m as { region_dong?: string }).region_dong ?? '') : '';
+        const pickup =
+          'offers_daeng_pickup' in m && (m as { offers_daeng_pickup?: boolean }).offers_daeng_pickup
+            ? '댕댕픽업'
+            : '';
+        const blob = `${m.intro} ${m.region_si ?? ''} ${m.region_gu ?? ''} ${dong} ${pickup}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;
@@ -236,7 +250,7 @@ export function DogSittersPage() {
     });
 
     return rows;
-  }, [careFilter, specialty, sortBy, distForDistrict, guardMoms, q]);
+  }, [careFilter, specialty, sortBy, distForDistrict, guardMomsForList, q]);
 
   const filteredMeetups = mockMeetups
     .filter((req) => {
@@ -319,7 +333,7 @@ export function DogSittersPage() {
               <>
                 <strong className="font-extrabold">모이자</strong>는 공원·카페 등 장소·일정 잡고{' '}
                 <strong>여럿이 모이는 글</strong>만 보여요. 1:1·교배·실종은{' '}
-                <strong>만나자</strong>, 맡기기·댕집사는{' '}
+                <strong>만나자</strong>, 맡기기(보호맘 집)·방문 돌봄(댕집사)는{' '}
                 <Link to="/sitters?view=care" className="font-extrabold text-brand underline underline-offset-2">
                   인증 돌봄
                 </Link>
@@ -398,20 +412,19 @@ export function DogSittersPage() {
       {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            <strong className="font-extrabold">인증 돌봄</strong>에서는{' '}
-            <strong>댕집사(산책·방문 돌봄)</strong>와 운영팀이 인증한{' '}
-            <strong>인증 보호맘(맡김·장기 돌봄)</strong>만 보여요. 무료 모임·만남 글은 상단의{' '}
+            <strong className="font-extrabold">댕집사</strong>는 주인 집에 찾아가는{' '}
+            <strong className="font-extrabold">방문 돌봄</strong>(산책·케어)이에요. 운영 인증{' '}
+            <strong className="font-extrabold">보호맘</strong> 맡기기는 돌봄하는 집에 아이를 맡기거나 거기서 픽업하고, 기간이
+            끝나면 <strong className="font-extrabold">보호맘이 주인 집까지 데려다 드리거나</strong> 주인이{' '}
+            <strong className="font-extrabold">찾아가는</strong> 식으로 조율해요. 무료 모임·만남은{' '}
             <Link to="/sitters" className="font-extrabold text-brand underline underline-offset-2">
               모이자 · 만나자
             </Link>
-            에서 확인해 주세요.
-            <span className="mt-2 block border-t border-amber-200/80 pt-2 text-[11px] font-semibold text-amber-900/95">
-              기본 동네·추가 동네·보호맘 등록·노출 결제는{' '}
-              <Link to="/my" className="font-extrabold text-brand underline underline-offset-2">
-                내댕댕
-              </Link>
-              에서 설정해요.
-            </span>
+            , 동네·등록·노출은{' '}
+            <Link to="/my" className="font-extrabold text-brand underline underline-offset-2">
+              내댕댕
+            </Link>
+            .
           </p>
 
           <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -557,11 +570,16 @@ export function DogSittersPage() {
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
                             <span className="inline-flex items-center gap-1">
                               <MapPin className="h-3.5 w-3.5 shrink-0" />
-                              {[row.mom.region_si, row.mom.region_gu].filter(Boolean).join(' ') || '동네 미입력'}
+                              {formatCertifiedGuardMomLocation(row.mom)}
                             </span>
                             <span className="text-brand">
                               1일 {row.mom.per_day_fee_krw.toLocaleString('ko-KR')}원부터
                             </span>
+                            {row.mom.offers_daeng_pickup === true && (
+                              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-extrabold text-sky-800">
+                                댕댕 픽업
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

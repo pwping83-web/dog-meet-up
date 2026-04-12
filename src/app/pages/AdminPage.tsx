@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowLeft, Baby, ChevronRight, CreditCard, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search } from 'lucide-react';
+import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { mockRequests, mockRepairers, mockQuotes } from '../data/mockData';
@@ -447,7 +448,7 @@ function GuardCareAdminView() {
         <>
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-900">
-              <Baby className="h-5 w-5 text-orange-600" />
+              <PawTabIcon className="h-5 w-5 text-orange-600" />
               돌봄(보호맘) 등록 · 신청 정보
               <span className="text-sm font-semibold text-gray-500">({guardMoms.length}명)</span>
             </h2>
@@ -466,6 +467,7 @@ function GuardCareAdminView() {
                           <p className="font-bold text-gray-900">{displayName(g.user_id)}</p>
                           <p className="text-xs text-gray-500">
                             {g.region_si} {g.region_gu} · 일당 {g.per_day_fee_krw.toLocaleString()}원
+                            {g.offers_daeng_pickup === true ? ' · 댕댕 픽업' : ''}
                           </p>
                         </div>
                         <div className="flex flex-wrap gap-1">

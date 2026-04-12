@@ -11,7 +11,7 @@ import { RouteErrorPage } from './pages/RouteErrorPage';
  * - / : Home (simple, vibrant landing)
  * - /explore : Community explorer (meetups, MBTI, dog profiles)
  * - /sitters : 모이자·만나자(상단 2탭) / ?view=care 인증 돌봄(댕집사·보호맘)
- * - /create-meetup : Create new meetup
+ * - /create-meetup : 글 올리기(모이자·만나자·돌봄 맡기기 선택 → 작성)
  * - /meetup/:id : Meetup detail + join requests
  * - /sitter/:id : Dog sitter profile
  * - /chats : Message inbox

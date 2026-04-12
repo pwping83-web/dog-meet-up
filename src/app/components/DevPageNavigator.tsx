@@ -36,7 +36,7 @@ const pages: PageInfo[] = [
   
   // 사용자
   { path: '/my', name: '마이페이지', emoji: '👤', category: '사용자' },
-  { path: '/billing', name: '인증 보호맘 결제', emoji: '💳', category: '사용자' },
+  { path: '/billing', name: '인증 돌봄 · 노출', emoji: '💳', category: '사용자' },
   { path: '/login', name: '로그인', emoji: '🔐', category: '사용자' },
   { path: '/signup', name: '회원가입', emoji: '📝', category: '사용자' },
   { path: '/delete-account', name: '회원탈퇴', emoji: '🗑️', category: '사용자' },

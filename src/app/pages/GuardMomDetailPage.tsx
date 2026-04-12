@@ -5,6 +5,8 @@ import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { startGuardMomCareCheckout } from '../../lib/billing';
+import { getMockCertifiedGuardMomById, isMockGuardMomId } from '../data/mockCertifiedGuardMoms';
+import { formatCertifiedGuardMomLocation } from '../data/regions';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -28,11 +30,19 @@ export function GuardMomDetailPage() {
       setLoadErr(null);
       const { data, error } = await supabase.from('certified_guard_moms').select('*').eq('id', id).maybeSingle();
       if (c) return;
-      if (error || !data) {
+      const mockRow = getMockCertifiedGuardMomById(id);
+      if (data && !error) {
+        setMom(data as GuardMomRow);
+        setLoadErr(null);
+      } else if (mockRow) {
+        setMom(mockRow as GuardMomRow);
+        setLoadErr(null);
+      } else if (error) {
         setLoadErr('프로필을 불러오지 못했습니다.');
         setMom(null);
       } else {
-        setMom(data as GuardMomRow);
+        setLoadErr(null);
+        setMom(null);
       }
       setLoading(false);
     })();
@@ -46,6 +56,10 @@ export function GuardMomDetailPage() {
 
   const handleRequestPay = async () => {
     if (!user || !mom || isOwn) return;
+    if (isMockGuardMomId(mom.id)) {
+      setSubmitErr('가상 프로필은 예약을 할 수 없어요.');
+      return;
+    }
     if (days < 1 || days > 30) {
       setSubmitErr('일수는 1~30일로 입력해 주세요.');
       return;
@@ -114,11 +128,14 @@ export function GuardMomDetailPage() {
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
                   <MapPin className="h-3.5 w-3.5" />
-                  {[mom.region_si, mom.region_gu].filter(Boolean).join(' ') || '동네 미입력'}
+                  {formatCertifiedGuardMomLocation(mom)}
                 </span>
                 <span className="rounded-full bg-orange-100 px-3 py-1 text-brand">
                   1일 돌봄 {mom.per_day_fee_krw.toLocaleString('ko-KR')}원
                 </span>
+                {mom.offers_daeng_pickup === true && (
+                  <span className="rounded-full bg-sky-100 px-3 py-1 text-sky-900">댕댕 픽업 가능</span>
+                )}
               </div>
               {mom.listing_visible_until && (
                 <p className="mt-3 text-[11px] font-semibold text-slate-400">
@@ -136,7 +153,7 @@ export function GuardMomDetailPage() {
               </Link>
             ) : !user ? (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-sm">
-                <p className="text-sm font-semibold text-slate-600">돌봄 신청·결제는 로그인 후 가능해요.</p>
+                <p className="text-sm font-semibold text-slate-600">돌봄 신청은 로그인 후 가능해요.</p>
                 <Link
                   to="/login"
                   className="mt-3 inline-block rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-extrabold text-white shadow-md"
@@ -144,11 +161,19 @@ export function GuardMomDetailPage() {
                   로그인하기
                 </Link>
               </div>
+            ) : isMockGuardMomId(mom.id) ? (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center shadow-sm">
+                <p className="text-sm font-bold text-slate-700">체험용 가상 프로필이에요</p>
+                <p className="mt-2 text-xs font-medium text-slate-500">
+                  체험용이라 예약·진행은 연결되지 않아요. 실제 등록된 인증 보호맘은 신청 후 안내됩니다.
+                </p>
+              </div>
             ) : (
               <div className="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50/95 to-amber-50/80 p-5 shadow-sm">
-                <h2 className="text-sm font-extrabold text-slate-900">돌봄 일정 신청 (Stripe 결제)</h2>
+                <h2 className="text-sm font-extrabold text-slate-900">돌봄 일정 신청</h2>
                 <p className="mt-1 text-xs font-medium text-slate-600">
-                  일수 × 1일 요금으로 결제됩니다. 세부 일정·집 맡기기는 채팅으로 조율해 주세요.
+                  일수 × 1일 요금으로 안내됩니다. 돌봄 집에 맡기거나 픽업하는 방식, 기간이 끝난 뒤 보호맘이 주인 집까지
+                  데려다 드릴지·주인이 찾아갈지 등은 채팅으로 조율해 주세요.
                 </p>
                 <label className="mt-4 block text-xs font-extrabold text-slate-700">
                   맡길 일수 (1~30)
@@ -183,7 +208,7 @@ export function GuardMomDetailPage() {
                   onClick={() => void handleRequestPay()}
                   className="mt-4 w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-extrabold text-white shadow-md disabled:opacity-60"
                 >
-                  {payBusy ? '처리 중…' : '예약 만들고 Stripe로 결제'}
+                  {payBusy ? '처리 중…' : '예약 만들고 다음 단계로'}
                 </button>
               </div>
             )}

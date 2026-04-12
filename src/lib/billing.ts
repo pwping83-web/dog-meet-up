@@ -13,7 +13,7 @@ export const BILLING_PRODUCTS: {
     key: 'guard_mom_listing_7d',
     title: '인증 보호맘 란 노출 (7일)',
     description:
-      '운영팀 인증을 받은 보호맘만 구매할 수 있어요. 「인증 돌봄」 탭에 7일간 노출되며, 잔여 기간이 있으면 이어서 연장돼요.',
+      '운영 인증을 마친 보호맘만 목록 노출을 신청할 수 있어요. 「인증 돌봄」 탭에 7일간 보이며, 잔여 기간이 있으면 이어서 연장돼요. 과금은 이 목록에 올라가 보이는 기간에만 해당하고, 돌봄·맡김 내용과 그 이후 일정·분쟁은 보호맘 본인과 맡기는 분이 직접 책임지고 조율해 주세요.',
     badge: '7일',
   },
 ];
@@ -25,7 +25,7 @@ async function invokeCheckoutSession(body: Record<string, unknown>): Promise<voi
   );
 
   if (error) {
-    throw new Error(error.message ?? '결제 세션을 열 수 없습니다.');
+    throw new Error(error.message ?? '다음 단계로 이동할 수 없습니다.');
   }
 
   if (data && typeof data === 'object' && 'error' in data && data.error) {
@@ -34,7 +34,7 @@ async function invokeCheckoutSession(body: Record<string, unknown>): Promise<voi
 
   const url = data && typeof data === 'object' && 'url' in data ? data.url : undefined;
   if (!url) {
-    throw new Error('Checkout URL이 비어 있습니다. Edge Function과 Stripe Price ID를 확인하세요.');
+    throw new Error('연결을 완료할 수 없습니다. 잠시 후 다시 시도해 주세요.');
   }
 
   window.location.assign(url);

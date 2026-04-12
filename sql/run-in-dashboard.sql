@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS public.certified_guard_moms (
   listing_visible_until TIMESTAMPTZ
 );
 
+ALTER TABLE public.certified_guard_moms
+  ADD COLUMN IF NOT EXISTS offers_daeng_pickup BOOLEAN NOT NULL DEFAULT false;
+
 CREATE INDEX IF NOT EXISTS idx_certified_guard_moms_visible
   ON public.certified_guard_moms (listing_visible_until DESC)
   WHERE certified_at IS NOT NULL;

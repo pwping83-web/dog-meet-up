@@ -13,6 +13,8 @@ const STORAGE_LOCATION_BASED = 'daeng_location_based_v1';
 export type UserLocationSnapshot = {
   city: string;
   district: string;
+  /** 카카오 region_3depth 등(잠실동 등). 수동 시·구만 고르면 빈 문자열 */
+  dong: string;
   lat: number | null;
   lng: number | null;
   source: 'default' | 'gps' | 'map' | 'manual';
@@ -39,6 +41,7 @@ type UserLocationContextValue = {
 const DEFAULT: UserLocationSnapshot = {
   city: '서울',
   district: '강남구',
+  dong: '',
   lat: 37.4979,
   lng: 127.0276,
   source: 'default',
@@ -53,6 +56,7 @@ function readStorage(): UserLocationSnapshot | null {
     return {
       city: v.city,
       district: v.district,
+      dong: typeof v.dong === 'string' ? v.dong : '',
       lat: typeof v.lat === 'number' ? v.lat : null,
       lng: typeof v.lng === 'number' ? v.lng : null,
       source: v.source ?? 'manual',
@@ -114,6 +118,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
         const next: UserLocationSnapshot = {
           city: m.city,
           district: m.district || districtFallback || '선택',
+          dong: (m.dong ?? '').trim(),
           lat,
           lng,
           source,
@@ -155,6 +160,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
       persist({
         city,
         district,
+        dong: '',
         lat: null,
         lng: null,
         source: 'manual',
@@ -177,10 +183,14 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   }, [persist, locationBasedEnabled]);
 
   const value = useMemo<UserLocationContextValue>(() => {
-    const regionShortLabel = location.district || location.city || '지역';
+    const dongTrim = (location.dong ?? '').trim();
+    const regionShortLabel =
+      dongTrim && location.district
+        ? `${location.district} ${dongTrim}`
+        : location.district || location.city || '지역';
     const regionFullLabel =
       location.city && location.district
-        ? formatRegion(location.city, location.district)
+        ? formatRegion(location.city, location.district, dongTrim || undefined)
         : location.city || '지역 미설정';
 
     const shortLabel = locationBasedEnabled ? regionShortLabel : '전국';

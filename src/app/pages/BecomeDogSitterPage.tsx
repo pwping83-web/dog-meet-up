@@ -42,7 +42,7 @@ export function BecomeDogSitterPage() {
     }
 
     console.log('댕집사 등록:', formData);
-    alert('등록 완료! 🎉\n이제 인증 돌봄(댕집사)로 돌봄을 제공할 수 있어요');
+    alert('등록 완료! 🎉\n이제 주인 집 방문 돌봄 댕집사로 활동할 수 있어요');
     navigate('/my');
   };
 
@@ -64,10 +64,10 @@ export function BecomeDogSitterPage() {
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🐕</div>
           <h2 className="text-2xl mb-3" style={{ fontWeight: 700 }}>
-            돈 받고 댕댕이를 돌봐 주는 돌보미로 활동해요
+            이웃 강아지 집에 찾아가 방문 돌봄해요
           </h2>
           <p className="text-gray-600 text-base">
-            이웃 댕댕이들과 함께 즐거운 시간을
+            산책·밥·놀이 등 주인 집을 기준으로 돌봐 주는 댕집사예요
           </p>
         </div>
 

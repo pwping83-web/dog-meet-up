@@ -43,8 +43,8 @@ export function CommunityBottomNav() {
           <Link
             to="/create-meetup"
             className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
-            aria-label="모이자 · 만나자 글 올리기"
-            title="모이자 · 만나자 글 올리기"
+            aria-label="글 올리기 · 모이자·만나자·돌봄 맡기기"
+            title="글 올리기 · 모이자·만나자·돌봄 맡기기"
           >
             <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-gradient-to-br from-orange-500 to-yellow-400 shadow-lg shadow-orange-400/45 transition-all group-active:scale-90 max-md:h-[3.65rem] max-md:w-[3.65rem] md:h-12 md:w-12 md:rounded-2xl">
               <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7 md:h-6 md:w-6" />
