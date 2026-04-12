@@ -24,9 +24,21 @@ export type DaengAiAssistResult =
 function explainEdgeInvokeFailure(raw: string): string {
   const m = raw.trim();
   const lower = m.toLowerCase();
+  if (lower.includes('non-2xx')) {
+    return (
+      `${m}\n\n` +
+      '【의미】Supabase Edge Function이 2xx가 아닌 HTTP 상태(404·401·500·503 등)로 응답했습니다. CORS만 고쳐서는 안 될 수 있어요.\n\n' +
+      '【확인 순서】\n' +
+      '1) Dashboard → Edge Functions → 목록에 daeng-ai-assist 가 있는지 (없으면 미배포)\n' +
+      '2) Edge Functions Secrets에 OPENAI_API_KEY 등록 여부\n' +
+      '3) Edge Functions → Logs에서 방금 요청의 status·메시지 확인\n' +
+      '4) 앱에서 로그아웃 후 다시 로그인(JWT 문제 시 401)\n\n' +
+      '배포: npx supabase functions deploy daeng-ai-assist --use-api (또는 GitHub Actions).'
+    );
+  }
   if (
     lower.includes('failed to send a request to the edge function') ||
-    lower.includes('edge function') && lower.includes('failed')
+    (lower.includes('edge function') && lower.includes('failed'))
   ) {
     return (
       `${m}\n\n` +
