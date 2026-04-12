@@ -148,24 +148,7 @@ CREATE POLICY "guard_mom_bookings_cancel_own"
   USING (auth.uid() = applicant_id AND status = 'pending_payment')
   WITH CHECK (auth.uid() = applicant_id AND status = 'cancelled');
 
-CREATE OR REPLACE FUNCTION public.certified_guard_moms_protect_privileged()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF TG_OP = 'UPDATE' AND auth.uid() IS NOT NULL THEN
-    NEW.certified_at := OLD.certified_at;
-    NEW.listing_visible_until := OLD.listing_visible_until;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_certified_guard_moms_protect ON public.certified_guard_moms;
-CREATE TRIGGER trg_certified_guard_moms_protect
-  BEFORE UPDATE ON public.certified_guard_moms
-  FOR EACH ROW
-  EXECUTE PROCEDURE public.certified_guard_moms_protect_privileged();
+-- certified_guard_moms_protect 트리거는 is_app_admin() 정의 뒤에 둡니다(아래 관리자 블록).
 
 CREATE OR REPLACE FUNCTION public.certified_guard_moms_touch_updated_at()
 RETURNS TRIGGER
@@ -223,11 +206,7 @@ CREATE POLICY "guard_mom_bookings_select_admin"
   TO authenticated
   USING (public.is_app_admin());
 
--- 만나자 「교배」 글 7일 목록 노출 (결제 → stripe-webhook에서 breeding_listing_until 연장)
-ALTER TABLE public.user_entitlements
-  ADD COLUMN IF NOT EXISTS breeding_listing_until TIMESTAMPTZ;
-
--- ─── 관리자: 보호맘 인증(certified_at) 앱에서 수정 (is_app_admin) ───
+-- ─── 관리자: 보호맘 인증(certified_at) — 트리거는 일반 사용자만 잠금, 관리자·서비스 롤은 허용 (migrations/20260416120000 과 동일)
 CREATE OR REPLACE FUNCTION public.certified_guard_moms_protect_privileged()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -241,12 +220,22 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_certified_guard_moms_protect ON public.certified_guard_moms;
+CREATE TRIGGER trg_certified_guard_moms_protect
+  BEFORE UPDATE ON public.certified_guard_moms
+  FOR EACH ROW
+  EXECUTE PROCEDURE public.certified_guard_moms_protect_privileged();
+
 DROP POLICY IF EXISTS "certified_guard_moms_update_admin" ON public.certified_guard_moms;
 CREATE POLICY "certified_guard_moms_update_admin"
   ON public.certified_guard_moms FOR UPDATE
   TO authenticated
   USING (public.is_app_admin())
   WITH CHECK (public.is_app_admin());
+
+-- 만나자 「교배」 글 7일 목록 노출 (결제 → stripe-webhook에서 breeding_listing_until 연장)
+ALTER TABLE public.user_entitlements
+  ADD COLUMN IF NOT EXISTS breeding_listing_until TIMESTAMPTZ;
 
 -- 관리자 인증 RPC (RLS 우회·클라이언트는 이걸 호출하는 것을 권장)
 CREATE OR REPLACE FUNCTION public.admin_set_guard_mom_certified(p_guard_mom_id uuid, p_certified boolean)
