@@ -105,16 +105,14 @@ CREATE INDEX IF NOT EXISTS idx_guard_mom_bookings_mom
 ALTER TABLE public.certified_guard_moms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.guard_mom_bookings ENABLE ROW LEVEL SECURITY;
 
+-- 한시적 무료: 인증만 된 보호맘은 listing_visible_until 없이도 목록 공개.
+-- 유료 전환 시: supabase/migrations/20260415100001_paid_guard_mom_listing_select.sql 내용으로 교체.
 DROP POLICY IF EXISTS "certified_guard_moms_select" ON public.certified_guard_moms;
 CREATE POLICY "certified_guard_moms_select"
   ON public.certified_guard_moms FOR SELECT
   USING (
     user_id = auth.uid()
-    OR (
-      certified_at IS NOT NULL
-      AND listing_visible_until IS NOT NULL
-      AND listing_visible_until > NOW()
-    )
+    OR (certified_at IS NOT NULL)
   );
 
 DROP POLICY IF EXISTS "certified_guard_moms_insert_own" ON public.certified_guard_moms;

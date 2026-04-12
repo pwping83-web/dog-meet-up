@@ -7,6 +7,7 @@ import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BILLING_PRODUCTS, startStripeCheckout, type BillingProductKey } from '../../lib/billing';
+import { isPromoFreeListings } from '../../lib/promoFlags';
 
 type OrderRow = {
   id: string;
@@ -36,14 +37,17 @@ export function BillingPage() {
   const [listLoading, setListLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<BillingProductKey | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [guardCertifiedAt, setGuardCertifiedAt] = useState<string | null>(null);
 
   const checkoutStatus = searchParams.get('checkout');
+  const promoFree = isPromoFreeListings();
 
   const loadBilling = useCallback(async () => {
     if (!user) {
       setOrders([]);
       setListingVisibleUntil(null);
       setBreedingListingUntil(null);
+      setGuardCertifiedAt(null);
       setListLoading(false);
       return;
     }
@@ -58,7 +62,7 @@ export function BillingPage() {
         .limit(30),
       supabase
         .from('certified_guard_moms')
-        .select('listing_visible_until')
+        .select('listing_visible_until,certified_at')
         .eq('user_id', user.id)
         .maybeSingle(),
       supabase
@@ -77,9 +81,11 @@ export function BillingPage() {
       setOrders((ordersRes.data ?? []) as OrderRow[]);
     }
 
-    if (!gmRes.error && gmRes.data?.listing_visible_until) {
-      setListingVisibleUntil(gmRes.data.listing_visible_until);
+    if (!gmRes.error && gmRes.data) {
+      setGuardCertifiedAt(gmRes.data.certified_at ?? null);
+      setListingVisibleUntil(gmRes.data.listing_visible_until ?? null);
     } else {
+      setGuardCertifiedAt(null);
       setListingVisibleUntil(null);
     }
 
@@ -121,15 +127,19 @@ export function BillingPage() {
     }
   };
 
-  const listingActive =
+  const guardCertified = guardCertifiedAt != null && !Number.isNaN(Date.parse(guardCertifiedAt));
+  const listingPaidWindow =
     listingVisibleUntil != null &&
     !Number.isNaN(Date.parse(listingVisibleUntil)) &&
     new Date(listingVisibleUntil) > new Date();
 
+  const listingActive = guardCertified && (promoFree || listingPaidWindow);
+
   const breedingListingActive =
-    breedingListingUntil != null &&
-    !Number.isNaN(Date.parse(breedingListingUntil)) &&
-    new Date(breedingListingUntil) > new Date();
+    promoFree ||
+    (breedingListingUntil != null &&
+      !Number.isNaN(Date.parse(breedingListingUntil)) &&
+      new Date(breedingListingUntil) > new Date());
 
   const guardMomProduct = BILLING_PRODUCTS.find((p) => p.key === 'guard_mom_listing_7d')!;
   const breedingProduct = BILLING_PRODUCTS.find((p) => p.key === 'breeding_post_listing_7d')!;
@@ -167,6 +177,13 @@ export function BillingPage() {
           </div>
         )}
 
+        {promoFree && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-xs font-semibold leading-relaxed text-emerald-950">
+            <span className="font-extrabold">한시적 무료</span> 기간이에요. 인증 보호맘 목록·교배 글 노출은 결제 없이
+            이용할 수 있어요. 이용이 늘면 유료로 전환될 수 있어요.
+          </div>
+        )}
+
         {authLoading ? (
           <div className="flex justify-center py-16 text-slate-500">
             <Loader2 className="h-8 w-8 animate-spin text-brand" />
@@ -201,10 +218,21 @@ export function BillingPage() {
                       {format(new Date(listingVisibleUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
                     </p>
                   )}
-                  {!listingVisibleUntil && (
+                  {!listingVisibleUntil && promoFree && !guardCertified && (
+                    <p className="mt-1 text-xs font-medium text-slate-500">
+                      보호맘 프로필을 저장하고 운영 인증을 마치면 「인증 돌봄」 탭 목록에 무료로 올라가요. 돌봄·맡김은
+                      이용자 간에 조율해 주세요.
+                    </p>
+                  )}
+                  {!listingVisibleUntil && !promoFree && (
                     <p className="mt-1 text-xs font-medium text-slate-500">
                       노출을 신청하면 「인증 돌봄」 탭 목록에 보여요. 프로필은 보호맘 등록에서 먼저 완료해 주세요. 과금은
                       노출 기간에만 해당하며, 돌봄·맡김 이후는 이용자 간 책임이에요.
+                    </p>
+                  )}
+                  {!listingVisibleUntil && promoFree && guardCertified && (
+                    <p className="mt-1 text-xs font-medium text-slate-500">
+                      인증이 완료된 보호맘은 지금 무료로 목록에 노출돼요. 이후 정책이 바뀌면 안내드릴게요.
                     </p>
                   )}
                 </div>
@@ -225,24 +253,30 @@ export function BillingPage() {
                   )}
                 </div>
                 <p className="text-sm leading-relaxed text-slate-600">{guardMomProduct.description}</p>
-                <button
-                  type="button"
-                  disabled={checkoutLoading !== null}
-                  onClick={() => void handlePay(guardMomProduct.key)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-market-cta py-3.5 text-sm font-extrabold text-white shadow-market transition-transform active:scale-[0.98] disabled:opacity-60"
-                >
-                  {checkoutLoading === guardMomProduct.key ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      이동 중…
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="h-5 w-5" />
-                      노출 신청하기
-                    </>
-                  )}
-                </button>
+                {promoFree ? (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 py-3.5 text-center text-sm font-extrabold text-emerald-900">
+                    한시적 무료 — 인증 완료 시 목록 노출
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={checkoutLoading !== null}
+                    onClick={() => void handlePay(guardMomProduct.key)}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-market-cta py-3.5 text-sm font-extrabold text-white shadow-market transition-transform active:scale-[0.98] disabled:opacity-60"
+                  >
+                    {checkoutLoading === guardMomProduct.key ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        이동 중…
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-5 w-5" />
+                        노출 신청하기
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
@@ -262,7 +296,12 @@ export function BillingPage() {
                       {format(new Date(breedingListingUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
                     </p>
                   )}
-                  {!breedingListingUntil && (
+                  {!breedingListingUntil && promoFree && (
+                    <p className="mt-1 font-medium text-pink-900/80">
+                      지금은 한시적 무료로 「만나자」 목록·홈 피드에 교배 글을 올릴 수 있어요.
+                    </p>
+                  )}
+                  {!breedingListingUntil && !promoFree && (
                     <p className="mt-1 font-medium text-pink-900/80">
                       결제를 완료하면 7일간 「만나자」 목록·홈 피드에 교배 글을 올릴 수 있어요.
                     </p>
@@ -276,24 +315,30 @@ export function BillingPage() {
                   )}
                 </div>
                 <p className="text-sm leading-relaxed text-slate-600">{breedingProduct.description}</p>
-                <button
-                  type="button"
-                  disabled={checkoutLoading !== null}
-                  onClick={() => void handlePay(breedingProduct.key)}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
-                >
-                  {checkoutLoading === breedingProduct.key ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      이동 중…
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="h-5 w-5" />
-                      교배 글 7일 노출 결제
-                    </>
-                  )}
-                </button>
+                {promoFree ? (
+                  <div className="rounded-2xl border border-pink-200 bg-pink-50 py-3.5 text-center text-sm font-extrabold text-pink-900">
+                    한시적 무료 — 만나자에서 「교배」로 글 작성
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={checkoutLoading !== null}
+                    onClick={() => void handlePay(breedingProduct.key)}
+                    className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
+                  >
+                    {checkoutLoading === breedingProduct.key ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        이동 중…
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="h-5 w-5" />
+                        교배 글 7일 노출 결제
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 

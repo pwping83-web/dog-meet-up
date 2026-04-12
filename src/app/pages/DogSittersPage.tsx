@@ -20,6 +20,7 @@ import {
 } from '../utils/meetupCategory';
 import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { isPromoFreeListings } from '../../lib/promoFlags';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
 
@@ -123,13 +124,15 @@ export function DogSittersPage() {
       } else {
         const all = (data ?? []) as GuardMomRow[];
         const now = Date.now();
+        const promo = isPromoFreeListings();
         setGuardMoms(
-          all.filter(
-            (r) =>
-              r.certified_at != null &&
-              r.listing_visible_until != null &&
-              new Date(r.listing_visible_until).getTime() > now,
-          ),
+          all.filter((r) => {
+            if (r.certified_at == null) return false;
+            if (promo) return true;
+            return (
+              r.listing_visible_until != null && new Date(r.listing_visible_until).getTime() > now
+            );
+          }),
         );
       }
       setGuardLoading(false);
@@ -340,8 +343,13 @@ export function DogSittersPage() {
             ) : (
               <>
                 <strong className="font-extrabold">만나자</strong>는 1:1 친구 찾기·교배·실종{' '}
-                <strong>맞춤 글</strong>만 보여요. <strong className="font-extrabold">교배</strong> 신청 글은 결제 후
-                7일간만 목록에 올라가요. 공원 모임은 <strong>모이자</strong>.
+                <strong>맞춤 글</strong>만 보여요. <strong className="font-extrabold">교배</strong> 신청 글은{' '}
+                {isPromoFreeListings() ? (
+                  <>지금은 한시적으로 무료로 목록·피드에도 올라가요. </>
+                ) : (
+                  <>결제 후 7일간만 목록에 올라가요. </>
+                )}
+                공원 모임은 <strong>모이자</strong>.
               </>
             )}
           </p>

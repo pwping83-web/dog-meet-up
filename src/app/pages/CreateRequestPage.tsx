@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import { supabase } from '../../lib/supabase';
 import { startStripeCheckout } from '../../lib/billing';
+import { isPromoFreeListings } from '../../lib/promoFlags';
 import { getBreedingLeakInNonBreedingPost } from '../utils/breedingContentGuard';
 
 const MOIJA_CATEGORIES = [
@@ -250,9 +251,10 @@ export function CreateRequestPage() {
   }, [kind, formData.category, formData.title, formData.description]);
 
   const breedingListingActive =
-    breedingListingUntil != null &&
-    !Number.isNaN(Date.parse(breedingListingUntil)) &&
-    new Date(breedingListingUntil) > new Date();
+    isPromoFreeListings() ||
+    (breedingListingUntil != null &&
+      !Number.isNaN(Date.parse(breedingListingUntil)) &&
+      new Date(breedingListingUntil) > new Date());
 
   const saveBreedingDraft = () => {
     try {
@@ -286,7 +288,9 @@ export function CreateRequestPage() {
     if (breedingLeakLabel) {
       alert(
         `자동 검사: 무료·다른 주제 글에는 ${breedingLeakLabel} 같은 교배·번식 표현을 쓸 수 없어요.\n` +
-          '교배·번식 상담은 「만나자」에서 주제를 「교배」로 선택한 뒤 작성·결제해 주세요.',
+          (isPromoFreeListings()
+            ? '교배·번식 상담은 「만나자」에서 주제를 「교배」로 선택한 뒤 작성해 주세요.'
+            : '교배·번식 상담은 「만나자」에서 주제를 「교배」로 선택한 뒤 작성·결제해 주세요.'),
       );
       return;
     }
@@ -320,7 +324,9 @@ export function CreateRequestPage() {
         /* ignore */
       }
       alert(
-        '💕 교배 신청 글이 올라갔어요!\n결제로 열린 7일 노출 기간 동안 만나자·홈 피드에서 보여요. 1:1 만남·실종은 무료예요.',
+        isPromoFreeListings()
+          ? '💕 교배 신청 글이 올라갔어요!\n지금은 한시적으로 만나자·홈 피드에서도 보여요. 1:1 만남·실종은 무료예요.'
+          : '💕 교배 신청 글이 올라갔어요!\n결제로 열린 7일 노출 기간 동안 만나자·홈 피드에서 보여요. 1:1 만남·실종은 무료예요.',
       );
     } else {
       alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
@@ -478,16 +484,29 @@ export function CreateRequestPage() {
 
           {kind === 'mannaja' && formData.category === '교배' && (
             <div className="rounded-2xl border border-pink-200 bg-pink-50/90 px-3 py-3 text-xs font-semibold leading-relaxed text-pink-950">
-              <p className="font-extrabold">교배 신청 글은 유료 · 7일간 목록·피드 노출</p>
+              <p className="font-extrabold">
+                {isPromoFreeListings()
+                  ? '교배 신청 글 · 지금은 한시적 무료로 목록·피드 노출'
+                  : '교배 신청 글은 유료 · 7일간 목록·피드 노출'}
+              </p>
               <p className="mt-1.5">
                 견종·성별·나이, 희망하는 상대 조건, 건강·접종 여부, 연락 방법 등을 적어 주세요. 예: 포메 여아입니다. 흰색
                 포메 남아 사진 보내주세요.
               </p>
               <p className="mt-1.5">
-                <strong className="font-extrabold">결제를 마쳐야</strong> 글이 올라가요. 노출 기간이 남아 있으면 「올리기」만
-                누르면 됩니다. 1:1 만남·실종 글은 무료예요.
+                {isPromoFreeListings() ? (
+                  <>
+                    <strong className="font-extrabold">지금은 한시적으로 무료</strong>로 올릴 수 있어요. 이용이 늘면 유료로
+                    바뀔 수 있어요. 1:1 만남·실종 글은 무료예요.
+                  </>
+                ) : (
+                  <>
+                    <strong className="font-extrabold">결제를 마쳐야</strong> 글이 올라가요. 노출 기간이 남아 있으면 「올리기」만
+                    누르면 됩니다. 1:1 만남·실종 글은 무료예요.
+                  </>
+                )}
               </p>
-              {breedingListingActive && breedingListingUntil && (
+              {!isPromoFreeListings() && breedingListingActive && breedingListingUntil && (
                 <p className="mt-2 font-bold text-pink-900">
                   이번 노출권 만료:{' '}
                   {format(new Date(breedingListingUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}

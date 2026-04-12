@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { startStripeCheckout } from '../../lib/billing';
+import { isPromoFreeListings } from '../../lib/promoFlags';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -124,8 +125,10 @@ export function GuardMomRegisterPage() {
   };
 
   const certified = row?.certified_at != null;
-  const visible =
+  const promoFree = isPromoFreeListings();
+  const paidListingWindow =
     row?.listing_visible_until != null && new Date(row.listing_visible_until).getTime() > Date.now();
+  const visible = (promoFree && certified) || paidListingWindow;
 
   return (
     <div className="min-h-screen bg-[#F5F5F7] pb-28">
@@ -167,14 +170,35 @@ export function GuardMomRegisterPage() {
 
             <div className="rounded-2xl border border-orange-200 bg-orange-50/90 px-4 py-3 text-xs font-medium leading-relaxed text-orange-950">
               <p>
-                운영 확인이 끝나면 <strong className="font-extrabold">인증 보호맘</strong>으로 표시돼요. 확인 전에는{' '}
-                <strong className="font-extrabold">7일 목록 노출</strong> 신청만 잠시 막혀 있고, 프로필은 지금부터 저장해
-                두셔도 돼요.
+                운영 확인이 끝나면 <strong className="font-extrabold">인증 보호맘</strong>으로 표시돼요.
+                {promoFree ? (
+                  <>
+                    {' '}
+                    지금은 <strong className="font-extrabold">한시적 무료</strong>로 인증 후 목록에 올라가요. 프로필은 지금부터
+                    저장해 두셔도 돼요.
+                  </>
+                ) : (
+                  <>
+                    {' '}
+                    확인 전에는 <strong className="font-extrabold">7일 목록 노출</strong> 신청만 잠시 막혀 있고, 프로필은
+                    지금부터 저장해 두셔도 돼요.
+                  </>
+                )}
               </p>
               <p className="mt-2 border-t border-orange-200/80 pt-2 text-[11px] font-semibold leading-relaxed">
                 맡기기·픽업·데려다주기 등은 <strong className="font-extrabold">보호맘님과 맡기는 분</strong>이 직접 정해
-                주세요. 돌봄·거래 책임도 함께 조율해 주시면 돼요. <strong className="font-extrabold">유료(목록 노출)</strong>는
-                목록에 보이는 기간에만 해당해요.
+                주세요. 돌봄·거래 책임도 함께 조율해 주시면 돼요.
+                {promoFree ? (
+                  <>
+                    {' '}
+                    <strong className="font-extrabold">지금은 한시적 무료</strong>로 인증된 보호맘은 목록에 노출돼요.
+                  </>
+                ) : (
+                  <>
+                    {' '}
+                    <strong className="font-extrabold">유료(목록 노출)</strong>는 목록에 보이는 기간에만 해당해요.
+                  </>
+                )}
               </p>
             </div>
 
@@ -193,22 +217,34 @@ export function GuardMomRegisterPage() {
                 <li>
                   보호맘 란 노출:{' '}
                   <span className={visible ? 'text-orange-600' : 'text-slate-500'}>
-                    {visible && row?.listing_visible_until
-                      ? `~ ${new Date(row.listing_visible_until).toLocaleString('ko-KR')}`
-                      : '비노출'}
+                    {visible && promoFree && certified
+                      ? '한시적 무료 노출 중'
+                      : visible && row?.listing_visible_until
+                        ? `~ ${new Date(row.listing_visible_until).toLocaleString('ko-KR')}`
+                        : '비노출'}
                   </span>
                 </li>
               </ul>
-              <button
-                type="button"
-                disabled={listingBusy || !certified}
-                onClick={() => void handleListingPay()}
-                className="mt-4 w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 text-sm font-extrabold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {listingBusy ? '이동 중…' : '7일 목록 노출 신청'}
-              </button>
-              {!certified && (
-                <p className="mt-2 text-[11px] font-medium text-slate-500">인증 완료 후 버튼이 활성화됩니다.</p>
+              {promoFree ? (
+                <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/90 px-3 py-3 text-center text-xs font-extrabold text-emerald-900">
+                  {certified
+                    ? '한시적 무료 기간 — 별도 결제 없이 목록에 노출돼요.'
+                    : '운영 인증이 완료되면 한시적 무료로 목록에 올라가요.'}
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    disabled={listingBusy || !certified}
+                    onClick={() => void handleListingPay()}
+                    className="mt-4 w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 text-sm font-extrabold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {listingBusy ? '이동 중…' : '7일 목록 노출 신청'}
+                  </button>
+                  {!certified && (
+                    <p className="mt-2 text-[11px] font-medium text-slate-500">인증 완료 후 버튼이 활성화됩니다.</p>
+                  )}
+                </>
               )}
             </div>
 
