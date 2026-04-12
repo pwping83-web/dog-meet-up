@@ -9,6 +9,21 @@ import { startStripeCheckout } from '../../lib/billing';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
+/** PostgREST 영문 오류 → 운영자·배포 시 조치 안내 */
+function friendlyCertifiedGuardMomsError(message: string): string {
+  const m = message.toLowerCase();
+  if (
+    m.includes('certified_guard_moms') &&
+    (m.includes('could not find') || m.includes('schema cache') || m.includes('does not exist'))
+  ) {
+    return 'Supabase에 보호맘 테이블(certified_guard_moms)이 아직 없어요. Dashboard → SQL Editor에서 저장소의 supabase/migrations/20260411120000_guard_moms.sql을 실행한 뒤, 이어서 20260412120000_daeng_pickup.sql도 실행해 주세요.';
+  }
+  if (m.includes('offers_daeng_pickup') || (m.includes('column') && m.includes('does not exist'))) {
+    return 'DB에 댕댕 픽업 컬럼(offers_daeng_pickup)이 없어요. supabase/migrations/20260412120000_daeng_pickup.sql을 SQL Editor에서 실행해 주세요.';
+  }
+  return message;
+}
+
 export function GuardMomRegisterPage() {
   const { user, loading: authLoading } = useAuth();
   const [row, setRow] = useState<GuardMomRow | null>(null);
@@ -19,6 +34,7 @@ export function GuardMomRegisterPage() {
   const [fee, setFee] = useState(20000);
   const [offersDaengPickup, setOffersDaengPickup] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
+  const [loadErr, setLoadErr] = useState<string | null>(null);
   const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [listingBusy, setListingBusy] = useState(false);
@@ -26,11 +42,23 @@ export function GuardMomRegisterPage() {
   const load = useCallback(async () => {
     if (!user) {
       setRow(null);
+      setLoadErr(null);
       setLoading(false);
       return;
     }
     setLoading(true);
-    const { data } = await supabase.from('certified_guard_moms').select('*').eq('user_id', user.id).maybeSingle();
+    setLoadErr(null);
+    const { data, error } = await supabase
+      .from('certified_guard_moms')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (error) {
+      setLoadErr(friendlyCertifiedGuardMomsError(error.message));
+      setRow(null);
+      setLoading(false);
+      return;
+    }
     if (data) {
       const r = data as GuardMomRow;
       setRow(r);
@@ -69,7 +97,7 @@ export function GuardMomRegisterPage() {
         offers_daeng_pickup: offersDaengPickup,
       };
       const { error } = await supabase.from('certified_guard_moms').upsert(payload, { onConflict: 'user_id' });
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(friendlyCertifiedGuardMomsError(error.message));
       setSaveOk(true);
       await load();
     } catch (e) {
