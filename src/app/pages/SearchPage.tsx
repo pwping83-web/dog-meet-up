@@ -1,6 +1,15 @@
 // src/app/pages/SearchPage.tsx 전체 교체
 import { Link, useLocation } from 'react-router';
-import { ArrowLeft, Search, X, ChevronRight, Home, MessageCircle, User } from 'lucide-react';
+import {
+  ArrowLeft,
+  Search,
+  X,
+  ChevronRight,
+  Home,
+  MessageCircle,
+  User,
+  PlusCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { mockRequests } from '../data/mockData';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
@@ -230,14 +239,15 @@ export function SearchPage() {
             <span className="text-[10px] font-bold">검색</span>
           </Link>
           
-          {/* Central write button */}
-          <Link to="/create-meetup" className="flex flex-col items-center -mt-2 group">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg shadow-orange-500/35 transition-all group-active:scale-95 group-hover:shadow-orange-500/40">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
+          <Link
+            to="/create-meetup"
+            className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
+            aria-label="글 올리기 · 모이자·만나자·돌봄 맡기기"
+            title="글 올리기 · 모이자·만나자·돌봄 맡기기"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-gradient-to-br from-orange-500 to-yellow-400 shadow-lg shadow-orange-400/45 transition-all group-active:scale-90 max-md:h-[3.65rem] max-md:w-[3.65rem]">
+              <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7" />
             </div>
-            <span className="text-[10px] font-bold text-slate-500 mt-1">글쓰기</span>
           </Link>
           
           <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-brand transition-colors">

@@ -1,5 +1,5 @@
 /**
- * 가상 인증 보호맘 — Supabase 목록이 비었을 때 인증 돌봄 탭 데모용.
+ * 가상 인증 보호맘 — DB에 노출 중인 행이 없거나 조회 오류 시 인증 돌봄 탭 데모용.
  * 상세(/guard-mom/:id)는 getMockCertifiedGuardMomById 로 동일 데이터를 씁니다.
  */
 const ISO_PAST = '2026-03-01T12:00:00.000+09:00';
@@ -30,6 +30,7 @@ export const mockCertifiedGuardMoms = [
       '분당에서 비글·코기 등 중형견 맡아요. 마당은 없지만 옆 공원이 가까워서 활동량 맞춰 산책합니다. 첫 만남 시 성향 체크 후 일정 조율할게요.',
     region_si: '경기도',
     region_gu: '분당구',
+    region_dong: '정자동',
     per_day_fee_krw: 28000,
     offers_daeng_pickup: false,
     certified_at: ISO_PAST,
@@ -44,7 +45,53 @@ export const mockCertifiedGuardMoms = [
       '마포·서대문 인근 노견·투약 필요 아이 경험 많아요. 집중 케어 가능하고, 맡기 전 건강 상태·복약 시간 꼭 알려 주세요. 장기 맡김도 상담 가능합니다.',
     region_si: '서울특별시',
     region_gu: '마포구',
+    region_dong: '공덕동',
     per_day_fee_krw: 42000,
+    offers_daeng_pickup: false,
+    certified_at: ISO_PAST,
+    listing_visible_until: ISO_FUTURE,
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000004',
+    created_at: ISO_PAST,
+    updated_at: ISO_PAST,
+    user_id: 'b1000000-0000-4000-8000-000000000004',
+    intro:
+      '송파 잠실·문정 쪽 퍼피·소형견 맡기기 좋아해요. 로트와일러 한 마리 키워 본 경험이 있어 대형견 상담도 가능해요. 주말·연휴 일정 미리 말씀 주세요.',
+    region_si: '서울특별시',
+    region_gu: '송파구',
+    region_dong: '잠실동',
+    per_day_fee_krw: 32000,
+    offers_daeng_pickup: true,
+    certified_at: ISO_PAST,
+    listing_visible_until: ISO_FUTURE,
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000005',
+    created_at: ISO_PAST,
+    updated_at: ISO_PAST,
+    user_id: 'b1000000-0000-4000-8000-000000000005',
+    intro:
+      '안양·군포 인근 맞벌이 가정 맡기기 많이 해요. 산책·밥·놀이 루틴 맞춰 드리고, 하원 전까지 사진 한 장 보내드릴게요.',
+    region_si: '경기도',
+    region_gu: '안양시 만안구',
+    region_dong: '안양동',
+    per_day_fee_krw: 24000,
+    offers_daeng_pickup: true,
+    certified_at: ISO_PAST,
+    listing_visible_until: ISO_FUTURE,
+  },
+  {
+    id: 'a1000000-0000-4000-8000-000000000006',
+    created_at: ISO_PAST,
+    updated_at: ISO_PAST,
+    user_id: 'b1000000-0000-4000-8000-000000000006',
+    intro:
+      '노원·도봉 쪽에서 하루·이틀 단기 맡기기 위주예요. 예민한 아이는 사전 만남 한 번 추천드려요. 고양이와 함께 키워서 사회성 있는 강아지와 잘 맞아요.',
+    region_si: '서울특별시',
+    region_gu: '노원구',
+    region_dong: '상계동',
+    per_day_fee_krw: 30000,
     offers_daeng_pickup: false,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,

@@ -21,6 +21,7 @@ import {
   Loader2,
   CheckCircle2,
   Plus,
+  PlusCircle,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
@@ -615,13 +616,15 @@ export function MyPage() {
             <span className="text-[10px] font-bold">검색</span>
           </Link>
 
-          <Link to="/create-meetup" className="-mt-2 flex flex-col items-center group">
-            <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-market-header shadow-lg shadow-orange-400/45 transition-all group-active:scale-95 group-hover:shadow-orange-400/55">
-              <svg className="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-              </svg>
+          <Link
+            to="/create-meetup"
+            className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
+            aria-label="글 올리기 · 모이자·만나자·돌봄 맡기기"
+            title="글 올리기 · 모이자·만나자·돌봄 맡기기"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.15rem] border-[3px] border-white bg-gradient-to-br from-orange-500 to-yellow-400 shadow-lg shadow-orange-400/45 transition-all group-active:scale-90 max-md:h-[3.65rem] max-md:w-[3.65rem]">
+              <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7" />
             </div>
-            <span className="mt-1 text-[10px] font-bold text-slate-500">글쓰기</span>
           </Link>
 
           <Link

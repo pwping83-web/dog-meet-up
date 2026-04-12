@@ -4,7 +4,7 @@ import { Home, MapPin, PlusCircle, MessageCircle, User } from 'lucide-react';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { LocationPickerModal } from './LocationPickerModal';
 
-/** 탐색(/explore)·모임 상세(/meetup/*) 등에서 공통 하단 바 — 글쓰기(+) 유지 */
+/** 탐색(/explore)·모임 상세(/meetup/*) 등 — 중앙 + 는 라벨 없음(홈·내댕댕과 동일 톤) */
 export function CommunityBottomNav() {
   const location = useLocation();
   const { shortLabel: locationShortLabel } = useUserLocation();

@@ -120,7 +120,9 @@ export function DogSittersPage() {
         .order('listing_visible_until', { ascending: false, nullsFirst: false });
       if (cancelled) return;
       if (error) {
-        setGuardErr('인증 보호맘 목록을 불러오지 못했습니다.');
+        setGuardErr(
+          '실제 목록을 불러오지 못했어요. 아래는 체험용 가상 인증 보호맘 프로필이에요. DB 연결 후에는 실제 등록분만 보여요.',
+        );
         setGuardMoms([]);
       } else {
         const all = (data ?? []) as GuardMomRow[];
@@ -187,12 +189,11 @@ export function DogSittersPage() {
 
   const q = searchQuery.trim().toLowerCase();
 
-  /** DB에 노출 중인 보호맘이 없으면 가상 3명 표시(데모) */
+  /** DB에 노출 중인 보호맘이 없거나 조회 실패 시 가상 프로필 표시(데모) */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
-    if (guardErr) return guardMoms;
     if (guardMoms.length > 0) return guardMoms;
     return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
-  }, [guardMoms, guardErr]);
+  }, [guardMoms]);
 
   const combinedRows: CombinedRow[] = useMemo(() => {
     let sitters = mockDogSitters.filter((s) => {
