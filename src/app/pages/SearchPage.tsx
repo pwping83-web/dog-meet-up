@@ -1,5 +1,5 @@
 // src/app/pages/SearchPage.tsx 전체 교체
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
@@ -14,7 +14,8 @@ import { mockRequests } from '../data/mockData';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
@@ -58,11 +59,41 @@ function upsertRecent(prev: string[], term: string): string[] {
 export function SearchPage() {
   const { user } = useAuth();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const dogsListView = searchParams.get('view') === 'dogs';
+
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [dbDogs, setDbDogs] = useState<any[]>([]);
+  const [dogsLoading, setDogsLoading] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     typeof window !== 'undefined' ? readRecentFromStorage() : [...DEFAULT_RECENT],
   );
+
+  useEffect(() => {
+    if (!dogsListView) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        setDogsLoading(true);
+        const { data, error } = await supabase
+          .from('dog_profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        if (error) throw error;
+        if (!cancelled) setDbDogs(data || []);
+      } catch (e) {
+        console.error('강아지 목록을 불러오지 못했습니다:', e);
+        if (!cancelled) setDbDogs([]);
+      } finally {
+        if (!cancelled) setDogsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dogsListView]);
 
   const [meetupFeedTick, setMeetupFeedTick] = useState(0);
   useEffect(() => {
@@ -83,6 +114,23 @@ export function SearchPage() {
         request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
+
+  const filteredDogs = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return dbDogs;
+    return dbDogs.filter((dog) => {
+      const d = sanitizeDogProfileForPublicDisplay({
+        id: String(dog.id),
+        name: typeof dog.name === 'string' ? dog.name : '',
+        breed: dog.breed != null ? String(dog.breed) : null,
+        age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
+        gender: dog.gender != null ? String(dog.gender) : null,
+        photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+      });
+      const hay = `${d.name} ${d.breed ?? ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }, [dbDogs, searchQuery]);
 
   /** 입력창 타이핑 — 최근 검색 목록에는 넣지 않음 */
   const handleInputChange = (value: string) => {
@@ -143,9 +191,9 @@ export function SearchPage() {
                   if (q) selectSearch(q);
                 }
               }}
-              placeholder="어떤 댕친을 찾으시나요? 🐾"
+              placeholder={dogsListView ? '이름·품종으로 찾기 🐾' : '어떤 댕친을 찾으시나요? 🐾'}
               className="h-12 w-full rounded-2xl border-transparent bg-slate-50/80 pl-11 pr-10 font-bold text-slate-900 transition-all placeholder:font-medium placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:ring-4 focus:ring-orange-500/15"
-              autoFocus
+              autoFocus={!dogsListView}
             />
             {searchQuery && (
               <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 bg-slate-200 hover:bg-slate-300 rounded-full text-slate-500 transition-colors">
@@ -177,6 +225,61 @@ export function SearchPage() {
       <div className="max-w-screen-md mx-auto">
         {/* 검색 결과 화면 */}
         {showResults && searchQuery ? (
+          dogsListView ? (
+            <div className="p-5">
+              <div className="mb-5 flex items-center gap-2">
+                <span className="text-sm font-bold text-slate-800">댕친 검색</span>
+                <span className="rounded-lg bg-orange-50 px-2 py-0.5 text-sm font-extrabold text-brand">
+                  {filteredDogs.length}마리
+                </span>
+              </div>
+              {dogsLoading ? (
+                <p className="py-16 text-center text-sm font-bold text-slate-400">불러오는 중…</p>
+              ) : filteredDogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 px-4">
+                  <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-50">
+                    <Search className="h-10 w-10 text-slate-300" />
+                  </div>
+                  <p className="mb-2 text-lg font-bold text-slate-600">맞는 댕친이 없어요</p>
+                  <p className="text-center text-sm font-medium text-slate-400">다른 이름·품종으로 검색해보세요.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredDogs.map((dog) => {
+                    const d = sanitizeDogProfileForPublicDisplay({
+                      id: String(dog.id),
+                      name: typeof dog.name === 'string' ? dog.name : '',
+                      breed: dog.breed != null ? String(dog.breed) : null,
+                      age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
+                      gender: dog.gender != null ? String(dog.gender) : null,
+                      photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+                    });
+                    return (
+                      <Link
+                        key={dog.id}
+                        to={`/dog/${dog.id}`}
+                        className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all active:scale-[0.98] hover:border-orange-200 hover:shadow-md"
+                      >
+                        <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner">
+                          <ImageWithFallback
+                            src={d.photoUrl}
+                            fallbackSrc={virtualDogPhotoForSeed(`search-dogs-grid-fallback-${dog.id}`)}
+                            alt={d.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <p className="truncate text-sm font-black text-slate-800">{d.name}</p>
+                        <p className="truncate text-xs font-semibold text-slate-400">
+                          {d.breed ?? ''}
+                          {d.age != null ? ` · ${d.age}살` : ''}
+                        </p>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="p-5">
             <div className="mb-5 flex items-center gap-2">
               <span className="text-sm font-bold text-slate-800">검색 결과</span>
@@ -220,6 +323,65 @@ export function SearchPage() {
                 ))}
               </div>
             )}
+          </div>
+          )
+        ) : dogsListView ? (
+          <div className="p-5">
+            <div className="mb-4 px-1">
+              <h1 className="text-lg font-extrabold text-slate-900">새로운 댕친</h1>
+              <p className="mt-1 text-sm font-semibold text-slate-400">최근 등록된 우리 동네 댕댕이</p>
+            </div>
+            {dogsLoading ? (
+              <p className="py-16 text-center text-sm font-bold text-slate-400">불러오는 중…</p>
+            ) : dbDogs.length === 0 ? (
+              <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center">
+                <p className="font-bold text-slate-600">아직 등록된 댕댕이가 없어요</p>
+                <p className="mt-2 text-sm text-slate-400">첫 댕친이 되어 보세요!</p>
+                <Link to="/my" className="mt-4 inline-block text-sm font-extrabold text-brand hover:underline">
+                  내댕댕에서 프로필 등록
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {dbDogs.map((dog) => {
+                  const d = sanitizeDogProfileForPublicDisplay({
+                    id: String(dog.id),
+                    name: typeof dog.name === 'string' ? dog.name : '',
+                    breed: dog.breed != null ? String(dog.breed) : null,
+                    age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
+                    gender: dog.gender != null ? String(dog.gender) : null,
+                    photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+                  });
+                  return (
+                    <Link
+                      key={dog.id}
+                      to={`/dog/${dog.id}`}
+                      className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all active:scale-[0.98] hover:border-orange-200 hover:shadow-md"
+                    >
+                      <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner">
+                        <ImageWithFallback
+                          src={d.photoUrl}
+                          fallbackSrc={virtualDogPhotoForSeed(`search-dogs-list-fallback-${dog.id}`)}
+                          alt={d.name}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <p className="truncate text-sm font-black text-slate-800">{d.name}</p>
+                      <p className="truncate text-xs font-semibold text-slate-400">
+                        {d.breed ?? ''}
+                        {d.age != null ? ` · ${d.age}살` : ''}
+                      </p>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+            <div className="mt-8 rounded-2xl border border-orange-100 bg-orange-50/50 p-4 text-center">
+              <p className="text-sm font-bold text-slate-700">모이자·만나자 모임을 찾고 있나요?</p>
+              <Link to="/search" className="mt-2 inline-block text-sm font-extrabold text-brand hover:underline">
+                모임·글 검색으로 이동
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="p-5">

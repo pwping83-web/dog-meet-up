@@ -276,3 +276,49 @@ export async function trySendEmail(
     return false;
   }
 }
+
+const DEFAULT_FEEDBACK_INBOX = 'support@daengdaeng.com';
+
+/** 운영 수신함 — `.env`에 `VITE_FEEDBACK_INBOX_EMAIL` 이 있으면 우선 */
+export function getFeedbackInboxEmail(): string {
+  const v = import.meta.env.VITE_FEEDBACK_INBOX_EMAIL?.trim();
+  return v && v.includes('@') ? v : DEFAULT_FEEDBACK_INBOX;
+}
+
+/** 고객 의견·오류·불편 접수 → 운영 메일(EmailJS 템플릿 경유) */
+export async function sendUserFeedbackEmail(params: {
+  kindLabel: string;
+  title: string;
+  detail: string;
+  accountHint: string;
+  replyEmail: string;
+  pageUrl: string;
+  userAgent: string;
+}): Promise<void> {
+  const to_email = getFeedbackInboxEmail();
+  const message = [
+    '[개선해 주세요 — 댕댕마켓]',
+    `유형: ${params.kindLabel}`,
+    `제목: ${params.title}`,
+    '',
+    '내용:',
+    params.detail,
+    '',
+    '---',
+    `계정: ${params.accountHint}`,
+    `답변 받을 이메일: ${params.replyEmail || '(미입력)'}`,
+    `접수 시점 URL: ${params.pageUrl}`,
+    `User-Agent: ${params.userAgent}`,
+  ].join('\n');
+
+  const subj = `[개선요청] ${params.kindLabel} — ${params.title.slice(0, 72)}${params.title.length > 72 ? '…' : ''}`;
+
+  return sendEmail({
+    to_email,
+    to_name: '댕댕마켓 운영',
+    subject: subj,
+    message,
+    from_name: '댕댕마켓 피드백',
+    reply_to: params.replyEmail && params.replyEmail.includes('@') ? params.replyEmail : 'noreply@daengdaengmarket.com',
+  });
+}

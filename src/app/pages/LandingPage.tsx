@@ -35,11 +35,12 @@ function shortProfileLabel(user: User): string {
   return '내 정보';
 }
 
-// 댕친 프로필 데이터
+// 댕친 프로필 데이터 — 시드별로 가상 풀 인덱스가 달라지며, 일부 Unsplash 슬롯은 로드 실패 시 회색 박스가 남음.
+// 뽀삐·보리는 풀에서 안정적으로 열리는 슬롯을 쓰도록 시드만 조정(landing-hero-* 해시는 virtualDogPhotos와 동일 규칙).
 const dogProfiles = [
-  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: virtualDogPhotoForSeed('landing-dog-ppobb') },
+  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: virtualDogPhotoForSeed('landing-hero-26') },
   { name: '초코', breed: '웰시코기', img: virtualDogPhotoForSeed('landing-dog-choco'), age: '3살', mbti: '사교적아이' },
-  { name: '보리', breed: '골든리트리버', img: virtualDogPhotoForSeed('landing-dog-bori'), age: '5살', mbti: '듬직한아이' },
+  { name: '보리', breed: '골든리트리버', img: virtualDogPhotoForSeed('landing-hero-25'), age: '5살', mbti: '듬직한아이' },
   { name: '콩이', breed: '비글', img: virtualDogPhotoForSeed('landing-dog-kong'), age: '1살', mbti: '호기심아이' },
 ];
 
@@ -228,6 +229,7 @@ export function LandingPage() {
                     <div className="mx-auto mb-2 h-[4.25rem] w-[4.25rem] overflow-hidden rounded-full bg-orange-100 ring-[3px] ring-white/90 max-md:h-[4.5rem] max-md:w-[4.5rem] md:mb-1.5 md:h-12 md:w-12 md:ring-2">
                       <ImageWithFallback
                         src={dog.img}
+                        fallbackSrc={virtualDogPhotoForSeed(`landing-hero-fallback-${dog.name}`)}
                         alt={dog.name}
                         className={`h-full w-full object-cover transition-transform duration-500 ${hoveredDog === i ? 'scale-110' : 'scale-100'}`}
                       />
@@ -268,13 +270,13 @@ export function LandingPage() {
           className="px-4 mt-8"
         >
           <motion.div variants={fadeUp} custom={0} className="mb-4 flex items-center justify-between max-md:mb-4 md:mb-3">
-            <div>
+            <Link to="/search?view=dogs" className="min-w-0 flex-1 text-left active:opacity-80">
               <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>
                 새로운 댕친 <Heart className="inline h-5 w-5 fill-red-500 text-red-500 max-md:h-5 max-md:w-5 md:h-4 md:w-4" />
               </h2>
               <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>최근 등록된 우리 동네 댕댕이</p>
-            </div>
-            <Link to="/search" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
+            </Link>
+            <Link to="/search?view=dogs" className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
               전체보기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
             </Link>
           </motion.div>

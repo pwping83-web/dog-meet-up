@@ -7,30 +7,30 @@ import type { DogSitter, Meetup } from '../types';
 const Q = 'w=960&h=960&fit=crop&q=85';
 
 const VIRTUAL_DOG_PHOTOS: readonly string[] = [
-  `https://images.unsplash.com/photo-1548199973-03cce0bbc87b?${Q}`,
-  `https://images.unsplash.com/photo-1552053831-71594a27632d?${Q}`,
-  `https://images.unsplash.com/photo-1561037404-61cd46aa615b?${Q}`,
-  `https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?${Q}`,
-  `https://images.unsplash.com/photo-1505628346881-b72b27e84530?${Q}`,
-  `https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?${Q}`,
-  `https://images.unsplash.com/photo-1588943211346-0908a1fb0b01?${Q}`,
-  `https://images.unsplash.com/photo-1693897004115-7fbd4f1ae96e?${Q}`,
-  `https://images.unsplash.com/photo-1587300003388-59208cc96262?${Q}`,
-  `https://images.unsplash.com/photo-1672838565001-3e7e1e96bb52?${Q}`,
-  `https://images.unsplash.com/photo-1727302700512-e053b331d61c?${Q}`,
-  `https://images.unsplash.com/photo-1704227170709-5e5ddefcb4f7?${Q}`,
-  `https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?${Q}`,
-  `https://images.unsplash.com/photo-1534361960056-177fcc42de35?${Q}`,
-  `https://images.unsplash.com/photo-1518717758536-85ae2901b046?${Q}`,
-  `https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?${Q}`,
-  `https://images.unsplash.com/photo-1560806887-1a535afab1ea?${Q}`,
-  `https://images.unsplash.com/photo-1450778410646-35923d1c404c?${Q}`,
-  `https://images.unsplash.com/photo-1598131084681-3f9ee6a74abf?${Q}`,
-  `https://images.unsplash.com/photo-1529429617124-95b109f810d9?${Q}`,
-  `https://images.unsplash.com/photo-1544568100-847a948265bb?${Q}`,
-  `https://images.unsplash.com/photo-1612536849822-94e30258c0a0?${Q}`,
-  `https://images.unsplash.com/photo-1601758223008-9297a6bc52bc?${Q}`,
-  `https://images.unsplash.com/photo-1636890906264-135013858f6b?${Q}`,
+  `https://images.unsplash.com/photo-1543466835-00a7907e9de1?${Q}`,
+  `https://images.unsplash.com/photo-1517423440428-a5a00ad493e2?${Q}`,
+  `https://images.unsplash.com/photo-1583511665977-2b1c39aace49?${Q}`,
+  `https://images.unsplash.com/photo-1596492784531-5997e95e006d?${Q}`,
+  `https://images.unsplash.com/photo-1605568427561-40c23fa6adc4?${Q}`,
+  `https://images.unsplash.com/photo-1593134257789-471d46b0ce2d?${Q}`,
+  `https://images.unsplash.com/photo-1576201836106-db1758fd1c97?${Q}`,
+  `https://images.unsplash.com/photo-1568393698422-23a7767527a5?${Q}`,
+  `https://images.unsplash.com/photo-1525253086316-d0c936c814f0?${Q}`,
+  `https://images.unsplash.com/photo-1507146426986-505756756a54?${Q}`,
+  `https://images.unsplash.com/photo-1558788353-f76d92427f16?${Q}`,
+  `https://images.unsplash.com/photo-1530281700549-e82cae7f15a5?${Q}`,
+  `https://images.unsplash.com/photo-1568572933382-376960a653c3?${Q}`,
+  `https://images.unsplash.com/photo-1591169194246-8a933f3d60f4?${Q}`,
+  `https://images.unsplash.com/photo-1522276498395-a041d935f22d?${Q}`,
+  `https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?${Q}`,
+  `https://images.unsplash.com/photo-1604081470199-47f0a6158019?${Q}`,
+  `https://images.unsplash.com/photo-1596825145855-89840b290d32?${Q}`,
+  `https://images.unsplash.com/photo-1534567115038-b2ed281cd54c?${Q}`,
+  `https://images.unsplash.com/photo-1558944351-88b8ce1d8509?${Q}`,
+  `https://images.unsplash.com/photo-1560963695-d6a13cf7b96a?${Q}`,
+  `https://images.unsplash.com/photo-1529476490802-43c0223ccf7a?${Q}`,
+  `https://images.unsplash.com/photo-1577349908390-f407c1f7bcf0?${Q}`,
+  `https://images.unsplash.com/photo-1598133894008-8f4523a1d086?${Q}`,
 ];
 
 /** 목업에서 잘못 쓰이기 쉬운 비(또는 논쟁) 반려 이미지 ID → 가상 강아지로 교체 */
@@ -244,7 +244,9 @@ function dogProfilePhotoUrlLooksNonPet(url: string): boolean {
   return (
     /grazing|\bsheep\b|\blamb\b|mee{2,}p|illustrat|freepik\.com\/|vecteezy|depositphotos|shutterstock|123rf|alamy|bodybuild|muscle[-_]?man|weight[-_]?lift|humaaans|blush\.design|opendoodles|flaticon|iconfinder|cdn-icons|human[-_]?figure|people[-_]?illustrat/i.test(
       p,
-    ) || /undraw\.co|storyset\.com|drawkit\.io|illustrations\.unsplash/i.test(p)
+    ) ||
+    /undraw\.co|storyset\.com|drawkit\.io|illustrations\.unsplash/i.test(p) ||
+    /[/._-]logo\.(png|jpe?g|webp)(\?|#|$)|[/._-]favicon\.(png|ico)(\?|#|$)/i.test(p)
   );
 }
 

@@ -632,7 +632,7 @@ export function CreateRequestPage() {
           {kind === 'moija' && (
             <div>
               <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-orange-600">
-                주제
+                주제를 선택해주세요
               </p>
               {renderCategoryGrid(MOIJA_CATEGORIES, 'grid-cols-2')}
             </div>
@@ -641,7 +641,7 @@ export function CreateRequestPage() {
           {kind === 'mannaja' && (
             <div>
               <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-amber-700">
-                주제
+                주제를 선택해주세요
               </p>
               {renderCategoryGrid(MANNAJA_CATEGORIES, 'grid-cols-3')}
             </div>

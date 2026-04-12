@@ -85,7 +85,10 @@ export const mockMeetups: Meetup[] = [
       '5kg 말티즈 남아예요. 예방접종·심장사상충 완료, 배변 패드 잘 쌉니다. 토·일 이틀간 집 방문 돌봄 또는 하루 맡기기 가능한 분 찾아요. 인증 돌봄 탭의 인증 댕집사분도 환영합니다. 사전에 성향·산책 여부만 채팅으로 맞추면 돼요!',
     location: '서울 마포구',
     district: '마포구',
-    images: mockMeetupImages('explore-dolbom-1', '돌봄'),
+    /** Unsplash 가상 풀은 일부 시드에서 썸네일 로드 실패 시 회색 박스가 되어, 맡기는 사람 목록용으로 비-Unsplash 고정 URL 사용 */
+    images: [
+      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/YellowLabradorLooking_new.jpg/960px-YellowLabradorLooking_new.jpg',
+    ],
     estimatedCost: '돌봄·맡기기',
     status: 'pending',
     createdAt: new Date('2026-02-10'),
