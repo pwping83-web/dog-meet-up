@@ -1,12 +1,20 @@
 // 파일 경로: src/app/pages/ProfileEditPage.tsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, Camera, MapPin, CheckCircle2, ShieldCheck, ChevronDown, Loader2 } from 'lucide-react';
 import { LocationPickerModal } from '../components/LocationPickerModal';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
+import {
+  DAENG_AVATAR_THEME_PREFIX,
+  PROFILE_THEME_AVATARS,
+  encodeProfileAvatarTheme,
+  parseProfileAvatarUrl,
+} from '../../lib/profileAvatar';
+import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 /** 숫자만 받아 010-0000-0000 형태로 (최대 11자리) */
 function formatKoreanMobileDigits(raw: string): string {
@@ -21,6 +29,8 @@ function phoneDigitsOk(digits: string): boolean {
   return digits.length >= 10 && digits.length <= 11;
 }
 
+type AvatarDraft = 'theme' | 'custom';
+
 export function ProfileEditPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -29,6 +39,11 @@ export function ProfileEditPage() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [avatarDraft, setAvatarDraft] = useState<AvatarDraft>('theme');
+  const [committedAvatarUrl, setCommittedAvatarUrl] = useState<string | null>(null);
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
+  const pendingFileRef = useRef<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     nickname: '',
@@ -37,42 +52,72 @@ export function ProfileEditPage() {
     specialty: '산책 · 방문 돌봄', // 돌봄회원 탭 (로컬만)
   });
 
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
+    };
+  }, [localPreviewUrl]);
+
   const loadProfile = useCallback(async () => {
     if (!user) {
       setFormData((prev) => ({
         ...prev,
         nickname: '',
         phone: '',
+        avatarTheme: 'default',
       }));
+      setCommittedAvatarUrl(null);
+      setAvatarDraft('theme');
+      setLocalPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      pendingFileRef.current = null;
       setProfileLoading(false);
       return;
     }
     setProfileLoading(true);
-    const { data, error } = await supabase.from('profiles').select('name, phone').eq('id', user.id).maybeSingle();
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('name, phone, avatar_url')
+      .eq('id', user.id)
+      .maybeSingle();
     if (error) {
       console.warn('[프로필 수정] profiles 조회:', error.message);
     }
     const nameFromProfile = data?.name?.trim();
     const phoneFromProfile = data?.phone?.trim() ?? '';
-    setFormData((prev) => ({
-      ...prev,
-      nickname: (nameFromProfile || displayNameFromUser(user)).slice(0, 10),
-      phone: phoneFromProfile ? formatKoreanMobileDigits(phoneFromProfile) : '',
-    }));
+    const rawAv = data?.avatar_url?.trim() ?? null;
+    setCommittedAvatarUrl(rawAv);
+    const parsed = parseProfileAvatarUrl(rawAv);
+    setLocalPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    pendingFileRef.current = null;
+    if (parsed.kind === 'image') {
+      setAvatarDraft('custom');
+      setFormData((prev) => ({
+        ...prev,
+        nickname: (nameFromProfile || displayNameFromUser(user)).slice(0, 10),
+        phone: phoneFromProfile ? formatKoreanMobileDigits(phoneFromProfile) : '',
+        avatarTheme: 'default',
+      }));
+    } else {
+      setAvatarDraft('theme');
+      setFormData((prev) => ({
+        ...prev,
+        nickname: (nameFromProfile || displayNameFromUser(user)).slice(0, 10),
+        phone: phoneFromProfile ? formatKoreanMobileDigits(phoneFromProfile) : '',
+        avatarTheme: parsed.themeId,
+      }));
+    }
     setProfileLoading(false);
   }, [user]);
 
   useEffect(() => {
     void loadProfile();
   }, [loadProfile]);
-
-  /** 프로필 테마 — 댕댕마켓용 강아지 캐릭터 (이전 수리마켓 킥보드·드론·렌치 제거) */
-  const themeAvatars = [
-    { id: 'default', emoji: '👤', bg: 'bg-slate-100', border: 'border-slate-200' },
-    { id: 'pup', emoji: '🐶', bg: 'bg-amber-100', border: 'border-amber-300' },
-    { id: 'poodle', emoji: '🐩', bg: 'bg-orange-100', border: 'border-orange-300' },
-    { id: 'retriever', emoji: '🦮', bg: 'bg-orange-100', border: 'border-orange-300' },
-  ];
 
   const locationVerified = userLoc.source === 'gps' || userLoc.source === 'map';
   const hasRegion = Boolean(userLoc.city && userLoc.district);
@@ -113,11 +158,38 @@ export function ProfileEditPage() {
     setSaveBusy(true);
     try {
       const phoneOut = formatKoreanMobileDigits(phoneDigits);
+      let avatar_url: string | null = null;
+      const pending = pendingFileRef.current;
+      if (pending) {
+        if (pending.size > 5 * 1024 * 1024) {
+          alert('사진은 5MB 이하로 올려 주세요.');
+          return;
+        }
+        const ext = (pending.name.split('.').pop() || 'jpg').toLowerCase();
+        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+        const path = `user-avatars/${user.id}/${Date.now()}.${safeExt}`;
+        const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, pending, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+        if (upErr) {
+          alert(upErr.message || '프로필 사진 업로드에 실패했습니다. Storage 정책(dog-photos)을 확인해 주세요.');
+          return;
+        }
+        const { data: pub } = supabase.storage.from('dog-photos').getPublicUrl(path);
+        avatar_url = pub.publicUrl;
+      } else if (avatarDraft === 'theme') {
+        avatar_url = encodeProfileAvatarTheme(formData.avatarTheme);
+      } else {
+        avatar_url = committedAvatarUrl;
+      }
+
       const { error } = await supabase.from('profiles').upsert(
         {
           id: user.id,
           name: formData.nickname.trim().slice(0, 10),
           phone: phoneOut,
+          avatar_url,
         },
         { onConflict: 'id' },
       );
@@ -125,12 +197,62 @@ export function ProfileEditPage() {
         alert(error.message || '저장에 실패했습니다.');
         return;
       }
+      pendingFileRef.current = null;
+      setLocalPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
+      });
+      setCommittedAvatarUrl(avatar_url);
+      if (avatar_url?.startsWith(DAENG_AVATAR_THEME_PREFIX)) {
+        setAvatarDraft('theme');
+      } else if (avatar_url && /^https?:\/\//i.test(avatar_url)) {
+        setAvatarDraft('custom');
+      } else {
+        setAvatarDraft('theme');
+      }
       alert('프로필이 저장되었습니다! 💾');
       navigate('/my');
     } finally {
       setSaveBusy(false);
     }
   };
+
+  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !file.type.startsWith('image/')) {
+      if (file) alert('이미지 파일만 선택할 수 있어요.');
+      return;
+    }
+    pendingFileRef.current = file;
+    setLocalPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setAvatarDraft('custom');
+  };
+
+  const selectThemeAvatar = (themeId: string) => {
+    pendingFileRef.current = null;
+    setLocalPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    setAvatarDraft('theme');
+    setFormData((prev) => ({ ...prev, avatarTheme: themeId }));
+  };
+
+  const avatarMain = useMemo(() => {
+    if (avatarDraft === 'theme') {
+      const th = PROFILE_THEME_AVATARS.find((t) => t.id === formData.avatarTheme) ?? PROFILE_THEME_AVATARS[0];
+      return { kind: 'emoji' as const, ...th };
+    }
+    const parsed = parseProfileAvatarUrl(committedAvatarUrl);
+    const src = localPreviewUrl ?? (parsed.kind === 'image' ? parsed.url : '');
+    if (src) return { kind: 'image' as const, src };
+    const th = PROFILE_THEME_AVATARS.find((t) => t.id === formData.avatarTheme) ?? PROFILE_THEME_AVATARS[0];
+    return { kind: 'emoji' as const, ...th };
+  }, [avatarDraft, formData.avatarTheme, localPreviewUrl, committedAvatarUrl]);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-28">
@@ -211,31 +333,60 @@ export function ProfileEditPage() {
         {/* 프로필 사진 & 테마 선택 */}
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <h3 className="text-sm font-extrabold text-slate-800 mb-4">프로필 이미지</h3>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleAvatarFile}
+          />
           <div className="flex flex-col items-center">
-            {/* 현재 아바타 뷰 */}
-            <div className="relative mb-5 group cursor-pointer">
-              <div className={`w-24 h-24 rounded-3xl border-4 ${themeAvatars.find(t => t.id === formData.avatarTheme)?.bg} ${themeAvatars.find(t => t.id === formData.avatarTheme)?.border} flex items-center justify-center text-4xl shadow-inner transition-colors`}>
-                {themeAvatars.find(t => t.id === formData.avatarTheme)?.emoji}
+            <button
+              type="button"
+              className="relative mb-5 group cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+              aria-label="프로필 사진 올리기"
+            >
+              {avatarMain.kind === 'image' ? (
+                <div className="relative h-24 w-24 overflow-hidden rounded-3xl border-4 border-orange-200 shadow-inner">
+                  <ImageWithFallback
+                    src={avatarMain.src}
+                    fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
+                    alt="프로필 사진"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div
+                  className={`flex h-24 w-24 items-center justify-center rounded-3xl border-4 text-4xl shadow-inner transition-colors ${avatarMain.bg} ${avatarMain.border}`}
+                >
+                  {avatarMain.emoji}
+                </div>
+              )}
+              <div className="pointer-events-none absolute -bottom-2 -right-2 rounded-full border-2 border-white bg-slate-800 p-2 text-white shadow-lg transition-transform group-hover:scale-110">
+                <Camera className="h-4 w-4" aria-hidden />
               </div>
-              <div className="absolute -bottom-2 -right-2 bg-slate-800 text-white p-2 rounded-full shadow-lg border-2 border-white group-hover:scale-110 transition-transform">
-                <Camera className="w-4 h-4" />
-              </div>
-            </div>
+            </button>
 
-            {/* 테마 팔레트 */}
-            <div className="flex gap-3 justify-center bg-slate-50 p-2.5 rounded-2xl">
-              {themeAvatars.map((theme) => (
+            <div className="flex gap-3 justify-center rounded-2xl bg-slate-50 p-2.5">
+              {PROFILE_THEME_AVATARS.map((theme) => (
                 <button
                   key={theme.id}
-                  onClick={() => setFormData({...formData, avatarTheme: theme.id})}
-                  className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl transition-all ${theme.bg} ${formData.avatarTheme === theme.id ? 'scale-110 ring-2 ring-brand ring-offset-2' : 'opacity-70 hover:opacity-100'}`}
+                  type="button"
+                  onClick={() => selectThemeAvatar(theme.id)}
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl transition-all ${theme.bg} ${
+                    avatarDraft === 'theme' && formData.avatarTheme === theme.id
+                      ? 'scale-110 ring-2 ring-brand ring-offset-2'
+                      : 'opacity-70 hover:opacity-100'
+                  }`}
+                  aria-label={`캐릭터 ${theme.id}`}
                 >
                   {theme.emoji}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-slate-400 font-bold mt-3 text-center px-2">
-              사진을 올리거나, 댕댕이 캐릭터(품종 느낌)를 골라보세요
+            <p className="mt-3 px-2 text-center text-[11px] font-bold text-slate-400">
+              사진을 올리거나, 댕댕이 캐릭터(품종 느낌)를 골라보세요. 저장 후 내댕댕에 반영돼요.
             </p>
           </div>
         </div>

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search, Shield } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { mockRequests, mockRepairers, mockQuotes } from '../data/mockData';
+import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { isPromoFreeListings } from '../../lib/promoFlags';
@@ -164,9 +165,18 @@ function RequestsView({
   selectedFilter: string;
   setSelectedFilter: (f: string) => void;
 }) {
+  const [feedTick, setFeedTick] = useState(0);
+  useEffect(() => {
+    const fn = () => setFeedTick((t) => t + 1);
+    window.addEventListener('daeng-user-meetups-changed', fn);
+    return () => window.removeEventListener('daeng-user-meetups-changed', fn);
+  }, []);
+
+  const mergedRequests = useMemo(() => getMergedMeetups(mockRequests), [feedTick]);
+
   const filters = ['전체', '대기중', '진행중', '완료'];
   
-  const filteredRequests = mockRequests.filter(req => {
+  const filteredRequests = mergedRequests.filter(req => {
     const matchesSearch = !searchQuery || 
       req.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.userName.toLowerCase().includes(searchQuery.toLowerCase());
@@ -214,7 +224,7 @@ function RequestsView({
       {/* 리스트 */}
       <div className="space-y-3">
         {filteredRequests.map((request) => {
-          const quoteCount = mockQuotes.filter(q => q.repairRequestId === request.id).length;
+          const quoteCount = mockQuotes.filter((q) => q.meetupId === request.id).length;
           return (
             <Link
               key={request.id}

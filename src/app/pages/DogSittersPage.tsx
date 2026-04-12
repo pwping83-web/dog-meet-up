@@ -22,6 +22,11 @@ import { ko } from 'date-fns/locale';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
 import { getCertifiedGuardMomPhotoUrl, mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
 import {
+  displayCertifiedGuardMomIntro,
+  displayPublicDolbomMeetupDescription,
+  displayPublicDolbomMeetupTitle,
+} from '../data/virtualDogPhotos';
+import {
   MANNAJA_CATEGORY_SET,
   MANNAJA_MEETUP_CATEGORIES,
   MOIJA_CATEGORY_SET,
@@ -274,7 +279,8 @@ export function DogSittersPage() {
           'offers_daeng_pickup' in m && (m as { offers_daeng_pickup?: boolean }).offers_daeng_pickup
             ? '댕댕픽업'
             : '';
-        const blob = `${m.intro} ${m.region_si ?? ''} ${m.region_gu ?? ''} ${dong} ${pickup}`.toLowerCase();
+        const introShown = displayCertifiedGuardMomIntro(m);
+        const blob = `${introShown} ${m.region_si ?? ''} ${m.region_gu ?? ''} ${dong} ${pickup}`.toLowerCase();
         if (!blob.includes(q)) return false;
       }
       return true;
@@ -337,7 +343,8 @@ export function DogSittersPage() {
       .filter((req) => meetupVisibleInPublicFeed(req))
       .filter((req) => {
         if (!q) return true;
-        const blob = `${req.title} ${req.description} ${req.district} ${req.userName}`.toLowerCase();
+        const blob = `${displayPublicDolbomMeetupTitle(req)} ${displayPublicDolbomMeetupDescription(req)} ${req.title} ${req.description} ${req.district} ${req.userName}`
+          .toLowerCase();
         return blob.includes(q);
       })
       .slice(0, 50);
@@ -636,10 +643,10 @@ export function DogSittersPage() {
                           돌봄 맡기기 글
                         </p>
                         <h3 className="mb-1 line-clamp-1 text-base text-slate-800" style={{ fontWeight: 800 }}>
-                          {meetup.title}
+                          {displayPublicDolbomMeetupTitle(meetup)}
                         </h3>
                         <p className="mb-2 line-clamp-2 text-sm text-slate-500" style={{ fontWeight: 500 }}>
-                          {meetup.description}
+                          {displayPublicDolbomMeetupDescription(meetup)}
                         </p>
                         <div className="flex items-center justify-between">
                           <div
@@ -760,7 +767,7 @@ export function DogSittersPage() {
                             인증 보호맘
                           </p>
                           <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-800">
-                            {row.mom.intro.trim() || '소개를 준비 중이에요.'}
+                            {displayCertifiedGuardMomIntro(row.mom)}
                           </p>
                           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
                             <span className="inline-flex items-center gap-1">

@@ -9,17 +9,17 @@ const Q = 'w=960&h=960&fit=crop&q=85';
 const VIRTUAL_DOG_PHOTOS: readonly string[] = [
   `https://images.unsplash.com/photo-1548199973-03cce0bbc87b?${Q}`,
   `https://images.unsplash.com/photo-1552053831-71594a27632d?${Q}`,
-  `https://images.unsplash.com/photo-1633722715463-d30f4f325e24?${Q}`,
+  `https://images.unsplash.com/photo-1561037404-61cd46aa615b?${Q}`,
   `https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?${Q}`,
   `https://images.unsplash.com/photo-1505628346881-b72b27e84530?${Q}`,
   `https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?${Q}`,
-  `https://images.unsplash.com/photo-1637076941297-403290f6d028?${Q}`,
+  `https://images.unsplash.com/photo-1588943211346-0908a1fb0b01?${Q}`,
   `https://images.unsplash.com/photo-1693897004115-7fbd4f1ae96e?${Q}`,
   `https://images.unsplash.com/photo-1587300003388-59208cc96262?${Q}`,
   `https://images.unsplash.com/photo-1672838565001-3e7e1e96bb52?${Q}`,
   `https://images.unsplash.com/photo-1727302700512-e053b331d61c?${Q}`,
   `https://images.unsplash.com/photo-1704227170709-5e5ddefcb4f7?${Q}`,
-  `https://images.unsplash.com/photo-1766114314882-89b64589f2c5?${Q}`,
+  `https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?${Q}`,
   `https://images.unsplash.com/photo-1534361960056-177fcc42de35?${Q}`,
   `https://images.unsplash.com/photo-1518717758536-85ae2901b046?${Q}`,
   `https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?${Q}`,
@@ -68,12 +68,107 @@ function dataUrlBinarySuggestsNonPetCover(url: string): boolean {
   return bad;
 }
 
-function hashSeed(seed: string): number {
+/** 동일 시드 → 동일 인덱스(가상 프로필·폴백 문구 등) */
+export function hashSeed(seed: string): number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
     h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
   }
   return Math.abs(h);
+}
+
+export type GuardMomIntroDisplayInput = {
+  id: string;
+  intro: string | null | undefined;
+  region_si: string | null | undefined;
+  region_gu: string | null | undefined;
+};
+
+function isGarbageGuardMomIntro(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return true;
+  const hangulSyllables = (t.match(/[가-힣]/g) ?? []).length;
+  if (hangulSyllables >= 4) return false;
+  if (t.length >= 36) return false;
+  if (/^\d{1,4}$/.test(t)) return true;
+  if (/^[\d\s.,~!?]+$/.test(t)) return true;
+  if (t.length <= 8 && hangulSyllables === 0) return true;
+  if (t.length <= 12 && hangulSyllables <= 1 && /[ㅋㅎㅈㅂㅇㅜㅠ]/.test(t)) return true;
+  return false;
+}
+
+const GUARD_MOM_FALLBACK_INTROS: readonly ((loc: string) => string)[] = [
+  (loc) =>
+    `${loc} 인근 집에서 맡기기·단기 돌봄 도와드려요. 산책·식사 루틴 맞춰 드리고, 맡기 전 성향·건강 상태 알려 주시면 더 안심하고 맡기실 수 있어요. 🐾`,
+  (loc) =>
+    `${loc} 쪽 소형·중형견 위주로 케어해요. 하루 산책 횟수·사료·간식은 사전에 맞춰 주시면 그대로 지켜 드릴게요.`,
+  (loc) =>
+    `${loc}에서 맞벌이 가정 맡기기 경험이 많아요. 사진 한 장·간단 메모로 안심하고 연락 주세요.`,
+  (loc) =>
+    `${loc} 인근 예민한 아이도 천천히 적응시키며 돌봐요. 첫 만남(산책 동행) 원하시면 일정만 조율해 주세요.`,
+];
+
+/** DB `intro`가 테스트용으로 비어 있거나 너무 짧을 때만 예시 문구로 표시(원문은 DB에 그대로) */
+export function displayCertifiedGuardMomIntro(mom: GuardMomIntroDisplayInput): string {
+  const raw = typeof mom.intro === 'string' ? mom.intro : '';
+  if (!isGarbageGuardMomIntro(raw)) return raw.trim();
+  const loc = [mom.region_si, mom.region_gu].filter((x) => typeof x === 'string' && x.trim()).join(' ').trim();
+  const place = loc.length > 0 ? loc : '근처';
+  const idx = hashSeed(mom.id) % GUARD_MOM_FALLBACK_INTROS.length;
+  return GUARD_MOM_FALLBACK_INTROS[idx](place);
+}
+
+function isGarbageDolbomMeetupTitle(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return true;
+  if (/^\d+$/.test(t)) return true;
+  const hangul = (t.match(/[가-힣]/g) ?? []).length;
+  if (hangul >= 2 && t.length >= 5) return false;
+  if (t.length <= 14 && hangul === 0 && /^[a-zA-Z0-9\s._\-!?🐾]+$/u.test(t)) return true;
+  return false;
+}
+
+function isGarbageDolbomMeetupDescription(raw: string): boolean {
+  const t = raw.trim();
+  if (!t) return true;
+  if (t.length > 80) return false;
+  return isGarbageGuardMomIntro(t);
+}
+
+const DOLBOM_CARD_TITLE_FALLBACKS: readonly ((d: string) => string)[] = [
+  (d) => `${d} · 돌봄·맡기기 도와드려요`,
+  (d) => `${d} 근처 방문 돌봄 상담 받아요`,
+  (d) => `${d}에서 산책·밥·놀이 맡기기 가능해요`,
+  (d) => `${d} 기준 맡기기 일정 조율 중이에요`,
+];
+
+const DOLBOM_CARD_DESC_FALLBACKS: readonly ((d: string) => string)[] = [
+  (d) =>
+    `안녕하세요! ${d}에서 아이 맡기기·방문 돌봄 상담 받고 있어요. 체중·예방접종 여부 알려 주시면 일정 맞춰 볼게요. 🐾`,
+  (d) =>
+    `${d} 인근 집 돌봄·당일 방문도 가능한지 채팅으로 편하게 물어봐 주세요. 사료·산책 횟수 맞춰 드려요.`,
+  (d) =>
+    `맞벌이·외출 때 하루 이틀 맡기기 많이 해요. ${d} 쪽이시면 거리·시간 먼저 알려 주세요.`,
+  (d) =>
+    `${d}에서 소형견 위주로 케어해요. 첫 만남(짧은 산책) 원하시면 미리 말씀 주세요.`,
+];
+
+/** 돌봄(맡기는 사람) 목록·상세: 테스트용 제목은 구 기준 예시 문구로 표시 */
+export function displayPublicDolbomMeetupTitle(m: Pick<Meetup, 'id' | 'title' | 'district'>): string {
+  const raw = (m.title ?? '').trim();
+  if (!isGarbageDolbomMeetupTitle(raw)) return raw;
+  const d = (m.district ?? '').trim() || '동네';
+  const idx = hashSeed(m.id) % DOLBOM_CARD_TITLE_FALLBACKS.length;
+  return DOLBOM_CARD_TITLE_FALLBACKS[idx](d);
+}
+
+/** 돌봄 맡기기 글 설명: 너무 짧은 테스트 문장은 예시로 표시 */
+export function displayPublicDolbomMeetupDescription(m: Pick<Meetup, 'id' | 'description' | 'district'>): string {
+  const raw = typeof m.description === 'string' ? m.description : '';
+  if (!isGarbageDolbomMeetupDescription(raw)) return raw.trim();
+  const d = (m.district ?? '').trim() || '동네';
+  const idx = hashSeed(`${m.id}-dolbom-desc`) % DOLBOM_CARD_DESC_FALLBACKS.length;
+  return DOLBOM_CARD_DESC_FALLBACKS[idx](d);
 }
 
 export function virtualDogPhotoForSeed(seed: string): string {
@@ -88,6 +183,21 @@ export function shouldUseVirtualDogPhoto(url: string | undefined | null): boolea
   /** 올리기(FileReader)로 들어온 base64: EXIF/XMP 등에 드론·스톡 문자열이 있으면 강아지 커버로 교체 */
   if (/^data:image\//i.test(t)) return dataUrlBinarySuggestsNonPetCover(t);
   if (!/^https?:\/\//i.test(t)) return false;
+  let probe = t;
+  try {
+    probe = `${t} ${decodeURIComponent(t)}`;
+  } catch {
+    /* ignore */
+  }
+  const lower = probe.toLowerCase();
+  /** CDN·파일명에 드론·항공 촬영 힌트가 있으면 비반려 커버로 간주 */
+  if (
+    /dji|djifly|\bmavic\b|phantom|\binspire\b|air\s*2s|mini\s*[23]|quadcopter|\bdrone\b|\buav\b|skydio|autel|ryze|tello|fpv|racing\s*quad|항공\s*촬|항공촬|촬영용|드론|aerial\s*photo|aerial[_-]?image/i.test(
+      lower,
+    )
+  ) {
+    return true;
+  }
   return REPLACED_UNSPLASH_IDS.test(t);
 }
 
@@ -122,16 +232,29 @@ export function resolveDogSitterPortraitUrl(s: Pick<DogSitter, 'id' | 'profileIm
 const PLACEHOLDER_OR_STOCK_HOST =
   /picsum\.photos|placehold|placeholder|loremflickr|dummyimage/i;
 
+/** URL 문자열에만 나타나는 비반려·일러스트 힌트(퍼센트 인코딩 디코드 후에도 검사) */
+function dogProfilePhotoUrlLooksNonPet(url: string): boolean {
+  let probe = url;
+  try {
+    probe = `${url} ${decodeURIComponent(url)}`;
+  } catch {
+    probe = url;
+  }
+  const p = probe.toLowerCase();
+  return (
+    /grazing|\bsheep\b|\blamb\b|mee{2,}p|illustrat|freepik\.com\/|vecteezy|depositphotos|shutterstock|123rf|alamy|bodybuild|muscle[-_]?man|weight[-_]?lift|humaaans|blush\.design|opendoodles|flaticon|iconfinder|cdn-icons|human[-_]?figure|people[-_]?illustrat/i.test(
+      p,
+    ) || /undraw\.co|storyset\.com|drawkit\.io|illustrations\.unsplash/i.test(p)
+  );
+}
+
 /** `dog_profiles.photo_url` — 비어 있거나 플레이스홀더·일러스트 스톡·비반려면 가상 강아지 */
 export function resolveDogProfilePhotoUrl(dog: { id: string; photo_url?: string | null }): string {
   const raw = typeof dog.photo_url === 'string' ? dog.photo_url.trim() : '';
   if (!raw) return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
   if (shouldUseVirtualDogPhoto(raw)) return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
   if (/^https:\/\/images\.unsplash\.com\//i.test(raw)) return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
-  if (/undraw\.co|storyset\.com|drawkit\.io|illustrations\.unsplash/i.test(raw)) {
-    return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
-  }
-  if (/grazing|sheep|\blamb\b|mee{2,}p|illustrat|freepik\.com\/photo|vecteezy/i.test(raw)) {
+  if (dogProfilePhotoUrlLooksNonPet(raw)) {
     return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
   }
   try {
@@ -183,11 +306,22 @@ export function virtualDogPersonaGender(dogId: string): string {
   return hashSeed(`${dogId}-gender`) % 2 === 0 ? '남아' : '여아';
 }
 
+/** 한글 음절(가~힣) 없이 자모·숫자·영문만 짧게 쓴 테스트 이름 */
+function isJamoOrAsciiGarbageName(n: string): boolean {
+  const hangulSyllables = (n.match(/[가-힣]/g) ?? []).length;
+  if (hangulSyllables > 0) return false;
+  if (n.length > 6) return false;
+  if (/^[\u3131-\u318E]+$/.test(n)) return true;
+  if (/^[a-zA-Z0-9]*$/i.test(n) && n.length <= 3) return true;
+  return false;
+}
+
 function isGarbageDogNameForPublic(name: string | null | undefined): boolean {
   const n = (name ?? '').trim();
   if (!n) return true;
-  if (/^\d{1,4}$/.test(n)) return true;
+  if (/^\d+$/.test(n) && n.length <= 10) return true;
   if (n.length === 1) return true;
+  if (isJamoOrAsciiGarbageName(n)) return true;
   return false;
 }
 
@@ -196,6 +330,7 @@ function isGarbageDogBreedForPublic(breed: string | null | undefined): boolean {
   if (!b) return false;
   if (/^\d+$/.test(b)) return true;
   if (b.length === 1) return true;
+  if (isJamoOrAsciiGarbageName(b)) return true;
   return false;
 }
 

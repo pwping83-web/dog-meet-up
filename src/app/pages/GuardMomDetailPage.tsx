@@ -10,6 +10,7 @@ import {
   getMockCertifiedGuardMomById,
   isMockGuardMomId,
 } from '../data/mockCertifiedGuardMoms';
+import { displayCertifiedGuardMomIntro } from '../data/virtualDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation } from '../data/regions';
 import { GUARD_MOM_REQUEST_LEGAL_FOOTNOTE } from '../../lib/platformLegalCopy';
@@ -137,7 +138,7 @@ export function GuardMomDetailPage() {
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-extrabold uppercase tracking-wide text-orange-600">인증 보호맘</p>
               <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-800">
-                {mom.intro.trim() || '소개 글이 없어요.'}
+                {displayCertifiedGuardMomIntro(mom)}
               </p>
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">

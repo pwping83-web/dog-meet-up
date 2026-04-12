@@ -1,11 +1,12 @@
 import { useParams, useNavigate, useLocation, Link } from 'react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag, PencilLine, Trash2, Shield } from 'lucide-react';
 import { mockMeetups, mockJoinRequests, mockDogSitters } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { calculateDistance, formatDistance } from '../utils/distance';
-import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { adminDeleteMeetupById, adminSaveMeetupPatch, getMergedMeetups } from '../../lib/userMeetupsStore';
+import { isAppAdmin } from '../../lib/appAdmin';
 import { useAuth } from '../../contexts/AuthContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import {
@@ -15,7 +16,25 @@ import {
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { MEETUP_DETAIL_FOOTNOTE } from '../../lib/platformLegalCopy';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { meetupCoverImageUrl, resolveDogSitterPortraitUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import {
+  displayPublicDolbomMeetupDescription,
+  displayPublicDolbomMeetupTitle,
+  meetupCoverImageUrl,
+  resolveDogSitterPortraitUrl,
+  virtualDogPhotoForSeed,
+} from '../data/virtualDogPhotos';
+import type { Meetup } from '../types';
+
+const ADMIN_MEETUP_CATEGORIES = [
+  '공원·장소 모임',
+  '산책·놀이',
+  '카페·체험',
+  '훈련·사회화',
+  '1:1 만남',
+  '교배',
+  '실종',
+  '돌봄',
+] as const;
 
 export function MeetupDetailPage() {
   const { id } = useParams();
@@ -37,6 +56,21 @@ export function MeetupDetailPage() {
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [joinAiSummary, setJoinAiSummary] = useState<string | null>(null);
+  const [adminEditOpen, setAdminEditOpen] = useState(false);
+  const [adminForm, setAdminForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    status: 'pending' as Meetup['status'],
+    district: '',
+    location: '',
+    userName: '',
+    estimatedCost: '',
+  });
+
+  useEffect(() => {
+    setAdminEditOpen(false);
+  }, [id]);
 
   if (!meetup) {
     return (
@@ -47,6 +81,11 @@ export function MeetupDetailPage() {
   }
 
   const timeAgo = formatDistanceToNow(meetup.createdAt, { addSuffix: true, locale: ko });
+
+  const dolbomTitleShown =
+    meetup.category === '돌봄' ? displayPublicDolbomMeetupTitle(meetup) : meetup.title;
+  const dolbomDescriptionShown =
+    meetup.category === '돌봄' ? displayPublicDolbomMeetupDescription(meetup) : meetup.description;
 
   const breedingMislabelHint = shouldSuggestBreedingMislabelReport(
     meetup.category,
@@ -114,6 +153,51 @@ export function MeetupDetailPage() {
     );
   };
 
+  const openAdminEdit = () => {
+    setAdminForm({
+      title: meetup.title,
+      description: meetup.description,
+      category: meetup.category,
+      status: meetup.status,
+      district: meetup.district,
+      location: meetup.location,
+      userName: meetup.userName,
+      estimatedCost: meetup.estimatedCost ?? '',
+    });
+    setAdminEditOpen(true);
+  };
+
+  const handleAdminSave = () => {
+    if (!adminForm.title.trim()) {
+      alert('제목은 비울 수 없어요.');
+      return;
+    }
+    adminSaveMeetupPatch(meetup.id, {
+      title: adminForm.title.trim(),
+      description: adminForm.description.trim(),
+      category: adminForm.category,
+      status: adminForm.status,
+      district: adminForm.district.trim(),
+      location: adminForm.location.trim(),
+      userName: adminForm.userName.trim(),
+      estimatedCost: adminForm.estimatedCost.trim() || undefined,
+    });
+    setAdminEditOpen(false);
+    alert('관리자 권한으로 글을 저장했어요.');
+  };
+
+  const handleAdminDelete = () => {
+    if (
+      !window.confirm(
+        '관리자 권한으로 이 글을 삭제합니다. 목록·피드에서 사라지며 복구할 수 없어요. 계속할까요?',
+      )
+    ) {
+      return;
+    }
+    adminDeleteMeetupById(meetup.id);
+    navigate('/explore', { replace: true });
+  };
+
   return (
     <div className="min-h-screen bg-white pb-24">
       {/* 글래스모피즘 헤더 */}
@@ -146,13 +230,40 @@ export function MeetupDetailPage() {
           </p>
         )}
 
+        {!authLoading && user && isAppAdmin(user) && (
+          <div className="mb-5 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-white px-4 py-3 shadow-sm">
+            <div className="mb-2 flex items-center gap-2 text-xs font-extrabold text-violet-800">
+              <Shield className="h-4 w-4 shrink-0" aria-hidden />
+              관리자 전용 — 이 글을 직접 수정하거나 삭제할 수 있어요
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={openAdminEdit}
+                className="inline-flex flex-1 min-w-[8rem] items-center justify-center gap-1.5 rounded-xl bg-violet-600 px-3 py-2.5 text-sm font-extrabold text-white shadow-sm active:scale-[0.98]"
+              >
+                <PencilLine className="h-4 w-4" aria-hidden />
+                글 수정
+              </button>
+              <button
+                type="button"
+                onClick={handleAdminDelete}
+                className="inline-flex flex-1 min-w-[8rem] items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm font-extrabold text-red-600 active:scale-[0.98]"
+              >
+                <Trash2 className="h-4 w-4" aria-hidden />
+                글 삭제
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* 1. 모임 정보 */}
         <div className="mb-10">
           <div className="aspect-[4/3] bg-slate-100 rounded-[2rem] overflow-hidden mb-6 shadow-sm">
             <ImageWithFallback
               src={meetupCoverImageUrl(meetup)}
               fallbackSrc={virtualDogPhotoForSeed(`meetup-detail-fallback-${meetup.id}`)}
-              alt={meetup.title}
+              alt={dolbomTitleShown}
               className="h-full w-full object-cover"
             />
           </div>
@@ -165,7 +276,7 @@ export function MeetupDetailPage() {
           </div>
 
           <h1 className="text-2xl text-slate-900 mb-4 leading-tight tracking-tight" style={{ fontWeight: 800 }}>
-            {meetup.title}
+            {dolbomTitleShown}
           </h1>
 
           <div className="flex items-center gap-4 text-sm text-slate-500 mb-6" style={{ fontWeight: 500 }}>
@@ -175,7 +286,7 @@ export function MeetupDetailPage() {
           </div>
 
           <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 text-slate-700 leading-relaxed" style={{ fontWeight: 500 }}>
-            {meetup.description}
+            {dolbomDescriptionShown}
           </div>
 
           <p className="mt-3 text-[11px] font-medium leading-relaxed text-slate-500">{MEETUP_DETAIL_FOOTNOTE}</p>
@@ -430,6 +541,135 @@ export function MeetupDetailPage() {
           </div>
         )}
       </div>
+
+      {adminEditOpen && (
+        <div
+          className="fixed inset-0 z-[110] flex items-end justify-center bg-black/50 p-4 sm:items-center"
+          role="presentation"
+          onClick={() => setAdminEditOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-edit-title"
+            className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-violet-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="admin-edit-title" className="text-base font-extrabold text-slate-900">
+              관리자 — 글 수정
+            </h3>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              저장 즉시 모든 사용자 화면에 반영돼요. (목업 글은 이 기기에만 오버라이드로 저장됩니다.)
+            </p>
+            <div className="mt-4 space-y-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">제목</span>
+                <input
+                  type="text"
+                  value={adminForm.title}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, title: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">주제</span>
+                <select
+                  value={adminForm.category}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, category: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                >
+                  {!(ADMIN_MEETUP_CATEGORIES as readonly string[]).includes(adminForm.category) && (
+                    <option value={adminForm.category}>{adminForm.category} (현재 DB)</option>
+                  )}
+                  {ADMIN_MEETUP_CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">상태</span>
+                <select
+                  value={adminForm.status}
+                  onChange={(e) =>
+                    setAdminForm((f) => ({
+                      ...f,
+                      status: e.target.value as Meetup['status'],
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                >
+                  <option value="pending">모집중</option>
+                  <option value="in-progress">진행중</option>
+                  <option value="completed">완료</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">작성자 표시명</span>
+                <input
+                  type="text"
+                  value={adminForm.userName}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, userName: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">구(동네)</span>
+                <input
+                  type="text"
+                  value={adminForm.district}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, district: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">위치(한 줄)</span>
+                <input
+                  type="text"
+                  value={adminForm.location}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, location: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">일정·표기 (estimatedCost)</span>
+                <input
+                  type="text"
+                  value={adminForm.estimatedCost}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, estimatedCost: e.target.value }))}
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-900"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold text-slate-600">본문</span>
+                <textarea
+                  value={adminForm.description}
+                  onChange={(e) => setAdminForm((f) => ({ ...f, description: e.target.value }))}
+                  rows={5}
+                  className="w-full resize-y rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-800"
+                />
+              </label>
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button
+                type="button"
+                onClick={() => setAdminEditOpen(false)}
+                className="flex-1 rounded-xl border border-slate-200 py-3 text-sm font-extrabold text-slate-600"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={handleAdminSave}
+                className="flex-1 rounded-xl bg-violet-600 py-3 text-sm font-extrabold text-white shadow-sm"
+              >
+                저장
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {reportOpen && (
         <div

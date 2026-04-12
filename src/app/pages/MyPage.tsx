@@ -35,6 +35,10 @@ import { formatRegion } from '../data/regions';
 import { readExtraCareRegions, writeExtraCareRegions } from '../../lib/extraCareRegions';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 import { isAppAdmin } from '../../lib/appAdmin';
+import { supabase } from '../../lib/supabase';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { profileAvatarAlt, profileAvatarVisual } from '../../lib/profileAvatar';
+import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 export function MyPage() {
   const navigate = useNavigate();
@@ -59,6 +63,22 @@ export function MyPage() {
   const [extraCity, setExtraCity] = useState('');
   const [extraDistrict, setExtraDistrict] = useState('');
   const [extraHint, setExtraHint] = useState<string | null>(null);
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setProfileAvatarUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle();
+      if (!cancelled) setProfileAvatarUrl(data?.avatar_url?.trim() ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, location.key]);
 
   const referenceDistrictsForExtras = useMemo(() => {
     const primary = userLoc.district?.trim();
@@ -153,6 +173,7 @@ export function MyPage() {
   };
 
   const profileName = user ? displayNameFromUser(user) : '로그인 후 이용';
+  const headerAvatar = profileAvatarVisual(profileAvatarUrl);
 
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
@@ -176,8 +197,22 @@ export function MyPage() {
         {/* 프로필 섹션 · 동네 = UserLocation (헤더와 동일 저장소) */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner">
-              <User className="h-7 w-7 text-brand" />
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner">
+              {headerAvatar.kind === 'image' ? (
+                <ImageWithFallback
+                  src={headerAvatar.src}
+                  fallbackSrc={virtualDogPhotoForSeed(`my-page-avatar-${user?.id ?? 'x'}`)}
+                  alt={profileAvatarAlt(profileAvatarUrl, profileName)}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span
+                  className={`flex h-full w-full items-center justify-center text-2xl ${headerAvatar.bg} ${headerAvatar.border} border-2`}
+                  aria-hidden
+                >
+                  {headerAvatar.emoji}
+                </span>
+              )}
             </div>
             <div className="flex-1 min-w-0 space-y-3">
               <div>
