@@ -35,16 +35,19 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
 }
 
 /** Google AI Studio / Cloud에서 발급 (AIza…). Supabase Secret: GEMINI_API_KEY */
-const GEMINI_MODEL = "gemini-1.5-flash";
+const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"] as const;
 
-async function geminiChat(system: string, user: string, maxOutputTokens: number): Promise<string> {
-  const key = Deno.env.get("GEMINI_API_KEY")?.trim();
-  if (!key) throw new Error("NO_KEY");
-
+async function geminiChatOnce(
+  model: string,
+  system: string,
+  user: string,
+  maxOutputTokens: number,
+  apiKey: string,
+): Promise<string> {
   const cap = Math.min(Math.max(maxOutputTokens, 128), 8192);
   const url =
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${
-      encodeURIComponent(key)
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${
+      encodeURIComponent(apiKey)
     }`;
 
   const res = await fetch(url, {
@@ -62,7 +65,7 @@ async function geminiChat(system: string, user: string, maxOutputTokens: number)
 
   const rawText = await res.text();
   if (!res.ok) {
-    throw new Error(`Gemini HTTP ${res.status}: ${rawText.slice(0, 280)}`);
+    throw new Error(`Gemini HTTP ${res.status} (${model}): ${rawText.slice(0, 280)}`);
   }
 
   let data: {
@@ -76,7 +79,7 @@ async function geminiChat(system: string, user: string, maxOutputTokens: number)
   }
 
   if (data.error?.message) {
-    throw new Error(`Gemini API: ${data.error.message}`);
+    throw new Error(`Gemini API (${model}): ${data.error.message}`);
   }
 
   const parts = data.candidates?.[0]?.content?.parts;
@@ -84,6 +87,25 @@ async function geminiChat(system: string, user: string, maxOutputTokens: number)
     parts?.map((p) => p.text).filter((x): x is string => typeof x === "string").join("") ?? "";
   if (!text.trim()) throw new Error("빈 응답");
   return text.trim();
+}
+
+async function geminiChat(system: string, user: string, maxOutputTokens: number): Promise<string> {
+  const key = Deno.env.get("GEMINI_API_KEY")?.trim();
+  if (!key) throw new Error("NO_KEY");
+
+  let lastErr = "";
+  for (const model of GEMINI_MODELS) {
+    try {
+      return await geminiChatOnce(model, system, user, maxOutputTokens, key);
+    } catch (e) {
+      lastErr = (e as Error).message;
+      const retry = /404|NOT_FOUND|not found|is not found|not supported for generatecontent/i.test(
+        lastErr,
+      );
+      if (!retry) throw e;
+    }
+  }
+  throw new Error(lastErr || "Gemini 호출 실패");
 }
 
 Deno.serve(async (req) => {
@@ -96,22 +118,25 @@ Deno.serve(async (req) => {
 
   const authHeader = req.headers.get("Authorization") ?? "";
   if (!authHeader.startsWith("Bearer ")) {
-    return jsonResponse({ ok: false, error: "로그인이 필요합니다." }, 401);
+    return jsonResponse({ ok: false, error: "로그인이 필요합니다." });
   }
   const supabaseUrl = Deno.env.get("SUPABASE_URL")?.trim();
   const supabaseAnon = Deno.env.get("SUPABASE_ANON_KEY")?.trim();
   if (!supabaseUrl || !supabaseAnon) {
-    return jsonResponse({ ok: false, error: "서버 설정 오류(SUPABASE_URL / SUPABASE_ANON_KEY)" }, 500);
+    return jsonResponse(
+      { ok: false, error: "서버 설정 오류(SUPABASE_URL / SUPABASE_ANON_KEY). Edge 기본 시크릿을 확인하세요." },
+    );
   }
+  const clientApikey = req.headers.get("apikey")?.trim() || supabaseAnon;
   const supabaseAuth = createClient(supabaseUrl, supabaseAnon, {
-    global: { headers: { Authorization: authHeader } },
+    global: { headers: { Authorization: authHeader, apikey: clientApikey } },
   });
   const { data: authData, error: authErr } = await supabaseAuth.auth.getUser();
   if (authErr || !authData.user) {
-    return jsonResponse(
-      { ok: false, error: "세션이 유효하지 않습니다. 다시 로그인해 주세요." },
-      401,
-    );
+    return jsonResponse({
+      ok: false,
+      error: `세션이 유효하지 않습니다. 다시 로그인해 주세요. (${authErr?.message ?? "no user"})`,
+    });
   }
 
   let task: string;
@@ -238,14 +263,11 @@ Deno.serve(async (req) => {
   } catch (e) {
     const msg = (e as Error).message;
     if (msg === "NO_KEY") {
-      return jsonResponse(
-        {
-          ok: false,
-          error:
-            "GEMINI_API_KEY가 없습니다. Supabase Dashboard → Edge Functions → Secrets에 GEMINI_API_KEY를 등록하세요.",
-        },
-        503,
-      );
+      return jsonResponse({
+        ok: false,
+        error:
+          "GEMINI_API_KEY가 없습니다. Supabase Dashboard → Edge Functions → Secrets에 GEMINI_API_KEY를 등록하세요.",
+      });
     }
     const quotaLike =
       /Gemini HTTP 429/i.test(msg) ||
@@ -260,6 +282,7 @@ Deno.serve(async (req) => {
           : "ai토큰? 이 떨어졌습니다 충전해 주세요",
       });
     }
-    return jsonResponse({ ok: false, error: msg }, 500);
+    // HTTP 200 + ok:false → supabase-js가 body를 넘겨 alert에 원인이 보임(500이면 메시지가 잘림).
+    return jsonResponse({ ok: false, error: msg.slice(0, 900) });
   }
 });
