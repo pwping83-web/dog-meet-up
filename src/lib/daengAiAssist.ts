@@ -27,13 +27,15 @@ function explainEdgeInvokeFailure(raw: string): string {
   if (lower.includes('non-2xx')) {
     return (
       `${m}\n\n` +
-      '【의미】Supabase Edge Function이 2xx가 아닌 HTTP 상태(404·401·500·503 등)로 응답했습니다. CORS만 고쳐서는 안 될 수 있어요.\n\n' +
-      '【확인 순서】\n' +
-      '1) Dashboard → Edge Functions → 목록에 daeng-ai-assist 가 있는지 (없으면 미배포)\n' +
-      '2) Edge Functions Secrets에 OPENAI_API_KEY 등록 여부\n' +
-      '3) Edge Functions → Logs에서 방금 요청의 status·메시지 확인\n' +
-      '4) 앱에서 로그아웃 후 다시 로그인(JWT 문제 시 401)\n\n' +
-      '배포: npx supabase functions deploy daeng-ai-assist --use-api (또는 GitHub Actions).'
+      '【의미】Supabase Edge Function이 2xx가 아닌 HTTP 상태(404·401·500·503 등)로 응답했습니다.\n\n' +
+      '【401 Unauthorized 인 경우】`verify_jwt=true`일 때 세션 JWT가 거절된 것입니다.\n' +
+      '· 로그아웃 후 다시 로그인, 또는 시크릿 창에서 재시도\n' +
+      '· 배포 사이트 환경변수의 VITE_SUPABASE_URL·VITE_SUPABASE_ANON_KEY가 이 프로젝트 것과 같은지 확인\n\n' +
+      '【그 외】\n' +
+      '1) Edge Functions 목록에 daeng-ai-assist 배포 여부\n' +
+      '2) Secrets에 OPENAI_API_KEY\n' +
+      '3) Edge Functions → Logs\n\n' +
+      '배포: npx supabase functions deploy daeng-ai-assist --use-api'
     );
   }
   if (
@@ -55,8 +57,32 @@ export async function invokeDaengAiAssist(
   task: DaengAiTask,
   payload: Record<string, unknown>,
 ): Promise<DaengAiAssistResult> {
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    return { ok: false, error: '로그인 후 AI 도우미를 사용할 수 있어요.' };
+  }
+
+  let { data: sessionData } = await supabase.auth.getSession();
+  let session = sessionData.session;
+  if (!session?.access_token) {
+    return { ok: false, error: '세션을 찾을 수 없어요. 다시 로그인해 주세요.' };
+  }
+
+  const expiresAtMs = (session.expires_at ?? 0) * 1000;
+  if (expiresAtMs < Date.now() + 120_000) {
+    const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+    if (refreshError || !refreshed.session?.access_token) {
+      return {
+        ok: false,
+        error: '세션이 곧 만료됐거나 갱신에 실패했어요. 다시 로그인한 뒤 시도해 주세요.',
+      };
+    }
+    session = refreshed.session;
+  }
+
   const { data, error } = await supabase.functions.invoke('daeng-ai-assist', {
     body: { task, payload },
+    headers: { Authorization: `Bearer ${session.access_token}` },
   });
 
   if (error) {
