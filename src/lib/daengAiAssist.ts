@@ -21,10 +21,11 @@ export type DaengAiAssistResult =
   | { ok: true; text: string; fields?: DaengAiFields }
   | { ok: false; error: string };
 
-/** OpenAI 429·quota 등일 때 사용자에게 보이는 문구 */
-const OPENAI_QUOTA_USER_MESSAGE = 'ai토큰? 이 떨어졌습니다 충전해 주세요';
+const OPENAI_STYLE_QUOTA_MESSAGE = 'ai토큰? 이 떨어졌습니다 충전해 주세요';
+const GEMINI_STYLE_QUOTA_MESSAGE =
+  'Gemini 무료 한도에 걸렸어요. 1~2분 뒤 다시 시도하거나 Google AI Studio에서 사용량을 확인해 주세요.';
 
-function isLikelyOpenAiQuotaMessage(text: string): boolean {
+function isLikelyModelQuotaMessage(text: string): boolean {
   const l = text.toLowerCase();
   return (
     l.includes("429") ||
@@ -33,8 +34,19 @@ function isLikelyOpenAiQuotaMessage(text: string): boolean {
     l.includes("rate_limit") ||
     l.includes("rate limit") ||
     l.includes("billing_hard_cap") ||
-    l.includes("exceeded your current quota")
+    l.includes("exceeded your current quota") ||
+    l.includes("resource_exhausted") ||
+    l.includes("gemini http") ||
+    l.includes("generativelanguage")
   );
+}
+
+function quotaUserMessageForText(text: string): string {
+  const l = text.toLowerCase();
+  if (l.includes("gemini") || l.includes("resource_exhausted") || l.includes("generativelanguage")) {
+    return GEMINI_STYLE_QUOTA_MESSAGE;
+  }
+  return OPENAI_STYLE_QUOTA_MESSAGE;
 }
 
 function explainEdgeInvokeFailure(raw: string): string {
@@ -49,7 +61,7 @@ function explainEdgeInvokeFailure(raw: string): string {
       '· 배포 사이트 환경변수의 VITE_SUPABASE_URL·VITE_SUPABASE_ANON_KEY가 이 프로젝트 것과 같은지 확인\n\n' +
       '【그 외】\n' +
       '1) Edge Functions 목록에 daeng-ai-assist 배포 여부\n' +
-      '2) Secrets에 OPENAI_API_KEY\n' +
+      '2) Secrets에 GEMINI_API_KEY\n' +
       '3) Edge Functions → Logs\n\n' +
       '배포: npx supabase functions deploy daeng-ai-assist --use-api'
     );
@@ -62,7 +74,7 @@ function explainEdgeInvokeFailure(raw: string): string {
       `${m}\n\n` +
       '【조치】Supabase 프로젝트에 `daeng-ai-assist` 함수가 배포돼 있는지 확인하세요.\n' +
       '· CLI: `npx supabase functions deploy daeng-ai-assist`\n' +
-      '· Dashboard → Edge Functions → Secrets에 `OPENAI_API_KEY` 등록\n' +
+      '· Dashboard → Edge Functions → Secrets에 `GEMINI_API_KEY` 등록\n' +
       '· 로그인한 상태에서만 호출됩니다(`verify_jwt = true`).'
     );
   }
@@ -103,8 +115,8 @@ export async function invokeDaengAiAssist(
 
   if (error) {
     const raw = `${error.message || ''} ${typeof data === 'string' ? data : JSON.stringify(data ?? '')}`;
-    if (isLikelyOpenAiQuotaMessage(raw)) {
-      return { ok: false, error: OPENAI_QUOTA_USER_MESSAGE };
+    if (isLikelyModelQuotaMessage(raw)) {
+      return { ok: false, error: quotaUserMessageForText(raw) };
     }
     return {
       ok: false,
@@ -125,8 +137,8 @@ export async function invokeDaengAiAssist(
 
   if (!d.ok) {
     const errText = d.error || '';
-    if (isLikelyOpenAiQuotaMessage(errText)) {
-      return { ok: false, error: OPENAI_QUOTA_USER_MESSAGE };
+    if (isLikelyModelQuotaMessage(errText)) {
+      return { ok: false, error: quotaUserMessageForText(errText) };
     }
     return { ok: false, error: errText || 'AI 도우미 처리 실패' };
   }

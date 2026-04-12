@@ -33,37 +33,55 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
   }
 }
 
-async function openaiChat(system: string, user: string, maxTokens: number): Promise<string> {
-  const key = Deno.env.get("OPENAI_API_KEY")?.trim();
+/** Google AI Studio / Cloud에서 발급 (AIza…). Supabase Secret: GEMINI_API_KEY */
+const GEMINI_MODEL = "gemini-1.5-flash";
+
+async function geminiChat(system: string, user: string, maxOutputTokens: number): Promise<string> {
+  const key = Deno.env.get("GEMINI_API_KEY")?.trim();
   if (!key) throw new Error("NO_KEY");
 
-  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+  const cap = Math.min(Math.max(maxOutputTokens, 128), 8192);
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${
+      encodeURIComponent(key)
+    }`;
+
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: system },
-        { role: "user", content: user },
-      ],
-      temperature: 0.55,
-      max_tokens: maxTokens,
+      systemInstruction: { parts: [{ text: system }] },
+      contents: [{ role: "user", parts: [{ text: user }] }],
+      generationConfig: {
+        temperature: 0.55,
+        maxOutputTokens: cap,
+      },
     }),
   });
 
+  const rawText = await res.text();
   if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`OpenAI HTTP ${res.status}: ${t.slice(0, 240)}`);
+    throw new Error(`Gemini HTTP ${res.status}: ${rawText.slice(0, 280)}`);
   }
 
-  const data = (await res.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
+  let data: {
+    candidates?: Array<{ content?: { parts?: Array<{ text?: string }> }; finishReason?: string }>;
+    error?: { message?: string; code?: number; status?: string };
   };
-  const text = data.choices?.[0]?.message?.content;
-  if (typeof text !== "string" || !text.trim()) throw new Error("빈 응답");
+  try {
+    data = JSON.parse(rawText) as typeof data;
+  } catch {
+    throw new Error(`Gemini 응답 파싱 실패: ${rawText.slice(0, 160)}`);
+  }
+
+  if (data.error?.message) {
+    throw new Error(`Gemini API: ${data.error.message}`);
+  }
+
+  const parts = data.candidates?.[0]?.content?.parts;
+  const text =
+    parts?.map((p) => p.text).filter((x): x is string => typeof x === "string").join("") ?? "";
+  if (!text.trim()) throw new Error("빈 응답");
   return text.trim();
 }
 
@@ -103,7 +121,7 @@ Deno.serve(async (req) => {
           `말투는 친근한 존댓말. description은 2~5문장. 제목은 28자 이내 권장.`;
         const user = `글 유형: ${kind}. 사용자 메모/키워드:\n${hints || "(비어 있음)"}\n` +
           (currentCategory ? `선호 주제(가능하면 맞출 것): ${currentCategory}\n` : "");
-        const raw = await openaiChat(sys, user, 700);
+        const raw = await geminiChat(sys, user, 700);
         const obj = extractJsonObject(raw);
         if (!obj?.title || !obj?.description) {
           return jsonResponse({ ok: true, text: raw, fields: {} });
@@ -126,7 +144,7 @@ Deno.serve(async (req) => {
         const sys =
           "너는 인증 보호맘 프로필 소개글 작성 도우미야. 한국어 존댓말. 과장·의료·법적 확약은 피하고, 돌봄 경력·환경·견종 크기·산책·예방접종 확인 등을 담은 4~8문단. 출력은 본문만.";
         const user = `지역: ${regionSi} ${regionGu}\n키워드/메모:\n${keywords || "(없음)"}`;
-        const text = await openaiChat(sys, user, 900);
+        const text = await geminiChat(sys, user, 900);
         return jsonResponse({ ok: true, text });
       }
 
@@ -134,7 +152,7 @@ Deno.serve(async (req) => {
         const q = String(payload.query ?? "").slice(0, 200);
         const sys =
           '반드시 JSON만: {"suggestedSearch":"검색창에 넣을 한 줄","chips":["칩1","칩2"]} chips는 0~4개 한국어.';
-        const raw = await openaiChat(sys, `사용자 입력: ${q}`, 300);
+        const raw = await geminiChat(sys, `사용자 입력: ${q}`, 300);
         const obj = extractJsonObject(raw);
         const suggestedSearch = typeof obj?.suggestedSearch === "string" ? obj.suggestedSearch : q;
         const chips = Array.isArray(obj?.chips)
@@ -153,7 +171,7 @@ Deno.serve(async (req) => {
         const sys =
           "너는 반려견 산책·모임 채팅 도우미야. 한 줄~세 줄 짧은 답장 초안만. 존댓말. 연락처·주소 과다 요구 금지.";
         const user = `상대 닉네임: ${peerName}\n최근 대화:\n${transcript}`;
-        const text = await openaiChat(sys, user, 350);
+        const text = await geminiChat(sys, user, 350);
         return jsonResponse({ ok: true, text });
       }
 
@@ -164,7 +182,7 @@ Deno.serve(async (req) => {
         const sys =
           "강아지 성향(MBTI 유사) 결과에 대한 부드러운 해설을 한국어로 5~10문장. 과학적 단정 금지, '참고로' 톤.";
         const user = `유형 키: ${typeKey}\n이름: ${name}\n기본 설명: ${desc}`;
-        const text = await openaiChat(sys, user, 600);
+        const text = await geminiChat(sys, user, 600);
         return jsonResponse({ ok: true, text });
       }
 
@@ -181,7 +199,7 @@ Deno.serve(async (req) => {
         const sys =
           "모임 주최자용 참여 신청 요약. 한국어 불릿 4~10줄. 민감정보 반복·외부 유출 조언 금지.";
         const user = lines.join("\n\n") || "(신청 없음)";
-        const text = await openaiChat(sys, user, 700);
+        const text = await geminiChat(sys, user, 700);
         return jsonResponse({ ok: true, text });
       }
 
@@ -189,7 +207,7 @@ Deno.serve(async (req) => {
         const sys =
           "반려견 돌봄 플랫폼 운영자에게 짧은 체크리스트(한국어). 인증·RLS·결제·CS. 6~12줄 불릿, 기술명은 짧게.";
         const user = String(payload.topic ?? "guard_mom_certify_listing").slice(0, 200);
-        const text = await openaiChat(sys, `주제 키: ${user}`, 500);
+        const text = await geminiChat(sys, `주제 키: ${user}`, 500);
         return jsonResponse({ ok: true, text });
       }
 
@@ -203,19 +221,22 @@ Deno.serve(async (req) => {
         {
           ok: false,
           error:
-            "OPENAI_API_KEY가 없습니다. Supabase Dashboard → Project Settings → Edge Functions → Secrets에 OPENAI_API_KEY를 등록하세요.",
+            "GEMINI_API_KEY가 없습니다. Supabase Dashboard → Edge Functions → Secrets에 GEMINI_API_KEY를 등록하세요.",
         },
         503,
       );
     }
     const quotaLike =
-      /OpenAI HTTP 429/i.test(msg) ||
-      /insufficient_quota|exceeded your current quota|billing_hard_cap|Rate limit reached/i.test(msg);
+      /Gemini HTTP 429/i.test(msg) ||
+      /RESOURCE_EXHAUSTED|resource_exhausted|quota|rate limit|Too Many Requests|429/i.test(msg) ||
+      /insufficient_quota|exceeded your current quota|billing_hard_cap/i.test(msg);
     if (quotaLike) {
       // HTTP 200으로 내려야 supabase-js invoke가 body를 data로 넘깁니다(비-2xx면 메시지가 흐려짐).
       return jsonResponse({
         ok: false,
-        error: "ai토큰? 이 떨어졌습니다 충전해 주세요",
+        error: /Gemini|RESOURCE_EXHAUSTED|generativelanguage/i.test(msg)
+          ? "Gemini 무료 한도에 걸렸어요. 1~2분 뒤 다시 시도하거나 Google AI Studio에서 사용량을 확인해 주세요."
+          : "ai토큰? 이 떨어졌습니다 충전해 주세요",
       });
     }
     return jsonResponse({ ok: false, error: msg }, 500);
