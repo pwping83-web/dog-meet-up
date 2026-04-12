@@ -501,6 +501,55 @@ export function CreateRequestPage() {
   const headerTitle =
     kind === 'moija' ? '모이자 글' : kind === 'mannaja' ? '만나자 글' : '돌봄 · 맡기기';
 
+  const nearbyNeighborsTip = (
+    <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4 text-center text-sm font-bold text-orange-950">
+      🐾 가까운 동네 댕친에게 먼저 보여요
+    </div>
+  );
+
+  const meetupRegionSection = (
+    <div className="space-y-2">
+      <p className="px-1 text-xs font-extrabold uppercase tracking-wide text-slate-500">
+        {kind === 'dolbom' ? '맡길 지역(시·구)' : '모이는 동네'}
+      </p>
+      <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
+        <div>
+          <p className="mb-2 text-[11px] font-bold text-slate-600">
+            {kind === 'dolbom'
+              ? '① 지금 계신 곳(GPS)으로 시·구 맞추기'
+              : '① 현재 위치로 시·구 맞추기'}
+          </p>
+          <button
+            type="button"
+            disabled={regionGpsBusy}
+            onClick={() => void applyGpsToFormRegion()}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-extrabold text-white shadow-md transition-opacity active:scale-[0.99] disabled:opacity-50"
+          >
+            <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
+            {regionGpsBusy ? '위치 확인 중…' : '지금 위치로 찾기'}
+          </button>
+          {kind === 'dolbom' && (
+            <p className="mt-2 text-[10px] font-medium leading-relaxed text-slate-500">
+              ①과 같아요. 지금 위치 = 맡길 곳일 때만 쓰면 돼요.
+            </p>
+          )}
+        </div>
+        <div>
+          <p className="mb-2 text-[11px] font-bold text-slate-600">
+            {kind === 'dolbom' ? '② 수기로 맡길 지역 선택' : '② 직접 선택'}
+          </p>
+          <RegionSelector
+            selectedCity={formData.city}
+            selectedDistrict={formData.district}
+            onCityChange={(city) => setFormData({ ...formData, city })}
+            onDistrictChange={(district) => setFormData({ ...formData, district })}
+            placeholder={kind === 'dolbom' ? '맡길 지역(시·구)을 선택해 주세요' : undefined}
+          />
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white pb-24">
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
@@ -643,71 +692,72 @@ export function CreateRequestPage() {
           )}
 
           {kind === 'dolbom' && (
-            <div className="overflow-hidden rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-white to-sky-50/40 p-4 shadow-sm ring-1 ring-sky-100/90">
-              <div className="flex gap-3.5">
-                <div
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-md shadow-sky-500/20"
-                  aria-hidden
-                >
-                  <LocateFixed className="h-5 w-5" strokeWidth={2.2} />
-                </div>
-                <div className="min-w-0 flex-1 space-y-3">
-                  <p className="text-[13px] font-medium leading-[1.65] tracking-tight text-slate-700">
-                    이 글은{' '}
-                    <span className="font-extrabold text-slate-900">홈·목록</span>에서{' '}
-                    <span className="whitespace-nowrap rounded-md bg-sky-100 px-2 py-0.5 text-[12px] font-extrabold text-sky-900">
-                      돌봄·맡기기
-                    </span>
-                    로 모여 보여요.
-                  </p>
-                  <p className="text-[13px] font-medium leading-[1.65] tracking-tight text-slate-700">
-                    아래에서 고른{' '}
-                    <span className="font-extrabold text-slate-900">시·구</span>가{' '}
-                    이 글의 <span className="font-extrabold text-sky-800">맡길 지역</span>이에요.
-                  </p>
-                  <ul className="space-y-2.5 border-t border-sky-100 pt-3 text-left text-[12px] leading-[1.6] text-slate-600">
-                    <li className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[11px] font-black text-sky-900">
-                        ①
+            <>
+              <div className="overflow-hidden rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-white to-sky-50/40 p-4 shadow-sm ring-1 ring-sky-100/90">
+                <div className="flex gap-3.5">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-md shadow-sky-500/20"
+                    aria-hidden
+                  >
+                    <LocateFixed className="h-5 w-5" strokeWidth={2.2} />
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <p className="text-[13px] font-medium leading-[1.65] tracking-tight text-slate-700">
+                      이 글은{' '}
+                      <span className="font-extrabold text-slate-900">홈·목록</span>에서{' '}
+                      <span className="whitespace-nowrap rounded-md bg-sky-100 px-2 py-0.5 text-[12px] font-extrabold text-sky-900">
+                        돌봄·맡기기
                       </span>
-                      <span>
-                        지금 계신 곳이 곧 맡길 곳이면
-                        <br />
-                        <span className="font-semibold text-slate-800">「지금 위치로 찾기」</span>만 눌러 주세요.
-                      </span>
-                    </li>
-                    <li className="flex gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[11px] font-black text-sky-900">
-                        ②
-                      </span>
-                      <span>
-                        맡길 동네가 다르면
-                        <br />
-                        <span className="font-semibold text-slate-800">「수기로 맡길 지역 선택」</span>에서 시·구를 골라
-                        주세요.
-                      </span>
-                    </li>
-                  </ul>
+                      로 모여 보여요.
+                    </p>
+                    <p className="text-[13px] font-medium leading-[1.65] tracking-tight text-slate-700">
+                      아래에서 고른{' '}
+                      <span className="font-extrabold text-slate-900">시·구</span>가{' '}
+                      이 글의 <span className="font-extrabold text-sky-800">맡길 지역</span>이에요.
+                    </p>
+                    <ul className="space-y-2.5 border-t border-sky-100 pt-3 text-left text-[12px] leading-[1.6] text-slate-600">
+                      <li className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[11px] font-black text-sky-900">
+                          ①
+                        </span>
+                        <span>
+                          지금 계신 곳이 곧 맡길 곳이면
+                          <br />
+                          <span className="font-semibold text-slate-800">「지금 위치로 찾기」</span>만 눌러 주세요.
+                        </span>
+                      </li>
+                      <li className="flex gap-3">
+                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[11px] font-black text-sky-900">
+                          ②
+                        </span>
+                        <span>
+                          맡길 동네가 다르면
+                          <br />
+                          <span className="font-semibold text-slate-800">「수기로 맡길 지역 선택」</span>에서 시·구를
+                          골라 주세요.
+                        </span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {kind === 'dolbom' && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-              <input
-                type="checkbox"
-                checked={wantDaengPickup}
-                onChange={(e) => setWantDaengPickup(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-              />
-              <span>
-                <span className="block text-sm font-extrabold text-slate-900">댕댕 픽업 희망</span>
-                <span className="mt-0.5 block text-xs font-medium leading-relaxed text-slate-600">
-                  보호맘이 우리 집까지 와서 아이 모셔 가 주길 바랄 때 체크~~ 일정은 채팅으로 맞춰요.
+              {meetupRegionSection}
+              {nearbyNeighborsTip}
+              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={wantDaengPickup}
+                  onChange={(e) => setWantDaengPickup(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                />
+                <span>
+                  <span className="block text-sm font-extrabold text-slate-900">댕댕 픽업 희망</span>
+                  <span className="mt-0.5 block text-xs font-medium leading-relaxed text-slate-600">
+                    보호맘이 우리 집까지 와서 아이 모셔 가 주길 바랄 때 체크~~ 일정은 채팅으로 맞춰요.
+                  </span>
                 </span>
-              </span>
-            </label>
+              </label>
+            </>
           )}
 
           <div className="flex flex-wrap items-center justify-end gap-2">
@@ -737,7 +787,7 @@ export function CreateRequestPage() {
                 }
               }}
             >
-              AI로 제목·본문 채우기
+              AI 작성 도움받기
             </AiDoumiButton>
           </div>
 
@@ -814,50 +864,12 @@ export function CreateRequestPage() {
             )}
           </div>
 
-          <div className="space-y-2">
-            <p className="px-1 text-xs font-extrabold uppercase tracking-wide text-slate-500">
-              {kind === 'dolbom' ? '맡길 지역(시·구)' : '모이는 동네'}
-            </p>
-            <div className="space-y-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-4">
-              <div>
-                <p className="mb-2 text-[11px] font-bold text-slate-600">
-                  {kind === 'dolbom'
-                    ? '① 지금 계신 곳(GPS)으로 시·구 맞추기'
-                    : '① 현재 위치로 시·구 맞추기'}
-                </p>
-                <button
-                  type="button"
-                  disabled={regionGpsBusy}
-                  onClick={() => void applyGpsToFormRegion()}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-800 py-3 text-sm font-extrabold text-white shadow-md transition-opacity active:scale-[0.99] disabled:opacity-50"
-                >
-                  <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
-                  {regionGpsBusy ? '위치 확인 중…' : '지금 위치로 찾기'}
-                </button>
-                {kind === 'dolbom' && (
-                  <p className="mt-2 text-[10px] font-medium leading-relaxed text-slate-500">
-                    ①과 같아요. 지금 위치 = 맡길 곳일 때만 쓰면 돼요.
-                  </p>
-                )}
-              </div>
-              <div>
-                <p className="mb-2 text-[11px] font-bold text-slate-600">
-                  {kind === 'dolbom' ? '② 수기로 맡길 지역 선택' : '② 직접 선택'}
-                </p>
-                <RegionSelector
-                  selectedCity={formData.city}
-                  selectedDistrict={formData.district}
-                  onCityChange={(city) => setFormData({ ...formData, city })}
-                  onDistrictChange={(district) => setFormData({ ...formData, district })}
-                  placeholder={kind === 'dolbom' ? '맡길 지역(시·구)을 선택해 주세요' : undefined}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4 text-center text-sm font-bold text-orange-950">
-            🐾 가까운 동네 댕친에게 먼저 보여요
-          </div>
+          {kind !== 'dolbom' && (
+            <>
+              {meetupRegionSection}
+              {nearbyNeighborsTip}
+            </>
+          )}
 
           {breedingLeakLabel && (
             <div
