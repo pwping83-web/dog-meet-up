@@ -429,7 +429,12 @@ function GuardCareAdminView() {
           '변경된 행이 없어요. Supabase SQL에 ① 20260416130000_is_app_admin_kakao_metadata_email ② 20260416140000_admin_set_guard_mom_certified_rpc 를 적용했는지, 로그인이 pwping83@gmail.com 인지 확인하세요.',
         );
       }
+      const at = rows[0].certified_at;
+      setGuardMoms((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, certified_at: at } : m)),
+      );
       await load({ silent: true });
+      window.dispatchEvent(new CustomEvent('daeng-certified-guard-moms-changed'));
       setCertBanner(certify ? '인증 처리했어요.' : '인증을 해제했어요.');
       window.setTimeout(() => setCertBanner(null), 4000);
     } catch (e) {
@@ -498,7 +503,7 @@ function GuardCareAdminView() {
             <p className="mb-3 flex items-start gap-2 text-xs font-medium text-gray-600">
               <Shield className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" aria-hidden />
               <span>
-                <span className="font-bold text-gray-800">인증 통과</span>는 DB 함수{' '}
+                <span className="font-bold text-gray-800">DB에 인증 넣기</span>는 함수{' '}
                 <code className="rounded bg-gray-100 px-1 text-[10px]">admin_set_guard_mom_certified</code>를
                 써요. Supabase SQL Editor에서 마이그레이션{' '}
                 <code className="rounded bg-gray-100 px-1 text-[10px]">161300</code> →{' '}
@@ -511,11 +516,19 @@ function GuardCareAdminView() {
             ) : (
               <ul className="space-y-2">
                 {guardMoms.map((g) => {
-                  const certified = g.certified_at != null;
+                  const certified =
+                    g.certified_at != null &&
+                    g.certified_at !== '' &&
+                    !Number.isNaN(new Date(g.certified_at as string).getTime());
                   const promoFree = isPromoFreeListings();
                   const paidListingActive =
                     g.listing_visible_until != null && new Date(g.listing_visible_until).getTime() > Date.now();
                   const visible = (promoFree && certified) || paidListingActive;
+                  const listBadge = !certified
+                    ? '탭: 인증 후'
+                    : visible
+                      ? '탭: 노출 중'
+                      : '탭: 유료 노출 대기';
                   const busy = certifyingId === g.id;
                   return (
                     <li key={g.id} className="rounded-xl border border-gray-100 bg-white p-4">
@@ -533,14 +546,15 @@ function GuardCareAdminView() {
                               certified ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
                             }`}
                           >
-                            {certified ? '인증됨' : '미인증'}
+                            {certified ? 'DB 인증됨' : 'DB 미인증'}
                           </span>
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-bold ${
                               visible ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-600'
                             }`}
+                            title="인증 돌봄 탭에 다른 사람에게 보이는지(한시 무료·유료 노출 기간)"
                           >
-                            {visible ? '노출 중' : '노출 아님'}
+                            {listBadge}
                           </span>
                         </div>
                       </div>
@@ -562,7 +576,7 @@ function GuardCareAdminView() {
                             className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-50"
                           >
                             {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                            인증 통과
+                            DB에 인증 넣기
                           </button>
                         ) : (
                           <button

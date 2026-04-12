@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Search,
   MapPin,
@@ -164,30 +164,35 @@ export function DogSittersPage() {
     if (topTab === 'moija' || topTab === 'mannaja') setCategory('전체');
   }, [topTab]);
 
+  const refetchGuardMoms = useCallback(async () => {
+    setGuardLoading(true);
+    setGuardMomsLoadError(null);
+    const { data, error } = await supabase
+      .from('certified_guard_moms')
+      .select('*')
+      .order('listing_visible_until', { ascending: false, nullsFirst: false });
+    if (error) {
+      setGuardMoms([]);
+      setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
+    } else {
+      const all = (data ?? []) as GuardMomRow[];
+      /** 노출 여부는 Supabase RLS가 결정. 프론트에서 유료/프로모를 한 번 더 걸면 .env 와 DB 정책이 어긋날 때 전부 숨겨질 수 있음 */
+      setGuardMoms(all.filter((r) => r.certified_at != null));
+    }
+    setGuardLoading(false);
+  }, []);
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setGuardLoading(true);
-      setGuardMomsLoadError(null);
-      const { data, error } = await supabase
-        .from('certified_guard_moms')
-        .select('*')
-        .order('listing_visible_until', { ascending: false, nullsFirst: false });
-      if (cancelled) return;
-      if (error) {
-        setGuardMoms([]);
-        setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
-      } else {
-        const all = (data ?? []) as GuardMomRow[];
-        /** 노출 여부는 Supabase RLS가 결정. 프론트에서 유료/프로모를 한 번 더 걸면 .env 와 DB 정책이 어긋날 때 전부 숨겨질 수 있음 */
-        setGuardMoms(all.filter((r) => r.certified_at != null));
-      }
-      setGuardLoading(false);
-    })();
-    return () => {
-      cancelled = true;
+    void refetchGuardMoms();
+  }, [refetchGuardMoms, user?.id]);
+
+  useEffect(() => {
+    const on = () => {
+      void refetchGuardMoms();
     };
-  }, [user?.id]);
+    window.addEventListener('daeng-certified-guard-moms-changed', on);
+    return () => window.removeEventListener('daeng-certified-guard-moms-changed', on);
+  }, [refetchGuardMoms]);
 
   const syncCareToUrl = (next: CareFilter) => {
     setCareFilter(next);
