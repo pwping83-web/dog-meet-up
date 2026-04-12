@@ -6,7 +6,7 @@ import {
   User, Bell, Loader2,
   Menu, X, Settings, LogOut, CreditCard,
 } from 'lucide-react';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import { mockRequests, mockQuotes } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -19,6 +19,7 @@ import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import type { User } from '@supabase/supabase-js';
+import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 
 function shortProfileLabel(user: User): string {
   const m = user.user_metadata ?? {};
@@ -411,49 +412,54 @@ export function LandingPage() {
         </motion.div>
 
         <div className="space-y-3 max-md:space-y-3 md:space-y-2.5">
+          {meetupFeedItems.length === 0 && <ExploreVirtualTrainingAd />}
           {meetupFeedItems.map((req, i) => {
             const quoteCount = getQuoteCount(req.id);
+            const showAdAfter = meetupFeedItems.length >= 2 ? i === 1 : i === 0;
             return (
-              <motion.div key={req.id} variants={fadeUp} custom={i + 1}>
-                <Link
-                  to={`/meetup/${req.id}`}
-                  className="flex gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
-                >
-                  {/* 썸네일 */}
-                  <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-50 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
-                    {req.images && req.images.length > 0 ? (
-                      <ImageWithFallback
-                        src={req.images[0]}
-                        alt={req.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl">
-                        {meetupCategoryEmoji(req.category)}
-                      </div>
-                    )}
-                  </div>
-                  {/* 내용 */}
-                  <div className="min-w-0 flex-1 py-0.5">
-                    <h3 className="mb-1 line-clamp-1 text-base text-slate-800 max-md:text-[15px] md:mb-0.5 md:text-xs" style={{ fontWeight: 800 }}>
-                      {req.title}
-                    </h3>
-                    <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-                      {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
-                    </p>
-                    <div className="flex items-center gap-3">
-                      {req.estimatedCost && (
-                        <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
-                      )}
-                      {quoteCount > 0 && (
-                        <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
-                          <MessageCircle className="w-3 h-3" /> {quoteCount}
-                        </span>
+              <Fragment key={req.id}>
+                <motion.div variants={fadeUp} custom={i + 1}>
+                  <Link
+                    to={`/meetup/${req.id}`}
+                    className="flex gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
+                  >
+                    {/* 썸네일 */}
+                    <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-50 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
+                      {req.images && req.images.length > 0 ? (
+                        <ImageWithFallback
+                          src={req.images[0]}
+                          alt={req.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-2xl">
+                          {meetupCategoryEmoji(req.category)}
+                        </div>
                       )}
                     </div>
-                  </div>
-                </Link>
-              </motion.div>
+                    {/* 내용 */}
+                    <div className="min-w-0 flex-1 py-0.5">
+                      <h3 className="mb-1 line-clamp-1 text-base text-slate-800 max-md:text-[15px] md:mb-0.5 md:text-xs" style={{ fontWeight: 800 }}>
+                        {req.title}
+                      </h3>
+                      <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
+                        {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
+                      </p>
+                      <div className="flex items-center gap-3">
+                        {req.estimatedCost && (
+                          <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
+                        )}
+                        {quoteCount > 0 && (
+                          <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
+                            <MessageCircle className="w-3 h-3" /> {quoteCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+                {showAdAfter && <ExploreVirtualTrainingAd />}
+              </Fragment>
             );
           })}
         </div>

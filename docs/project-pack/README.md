@@ -9,6 +9,7 @@
 | 03 | [03-marketing-promotion.md](./03-marketing-promotion.md) | 광고·홍보 채널·메시지·단계별 실행 |
 | 04 | [04-ops-and-deployment.md](./04-ops-and-deployment.md) | 배포·Secrets·마이그레이션·운영 체크 |
 | 05 | [05-virtual-partner-ad-sample.md](./05-virtual-partner-ad-sample.md) | 가상 업체 광고 예시(한시 무료 → 월 유료 전환 스토리) |
+| 06 | [06-patents-and-ip.md](./06-patents-and-ip.md) | 특허 가능 여부(일반론), 출원 흐름, 상표·저작권 등 IP 정리 |
 
 **기존 문서와의 관계**
 
