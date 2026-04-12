@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search, Shield } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -495,12 +495,16 @@ function GuardCareAdminView() {
               돌봄(보호맘) 등록 · 신청 정보
               <span className="text-sm font-semibold text-gray-500">({guardMoms.length}명)</span>
             </h2>
-            <p className="mb-3 text-xs font-medium text-gray-600">
-              <span className="font-bold text-gray-800">인증 통과</span>는 DB 함수{' '}
-              <code className="rounded bg-gray-100 px-1 text-[10px]">admin_set_guard_mom_certified</code>를
-              호출해요. Supabase에{' '}
-              <code className="rounded bg-gray-100 px-1 text-[10px]">20260416130000</code>·
-              <code className="rounded bg-gray-100 px-1 text-[10px]">20260416140000</code> SQL을 적용해 주세요.
+            <p className="mb-3 flex items-start gap-2 text-xs font-medium text-gray-600">
+              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+              <span>
+                <span className="font-bold text-gray-800">인증 통과</span>는 DB 함수{' '}
+                <code className="rounded bg-gray-100 px-1 text-[10px]">admin_set_guard_mom_certified</code>를
+                써요. Supabase SQL Editor에서 마이그레이션{' '}
+                <code className="rounded bg-gray-100 px-1 text-[10px]">161300</code> →{' '}
+                <code className="rounded bg-gray-100 px-1 text-[10px]">161400</code> 순으로 한 번씩 실행하면
+                돼요.
+              </span>
             </p>
             {guardMoms.length === 0 ? (
               <p className="rounded-xl bg-white p-4 text-sm text-gray-500">등록된 행이 없습니다.</p>
