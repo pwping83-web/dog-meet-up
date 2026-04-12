@@ -737,7 +737,7 @@ export function CreateRequestPage() {
                 }
               }}
             >
-              글 초안 만들기
+              AI로 제목·본문 채우기
             </AiDoumiButton>
           </div>
 
