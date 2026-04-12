@@ -46,6 +46,7 @@ export function RegionSelector({
     <div className="relative">
       {/* 선택된 지역 표시 또는 선택 버튼 */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-4 py-3 bg-white border rounded-xl"
       >
@@ -60,6 +61,7 @@ export function RegionSelector({
         </div>
         {selectedCity && selectedDistrict ? (
           <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               handleReset();
@@ -102,6 +104,7 @@ export function RegionSelector({
                 <div className="grid grid-cols-3 gap-2">
                   {regions.map((region) => (
                     <button
+                      type="button"
                       key={region.city}
                       onClick={() => handleCitySelect(region.city)}
                       className={`px-3 py-2 text-sm rounded-lg transition-colors ${
@@ -119,6 +122,7 @@ export function RegionSelector({
               <div className="p-2">
                 <div className="flex items-center justify-between px-3 py-2 mb-2 border-b">
                   <button
+                    type="button"
                     onClick={() => setStep('city')}
                     className="text-sm text-orange-500 font-medium"
                   >
@@ -129,6 +133,7 @@ export function RegionSelector({
                 <div className="grid grid-cols-2 gap-2">
                   {selectedRegion?.districts.map((district) => (
                     <button
+                      type="button"
                       key={district}
                       onClick={() => handleDistrictSelect(district)}
                       className={`px-3 py-2 text-sm rounded-lg transition-colors text-left ${
