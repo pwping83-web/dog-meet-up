@@ -181,20 +181,6 @@ export function DogSittersPage() {
     );
   };
 
-  const goCertifiedCare = () => {
-    setTopTab('certified');
-    setSearchParams(
-      (prev) => {
-        const p = new URLSearchParams(prev);
-        p.set('view', 'care');
-        const hadCare = prev.get('care');
-        if (!hadCare || hadCare === 'all') p.delete('care');
-        return p;
-      },
-      { replace: true },
-    );
-  };
-
   const q = searchQuery.trim().toLowerCase();
 
   const combinedRows: CombinedRow[] = useMemo(() => {
@@ -271,49 +257,57 @@ export function DogSittersPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* 상단 탭 */}
-      <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-        <div className="flex max-w-screen-md mx-auto">
-          <button
-            type="button"
-            onClick={goMoija}
-            className={`relative flex-1 py-3.5 text-[12px] max-sm:text-[11px] transition-colors ${
-              topTab === 'moija' ? 'text-slate-900' : 'text-slate-400'
-            }`}
-            style={{ fontWeight: 800 }}
-          >
-            모이자
-            {topTab === 'moija' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={goMannaja}
-            className={`relative flex-1 py-3.5 text-[12px] max-sm:text-[11px] transition-colors ${
-              topTab === 'mannaja' ? 'text-slate-900' : 'text-slate-400'
-            }`}
-            style={{ fontWeight: 800 }}
-          >
-            만나자
-            {topTab === 'mannaja' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={goCertifiedCare}
-            className={`relative flex-1 py-3.5 text-[12px] max-sm:text-[11px] transition-colors ${
-              topTab === 'certified' ? 'text-slate-900' : 'text-slate-400'
-            }`}
-            style={{ fontWeight: 800 }}
-          >
-            인증 돌봄
-            {topTab === 'certified' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
-            )}
-          </button>
-        </div>
+      {/* 상단: 모이자·만나자는 2칸만 / 인증 돌봄은 별도 화면 */}
+      <div className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
+        {topTab === 'certified' ? (
+          <div className="mx-auto flex max-w-screen-md items-center justify-between gap-3 px-4 py-3">
+            <p className="text-sm text-slate-900" style={{ fontWeight: 900 }}>
+              인증 돌봄
+            </p>
+            <Link
+              to="/sitters"
+              className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] text-orange-700 transition-colors active:scale-[0.98] max-sm:text-[10px]"
+              style={{ fontWeight: 800 }}
+            >
+              모이자 · 만나자
+            </Link>
+          </div>
+        ) : (
+          <div className="mx-auto flex max-w-screen-md items-stretch">
+            <button
+              type="button"
+              onClick={goMoija}
+              className={`relative flex-1 py-3.5 text-[12px] transition-colors max-sm:text-[11px] ${
+                topTab === 'moija' ? 'text-slate-900' : 'text-slate-400'
+              }`}
+              style={{ fontWeight: 800 }}
+            >
+              모이자
+              {topTab === 'moija' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
+              )}
+            </button>
+            <span
+              className="flex items-center px-0.5 text-[13px] font-light text-slate-300 select-none"
+              aria-hidden
+            >
+              /
+            </span>
+            <button
+              type="button"
+              onClick={goMannaja}
+              className={`relative flex-1 py-3.5 text-[12px] transition-colors max-sm:text-[11px] ${
+                topTab === 'mannaja' ? 'text-slate-900' : 'text-slate-400'
+              }`}
+              style={{ fontWeight: 800 }}
+            >
+              만나자
+              {topTab === 'mannaja' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-orange-600" />
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {(topTab === 'moija' || topTab === 'mannaja') && (
@@ -322,14 +316,18 @@ export function DogSittersPage() {
             {topTab === 'moija' ? (
               <>
                 <strong className="font-extrabold">모이자</strong>는 산책·놀이·카페 등{' '}
-                <strong>여럿이 모여 즐기는 글</strong>만 보여요. 맡기기·교배·실종 안내는{' '}
-                <strong>만나자</strong> 탭, 댕집사·인증 보호맘은 <strong>인증 돌봄</strong> 탭이에요.
+                <strong>여럿이 모여 즐기는 글</strong>만 보여요. 맡기기·교배·실종 안내는 위의{' '}
+                <strong>만나자</strong>, 댕집사·인증 보호맘은{' '}
+                <Link to="/sitters?view=care" className="font-extrabold text-brand underline underline-offset-2">
+                  인증 돌봄
+                </Link>
+                에서 보세요.
               </>
             ) : (
               <>
                 <strong className="font-extrabold">만나자</strong>는 맡기 도움·교배·실종 등{' '}
-                <strong>맞춤 만남·급구 글</strong>만 보여요. 모임성 산책·놀이는{' '}
-                <strong>모이자</strong> 탭을 눌러 주세요.
+                <strong>맞춤 만남·급구 글</strong>만 보여요. 모임성 산책·놀이는 위의{' '}
+                <strong>모이자</strong>를 눌러 주세요.
               </>
             )}
           </p>
@@ -401,8 +399,11 @@ export function DogSittersPage() {
           <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
             <strong className="font-extrabold">인증 돌봄</strong>에서는{' '}
             <strong>댕집사(산책·방문 돌봄)</strong>와 운영팀이 인증한{' '}
-            <strong>인증 보호맘(맡김·장기 돌봄)</strong>만 보여요. 무료 모임·만남 글은{' '}
-            <strong>모이자</strong>·<strong>만나자</strong> 탭에서 확인해 주세요.
+            <strong>인증 보호맘(맡김·장기 돌봄)</strong>만 보여요. 무료 모임·만남 글은 상단의{' '}
+            <Link to="/sitters" className="font-extrabold text-brand underline underline-offset-2">
+              모이자 · 만나자
+            </Link>
+            에서 확인해 주세요.
             <span className="mt-2 block border-t border-amber-200/80 pt-2 text-[11px] font-semibold text-amber-900/95">
               기본 동네·추가 동네·보호맘 등록·노출 결제는{' '}
               <Link to="/my" className="font-extrabold text-brand underline underline-offset-2">

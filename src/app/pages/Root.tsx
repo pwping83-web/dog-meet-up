@@ -22,7 +22,7 @@ export function Root() {
   const isExplorePage = location.pathname === '/explore';
   const isMeetupDetailPage = location.pathname.startsWith('/meetup/');
   const isCreateMeetupPage = location.pathname === '/create-meetup';
-  /** 모이자·만나자·인증 돌봄(/sitters) 및 댕집사·보호맘 상세 */
+  /** 모이자·만나자(/sitters)·인증 돌봄(?view=care) 및 댕집사·보호맘 상세 */
   const isSittersCareFlow =
     location.pathname === '/sitters' ||
     location.pathname.startsWith('/sitter/') ||
