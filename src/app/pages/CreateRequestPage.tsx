@@ -620,9 +620,7 @@ export function CreateRequestPage() {
                   <MapPin className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" aria-hidden />
                   <div>
                     <p className="text-sm font-extrabold text-slate-900">맡길 동네</p>
-                    <p className="mt-0.5 text-xs font-medium text-slate-600">
-                      아래에서 시·구 골라 주세요. 출장지·부모님 집이면 그쪽으로요.
-                    </p>
+                    <p className="mt-0.5 text-xs font-medium text-slate-600">아래에서 선택해 주세요.</p>
                   </div>
                 </div>
               </div>
