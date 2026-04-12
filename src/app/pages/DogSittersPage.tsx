@@ -350,22 +350,9 @@ export function DogSittersPage() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
-      {/* 상단: 모이자·만나자는 2칸만 / 인증 돌봄은 별도 화면 */}
-      <div className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
-        {topTab === 'certified' ? (
-          <div className="mx-auto flex max-w-screen-md items-center justify-between gap-3 px-4 py-3">
-            <p className="text-sm text-slate-900" style={{ fontWeight: 900 }}>
-              인증 돌봄
-            </p>
-            <Link
-              to="/sitters"
-              className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] text-orange-700 transition-colors active:scale-[0.98] max-sm:text-[10px]"
-              style={{ fontWeight: 800 }}
-            >
-              모이자 · 만나자
-            </Link>
-          </div>
-        ) : (
+      {/* 상단: 모이자·만나자 탭만 스티키 / 인증 돌봄(certified)은 제목·모이자 링크 없이 바로 필터·목록 */}
+      {topTab !== 'certified' && (
+        <div className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
           <div className="mx-auto flex max-w-screen-md items-stretch">
             <button
               type="button"
@@ -400,8 +387,8 @@ export function DogSittersPage() {
               )}
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {(topTab === 'moija' || topTab === 'mannaja') && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
@@ -775,21 +762,12 @@ export function DogSittersPage() {
                     >
                       <div className="flex gap-4">
                         <div className="flex h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-inner">
-                          {(() => {
-                            const photo = getCertifiedGuardMomPhotoUrl(row.mom.id);
-                            return photo ? (
-                              <ImageWithFallback
-                                src={photo}
-                                alt="인증 보호맘"
-                                className="h-full w-full object-cover"
-                                loading="lazy"
-                              />
-                            ) : (
-                              <span className="flex h-full w-full items-center justify-center text-2xl" aria-hidden>
-                                🦴
-                              </span>
-                            );
-                          })()}
+                          <ImageWithFallback
+                            src={getCertifiedGuardMomPhotoUrl(row.mom.id)}
+                            alt="인증 보호맘"
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
                         </div>
                         <div className="min-w-0 flex-1 pt-0.5">
                           <p className="text-[10px] font-extrabold uppercase tracking-wide text-brand">

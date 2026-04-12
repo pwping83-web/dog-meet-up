@@ -334,7 +334,7 @@ export function CreateRequestPage() {
     if (!categoryOk) {
       alert(
         kind === 'dolbom'
-          ? '돌봄·맡기기 글을 이어서 작성해 주세요 🦴'
+          ? '돌봄·맡기기 글을 이어서 작성해 주세요 🍼'
           : '주제를 하나 골라 주세요 🐾',
       );
       return;
@@ -411,7 +411,7 @@ export function CreateRequestPage() {
     if (kind === 'dolbom') {
       const pickupNote = wantDaengPickup ? '\n댕댕 픽업 희망으로 함께 표시돼요.' : '';
       alert(
-        `🦴 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
+        `🍼 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
       );
     } else if (isBreedingPost) {
       try {
@@ -487,7 +487,7 @@ export function CreateRequestPage() {
               onClick={() => pickKind('dolbom')}
               className="rounded-3xl border-2 border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 text-left shadow-sm transition-all active:scale-[0.99]"
             >
-              <p className="text-lg font-extrabold text-slate-900">돌봄 · 맡기기</p>
+              <p className="text-lg font-extrabold text-slate-900">🍼 돌봄 · 맡기기</p>
               <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
                 맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
               </p>
@@ -499,7 +499,7 @@ export function CreateRequestPage() {
   }
 
   const headerTitle =
-    kind === 'moija' ? '모이자 글' : kind === 'mannaja' ? '만나자 글' : '돌봄 · 맡기기';
+    kind === 'moija' ? '모이자 글' : kind === 'mannaja' ? '만나자 글' : '🍼 돌봄 · 맡기기';
 
   const nearbyNeighborsTip = (
     <div className="rounded-2xl border border-orange-100 bg-orange-50/60 p-4 text-center text-sm font-bold text-orange-950">
@@ -797,7 +797,7 @@ export function CreateRequestPage() {
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder={
                 kind === 'dolbom'
-                  ? '예: 주말 부산 출장이라 부산에서 맡기기 구해요 / 집은 강남이에요 🦴'
+                  ? '예: 주말 부산 출장이라 부산에서 맡기기 구해요 / 집은 강남이에요 🍼'
                   : kind === 'mannaja' && formData.category === '교배'
                     ? '예: 포메 여아입니다 · 흰색 포메 남아 사진 보내주세요 💕'
                     : '예: 주말 오전 한강에서 산책 같이 해요 🐕'
@@ -900,7 +900,7 @@ export function CreateRequestPage() {
             className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-5 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-50"
           >
             {kind === 'dolbom'
-              ? '돌봄 · 맡기기 🚀'
+              ? '🍼 돌봄 · 맡기기 🚀'
               : kind === 'mannaja' && formData.category === '교배' && !breedingListingActive
                 ? '결제 후 올리기'
                 : '올리기 🚀'}

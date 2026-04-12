@@ -2,6 +2,8 @@
  * 가상 인증 보호맘 — DB에 노출 중인 행이 없거나 조회 오류 시 인증 돌봄 탭 데모용.
  * 상세(/guard-mom/:id)는 getMockCertifiedGuardMomById 로 동일 데이터를 씁니다.
  */
+import { virtualDogPhotoForSeed } from './virtualDogPhotos';
+
 const ISO_PAST = '2026-03-01T12:00:00.000+09:00';
 const ISO_FUTURE = '2027-12-31T23:59:59.000+09:00';
 
@@ -109,23 +111,9 @@ export function isMockGuardMomId(id: string) {
   return MOCK_GUARD_MOM_IDS.has(id);
 }
 
-/** 목록·상세용 데모 프로필 사진 (실 DB 행에는 없음) */
-const MOCK_GUARD_MOM_PHOTO_BY_ID: Record<string, string> = {
-  'a1000000-0000-4000-8000-000000000001':
-    'https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?w=400&h=400&fit=crop&q=80',
-  'a1000000-0000-4000-8000-000000000002':
-    'https://images.unsplash.com/photo-1505628346881-b72b27e84530?w=400&h=400&fit=crop&q=80',
-  'a1000000-0000-4000-8000-000000000003':
-    'https://images.unsplash.com/photo-1587300003388-59208cc96262?w=400&h=400&fit=crop&q=80',
-  'a1000000-0000-4000-8000-000000000004':
-    'https://images.unsplash.com/photo-1672838565001-3e7e1e96bb52?w=400&h=400&fit=crop&q=80',
-  'a1000000-0000-4000-8000-000000000005':
-    'https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?w=400&h=400&fit=crop&q=80',
-  'a1000000-0000-4000-8000-000000000006':
-    'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&h=400&fit=crop&q=80',
-};
-
-export function getCertifiedGuardMomPhotoUrl(id: string | undefined): string | null {
-  if (!id) return null;
-  return MOCK_GUARD_MOM_PHOTO_BY_ID[id] ?? null;
+/** 목록·상세용 데모 프로필 사진 — DB에 photo가 없을 때도 ID마다 다른 가상 강아지 이미지 */
+export function getCertifiedGuardMomPhotoUrl(id: string | undefined | null): string {
+  const key = id?.trim();
+  if (!key) return virtualDogPhotoForSeed('guard-mom-unknown');
+  return virtualDogPhotoForSeed(`certified-guard-mom-${key}`);
 }

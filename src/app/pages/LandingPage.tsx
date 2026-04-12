@@ -6,7 +6,7 @@ import {
   User, Bell, Loader2,
   Menu, X, Settings, LogOut, CreditCard,
 } from 'lucide-react';
-import { useState, useEffect, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { mockRequests, mockQuotes } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -412,90 +412,89 @@ export function LandingPage() {
         </motion.div>
 
         <div className="space-y-3 max-md:space-y-3 md:space-y-2.5">
-          {meetupFeedItems.length === 0 && <ExploreVirtualTrainingAd />}
           {meetupFeedItems.map((req, i) => {
             const quoteCount = getQuoteCount(req.id);
-            const showAdAfter = meetupFeedItems.length >= 2 ? i === 1 : i === 0;
             return (
-              <Fragment key={req.id}>
-                <motion.div variants={fadeUp} custom={i + 1}>
-                  <Link
-                    to={`/meetup/${req.id}`}
-                    className="flex gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
-                  >
-                    {/* 썸네일 */}
-                    <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-50 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
-                      {req.images && req.images.length > 0 ? (
-                        <ImageWithFallback
-                          src={req.images[0]}
-                          alt={req.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-2xl">
-                          {meetupCategoryEmoji(req.category)}
-                        </div>
+              <motion.div key={req.id} variants={fadeUp} custom={i + 1}>
+                <Link
+                  to={`/meetup/${req.id}`}
+                  className="flex gap-4 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
+                >
+                  {/* 썸네일 */}
+                  <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-50 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
+                    {req.images && req.images.length > 0 ? (
+                      <ImageWithFallback
+                        src={req.images[0]}
+                        alt={req.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-2xl">
+                        {meetupCategoryEmoji(req.category)}
+                      </div>
+                    )}
+                  </div>
+                  {/* 내용 */}
+                  <div className="min-w-0 flex-1 py-0.5">
+                    <h3 className="mb-1 line-clamp-1 text-base text-slate-800 max-md:text-[15px] md:mb-0.5 md:text-xs" style={{ fontWeight: 800 }}>
+                      {req.title}
+                    </h3>
+                    <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
+                      {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
+                    </p>
+                    <div className="flex items-center gap-3">
+                      {req.estimatedCost && (
+                        <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
+                      )}
+                      {quoteCount > 0 && (
+                        <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
+                          <MessageCircle className="w-3 h-3" /> {quoteCount}
+                        </span>
                       )}
                     </div>
-                    {/* 내용 */}
-                    <div className="min-w-0 flex-1 py-0.5">
-                      <h3 className="mb-1 line-clamp-1 text-base text-slate-800 max-md:text-[15px] md:mb-0.5 md:text-xs" style={{ fontWeight: 800 }}>
-                        {req.title}
-                      </h3>
-                      <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-                        {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
-                      </p>
-                      <div className="flex items-center gap-3">
-                        {req.estimatedCost && (
-                          <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
-                        )}
-                        {quoteCount > 0 && (
-                          <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
-                            <MessageCircle className="w-3 h-3" /> {quoteCount}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-                {showAdAfter && <ExploreVirtualTrainingAd />}
-              </Fragment>
+                  </div>
+                </Link>
+              </motion.div>
             );
           })}
         </div>
       </motion.section>
 
-      {/* ─── 돌봄 · 맡기기 (모이자·만나자와 분리) ─── */}
-      {dolbomFeedItems.length > 0 && (
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="px-4 mt-10"
-        >
-          <motion.div variants={fadeUp} custom={0} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
-            <div>
-              <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>
-                🦴 돌봄 · 맡기기
-              </h2>
-              <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-                맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
-              </p>
-            </div>
-            <Link
-              to="/sitters?view=care&care=need"
-              className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs"
-              style={{ fontWeight: 800 }}
-            >
-              전체보기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
-            </Link>
-          </motion.div>
+      {/* ─── 돌봄 · 맡기기 (모이자·만나자와 분리) — 상단에 가상 광고(작게) ─── */}
+      <motion.section
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        className="px-4 mt-10"
+      >
+        <motion.div variants={fadeUp} custom={0} className="mb-2 max-md:mb-2.5">
+          <ExploreVirtualTrainingAd variant="compact" />
+        </motion.div>
 
+        <motion.div variants={fadeUp} custom={1} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
+          <div>
+            <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>
+              🍼 돌봄 · 맡기기
+            </h2>
+            <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
+              맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
+            </p>
+          </div>
+          <Link
+            to="/sitters?view=care&care=need"
+            className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs"
+            style={{ fontWeight: 800 }}
+          >
+            전체보기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
+          </Link>
+        </motion.div>
+
+        {dolbomFeedItems.length > 0 ? (
           <div className="space-y-3 max-md:space-y-3 md:space-y-2.5">
             {dolbomFeedItems.map((req, i) => {
               const quoteCount = getQuoteCount(req.id);
               return (
-                <motion.div key={req.id} variants={fadeUp} custom={i + 1}>
+                <motion.div key={req.id} variants={fadeUp} custom={i + 2}>
                   <Link
                     to={`/meetup/${req.id}`}
                     className="flex gap-4 rounded-3xl border border-amber-100/90 bg-gradient-to-br from-amber-50/80 to-white p-4 shadow-sm transition-all hover:border-amber-200 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
@@ -509,7 +508,7 @@ export function LandingPage() {
                         />
                       ) : (
                         <span className="text-2xl" aria-hidden>
-                          🦴
+                          🍼
                         </span>
                       )}
                     </div>
@@ -549,8 +548,19 @@ export function LandingPage() {
               );
             })}
           </div>
-        </motion.section>
-      )}
+        ) : (
+          <motion.p
+            variants={fadeUp}
+            custom={2}
+            className="rounded-2xl border border-dashed border-amber-200/80 bg-amber-50/40 py-4 text-center text-sm font-medium text-slate-500"
+          >
+            아직 돌봄·맡기기 글이 없어요.{' '}
+            <Link to="/create-meetup?kind=dolbom" className="font-extrabold text-orange-600 underline underline-offset-2">
+              글 올리기
+            </Link>
+          </motion.p>
+        )}
+      </motion.section>
 
       {/* ─── HERO IMAGE SECTION ─── */}
       <motion.section

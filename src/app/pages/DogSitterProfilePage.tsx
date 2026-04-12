@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router';
 import { MapPin, Star, ArrowLeft, MessageCircle, X } from 'lucide-react';
 import { formatDistrictWithDong } from '../data/regions';
 import { mockDogSitters } from '../data/mockData';
+import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,7 +14,8 @@ export function DogSitterProfilePage() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const dogSitter = mockDogSitters.find((r) => r.id === id);
-  const profilePhoto = dogSitter?.profileImage?.trim() ?? '';
+  const profilePhoto =
+    dogSitter?.profileImage?.trim() || (dogSitter ? virtualDogPhotoForSeed(`mock-sitter-${dogSitter.id}`) : '');
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [joinData, setJoinData] = useState({
     message: '',
@@ -60,18 +62,12 @@ export function DogSitterProfilePage() {
         {/* 프로필 */}
         <div className="text-center mb-8">
           <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-3xl border-4 border-white bg-gradient-to-br from-orange-100 to-yellow-50 shadow-lg">
-            {profilePhoto ? (
-              <ImageWithFallback
-                src={profilePhoto}
-                alt={dogSitter.name}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
-            ) : (
-              <span className="flex h-full w-full items-center justify-center text-3xl text-orange-600" style={{ fontWeight: 900 }}>
-                {dogSitter.name.charAt(0)}
-              </span>
-            )}
+            <ImageWithFallback
+              src={profilePhoto}
+              alt={dogSitter.name}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
           </div>
           <h1 className="text-2xl mb-2 text-slate-900" style={{ fontWeight: 800 }}>{dogSitter.name}</h1>
           <div className="flex items-center justify-center gap-2 mb-3">

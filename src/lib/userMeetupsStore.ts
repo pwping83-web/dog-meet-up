@@ -1,4 +1,5 @@
 import type { Meetup } from '../app/types';
+import { enrichMeetupWithVirtualDogCover } from '../app/data/virtualDogPhotos';
 
 const STORAGE_KEY = 'daeng-user-meetups-v1';
 const MAX_STORED = 50;
@@ -76,7 +77,7 @@ export function getMergedMeetups(mock: Meetup[]): Meetup[] {
   const user = readUserMeetups();
   const seen = new Set(user.map((u) => u.id));
   const rest = mock.filter((m) => !seen.has(m.id));
-  return [...user, ...rest].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  return [...user, ...rest]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .map(enrichMeetupWithVirtualDogCover);
 }

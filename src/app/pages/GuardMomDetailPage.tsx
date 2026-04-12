@@ -126,20 +126,14 @@ export function GuardMomDetailPage() {
           <p className="py-12 text-center text-sm font-medium text-slate-500">{loadErr ?? '없는 프로필이에요.'}</p>
         ) : (
           <>
-            {(() => {
-              const photo = getCertifiedGuardMomPhotoUrl(mom.id);
-              if (!photo) return null;
-              return (
-                <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-                  <ImageWithFallback
-                    src={photo}
-                    alt="인증 보호맘 프로필"
-                    className="aspect-[16/9] w-full object-cover sm:aspect-[21/9]"
-                    loading="lazy"
-                  />
-                </div>
-              );
-            })()}
+            <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+              <ImageWithFallback
+                src={getCertifiedGuardMomPhotoUrl(mom.id)}
+                alt="인증 보호맘 프로필"
+                className="aspect-[16/9] w-full object-cover sm:aspect-[21/9]"
+                loading="lazy"
+              />
+            </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
               <p className="text-xs font-extrabold uppercase tracking-wide text-orange-600">인증 보호맘</p>
               <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-800">
