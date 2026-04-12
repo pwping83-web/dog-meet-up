@@ -50,7 +50,6 @@ export function DogSittersPage() {
   const [careFilter, setCareFilter] = useState<CareFilter>(() => readInitialSittersUrl().care);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
-  const [guardErr, setGuardErr] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState('전체');
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
@@ -113,16 +112,12 @@ export function DogSittersPage() {
     let cancelled = false;
     (async () => {
       setGuardLoading(true);
-      setGuardErr(null);
       const { data, error } = await supabase
         .from('certified_guard_moms')
         .select('*')
         .order('listing_visible_until', { ascending: false, nullsFirst: false });
       if (cancelled) return;
       if (error) {
-        setGuardErr(
-          '실제 목록을 불러오지 못했어요. 아래는 체험용 가상 인증 보호맘 프로필이에요. DB 연결 후에는 실제 등록분만 보여요.',
-        );
         setGuardMoms([]);
       } else {
         const all = (data ?? []) as GuardMomRow[];
@@ -503,12 +498,6 @@ export function DogSittersPage() {
               <option value="reviews">💬 리뷰 많은 순</option>
             </select>
           </div>
-
-          {guardErr && (
-            <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
-              {guardErr}
-            </div>
-          )}
 
           {guardLoading && careFilter === 'guard' ? (
             <div className="flex justify-center py-16 text-slate-400">
