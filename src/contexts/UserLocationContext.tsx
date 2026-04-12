@@ -111,7 +111,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   const applyCoordinates = useCallback(
     async (lat: number, lng: number, source: 'gps' | 'map'): Promise<UserLocationSnapshot> => {
       if (!locationBasedEnabled) {
-        throw new Error('위치 기반 서비스를 켜 주세요. 내댕댕 또는 동네 설정에서 스위치를 켜면 GPS·지도 저장을 쓸 수 있어요.');
+        throw new Error('위치 기반을 켜 주세요. 내댕댕에서 스위치를 켜면 내 주변 글·동네 설정을 쓸 수 있어요.');
       }
 
       const persistFromMatch = (m: ReturnType<typeof matchKakaoAdministrative>, districtFallback: string) => {
@@ -155,7 +155,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   const setManualRegion = useCallback(
     (city: string, district: string) => {
       if (!locationBasedEnabled) {
-        throw new Error('위치 기반 서비스를 먼저 켜 주세요.');
+        throw new Error('위치 기반을 먼저 켜 주세요.');
       }
       persist({
         city,
@@ -171,7 +171,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
 
   const applyGpsLocation = useCallback(async (): Promise<UserLocationSnapshot> => {
     if (!locationBasedEnabled) {
-      throw new Error('위치 기반 서비스를 켜 주세요.');
+      throw new Error('위치 기반을 켜 주세요.');
     }
     const { lat, lng } = await getCurrentBrowserPosition();
     return applyCoordinates(lat, lng, 'gps');
@@ -196,7 +196,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
     const shortLabel = locationBasedEnabled ? regionShortLabel : '전국';
     const fullLabel = locationBasedEnabled
       ? regionFullLabel
-      : '위치 기반 꺼짐 · 전국 기준';
+      : '전국 · 위치 기반 끔';
 
     return {
       location,

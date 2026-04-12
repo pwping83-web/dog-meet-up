@@ -89,7 +89,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
   const handleApplyMapCenter = async () => {
     if (!locationBasedEnabled) {
-      setError('위치 기반 서비스를 켜 주세요.');
+      setError('위치 기반을 켜 주세요.');
       return;
     }
     setBusy('apply');
@@ -128,7 +128,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
   /** 시·구 선택란 근처: GPS → 역지오코딩 후 저장 + 목록·지도 동기화 (모달 유지) */
   const handleFindMyLocation = async () => {
     if (!locationBasedEnabled) {
-      setError('위치 기반 서비스를 먼저 켜 주세요.');
+      setError('위치 기반을 먼저 켜 주세요.');
       return;
     }
     setBusy('findMe');
@@ -198,7 +198,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
             <div className="min-w-0">
               <p className="text-sm font-extrabold text-slate-900">위치 기반</p>
               <p className="mt-0.5 text-[11px] font-medium leading-snug text-slate-600">
-                켜면 우리 동네 기준, 끄면 전국이에요.
+                켜면 우리 동네 기준, 끄면 전국. 켜고 동네를 맞추면 내 주변 글·모임이 보여요.
               </p>
             </div>
             <button
@@ -223,7 +223,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
           {!locationBasedEnabled && (
             <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-medium text-slate-600">
-              꺼져 있어요. 켜면 동네 설정을 쓸 수 있어요.
+              지금은 전국 기준이에요. 켜면 동네·지도·GPS를 쓸 수 있어요.
             </p>
           )}
 

@@ -268,7 +268,7 @@ export function ProfileEditPage() {
             )}
           </div>
           <p className="text-[11px] text-slate-500 font-medium mb-3">
-            내댕댕 화면과 같은 설정이에요. 한 곳에서만 바꿔도 앱 전체에 반영돼요.
+            내댕댕과 같아요. 위치 기반을 켜면 우리 동네·내 주변 글, 끄면 전국이에요.
           </p>
           <button
             type="button"

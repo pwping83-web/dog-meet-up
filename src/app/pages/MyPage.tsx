@@ -183,7 +183,9 @@ export function MyPage() {
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
                   <div className="min-w-0">
                     <p className="text-xs font-extrabold text-slate-800">위치 기반</p>
-                    <p className="text-[10px] font-medium text-slate-500">우리 동네 기준</p>
+                    <p className="text-[10px] font-medium leading-snug text-slate-500">
+                      켜면 우리 동네 기준, 끄면 전국. 켜고 동네를 맞추면 내 주변 글이 보여요.
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -218,11 +220,11 @@ export function MyPage() {
                 </button>
                 {!locationBasedEnabled && regionFullLabel && (
                   <p className="mt-1 text-[10px] font-medium text-slate-400">
-                    저장된 동네: {regionFullLabel} (켜면 이 동네로 다시 표시돼요)
+                    저장된 동네: {regionFullLabel} · 켜면 이 기준으로 다시 보여요
                   </p>
                 )}
                 <p className="mt-1.5 text-[11px] font-medium text-slate-400">
-                  {locationBasedEnabled ? '탭해서 동네를 바꿀 수 있어요' : '켜면 동네·GPS를 쓸 수 있어요'}
+                  {locationBasedEnabled ? '탭해서 동네를 바꿀 수 있어요' : '위치 기반을 켜면 내 주변 글을 볼 수 있어요'}
                 </p>
                 {locationBasedEnabled &&
                   userLoc.lat != null &&
