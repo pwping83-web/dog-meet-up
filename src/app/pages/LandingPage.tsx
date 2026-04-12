@@ -190,8 +190,8 @@ export function LandingPage() {
                 className="text-orange-100/95 leading-relaxed text-sm max-md:text-[15px] max-md:leading-snug md:text-xs"
                 style={{ fontWeight: 600 }}
               >
-                성격이 맞는 댕댕이 친구를 찾고<br />
-                모이자 · 만나자로 댕친을 찾고 🐾<br />
+                성향이 맞는 댕댕이 친구를 찾고 있어요<br />
+                산책·모임으로 사교성 넓히는 댕댕이를 키워요 🐾<br />
                 여행·출장처럼 집을 비울 땐, 친해진 댕친 집에 맡기고 오기도 해요
               </p>
             </motion.div>
