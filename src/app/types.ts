@@ -19,6 +19,8 @@ export interface Meetup {
   district: string;                 // District only (e.g., "강남구")
   images: string[];                 // Dog/meetup photos
   estimatedCost?: string;           // Schedule or cost info
+  /** 교배 글만: 유료 노출 만료 시각이 지나면 목록·피드에서 숨김 */
+  listingVisibleUntil?: string | Date;
   status: 'pending' | 'in-progress' | 'completed';
   createdAt: Date;
   userId: string;

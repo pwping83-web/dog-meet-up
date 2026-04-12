@@ -19,6 +19,7 @@ function billingProductLabel(key: string): string {
     premium_month: '댕댕 프리미엄 (월)',
     meetup_boost: '만남 글 부스트 (1회)',
     guard_mom_listing_7d: '인증 돌봄 목록 노출 (7일)',
+    breeding_post_listing_7d: '만나자 교배 신청 글 노출 (7일)',
     guard_mom_care_day: '보호맘 돌봄 예약',
   };
   return map[key] ?? key;
@@ -411,6 +412,7 @@ function GuardCareAdminView() {
   const careRelatedOrders = billingOrders.filter(
     (o) =>
       o.product_key === 'guard_mom_listing_7d' ||
+      o.product_key === 'breeding_post_listing_7d' ||
       o.product_key === 'guard_mom_care_day' ||
       o.product_key.startsWith('guard_mom'),
   );
@@ -520,6 +522,12 @@ function GuardCareAdminView() {
                     o.product_key === 'guard_mom_listing_7d' ||
                     o.product_key === 'guard_mom_care_day' ||
                     o.product_key.startsWith('guard_mom');
+                  const tag =
+                    o.product_key === 'breeding_post_listing_7d'
+                      ? '교배'
+                      : care
+                        ? '돌봄'
+                        : null;
                   return (
                     <li key={o.id} className="rounded-xl border border-gray-100 bg-white p-4">
                       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -527,9 +535,9 @@ function GuardCareAdminView() {
                           <p className="font-bold text-gray-900">{billingProductLabel(o.product_key)}</p>
                           <p className="text-xs text-gray-500">
                             주문자 {displayName(o.user_id)}
-                            {care ? (
+                            {tag ? (
                               <span className="ml-2 rounded bg-orange-50 px-1.5 py-0.5 font-semibold text-orange-700">
-                                돌봄
+                                {tag}
                               </span>
                             ) : null}
                           </p>

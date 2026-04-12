@@ -124,6 +124,40 @@ Deno.serve(async (req) => {
         }
       }
 
+      if (productKey === "breeding_post_listing_7d") {
+        const { data: entRow, error: entSelErr } = await admin
+          .from("user_entitlements")
+          .select("user_id, breeding_listing_until")
+          .eq("user_id", userId)
+          .maybeSingle();
+
+        if (entSelErr) {
+          console.error("user_entitlements select breeding", entSelErr);
+        } else {
+          const now = Date.now();
+          const cur = entRow?.breeding_listing_until
+            ? new Date(entRow.breeding_listing_until as string).getTime()
+            : 0;
+          const startMs = Math.max(now, cur);
+          const until = new Date(startMs + 7 * 24 * 60 * 60 * 1000).toISOString();
+          const ts = new Date().toISOString();
+          if (entRow?.user_id) {
+            const { error: entUp } = await admin
+              .from("user_entitlements")
+              .update({ breeding_listing_until: until, updated_at: ts })
+              .eq("user_id", userId);
+            if (entUp) console.error("user_entitlements breeding update", entUp);
+          } else {
+            const { error: entIn } = await admin.from("user_entitlements").insert({
+              user_id: userId,
+              breeding_listing_until: until,
+              updated_at: ts,
+            });
+            if (entIn) console.error("user_entitlements breeding insert", entIn);
+          }
+        }
+      }
+
       if (productKey === "guard_mom_care_day") {
         const bookingId = session.metadata?.booking_id?.trim();
         if (bookingId) {

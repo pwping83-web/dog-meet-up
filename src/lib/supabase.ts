@@ -297,6 +297,7 @@ export interface Database {
           stripe_customer_id: string | null;
           stripe_subscription_id: string | null;
           premium_until: string | null;
+          breeding_listing_until: string | null;
           updated_at: string;
         };
         Insert: {
@@ -304,6 +305,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           premium_until?: string | null;
+          breeding_listing_until?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -311,6 +313,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           stripe_subscription_id?: string | null;
           premium_until?: string | null;
+          breeding_listing_until?: string | null;
           updated_at?: string;
         };
       };

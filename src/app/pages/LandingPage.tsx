@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
+import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import type { User } from '@supabase/supabase-js';
 
 function shortProfileLabel(user: User): string {
@@ -90,7 +91,9 @@ export function LandingPage() {
   }, []);
 
   const getQuoteCount = (id: string) => mockQuotes.filter(q => q.repairRequestId === id).length;
-  const meetupFeedItems = mockRequests.filter((r) => r.category !== '돌봄').slice(0, 6);
+  const meetupFeedItems = mockRequests
+    .filter((r) => r.category !== '돌봄' && meetupVisibleInPublicFeed(r))
+    .slice(0, 6);
   const dolbomFeedItems = mockRequests.filter((r) => r.category === '돌봄');
 
   const closeExploreMenu = () => setExploreMenuOpen(false);
@@ -110,9 +113,10 @@ export function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-orange-50/30 pb-[5.5rem] md:pb-20">
+    <div className="flex min-h-dvh min-h-screen flex-col overflow-x-hidden bg-orange-50/30 pb-[5.5rem] md:pb-20">
       <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
 
+      <main className="flex w-full min-h-0 flex-1 flex-col">
       {/* ─── HERO SECTION ─── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 px-4 pt-5 pb-12 max-md:pb-14 md:pt-4 md:pb-10">
         {/* 배경 장식 */}
@@ -629,19 +633,26 @@ export function LandingPage() {
           </motion.div>
         </motion.section>
       )}
+      </main>
 
-      {/* ─── FOOTER ─── */}
-      <footer className="px-4 mt-10 mb-6 text-center">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="text-xl">🐕</span>
-          <span className="text-orange-500" style={{ fontWeight: 900 }}>댕댕마켓</span>
+      {/* ─── FOOTER (콘텐츠가 짧을 때 화면 하단·탭바 위에 붙음) ─── */}
+      <footer className="mt-auto shrink-0 px-4 pt-8 pb-2 text-center">
+        <div className="flex flex-col items-center justify-end gap-0.5">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-xl" aria-hidden>
+              🐕
+            </span>
+            <span className="text-orange-500" style={{ fontWeight: 900 }}>
+              댕댕마켓
+            </span>
+          </div>
+          <p className="text-slate-400 text-xs" style={{ fontWeight: 600 }}>
+            우리 동네 반려견 소셜 커뮤니티
+          </p>
+          <p className="text-slate-300 text-[10px] mt-1" style={{ fontWeight: 600 }}>
+            © 2026 댕댕마켓. All rights reserved.
+          </p>
         </div>
-        <p className="text-slate-400 text-xs" style={{ fontWeight: 600 }}>
-          우리 동네 반려견 소셜 커뮤니티
-        </p>
-        <p className="text-slate-300 text-[10px] mt-2" style={{ fontWeight: 600 }}>
-          © 2026 댕댕마켓. All rights reserved.
-        </p>
       </footer>
 
       {exploreMenuOpen && user && (

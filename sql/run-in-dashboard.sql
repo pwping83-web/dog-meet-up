@@ -221,3 +221,7 @@ CREATE POLICY "guard_mom_bookings_select_admin"
   ON public.guard_mom_bookings FOR SELECT
   TO authenticated
   USING (public.is_app_admin());
+
+-- 만나자 「교배」 글 7일 목록 노출 (결제 → stripe-webhook에서 breeding_listing_until 연장)
+ALTER TABLE public.user_entitlements
+  ADD COLUMN IF NOT EXISTS breeding_listing_until TIMESTAMPTZ;

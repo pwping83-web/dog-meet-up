@@ -7,11 +7,13 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type ProductKey = "guard_mom_listing_7d" | "guard_mom_care_day";
+type ProductKey = "guard_mom_listing_7d" | "guard_mom_care_day" | "breeding_post_listing_7d";
 
 type Body = {
   productKey: ProductKey;
   bookingId?: string;
+  /** 결제 성공 후 이동할 경로(쿼리 포함 가능). `/`로 시작, 최대 300자. 예: /create-meetup?kind=mannaja&paid=breeding */
+  successPath?: string;
 };
 
 function jsonResponse(body: unknown, status = 200) {
@@ -21,7 +23,11 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-const ALLOWED_KEYS: ProductKey[] = ["guard_mom_listing_7d", "guard_mom_care_day"];
+const ALLOWED_KEYS: ProductKey[] = [
+  "guard_mom_listing_7d",
+  "guard_mom_care_day",
+  "breeding_post_listing_7d",
+];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -37,6 +43,7 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
   const priceGuardMomListing = Deno.env.get("STRIPE_PRICE_GUARD_MOM_LISTING_7D");
+  const priceBreedingListing = Deno.env.get("STRIPE_PRICE_BREEDING_POST_LISTING_7D");
 
   if (!stripeSecret || !supabaseUrl || !supabaseAnonKey) {
     return jsonResponse({ error: "서버 환경 변수(Supabase/Stripe)가 설정되지 않았습니다." }, 503);
@@ -129,6 +136,15 @@ Deno.serve(async (req) => {
     ];
     mode = "payment";
     bookingIdForMeta = bookingId;
+  } else if (productKey === "breeding_post_listing_7d") {
+    if (!priceBreedingListing) {
+      return jsonResponse(
+        { error: "STRIPE_PRICE_BREEDING_POST_LISTING_7D 가 설정되지 않았습니다." },
+        503,
+      );
+    }
+    lineItems = [{ price: priceBreedingListing, quantity: 1 }];
+    mode = "payment";
   } else {
     if (!priceGuardMomListing) {
       return jsonResponse(
@@ -160,8 +176,21 @@ Deno.serve(async (req) => {
     );
   }
 
-  const successUrl = `${publicSiteUrl}/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
-  const cancelUrl = `${publicSiteUrl}/billing?checkout=cancel`;
+  const rawSuccessPath = typeof parsed.successPath === "string" ? parsed.successPath.trim() : "";
+  const successPath =
+    rawSuccessPath.startsWith("/") &&
+    !rawSuccessPath.startsWith("//") &&
+    rawSuccessPath.length <= 300
+      ? rawSuccessPath
+      : "";
+  const successJoin = successPath.includes("?") ? "&" : "?";
+  const successUrl = successPath
+    ? `${publicSiteUrl}${successPath}${successJoin}session_id={CHECKOUT_SESSION_ID}`
+    : `${publicSiteUrl}/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
+  const cancelUrl =
+    successPath.startsWith("/create-meetup")
+      ? `${publicSiteUrl}/create-meetup?kind=mannaja&checkout=cancel`
+      : `${publicSiteUrl}/billing?checkout=cancel`;
 
   try {
     const session = await stripe.checkout.sessions.create({

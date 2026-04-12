@@ -113,6 +113,7 @@ export const mockMeetups: Meetup[] = [
     district: '강남구',
     images: ['https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb21lcmFuaWFuJTIwZG9nJTIwY3V0ZXxlbnwxfHx8fDE3NzE4MTM3MDh8MA&ixlib=rb-4.1.0&q=80&w=1080'],
     estimatedCost: '교배 희망',
+    listingVisibleUntil: '2030-12-31T00:00:00.000Z',
     status: 'pending',
     createdAt: new Date('2026-02-13'),
     userId: 'user5',
@@ -155,6 +156,7 @@ export const mockMeetups: Meetup[] = [
     district: '송파구',
     images: ['https://images.unsplash.com/photo-1693897004115-7fbd4f1ae96e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVuY2glMjBidWxsZG9nJTIwcHVwcGllc3xlbnwxfHx8fDE3NzE4NTMxNzV8MA&ixlib=rb-4.1.0&q=80&w=1080'],
     estimatedCost: '교배 가능',
+    listingVisibleUntil: '2030-12-31T00:00:00.000Z',
     status: 'completed',
     createdAt: new Date('2026-02-08'),
     userId: 'user8',
@@ -193,7 +195,7 @@ export const mockMeetups: Meetup[] = [
     title: '포메 여아예요 · 포메 남아 1:1 만나고 싶어요 💬',
     category: '1:1 만남',
     description:
-      '3살 포메 여아 건강해요. 산책 겸 비슷한 아이랑 천천히 친해지고 싶어요. 교배 목적은 아니에요. 포메 가족 편하게 연락 주세요!',
+      '3살 포메 여아 건강해요. 산책 겸 비슷한 아이랑 천천히 친해지고 싶어요. 친구·산책 메이트만 구해요. 포메 가족 편하게 연락 주세요!',
     location: '서울 강남구',
     district: '강남구',
     images: [

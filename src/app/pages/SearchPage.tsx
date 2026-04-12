@@ -13,6 +13,7 @@ import {
 import { useState } from 'react';
 import { mockRequests } from '../data/mockData';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
+import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 
 const popularSearches = [
   '소형견', '중형견', '대형견', '산책',
@@ -30,9 +31,10 @@ export function SearchPage() {
 
   const filteredRequests = mockRequests.filter(
     (request) =>
-      request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.description.toLowerCase().includes(searchQuery.toLowerCase())
+      meetupVisibleInPublicFeed(request) &&
+      (request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.description.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
   const handleSearch = (query: string) => {

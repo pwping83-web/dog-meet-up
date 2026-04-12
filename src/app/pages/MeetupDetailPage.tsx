@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation, Link } from 'react-router';
-import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag } from 'lucide-react';
 import { mockMeetups, mockJoinRequests, mockDogSitters } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -7,6 +7,10 @@ import { calculateDistance, formatDistance } from '../utils/distance';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
+import {
+  getBreedingLeakInNonBreedingPost,
+  shouldSuggestBreedingMislabelReport,
+} from '../utils/breedingContentGuard';
 
 export function MeetupDetailPage() {
   const { id } = useParams();
@@ -16,6 +20,7 @@ export function MeetupDetailPage() {
   const meetup = mockMeetups.find((r) => r.id === id);
   const joinRequests = mockJoinRequests.filter((q) => q.meetupId === id);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
 
   if (!meetup) {
     return (
@@ -26,6 +31,13 @@ export function MeetupDetailPage() {
   }
 
   const timeAgo = formatDistanceToNow(meetup.createdAt, { addSuffix: true, locale: ko });
+
+  const breedingMislabelHint = shouldSuggestBreedingMislabelReport(
+    meetup.category,
+    meetup.title,
+    meetup.description,
+  );
+  const breedingLeakLabel = getBreedingLeakInNonBreedingPost(meetup.title, meetup.description);
 
   const statusText = { pending: '모집중', 'in-progress': '진행중', completed: '완료' };
   const statusColor = {
@@ -66,6 +78,19 @@ export function MeetupDetailPage() {
   const handleInvite = (sitterName: string) => {
     if (!requireLoginForAction()) return;
     alert(`${sitterName}님과 채팅을 시작해요!`);
+  };
+
+  const openReport = () => {
+    if (!requireLoginForAction()) return;
+    setReportOpen(true);
+  };
+
+  const submitReport = (reason: string) => {
+    setReportOpen(false);
+    console.info('[댕댕마켓] 글 신고 접수(데모)', { meetupId: meetup.id, reason });
+    alert(
+      '신고가 접수되었습니다. 검토 후 필요하면 조치할 예정이에요. 이용에 도움 주셔서 감사합니다 🐾',
+    );
   };
 
   return (
@@ -128,6 +153,31 @@ export function MeetupDetailPage() {
           <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 text-slate-700 leading-relaxed" style={{ fontWeight: 500 }}>
             {meetup.description}
           </div>
+
+          {breedingMislabelHint && (
+            <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-950">
+              자동 검사: 이 글 주제(<strong className="font-extrabold">{meetup.category}</strong>)에는 보통{' '}
+              {breedingLeakLabel ? (
+                <span className="font-extrabold">{breedingLeakLabel}</span>
+              ) : (
+                '교배·번식'
+              )}{' '}
+              표현이 어울리지 않을 수 있어요. 위반으로 보이면 아래에서 신고해 주세요.
+            </div>
+          )}
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={openReport}
+              disabled={authLoading}
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50"
+            >
+              <Flag className="h-4 w-4 text-rose-500" aria-hidden />
+              이 글 신고하기
+            </button>
+          </div>
+
           {meetup.category === '돌봄' && (
             <Link
               to="/sitters?view=care&care=guard"
@@ -292,6 +342,56 @@ export function MeetupDetailPage() {
           </div>
         )}
       </div>
+
+      {reportOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 p-4 sm:items-center"
+          role="presentation"
+          onClick={() => setReportOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="report-dialog-title"
+            className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="report-dialog-title" className="text-base font-extrabold text-slate-900">
+              신고 사유 선택
+            </h3>
+            <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600">
+              무료·다른 주제 글에 교배·번식 내용이 숨겨진 경우 운영에서 확인할 수 있어요.
+            </p>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => submitReport('free_post_breeding_content')}
+                className={`rounded-2xl px-4 py-3 text-left text-sm font-bold transition-colors ${
+                  breedingMislabelHint
+                    ? 'border-2 border-amber-400 bg-amber-50 text-amber-950'
+                    : 'border border-slate-200 bg-slate-50 text-slate-800 hover:bg-slate-100'
+                }`}
+              >
+                {breedingMislabelHint ? '⚠️ ' : ''}무료·다른 주제인데 교배·번식 표현이 있습니다
+              </button>
+              <button
+                type="button"
+                onClick={() => submitReport('spam_or_abuse')}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-bold text-slate-800 hover:bg-slate-100"
+              >
+                욕설·광고·기타 부적절
+              </button>
+              <button
+                type="button"
+                onClick={() => setReportOpen(false)}
+                className="mt-1 rounded-2xl py-2.5 text-center text-xs font-bold text-slate-500"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

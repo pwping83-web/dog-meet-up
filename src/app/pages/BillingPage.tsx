@@ -21,6 +21,7 @@ function orderProductLabel(key: string): string {
     premium_month: '댕댕 프리미엄 (월)',
     meetup_boost: '만남 글 부스트 (1회)',
     guard_mom_listing_7d: '인증 돌봄 목록 노출 (7일)',
+    breeding_post_listing_7d: '만나자 교배 신청 글 노출 (7일)',
     guard_mom_care_day: '보호맘 돌봄 예약',
   };
   return map[key] ?? key;
@@ -31,6 +32,7 @@ export function BillingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [listingVisibleUntil, setListingVisibleUntil] = useState<string | null>(null);
+  const [breedingListingUntil, setBreedingListingUntil] = useState<string | null>(null);
   const [listLoading, setListLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<BillingProductKey | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
@@ -41,13 +43,14 @@ export function BillingPage() {
     if (!user) {
       setOrders([]);
       setListingVisibleUntil(null);
+      setBreedingListingUntil(null);
       setListLoading(false);
       return;
     }
     setListLoading(true);
     setPageError(null);
 
-    const [ordersRes, gmRes] = await Promise.all([
+    const [ordersRes, gmRes, entRes] = await Promise.all([
       supabase
         .from('billing_orders')
         .select('id,product_key,status,created_at,paid_at')
@@ -56,6 +59,11 @@ export function BillingPage() {
       supabase
         .from('certified_guard_moms')
         .select('listing_visible_until')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('user_entitlements')
+        .select('breeding_listing_until')
         .eq('user_id', user.id)
         .maybeSingle(),
     ]);
@@ -73,6 +81,12 @@ export function BillingPage() {
       setListingVisibleUntil(gmRes.data.listing_visible_until);
     } else {
       setListingVisibleUntil(null);
+    }
+
+    if (!entRes.error && entRes.data?.breeding_listing_until) {
+      setBreedingListingUntil(entRes.data.breeding_listing_until);
+    } else {
+      setBreedingListingUntil(null);
     }
 
     setListLoading(false);
@@ -112,7 +126,13 @@ export function BillingPage() {
     !Number.isNaN(Date.parse(listingVisibleUntil)) &&
     new Date(listingVisibleUntil) > new Date();
 
-  const product = BILLING_PRODUCTS[0];
+  const breedingListingActive =
+    breedingListingUntil != null &&
+    !Number.isNaN(Date.parse(breedingListingUntil)) &&
+    new Date(breedingListingUntil) > new Date();
+
+  const guardMomProduct = BILLING_PRODUCTS.find((p) => p.key === 'guard_mom_listing_7d')!;
+  const breedingProduct = BILLING_PRODUCTS.find((p) => p.key === 'breeding_post_listing_7d')!;
 
   return (
     <div className="min-h-full bg-slate-50 pb-28">
@@ -194,24 +214,24 @@ export function BillingPage() {
             <div className="overflow-hidden rounded-2xl border-2 border-orange-200/70 bg-white shadow-market-lg">
               <div className="bg-market-cta px-5 py-4 text-white">
                 <p className="text-xs font-bold text-white/90">단일 상품</p>
-                <h3 className="mt-0.5 text-lg font-black tracking-tight">{product.title}</h3>
+                <h3 className="mt-0.5 text-lg font-black tracking-tight">{guardMomProduct.title}</h3>
               </div>
               <div className="space-y-4 p-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  {product.badge && (
+                  {guardMomProduct.badge && (
                     <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-[10px] font-extrabold text-brand">
-                      {product.badge}
+                      {guardMomProduct.badge}
                     </span>
                   )}
                 </div>
-                <p className="text-sm leading-relaxed text-slate-600">{product.description}</p>
+                <p className="text-sm leading-relaxed text-slate-600">{guardMomProduct.description}</p>
                 <button
                   type="button"
                   disabled={checkoutLoading !== null}
-                  onClick={() => void handlePay(product.key)}
+                  onClick={() => void handlePay(guardMomProduct.key)}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl bg-market-cta py-3.5 text-sm font-extrabold text-white shadow-market transition-transform active:scale-[0.98] disabled:opacity-60"
                 >
-                  {checkoutLoading === product.key ? (
+                  {checkoutLoading === guardMomProduct.key ? (
                     <>
                       <Loader2 className="h-5 w-5 animate-spin" />
                       이동 중…
@@ -220,6 +240,57 @@ export function BillingPage() {
                     <>
                       <CreditCard className="h-5 w-5" />
                       노출 신청하기
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border-2 border-pink-200/80 bg-white shadow-market-lg">
+              <div className="bg-gradient-to-r from-pink-500 to-rose-500 px-5 py-4 text-white">
+                <p className="text-xs font-bold text-white/90">만나자 · 교배</p>
+                <h3 className="mt-0.5 text-lg font-black tracking-tight">{breedingProduct.title}</h3>
+              </div>
+              <div className="space-y-4 p-5">
+                <div className="rounded-xl border border-pink-100 bg-pink-50/80 px-3 py-2.5 text-xs font-semibold text-pink-950">
+                  <p className="font-extrabold">
+                    {breedingListingActive ? '교배 글 노출 중' : '교배 글 미노출'}
+                  </p>
+                  {breedingListingUntil && (
+                    <p className="mt-1 text-pink-900/90">
+                      노출 만료:{' '}
+                      {format(new Date(breedingListingUntil), 'yyyy년 M월 d일 HH:mm', { locale: ko })}
+                    </p>
+                  )}
+                  {!breedingListingUntil && (
+                    <p className="mt-1 font-medium text-pink-900/80">
+                      결제를 완료하면 7일간 「만나자」 목록·홈 피드에 교배 글을 올릴 수 있어요.
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {breedingProduct.badge && (
+                    <span className="rounded-full bg-pink-100 px-2.5 py-0.5 text-[10px] font-extrabold text-pink-700">
+                      {breedingProduct.badge}
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm leading-relaxed text-slate-600">{breedingProduct.description}</p>
+                <button
+                  type="button"
+                  disabled={checkoutLoading !== null}
+                  onClick={() => void handlePay(breedingProduct.key)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.98] disabled:opacity-60"
+                >
+                  {checkoutLoading === breedingProduct.key ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      이동 중…
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-5 w-5" />
+                      교배 글 7일 노출 결제
                     </>
                   )}
                 </button>

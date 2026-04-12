@@ -19,6 +19,7 @@ import {
   MOIJA_MEETUP_CATEGORIES,
 } from '../utils/meetupCategory';
 import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
+import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type CareFilter = 'all' | 'sitter' | 'guard';
 
@@ -257,6 +258,7 @@ export function DogSittersPage() {
             ? MANNAJA_CATEGORY_SET.has(req.category)
             : false;
       if (!inTab) return false;
+      if (!meetupVisibleInPublicFeed(req)) return false;
       const categoryMatch = category === '전체' || req.category === category;
       return categoryMatch;
     })
@@ -338,7 +340,8 @@ export function DogSittersPage() {
             ) : (
               <>
                 <strong className="font-extrabold">만나자</strong>는 1:1 친구 찾기·교배·실종{' '}
-                <strong>맞춤 글</strong>만 보여요. 공원 모임은 <strong>모이자</strong>.
+                <strong>맞춤 글</strong>만 보여요. <strong className="font-extrabold">교배</strong> 신청 글은 결제 후
+                7일간만 목록에 올라가요. 공원 모임은 <strong>모이자</strong>.
               </>
             )}
           </p>
