@@ -612,7 +612,7 @@ export function CreateRequestPage() {
                   <div>
                     <p className="text-sm font-extrabold text-slate-900">보호맘</p>
                     <p className="mt-0.5 text-xs font-medium text-slate-600">
-                      맡기기 → 필요하면 픽업 → 끝나면 집으로. 보호맘 집 기준으로 서로 맞추면 돼요 ~~
+                      맡기기 → 필요하면 픽업 → 끝나면 집으로. 보호맘 집 기준~
                     </p>
                   </div>
                 </div>
