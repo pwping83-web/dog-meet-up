@@ -86,9 +86,14 @@ export function MeetupDetailPage() {
     }, 500);
   };
 
-  const handleInvite = (sitterName: string) => {
+  const handleInvite = (sitter: { id: string; name: string }) => {
     if (!requireLoginForAction()) return;
-    alert(`${sitterName}님과 채팅을 시작해요!`);
+    const params = new URLSearchParams({
+      name: sitter.name,
+      meetup: meetup.title,
+      mid: meetup.id,
+    });
+    navigate(`/chat/${encodeURIComponent(sitter.id)}?${params.toString()}`);
   };
 
   const openReport = () => {
@@ -337,7 +342,7 @@ export function MeetupDetailPage() {
                         </Link>
                         <button
                           type="button"
-                          onClick={() => handleInvite(sitter.name)}
+                          onClick={() => handleInvite({ id: sitter.id, name: sitter.name })}
                           disabled={authLoading}
                           className={`flex-1 rounded-2xl py-3 text-sm text-white transition-all active:scale-[0.98] disabled:opacity-50 ${isVeryClose ? 'bg-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800'}`}
                           style={{ fontWeight: 700 }}

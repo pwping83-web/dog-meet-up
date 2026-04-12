@@ -1,7 +1,7 @@
 // src/app/pages/ChatsPage.tsx 전체 교체
-import { Link } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, Send, Settings2, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Chat {
   id: string;
@@ -94,14 +94,40 @@ interface Message {
   timestamp: string;
 }
 
+const LEGACY_DEMO_CHAT_IDS = new Set(['1', '2', '3', '4']);
+
+const LEGACY_DEMO_MESSAGES: Message[] = [
+  { id: '1', text: '안녕하세요! 내일 산책 모임 참여 가능할까요?', isMine: true, timestamp: '오전 10:23' },
+  { id: '2', text: '네 안녕하세요! 물론이죠! 몇 시가 괜찮으세요?', isMine: false, timestamp: '오전 10:24' },
+  { id: '3', text: '오전 10시 어떠세요? 우리 강아지 산책 시간이어서요', isMine: true, timestamp: '오전 10:25' },
+  { id: '4', text: '네 좋아요! 한강공원에서 만나요 🐾', isMine: false, timestamp: '오전 10:26' },
+];
+
+const LEGACY_PEER_NAMES: Record<string, string> = {
+  '1': '강아지엄마',
+  '2': '댕댕산책러버',
+  '3': '훈련전문가',
+  '4': '골든러버',
+};
+
 export function ChatDetailPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    { id: '1', text: '안녕하세요! 내일 산책 모임 참여 가능할까요?', isMine: true, timestamp: '오전 10:23' },
-    { id: '2', text: '네 안녕하세요! 물론이죠! 몇 시가 괜찮으세요?', isMine: false, timestamp: '오전 10:24' },
-    { id: '3', text: '오전 10시 어떠세요? 우리 강아지 산책 시간이어서요', isMine: true, timestamp: '오전 10:25' },
-    { id: '4', text: '네 좋아요! 한강공원에서 만나요 🐾', isMine: false, timestamp: '오전 10:26' },
-  ]);
+  const { id = '' } = useParams();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
+  const peerDisplayName =
+    searchParams.get('name')?.trim() || LEGACY_PEER_NAMES[id] || '댕친';
+  const meetupContext = searchParams.get('meetup')?.trim();
+
+  const [messages, setMessages] = useState<Message[]>(() =>
+    LEGACY_DEMO_CHAT_IDS.has(id) ? [...LEGACY_DEMO_MESSAGES] : [],
+  );
   const [inputText, setInputText] = useState('');
+
+  useEffect(() => {
+    setMessages(LEGACY_DEMO_CHAT_IDS.has(id) ? [...LEGACY_DEMO_MESSAGES] : []);
+    setInputText('');
+  }, [id]);
 
   const handleSend = () => {
     if (!inputText.trim()) return;
@@ -111,7 +137,7 @@ export function ChatDetailPage() {
       isMine: true,
       timestamp: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
     };
-    setMessages([...messages, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
     setInputText('');
   };
 
@@ -121,14 +147,19 @@ export function ChatDetailPage() {
       <header className="bg-white/90 backdrop-blur-xl border-b border-slate-100 flex-shrink-0 z-10">
         <div className="px-2 h-14 flex items-center justify-between">
           <div className="flex items-center gap-1">
-            <Link to="/explore" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="홈으로">
+            <button
+              type="button"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/chats'))}
+              className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors"
+              aria-label="뒤로"
+            >
               <ArrowLeft className="w-6 h-6" />
-            </Link>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-sm">
+            </button>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-sm flex-shrink-0">
                 🐕
               </div>
-              <h1 className="font-extrabold text-slate-800 text-base">강아지엄마</h1>
+              <h1 className="font-extrabold text-slate-800 text-base truncate">{peerDisplayName}</h1>
             </div>
           </div>
           <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-colors">
@@ -137,8 +168,19 @@ export function ChatDetailPage() {
         </div>
       </header>
 
+      {meetupContext && (
+        <div className="flex-shrink-0 px-4 py-2 bg-orange-50/90 border-b border-orange-100 text-xs text-orange-900 font-medium">
+          모임 글: <span className="font-extrabold">{meetupContext}</span>
+        </div>
+      )}
+
       {/* 메시지 목록 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {messages.length === 0 && (
+          <p className="text-center text-sm text-slate-400 py-10 font-medium">
+            첫 메시지를 내보세요 🐾
+          </p>
+        )}
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}>
             <div className="flex flex-col gap-1 max-w-[75%]">
