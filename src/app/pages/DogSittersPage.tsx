@@ -3,7 +3,7 @@ import { Search, MapPin, MessageCircle, Loader2 } from 'lucide-react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { DogSitterCard } from '../components/DogSitterCard';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
-import { calculateDistance, formatDistance } from '../utils/distance';
+import { ANYANG_MANAN_DISTANCE_ORIGIN, calculateDistance, formatDistance } from '../utils/distance';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
@@ -15,15 +15,18 @@ import { mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
 import {
   MANNAJA_CATEGORY_SET,
   MANNAJA_MEETUP_CATEGORIES,
+  meetupCategoryEmoji,
   MOIJA_CATEGORY_SET,
   MOIJA_MEETUP_CATEGORIES,
 } from '../utils/meetupCategory';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { isPromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
-type CareFilter = 'all' | 'sitter' | 'guard';
+/** need: 돌봄 맡기기 글(주인) / all·sitter·guard: 맡아주는 쪽(댕집사·보호맘) */
+type CareFilter = 'need' | 'all' | 'sitter' | 'guard';
 
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
@@ -36,9 +39,10 @@ function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   const p = new URLSearchParams(window.location.search);
   const view = p.get('view');
   const care = p.get('care');
-  if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter') {
+  if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter' || care === 'need') {
     let cf: CareFilter = 'all';
-    if (care === 'guard' || care === 'moms') cf = 'guard';
+    if (care === 'need') cf = 'need';
+    else if (care === 'guard' || care === 'moms') cf = 'guard';
     else if (care === 'sitter') cf = 'sitter';
     return { topTab: 'certified', care: cf };
   }
@@ -97,19 +101,30 @@ export function DogSittersPage() {
   }, [topTab]);
 
   const distForDistrict = useMemo(() => {
+    const userRefs =
+      referenceDistricts.length > 0 ? referenceDistricts : [ANYANG_MANAN_DISTANCE_ORIGIN];
+    /** 인증 돌봄(맡아주는) 목록은 안양 만안 기준으로 거리 표기 */
+    const effectiveRefs = topTab === 'certified' ? [ANYANG_MANAN_DISTANCE_ORIGIN] : userRefs;
+
     return (district: string) => {
       const d = district?.trim();
-      if (!d || referenceDistricts.length === 0) return 999;
-      return Math.min(...referenceDistricts.map((ref) => calculateDistance(ref, d)));
+      if (!d) return 999;
+      const distances = effectiveRefs.map((ref) => calculateDistance(ref, d)).filter((km) => km < 900);
+      if (distances.length === 0) {
+        const fallback = calculateDistance(ANYANG_MANAN_DISTANCE_ORIGIN, d);
+        return fallback < 900 ? fallback : 999;
+      }
+      return Math.min(...distances);
     };
-  }, [referenceDistricts]);
+  }, [referenceDistricts, topTab]);
 
   useEffect(() => {
     const view = searchParams.get('view');
     const care = searchParams.get('care');
-    if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter') {
+    if (view === 'care' || care === 'guard' || care === 'moms' || care === 'sitter' || care === 'need') {
       setTopTab('certified');
-      if (care === 'guard' || care === 'moms') setCareFilter('guard');
+      if (care === 'need') setCareFilter('need');
+      else if (care === 'guard' || care === 'moms') setCareFilter('guard');
       else if (care === 'sitter') setCareFilter('sitter');
       else setCareFilter('all');
     } else if (view === 'mannaja') {
@@ -163,6 +178,7 @@ export function DogSittersPage() {
         const p = new URLSearchParams(prev);
         p.set('view', 'care');
         if (next === 'all') p.delete('care');
+        else if (next === 'need') p.set('care', 'need');
         else if (next === 'guard') p.set('care', 'guard');
         else p.set('care', 'sitter');
         return p;
@@ -208,6 +224,8 @@ export function DogSittersPage() {
   }, [guardMoms]);
 
   const combinedRows: CombinedRow[] = useMemo(() => {
+    if (careFilter === 'need') return [];
+
     let sitters = mockDogSitters.filter((s) => {
       if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
       if (q) {
@@ -279,6 +297,19 @@ export function DogSittersPage() {
       return categoryMatch;
     })
     .slice(0, 20);
+
+  /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
+  const filteredCareNeedMeetups = useMemo(() => {
+    return allMeetups
+      .filter((req) => req.category === '돌봄')
+      .filter((req) => meetupVisibleInPublicFeed(req))
+      .filter((req) => {
+        if (!q) return true;
+        const blob = `${req.title} ${req.description} ${req.district} ${req.userName}`.toLowerCase();
+        return blob.includes(q);
+      })
+      .slice(0, 50);
+  }, [allMeetups, q]);
 
   // 신청 수 계산
   const getJoinCount = (meetupId: string) => {
@@ -387,6 +418,8 @@ export function DogSittersPage() {
           <div className="space-y-3">
             {filteredMeetups.map((meetup) => {
               const joinCount = getJoinCount(meetup.id);
+              const thumb =
+                meetup.images?.find((u) => typeof u === 'string' && u.trim().length > 0) ?? '';
               return (
                 <Link
                   key={meetup.id}
@@ -394,10 +427,19 @@ export function DogSittersPage() {
                   className="block bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-md hover:border-orange-100 active:scale-[0.98] transition-all"
                 >
                   <div className="flex gap-4 p-4">
-                    <div className="w-20 h-20 rounded-2xl flex-shrink-0 overflow-hidden">
-                      <div className="w-full h-full flex items-center justify-center text-3xl bg-gradient-to-br from-orange-100 to-yellow-100">
-                        🐕
-                      </div>
+                    <div className="flex h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-100">
+                      {thumb ? (
+                        <ImageWithFallback
+                          src={thumb}
+                          alt={meetup.title}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-3xl">
+                          {meetupCategoryEmoji(meetup.category)}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -431,20 +473,29 @@ export function DogSittersPage() {
 
       {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
-          <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
-            <span className="mb-1.5 block">
-              <strong className="font-extrabold">댕집사</strong>는 근처에 사는 이웃이 주인 집에 와서 돌봐 주는 방식이에요
-            </span>
-            <span className="block">
-              <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
-              맞추면 돼요.
-            </span>
-          </p>
+          {careFilter === 'need' ? (
+            <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
+              <strong className="font-extrabold">맡기는 사람</strong>은 집 방문 돌봄·맡기기 등을 구하는{' '}
+              <strong>돌봄 글</strong>이에요. 댕집사·보호맘은 아래 <strong>맡아주는 사람</strong> 탭에서 볼 수 있어요.
+            </p>
+          ) : (
+            <p className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-xs font-semibold leading-relaxed text-amber-950">
+              <span className="mb-1.5 block">
+                <strong className="font-extrabold">맡아주는 사람</strong> —{' '}
+                <strong className="font-extrabold">댕집사</strong>는 이웃이 주인 집에 와서 돌봐 주는 방식이에요.
+              </span>
+              <span className="block">
+                <strong className="font-extrabold">보호맘</strong>은 맡기기·픽업·기간 후 인수까지 돌봄 집 기준으로 서로
+                맞추면 돼요.
+              </span>
+            </p>
+          )}
 
           <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {(
               [
-                { id: 'all' as const, label: '전체' },
+                { id: 'need' as const, label: '맡기는 사람' },
+                { id: 'all' as const, label: '맡아주는 · 전체' },
                 { id: 'sitter' as const, label: '댕집사' },
                 { id: 'guard' as const, label: '인증 보호맘' },
               ] as const
@@ -453,7 +504,7 @@ export function DogSittersPage() {
                 key={id}
                 type="button"
                 onClick={() => syncCareToUrl(id)}
-                className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm transition-all ${
+                className={`whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm transition-all max-sm:px-3 max-sm:text-[13px] ${
                   careFilter === id
                     ? 'bg-market-cta text-white shadow-market'
                     : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
@@ -471,13 +522,15 @@ export function DogSittersPage() {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="이름·소개·동네 검색 🐕"
+              placeholder={
+                careFilter === 'need' ? '제목·내용·동네 검색 🐾' : '이름·소개·동네 검색 🐕'
+              }
               className="h-12 w-full rounded-2xl border-transparent bg-slate-50 pl-11 pr-4 text-sm transition-all placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10"
               style={{ fontWeight: 500 }}
             />
           </div>
 
-          {careFilter !== 'guard' && (
+          {careFilter !== 'guard' && careFilter !== 'need' && (
             <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
               {specialties.map((spec) => (
                 <button
@@ -505,21 +558,107 @@ export function DogSittersPage() {
 
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-sm text-slate-600" style={{ fontWeight: 700 }}>
-              총 {combinedRows.length}명
+              {careFilter === 'need'
+                ? `총 ${filteredCareNeedMeetups.length}건`
+                : `총 ${combinedRows.length}명`}
             </p>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'distance' | 'rating' | 'reviews')}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
-              style={{ fontWeight: 700 }}
-            >
-              <option value="distance">🎯 거리 가까운 순</option>
-              <option value="rating">⭐ 평점 높은 순</option>
-              <option value="reviews">💬 리뷰 많은 순</option>
-            </select>
+            {careFilter !== 'need' && (
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'distance' | 'rating' | 'reviews')}
+                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                style={{ fontWeight: 700 }}
+              >
+                <option value="distance">🎯 거리 가까운 순</option>
+                <option value="rating">⭐ 평점 높은 순</option>
+                <option value="reviews">💬 리뷰 많은 순</option>
+              </select>
+            )}
           </div>
+          {careFilter !== 'need' && (
+            <p className="-mt-1 mb-3 text-[11px] font-semibold text-slate-400">
+              표시 거리는 안양 만안구 기준 대략 거리예요.
+            </p>
+          )}
 
-          {guardLoading && careFilter === 'guard' ? (
+          {careFilter === 'need' ? (
+            <div className="space-y-3">
+              {filteredCareNeedMeetups.map((meetup) => {
+                const joinCount = getJoinCount(meetup.id);
+                const thumb =
+                  meetup.images?.find((u) => typeof u === 'string' && u.trim().length > 0) ?? '';
+                return (
+                  <Link
+                    key={meetup.id}
+                    to={`/meetup/${meetup.id}`}
+                    className="block overflow-hidden rounded-3xl border border-slate-100 bg-white transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98]"
+                  >
+                    <div className="flex gap-4 p-4">
+                      <div className="flex h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100">
+                        {thumb ? (
+                          <ImageWithFallback
+                            src={thumb}
+                            alt={meetup.title}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-3xl">
+                            {meetupCategoryEmoji(meetup.category)}
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[10px] font-extrabold uppercase tracking-wide text-orange-600">
+                          돌봄 맡기기 글
+                        </p>
+                        <h3 className="mb-1 line-clamp-1 text-base text-slate-800" style={{ fontWeight: 800 }}>
+                          {meetup.title}
+                        </h3>
+                        <p className="mb-2 line-clamp-2 text-sm text-slate-500" style={{ fontWeight: 500 }}>
+                          {meetup.description}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <div
+                            className="flex items-center gap-1.5 text-xs text-slate-400"
+                            style={{ fontWeight: 700 }}
+                          >
+                            <span>{meetup.district}</span>
+                            <span>·</span>
+                            <span>
+                              {formatDistanceToNow(new Date(meetup.createdAt), { locale: ko })} 전
+                            </span>
+                          </div>
+                          {joinCount > 0 && (
+                            <div className="flex items-center gap-1 rounded-lg bg-orange-50 px-2 py-1 text-orange-600">
+                              <MessageCircle className="h-3.5 w-3.5" />
+                              <span className="text-xs" style={{ fontWeight: 700 }}>
+                                {joinCount}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+              {filteredCareNeedMeetups.length === 0 && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
+                  <p className="text-sm font-bold text-slate-700">맞는 돌봄 글이 없어요</p>
+                  <p className="mt-2 text-xs font-medium text-slate-500">
+                    검색어를 바꾸거나, 글 올리기에서 돌봄·맡기기 글을 올려 보세요.
+                  </p>
+                  <Link
+                    to="/create-meetup?kind=dolbom"
+                    className="mt-4 inline-block rounded-2xl bg-orange-500 px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.98]"
+                  >
+                    돌봄 글 올리기
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : guardLoading && careFilter === 'guard' ? (
             <div className="flex justify-center py-16 text-slate-400">
               <Loader2 className="h-8 w-8 animate-spin" aria-label="불러오는 중" />
             </div>

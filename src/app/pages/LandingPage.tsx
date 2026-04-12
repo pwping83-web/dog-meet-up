@@ -472,7 +472,7 @@ export function LandingPage() {
               </p>
             </div>
             <Link
-              to="/sitters?view=care&care=guard"
+              to="/sitters?view=care&care=need"
               className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs"
               style={{ fontWeight: 800 }}
             >
