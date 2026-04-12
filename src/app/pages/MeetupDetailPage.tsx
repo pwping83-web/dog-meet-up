@@ -13,6 +13,7 @@ import {
   shouldSuggestBreedingMislabelReport,
 } from '../utils/breedingContentGuard';
 import { AiDoumiButton } from '../components/AiDoumiButton';
+import { MEETUP_DETAIL_FOOTNOTE } from '../../lib/platformLegalCopy';
 
 export function MeetupDetailPage() {
   const { id } = useParams();
@@ -171,6 +172,8 @@ export function MeetupDetailPage() {
           <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 text-slate-700 leading-relaxed" style={{ fontWeight: 500 }}>
             {meetup.description}
           </div>
+
+          <p className="mt-3 text-[11px] font-medium leading-relaxed text-slate-500">{MEETUP_DETAIL_FOOTNOTE}</p>
 
           {breedingMislabelHint && (
             <div className="mt-4 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-950">

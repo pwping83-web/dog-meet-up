@@ -26,6 +26,7 @@ import type { Meetup } from '../types';
 import type { User } from '@supabase/supabase-js';
 import { appendUserMeetup } from '../../lib/userMeetupsStore';
 import { AiDoumiButton } from '../components/AiDoumiButton';
+import { MEETUP_POST_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
 
 const MOIJA_CATEGORIES = [
   { name: '공원·장소 모임', emoji: '🌳' },
@@ -84,6 +85,7 @@ export function CreateRequestPage() {
   const [breedingListingUntil, setBreedingListingUntil] = useState<string | null>(null);
   const [breedingEntLoadFailed, setBreedingEntLoadFailed] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
+  const [meetupLiabilityAgree, setMeetupLiabilityAgree] = useState(false);
   const [regionGpsBusy, setRegionGpsBusy] = useState(false);
   const draftRestoredRef = useRef(false);
   const breedingPaidHandledRef = useRef(false);
@@ -325,6 +327,10 @@ export function CreateRequestPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !kind) return;
+    if (!meetupLiabilityAgree) {
+      alert('올리기 전에 아래 플랫폼 이용 범위·책임 고지에 동의해 주세요.');
+      return;
+    }
     if (!categoryOk) {
       alert(
         kind === 'dolbom'
@@ -863,9 +869,24 @@ export function CreateRequestPage() {
             </div>
           )}
 
+          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
+            <input
+              type="checkbox"
+              checked={meetupLiabilityAgree}
+              onChange={(e) => setMeetupLiabilityAgree(e.target.checked)}
+              className="mt-1 h-5 w-5 shrink-0 accent-orange-500"
+            />
+            <span className="min-w-0 flex-1 text-xs font-semibold leading-relaxed text-slate-700">
+              {MEETUP_POST_LIABILITY_CHECKBOX_LABEL}{' '}
+              <Link to="/customer-service#legal" className="font-extrabold text-brand underline underline-offset-2">
+                법적 고지 전문
+              </Link>
+            </span>
+          </label>
+
           <button
             type="submit"
-            disabled={!categoryOk || submitBusy || Boolean(breedingLeakLabel)}
+            disabled={!categoryOk || submitBusy || Boolean(breedingLeakLabel) || !meetupLiabilityAgree}
             className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-5 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-50"
           >
             {kind === 'dolbom'

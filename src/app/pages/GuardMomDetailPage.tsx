@@ -12,6 +12,7 @@ import {
 } from '../data/mockCertifiedGuardMoms';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation } from '../data/regions';
+import { GUARD_MOM_REQUEST_LEGAL_FOOTNOTE } from '../../lib/platformLegalCopy';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -236,6 +237,9 @@ export function GuardMomDetailPage() {
                 {submitErr && (
                   <p className="mt-2 text-xs font-semibold text-red-600">{submitErr}</p>
                 )}
+                <p className="mt-3 text-[10px] font-medium leading-relaxed text-slate-500">
+                  {GUARD_MOM_REQUEST_LEGAL_FOOTNOTE}
+                </p>
                 <button
                   type="button"
                   disabled={payBusy}

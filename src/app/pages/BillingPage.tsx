@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BILLING_PRODUCTS, startStripeCheckout, type BillingProductKey } from '../../lib/billing';
 import { isPromoFreeListings } from '../../lib/promoFlags';
+import { BILLING_LEGAL_NOTICE_PARAGRAPH } from '../../lib/platformLegalCopy';
 
 type OrderRow = {
   id: string;
@@ -176,6 +177,10 @@ export function BillingPage() {
             {pageError}
           </div>
         )}
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-[11px] font-semibold leading-relaxed text-slate-700">
+          {BILLING_LEGAL_NOTICE_PARAGRAPH}
+        </div>
 
         {promoFree && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-xs font-semibold leading-relaxed text-emerald-950">

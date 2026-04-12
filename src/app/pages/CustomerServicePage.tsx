@@ -1,10 +1,24 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router';
 import { ChevronRight } from 'lucide-react';
+import { PLATFORM_LEGAL_FULL_ARTICLE } from '../../lib/platformLegalCopy';
 
 export function CustomerServicePage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'faq' | 'inquiry' | 'notice'>('faq');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<'faq' | 'inquiry' | 'notice' | 'legal'>('faq');
+
+  useEffect(() => {
+    if (location.hash === '#legal') {
+      setActiveTab('legal');
+    }
+  }, [location.hash]);
+
+  const clearHash = () => {
+    if (location.hash) {
+      window.history.replaceState(null, '', location.pathname + location.search);
+    }
+  };
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [inquiryCategory, setInquiryCategory] = useState('');
   const [inquiryTitle, setInquiryTitle] = useState('');
@@ -114,8 +128,12 @@ export function CustomerServicePage() {
       <div className="sticky top-14 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
         <div className="flex max-w-screen-md mx-auto">
           <button
-            onClick={() => setActiveTab('faq')}
-            className={`flex-1 border-b-2 py-3 text-sm font-bold transition-colors ${
+            type="button"
+            onClick={() => {
+              clearHash();
+              setActiveTab('faq');
+            }}
+            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
               activeTab === 'faq'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
@@ -124,8 +142,12 @@ export function CustomerServicePage() {
             자주 묻는 질문
           </button>
           <button
-            onClick={() => setActiveTab('inquiry')}
-            className={`flex-1 border-b-2 py-3 text-sm font-bold transition-colors ${
+            type="button"
+            onClick={() => {
+              clearHash();
+              setActiveTab('inquiry');
+            }}
+            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
               activeTab === 'inquiry'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
@@ -134,14 +156,32 @@ export function CustomerServicePage() {
             1:1 문의
           </button>
           <button
-            onClick={() => setActiveTab('notice')}
-            className={`flex-1 border-b-2 py-3 text-sm font-bold transition-colors ${
+            type="button"
+            onClick={() => {
+              clearHash();
+              setActiveTab('notice');
+            }}
+            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
               activeTab === 'notice'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
             }`}
           >
             공지사항
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.history.replaceState(null, '', `${location.pathname}${location.search}#legal`);
+              setActiveTab('legal');
+            }}
+            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
+              activeTab === 'legal'
+                ? 'border-brand text-brand'
+                : 'border-transparent text-slate-400'
+            }`}
+          >
+            법적 고지
           </button>
         </div>
       </div>
@@ -201,7 +241,10 @@ export function CustomerServicePage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setActiveTab('inquiry')}
+                    onClick={() => {
+                      clearHash();
+                      setActiveTab('inquiry');
+                    }}
                     className="rounded-xl bg-market-cta px-5 py-2.5 text-sm font-bold text-white shadow-market transition-all hover:opacity-90"
                   >
                     1:1 문의하기
@@ -366,6 +409,20 @@ export function CustomerServicePage() {
             <button type="button" className="text-sm font-bold text-slate-500 hover:text-brand">
               더보기 +
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'legal' && (
+        <div className="mx-auto max-w-screen-md px-4 py-6">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-extrabold text-slate-900">플랫폼 이용 범위 및 이용자 책임</h2>
+            <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
+              모이자·만나자(교배 포함)·돌봄·인증 보호맨 등 전 영역에 공통 적용됩니다.
+            </p>
+            <div className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-700">
+              {PLATFORM_LEGAL_FULL_ARTICLE}
+            </div>
           </div>
         </div>
       )}

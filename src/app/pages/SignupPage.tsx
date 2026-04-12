@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { SIGNUP_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ export function SignupPage() {
   const [allAgree, setAllAgree] = useState(false);
   const [termsAgree, setTermsAgree] = useState(false);
   const [privacyAgree, setPrivacyAgree] = useState(false);
+  const [liabilityAgree, setLiabilityAgree] = useState(false);
   const [marketingAgree, setMarketingAgree] = useState(false);
 
   const handleAllAgree = () => {
@@ -22,12 +24,13 @@ export function SignupPage() {
     setAllAgree(newValue);
     setTermsAgree(newValue);
     setPrivacyAgree(newValue);
+    setLiabilityAgree(newValue);
     setMarketingAgree(newValue);
   };
 
   const handleKakaoSignup = async () => {
-    if (!termsAgree || !privacyAgree) {
-      alert('필수 약관에 동의해 주세요.');
+    if (!termsAgree || !privacyAgree || !liabilityAgree) {
+      alert('필수 약관·고지에 동의해 주세요.');
       return;
     }
     try {
@@ -42,6 +45,10 @@ export function SignupPage() {
 
   const handleTermsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!termsAgree || !privacyAgree || !liabilityAgree) {
+      alert('필수 약관·고지에 동의해 주세요.');
+      return;
+    }
     setStep('phone');
   };
 
@@ -144,6 +151,19 @@ export function SignupPage() {
                   </button>
                 </label>
 
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={liabilityAgree}
+                    onChange={(e) => setLiabilityAgree(e.target.checked)}
+                    className="mt-0.5 w-5 h-5 shrink-0 accent-orange-500"
+                  />
+                  <span className="text-sm flex-1 leading-snug">{SIGNUP_LIABILITY_CHECKBOX_LABEL}</span>
+                  <Link to="/customer-service#legal" className="shrink-0 text-sm font-bold text-orange-600">
+                    보기
+                  </Link>
+                </label>
+
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -170,7 +190,7 @@ export function SignupPage() {
             <button
               type="button"
               onClick={() => void handleKakaoSignup()}
-              disabled={loading || !termsAgree || !privacyAgree}
+              disabled={loading || !termsAgree || !privacyAgree || !liabilityAgree}
               className="mb-4 w-full rounded-2xl bg-[#FEE500] py-3.5 font-bold text-gray-900 shadow-md transition-all hover:bg-[#FDD835] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 flex items-center justify-center gap-2"
             >
               <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -181,7 +201,7 @@ export function SignupPage() {
 
             <button
               type="submit"
-              disabled={!termsAgree || !privacyAgree}
+              disabled={!termsAgree || !privacyAgree || !liabilityAgree}
               className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98] disabled:from-gray-300 disabled:to-gray-300 disabled:shadow-none disabled:cursor-not-allowed"
             >
               휴대폰으로 계속하기
