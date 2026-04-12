@@ -10,6 +10,12 @@
  */
 
 import { Meetup, DogSitter, JoinRequest } from '../types';
+import { virtualDogPhotoForSeed } from './virtualDogPhotos';
+
+function mockMeetupImages(id: string, category: Meetup['category']): string[] {
+  const seed = category === '돌봄' ? `dolbom-${id}` : `meetup-${id}`;
+  return [virtualDogPhotoForSeed(seed)];
+}
 
 // Sample dog meetup requests from owners
 // 모이자: 공원·장소 모임, 산책·놀이, 카페·체험, 훈련·사회화 / 만나자: 1:1 만남, 교배, 실종 / 돌봄: 맡기기(랜딩 돌봄 섹션)
@@ -22,9 +28,7 @@ export const mockMeetups: Meetup[] = [
       '말티즈·포메·비숑 등 소형견 가족이에요. 잔디광장 근처 10시쯤 모여서 같이 놀다 가요. 참석 가능하신 분 채팅 주세요 🐾',
     location: '서울 송파구',
     district: '송파구',
-    images: [
-      'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    ],
+    images: mockMeetupImages('moija-park-1', '공원·장소 모임'),
     estimatedCost: '일요일 10시',
     status: 'pending',
     createdAt: new Date('2026-04-08'),
@@ -38,7 +42,7 @@ export const mockMeetups: Meetup[] = [
     description: '3살 웰시코기 키우고 있어요! 주말 오전에 한강공원 산책 함께 하실 분 찾아요. 활발한 성격이라 에너지 넘치는 댕댕이 환영합니다 💪',
     location: '서울 강남구',
     district: '강남구',
-    images: ['https://images.unsplash.com/photo-1548199973-03cce0bbc87b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3JnaSUyMGRvZyUyMHdhbGtpbmd8ZW58MXx8fHwxNzcxMDIzMTg0fDA&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('1', '산책·놀이'),
     estimatedCost: '내일 오전 10시',
     status: 'pending',
     createdAt: new Date('2026-02-10'),
@@ -52,7 +56,7 @@ export const mockMeetups: Meetup[] = [
     description: '5개월 골든리트리버 퍼피 키워요! 사회화 훈련이 필요한 시기라 비슷한 나이대 강아지와 만나고 싶어요. 매주 토요일 오후 2시 예정입니다.',
     location: '서울 서초구',
     district: '서초구',
-    images: ['https://images.unsplash.com/photo-1633722715463-d30f4f325e24?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxnb2xkZW4lMjByZXRyaWV2ZXIlMjBwdXBweXxlbnwxfHx8fDE3NzEwMjMxODV8MA&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('2', '훈련·사회화'),
     estimatedCost: '토요일 오후 2시',
     status: 'pending',
     createdAt: new Date('2026-02-11'),
@@ -66,7 +70,7 @@ export const mockMeetups: Meetup[] = [
     description: '말티즈 6개월이에요. 소형견끼리 모여서 안전하게 놀 수 있는 모임 만들고 싶어요! 공놀이 좋아하는 친구들 모여라~',
     location: '서울 강남구',
     district: '강남구',
-    images: ['https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYWx0ZXNlJTIwZG9nJTIwcGxheWluZ3xlbnwxfHx8fDE3NzEwMjMxODV8MA&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('3', '산책·놀이'),
     estimatedCost: '이번 주말',
     status: 'in-progress',
     createdAt: new Date('2026-02-09'),
@@ -81,9 +85,7 @@ export const mockMeetups: Meetup[] = [
       '5kg 말티즈 남아예요. 예방접종·심장사상충 완료, 배변 패드 잘 쌉니다. 토·일 이틀간 집 방문 돌봄 또는 하루 맡기기 가능한 분 찾아요. 인증 돌봄 탭의 인증 댕집사분도 환영합니다. 사전에 성향·산책 여부만 채팅으로 맞추면 돼요!',
     location: '서울 마포구',
     district: '마포구',
-    images: [
-      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    ],
+    images: mockMeetupImages('explore-dolbom-1', '돌봄'),
     estimatedCost: '돌봄·맡기기',
     status: 'pending',
     createdAt: new Date('2026-02-10'),
@@ -97,7 +99,7 @@ export const mockMeetups: Meetup[] = [
     description: '반려견 동반 카페 다녀오실 분! 2살 비글이에요. 온순하고 사람 좋아해요. 새로운 댕친 만들고 싶어요 😊',
     location: '서울 송파구',
     district: '송파구',
-    images: ['https://images.unsplash.com/photo-1505628346881-b72b27e84530?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiZWFnbGUlMjBkb2clMjBjYWZlfGVufDF8fHx8MTc3MDk4MzYxN3ww&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('4', '카페·체험'),
     estimatedCost: '오늘 오후 4시',
     status: 'pending',
     createdAt: new Date('2026-02-12'),
@@ -111,7 +113,7 @@ export const mockMeetups: Meetup[] = [
     description: '건강하고 혈통 좋은 3살 포메라니안 암컷이에요. 예방접종 완료, 건강검진 완료했어요. 비슷한 조건의 수컷 찾습니다!',
     location: '서울 강남구',
     district: '강남구',
-    images: ['https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb21lcmFuaWFuJTIwZG9nJTIwY3V0ZXxlbnwxfHx8fDE3NzE4MTM3MDh8MA&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('5', '교배'),
     estimatedCost: '교배 희망',
     listingVisibleUntil: '2030-12-31T00:00:00.000Z',
     status: 'pending',
@@ -126,7 +128,7 @@ export const mockMeetups: Meetup[] = [
     description: '2월 22일 오후 3시경 강남역 근처에서 잃어버렸어요. 갈색 목줄 착용. 이름은 "초코"에요. 제보 부탁드립니다 😭',
     location: '서울 서초구',
     district: '서초구',
-    images: ['https://images.unsplash.com/photo-1637076941297-403290f6d028?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzaGliYSUyMGludSUyMGRvZyUyMGhhcHB5fGVufDF8fHx8MTc3MTgzMjkzN3ww&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('6', '실종'),
     estimatedCost: '🚨 찾아주세요',
     status: 'pending',
     createdAt: new Date('2026-02-14'),
@@ -140,7 +142,7 @@ export const mockMeetups: Meetup[] = [
     description: '수영 좋아하는 강아지들 모여라! 이번 주말 애견 수영장 예약했어요. 같이 가실 분~',
     location: '경기 성남시',
     district: '분당구',
-    images: ['https://images.unsplash.com/photo-1672838565001-3e7e1e96bb52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYWJyYWRvciUyMHJldHJpZXZlciUyMHB1cHB5fGVufDF8fHx8MTc3MTg0NjIxNXww&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('7', '공원·장소 모임'),
     estimatedCost: '일요일 오전',
     status: 'pending',
     createdAt: new Date('2026-02-15'),
@@ -154,7 +156,7 @@ export const mockMeetups: Meetup[] = [
     description: '건강한 2살 프렌치불독 수컷이에요. 혈통서 있고 건강검진 완료. 암컷 파트너 찾습니다. 연락주세요!',
     location: '서울 송파구',
     district: '송파구',
-    images: ['https://images.unsplash.com/photo-1693897004115-7fbd4f1ae96e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVuY2glMjBidWxsZG9nJTIwcHVwcGllc3xlbnwxfHx8fDE3NzE4NTMxNzV8MA&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('8', '교배'),
     estimatedCost: '교배 가능',
     listingVisibleUntil: '2030-12-31T00:00:00.000Z',
     status: 'completed',
@@ -169,7 +171,7 @@ export const mockMeetups: Meetup[] = [
     description: '매달 미용하는데 항상 같이 가면 재밌을 것 같아요! 미용 후 카페 가요~',
     location: '서울 강남구',
     district: '강남구',
-    images: ['https://images.unsplash.com/photo-1704227170709-5e5ddefcb4f7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwb29kbGUlMjBkb2clMjB3aGl0ZXxlbnwxfHx8fDE3NzE3NzIzMjR8MA&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('9', '카페·체험'),
     estimatedCost: '수요일 오후',
     status: 'pending',
     createdAt: new Date('2026-02-16'),
@@ -183,7 +185,7 @@ export const mockMeetups: Meetup[] = [
     description: '탄천에서 주인 찾아다니는 사모예드 보호중이에요. 파란 목줄 착용. 주인분 연락 부탁드립니다!',
     location: '경기 성남시',
     district: '분당구',
-    images: ['https://images.unsplash.com/photo-1727302700512-e053b331d61c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzYW1veWVkJTIwZG9nJTIwZmx1ZmZ5fGVufDF8fHx8MTc3MTg1MzE3Nnww&ixlib=rb-4.1.0&q=80&w=1080'],
+    images: mockMeetupImages('10', '실종'),
     estimatedCost: '🚨 보호중',
     status: 'pending',
     createdAt: new Date('2026-02-17'),
@@ -198,9 +200,7 @@ export const mockMeetups: Meetup[] = [
       '3살 포메 여아 건강해요. 산책 겸 비슷한 아이랑 천천히 친해지고 싶어요. 친구·산책 메이트만 구해요. 포메 가족 편하게 연락 주세요!',
     location: '서울 강남구',
     district: '강남구',
-    images: [
-      'https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
-    ],
+    images: mockMeetupImages('mannaja-pome-1', '1:1 만남'),
     estimatedCost: '주말 오후',
     status: 'pending',
     createdAt: new Date('2026-04-09'),
@@ -215,9 +215,7 @@ export const mockMeetups: Meetup[] = [
       '4살 보더콜리 키워요. 당김 줄·입마개 준비돼 있어요. 19시쯤 만나서 40분 정도 천천히 걷고 헤어져요. 무리한 뛰기보다 냄새 맡기·친해지기 위주로 가요 🦮',
     location: '서울 서초구',
     district: '서초구',
-    images: [
-      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=1080&h=1080&fit=crop&q=80',
-    ],
+    images: mockMeetupImages('daeng-friend-2026-01', '산책·놀이'),
     estimatedCost: '평일 저녁 7시',
     status: 'pending',
     createdAt: new Date('2026-04-11'),
@@ -232,9 +230,7 @@ export const mockMeetups: Meetup[] = [
       '골든 4개월 퍼피예요. 주말 오전 반려견 센터 기초반 열리는데 혼자 가기 부끄워요 😅 비슷한 월령 아이 부모님이랑 같이 듣고 산책도 번갈아 하면 좋겠어요.',
     location: '서울 송파구',
     district: '송파구',
-    images: [
-      'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=1080&h=1080&fit=crop&q=80',
-    ],
+    images: mockMeetupImages('daeng-friend-2026-02', '훈련·사회화'),
     estimatedCost: '토요일 10시',
     status: 'pending',
     createdAt: new Date('2026-04-11'),
@@ -249,9 +245,7 @@ export const mockMeetups: Meetup[] = [
       '2살 표준 닥스 남아예요. 비슷한 체형 닥스나 소형견이면 좋아요. 첫 만남은 단골 산책로에서 짧게, 서로 괜찮으면 카페도 가요. 예민한 편이라 천천히 맞춰 주실 분!',
     location: '서울 마포구',
     district: '마포구',
-    images: [
-      'https://images.unsplash.com/photo-1587300003388-59208cc96262?w=1080&h=1080&fit=crop&q=80',
-    ],
+    images: mockMeetupImages('daeng-friend-2026-03', '1:1 만남'),
     estimatedCost: '주말 오후',
     status: 'pending',
     createdAt: new Date('2026-04-10'),
@@ -266,9 +260,7 @@ export const mockMeetups: Meetup[] = [
       '7kg 비숑 여아, 중성화·접종 완료예요. 집에 CCTV 있어요. 하루 종일 맡기기 또는 오전·오후 나눠 방문 돌봄도 괜찮아요. 성향 맞춰 채팅으로 먼저 이야기 나눠요!',
     location: '경기 안양시',
     district: '안양시 만안구',
-    images: [
-      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=1080&h=1080&fit=crop&q=80',
-    ],
+    images: mockMeetupImages('daeng-friend-2026-04', '돌봄'),
     estimatedCost: '4/12 하루',
     status: 'pending',
     createdAt: new Date('2026-04-10'),
@@ -283,9 +275,7 @@ export const mockMeetups: Meetup[] = [
       '이번 주 토요일 한정 팝업이래요! 굿즈·간식 구경하고 근처 잔디에서 잠깐 놀아요. 소형견 위주로 모이면 좋겠어요. 인원 맞춰서 시간만 정하면 돼요 ✨',
     location: '서울 송파구',
     district: '송파구',
-    images: [
-      'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1080&h=1080&fit=crop&q=80',
-    ],
+    images: mockMeetupImages('daeng-friend-2026-05', '카페·체험'),
     estimatedCost: '토요일 오후 2시',
     status: 'pending',
     createdAt: new Date('2026-04-09'),
@@ -298,8 +288,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r1',
     name: '미미맘 🐩',
-    profileImage:
-      'https://images.unsplash.com/photo-1630766786510-85bc1c6f18d4?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r1'),
     location: '서울 강남구 (역삼동)',
     district: '강남구',
     dong: '역삼동',
@@ -317,8 +306,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r2',
     name: '훈련사 민호 🎓',
-    profileImage:
-      'https://images.unsplash.com/photo-1633722715463-d30f4f325e24?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r2'),
     location: '서울 서초구',
     district: '서초구',
     specialties: ['방문 훈련', '사회화', '기본교육'],
@@ -335,8 +323,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r3',
     name: '댕시터 하늘 🌤️',
-    profileImage:
-      'https://images.unsplash.com/photo-1693897004115-7fbd4f1ae96e?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r3'),
     location: '서울 강남구',
     district: '강남구',
     specialties: ['종일 돌봄', '반나절', '대형견 OK'],
@@ -353,8 +340,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r4',
     name: '산책메이트 지수 🦮',
-    profileImage:
-      'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r4'),
     location: '서울 송파구',
     district: '송파구',
     specialties: ['산책 대행', '아침·저녁 방문', '활동량 큰 아이'],
@@ -371,8 +357,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r5',
     name: '부산댕집사 🌊',
-    profileImage:
-      'https://images.unsplash.com/photo-1727302700512-e053b331d61c?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r5'),
     location: '부산 해운대구',
     district: '해운대구',
     specialties: ['해변 산책', '대형견', '당일·주말 맡기기'],
@@ -388,8 +373,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r6',
     name: '인천펫시터 🐶',
-    profileImage:
-      'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r6'),
     location: '인천 남동구',
     district: '남동구',
     specialties: ['노견 케어', '투약 보조', '방문 돌봄'],
@@ -405,8 +389,7 @@ export const mockDogSitters: DogSitter[] = [
   {
     id: 'r7',
     name: '대구댕집사 🐾',
-    profileImage:
-      'https://images.unsplash.com/photo-1704227170709-5e5ddefcb4f7?w=400&h=400&fit=crop&q=80',
+    profileImage: virtualDogPhotoForSeed('mock-sitter-r7'),
     location: '대구 수성구',
     district: '수성구',
     specialties: ['소형견 맡기기', '정기 산책 대행', '방문 돌봄'],

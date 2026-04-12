@@ -20,7 +20,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
     <article
       className={
         compact
-          ? 'relative overflow-hidden rounded-2xl border border-violet-200/80 bg-gradient-to-r from-violet-50/95 to-white px-2.5 py-2 shadow-sm max-md:px-3 max-md:py-2.5'
+          ? 'relative overflow-hidden rounded-2xl border border-violet-200/80 bg-gradient-to-r from-violet-50/95 to-white px-3 py-2.5 shadow-sm max-md:px-3.5 max-md:py-3'
           : 'relative overflow-hidden rounded-3xl border border-violet-200/90 bg-gradient-to-br from-violet-50 via-white to-sky-50/80 p-4 shadow-md shadow-violet-100/40 max-md:p-4 md:rounded-2xl md:p-3.5'
       }
       aria-label="가상 광고 예시 카드"
@@ -40,26 +40,26 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
           }
         >
           <div className="min-w-0 flex-1">
-            <div className={compact ? 'mb-0.5 flex flex-wrap items-center gap-1.5' : 'mb-2 flex flex-wrap items-center gap-2'}>
+            <div className={compact ? 'mb-1 flex flex-wrap items-center gap-2' : 'mb-2 flex flex-wrap items-center gap-2'}>
               <span
                 className={
                   compact
-                    ? 'inline-flex items-center gap-0.5 rounded-md bg-violet-600 px-1.5 py-0.5 text-[9px] font-black text-white max-md:text-[10px]'
-                    : 'inline-flex items-center gap-1 rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white max-md:text-[11px]'
+                    ? 'inline-flex items-center gap-1 rounded-md bg-violet-600 px-2 py-1 text-[10px] font-black text-white max-md:text-[11px]'
+                    : 'inline-flex items-center gap-1 rounded-full bg-violet-600 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-white max-md:text-xs'
                 }
               >
-                <Megaphone className={compact ? 'h-3 w-3 shrink-0' : 'h-3.5 w-3.5 shrink-0'} aria-hidden />
+                <Megaphone className={compact ? 'h-3.5 w-3.5 shrink-0' : 'h-3.5 w-3.5 shrink-0'} aria-hidden />
                 광고 · 가상 예시
               </span>
-              <span className={compact ? 'text-[9px] font-bold text-slate-500 max-md:text-[10px]' : 'text-[10px] font-bold text-slate-500 max-md:text-[11px]'}>
+              <span className={compact ? 'text-[10px] font-bold text-slate-600 max-md:text-[11px]' : 'text-[11px] font-bold text-slate-500 max-md:text-xs'}>
                 실제 업체 아님
               </span>
             </div>
             <h3
               className={
                 compact
-                  ? 'line-clamp-2 text-[11px] font-extrabold leading-snug tracking-tight text-slate-900 max-md:text-xs'
-                  : 'text-[15px] font-black leading-snug tracking-tight text-slate-900 max-md:text-base md:text-sm'
+                  ? 'line-clamp-2 text-xs font-extrabold leading-snug tracking-tight text-slate-900 max-md:text-[13px]'
+                  : 'text-base font-black leading-snug tracking-tight text-slate-900 max-md:text-lg'
               }
             >
               [가상] 댕댕케어 직업훈련센터 — 돌봄·맡기기 직업 훈련

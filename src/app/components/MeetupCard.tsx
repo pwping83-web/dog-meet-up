@@ -3,6 +3,8 @@ import { MapPin, Clock, Users, Zap, ChevronRight } from 'lucide-react';
 import { Meetup } from '../types';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import { ImageWithFallback } from './figma/ImageWithFallback';
+import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 interface MeetupCardProps {
   meetup: Meetup;
@@ -22,61 +24,47 @@ export function MeetupCard({ meetup, joinCount = 0, userDistrict }: MeetupCardPr
     completed: '모임 완료',
   };
 
-  const statusColor = {
-    pending: 'bg-orange-50 text-orange-600',
-    'in-progress': 'bg-orange-50 text-orange-600',
-    completed: 'bg-slate-50 text-slate-500',
-  }[meetup.status];
-
   return (
     <Link
       to={`/meetup/${meetup.id}`}
       className="block bg-white border border-slate-100 rounded-3xl overflow-hidden hover:shadow-md hover:border-orange-100 transition-all duration-200 active:scale-[0.98] w-full group"
       style={{ minWidth: '280px' }}
     >
-      {/* 이미지 영역 */}
-      {meetup.images && meetup.images.length > 0 ? (
-        <div className="relative aspect-[4/3] bg-slate-100 max-h-48 overflow-hidden">
-          <img
-            src={meetup.images[0]}
-            alt={meetup.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          <div className="absolute top-3 left-3">
-            <span className={`text-xs px-2.5 py-1 rounded-lg backdrop-blur-md bg-white/90 shadow-sm ${meetup.status === 'pending' ? 'text-orange-600' : meetup.status === 'in-progress' ? 'text-orange-600' : 'text-slate-600'}`} style={{ fontWeight: 700 }}>
-              {statusText[meetup.status]}
-            </span>
-          </div>
-          {userDistrict && meetup.district !== userDistrict && (
-            <div className="absolute top-3 right-3">
-              <div className="bg-black/40 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm" style={{ fontWeight: 700 }}>
-                <MapPin className="w-3 h-3" />
-                {meetup.district}
-              </div>
-            </div>
-          )}
-          {userDistrict && meetup.district === userDistrict && (
-            <div className="absolute top-3 right-3">
-              <div className="bg-orange-600/90 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm" style={{ fontWeight: 700 }}>
-                <Zap className="w-3 h-3 fill-white" />
-                우리 동네
-              </div>
-            </div>
-          )}
+      {/* 이미지 영역 — 비어 있거나 깨진 URL이어도 가상 강아지 커버로 표시 */}
+      <div className="relative aspect-[4/3] bg-slate-100 max-h-48 overflow-hidden">
+        <ImageWithFallback
+          src={meetupCoverImageUrl(meetup)}
+          fallbackSrc={virtualDogPhotoForSeed(`meetup-card-fallback-${meetup.id}`)}
+          alt={meetup.title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute top-3 left-3">
+          <span className={`text-xs px-2.5 py-1 rounded-lg backdrop-blur-md bg-white/90 shadow-sm ${meetup.status === 'pending' ? 'text-orange-600' : meetup.status === 'in-progress' ? 'text-orange-600' : 'text-slate-600'}`} style={{ fontWeight: 700 }}>
+            {statusText[meetup.status]}
+          </span>
         </div>
-      ) : (
-        <div className="hidden" />
-      )}
+        {userDistrict && meetup.district !== userDistrict && (
+          <div className="absolute top-3 right-3">
+            <div className="bg-black/40 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm" style={{ fontWeight: 700 }}>
+              <MapPin className="w-3 h-3" />
+              {meetup.district}
+            </div>
+          </div>
+        )}
+        {userDistrict && meetup.district === userDistrict && (
+          <div className="absolute top-3 right-3">
+            <div className="bg-orange-600/90 backdrop-blur-md text-white text-[10px] px-2.5 py-1 rounded-lg flex items-center gap-1 shadow-sm" style={{ fontWeight: 700 }}>
+              <Zap className="w-3 h-3 fill-white" />
+              우리 동네
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="p-5">
         <div className="flex items-start justify-between mb-2 gap-2">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              {(!meetup.images || meetup.images.length === 0) && (
-                <span className={`text-[10px] px-2 py-1 rounded-md whitespace-nowrap ${statusColor}`} style={{ fontWeight: 700 }}>
-                  {statusText[meetup.status]}
-                </span>
-              )}
               <span className="text-xs text-slate-400 whitespace-nowrap" style={{ fontWeight: 700 }}>{meetup.category}</span>
             </div>
             <h3 className="text-slate-800 mb-1.5 break-words text-base leading-tight group-hover:text-orange-600 transition-colors" style={{ fontWeight: 800 }}>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 type DogProfileRow = {
   id: string;
@@ -61,6 +62,11 @@ export function DogProfilePublicPage() {
   const locationLabel =
     dog?.city && dog?.district ? `${dog.city} ${dog.district}`.trim() : dog?.district ?? dog?.city ?? '';
 
+  const display = useMemo(
+    () => (dog ? sanitizeDogProfileForPublicDisplay(dog) : null),
+    [dog],
+  );
+
   return (
     <div className="min-h-screen bg-slate-50 pb-24">
       <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/90 backdrop-blur-xl">
@@ -91,32 +97,34 @@ export function DogProfilePublicPage() {
               홈으로 돌아가기
             </Link>
           </div>
-        ) : (
+        ) : dog && display ? (
           <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
             <div className="aspect-[4/3] w-full bg-orange-50">
-              {dog.photo_url ? (
-                <ImageWithFallback
-                  src={dog.photo_url}
-                  alt={dog.name}
-                  className="h-full w-full object-cover"
-                  loading="eager"
-                />
-              ) : (
-                <div className="flex h-full min-h-[12rem] items-center justify-center text-7xl">🐶</div>
-              )}
+              <ImageWithFallback
+                src={display.photoUrl}
+                fallbackSrc={virtualDogPhotoForSeed(`db-dog-fallback-${dog.id}`)}
+                alt={display.name}
+                className="h-full w-full object-cover"
+                loading="eager"
+              />
             </div>
             <div className="space-y-3 p-6">
               <p className="text-xs font-extrabold uppercase tracking-wide text-orange-600">등록 댕댕이</p>
-              <h2 className="text-2xl font-black text-slate-900">{dog.name}</h2>
+              {display.usedExamplePersona && (
+                <p className="rounded-xl border border-amber-100 bg-amber-50/90 px-3 py-2 text-[11px] font-semibold leading-snug text-amber-950">
+                  일부 정보는 예시로 보여 드려요. 실제 반려견 정보는 보호자님이 등록·수정해 주세요.
+                </p>
+              )}
+              <h2 className="text-2xl font-black text-slate-900">{display.name}</h2>
               <div className="flex flex-wrap gap-2 text-sm font-bold text-slate-600">
-                {dog.breed && (
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{dog.breed}</span>
+                {display.breed && (
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{display.breed}</span>
                 )}
-                {dog.age != null && (
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{dog.age}살</span>
+                {display.age != null && (
+                  <span className="rounded-full bg-slate-100 px-3 py-1">{display.age}살</span>
                 )}
-                {dog.gender && (
-                  <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-800">{dog.gender}</span>
+                {display.gender && (
+                  <span className="rounded-full bg-orange-50 px-3 py-1 text-orange-800">{display.gender}</span>
                 )}
               </div>
               {locationLabel && (
@@ -126,7 +134,7 @@ export function DogProfilePublicPage() {
                 </p>
               )}
               <p className="border-t border-slate-100 pt-4 text-xs font-medium leading-relaxed text-slate-500">
-                모이자·만나자에서 가까운 댕친을 찾아 산책·모임을 함께해 보세요. 채팅은 글 상세에서 연결할 수 있어요 🐾
+                모이자·만나자에서 가까운 댕친을 찾아 산책·모임을 함께해 보세요. 채팅은 모임 글 상세에서 이어갈 수 있어요 🐾
               </p>
               <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                 <Link
@@ -144,7 +152,7 @@ export function DogProfilePublicPage() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

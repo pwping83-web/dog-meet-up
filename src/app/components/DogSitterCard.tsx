@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { MapPin, Star, ShieldCheck } from 'lucide-react';
 import { formatDistrictWithDong } from '../data/regions';
-import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { resolveDogSitterPortraitUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { DogSitter } from '../types';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
@@ -10,8 +10,7 @@ interface DogSitterCardProps {
 }
 
 export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
-  const profilePhoto =
-    dogSitter.profileImage?.trim() || virtualDogPhotoForSeed(`mock-sitter-${dogSitter.id}`);
+  const profilePhoto = resolveDogSitterPortraitUrl(dogSitter);
 
   return (
     <Link
@@ -23,6 +22,7 @@ export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
         <div className="flex h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-white bg-gradient-to-br from-orange-100 to-yellow-50 shadow-inner">
           <ImageWithFallback
             src={profilePhoto}
+            fallbackSrc={virtualDogPhotoForSeed(`mock-sitter-fallback-${dogSitter.id}`)}
             alt={dogSitter.name}
             className="h-full w-full object-cover"
             loading="lazy"

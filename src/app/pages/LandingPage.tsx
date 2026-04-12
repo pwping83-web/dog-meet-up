@@ -15,11 +15,11 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
-import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import type { User } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
+import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 function shortProfileLabel(user: User): string {
   const m = user.user_metadata ?? {};
@@ -37,10 +37,10 @@ function shortProfileLabel(user: User): string {
 
 // 댕친 프로필 데이터
 const dogProfiles = [
-  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: 'https://images.unsplash.com/photo-1636890906264-135013858f6b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzbWFsbCUyMGRvZyUyMHBvbWVyYW5pYW4lMjBhZG9yYWJsZXxlbnwxfHx8fDE3NzE4NjA1ODB8MA&ixlib=rb-4.1.0&q=80&w=1080' },
-  { name: '초코', breed: '웰시코기', img: 'https://images.unsplash.com/photo-1759914915081-b206224de813?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3JnaSUyMHB1cHB5JTIwY3V0ZSUyMG91dGRvb3J8ZW58MXx8fHwxNzcxODYwNTc5fDA&ixlib=rb-4.1.0&q=80&w=1080', age: '3살', mbti: '사교적아이' },
-  { name: '보리', breed: '골든리트리버', img: 'https://images.unsplash.com/photo-1709497083259-2767f307aa55?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsYWJyYWRvciUyMHJldHJpZXZlciUyMGZyaWVuZGx5JTIwc21pbGV8ZW58MXx8fHwxNzcxODYwNTgwfDA&ixlib=rb-4.1.0&q=80&w=1080', age: '5살', mbti: '듬직한아이' },
-  { name: '콩이', breed: '비글', img: 'https://images.unsplash.com/photo-1677414129192-e82d85a882a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiZWFnbGUlMjBkb2clMjBvdXRkb29yJTIwc3Vubnl8ZW58MXx8fHwxNzcxODYwNTgwfDA&ixlib=rb-4.1.0&q=80&w=1080', age: '1살', mbti: '호기심아이' },
+  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: virtualDogPhotoForSeed('landing-dog-ppobb') },
+  { name: '초코', breed: '웰시코기', img: virtualDogPhotoForSeed('landing-dog-choco'), age: '3살', mbti: '사교적아이' },
+  { name: '보리', breed: '골든리트리버', img: virtualDogPhotoForSeed('landing-dog-bori'), age: '5살', mbti: '듬직한아이' },
+  { name: '콩이', breed: '비글', img: virtualDogPhotoForSeed('landing-dog-kong'), age: '1살', mbti: '호기심아이' },
 ];
 
 // MBTI 타입 프리뷰
@@ -280,7 +280,16 @@ export function LandingPage() {
           </motion.div>
 
           <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-2 no-scrollbar max-md:gap-3 md:gap-2.5">
-            {dbDogs.map((dog, i) => (
+            {dbDogs.map((dog, i) => {
+              const d = sanitizeDogProfileForPublicDisplay({
+                id: String(dog.id),
+                name: typeof dog.name === 'string' ? dog.name : '',
+                breed: dog.breed != null ? String(dog.breed) : null,
+                age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
+                gender: dog.gender != null ? String(dog.gender) : null,
+                photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+              });
+              return (
               <motion.div
                 key={dog.id}
                 variants={fadeUp}
@@ -291,20 +300,22 @@ export function LandingPage() {
                   to={`/dog/${dog.id}`}
                   className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-transform active:scale-95 max-md:p-4 md:rounded-2xl md:p-3"
                 >
-                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 text-3xl shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
-                    {dog.photo_url ? (
-                      <ImageWithFallback src={dog.photo_url} alt={dog.name} className="w-full h-full object-cover" />
-                    ) : (
-                      '🐶'
-                    )}
+                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
+                    <ImageWithFallback
+                      src={d.photoUrl}
+                      fallbackSrc={virtualDogPhotoForSeed(`explore-db-dog-fallback-${dog.id}`)}
+                      alt={d.name}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
-                  <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{dog.name}</p>
+                  <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{d.name}</p>
                   <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
-                    {dog.breed}{dog.age ? ` · ${dog.age}살` : ''}
+                    {d.breed ?? ''}{d.age != null ? ` · ${d.age}살` : ''}
                   </p>
                 </Link>
               </motion.div>
-            ))}
+            );
+            })}
           </div>
         </motion.section>
       )}
@@ -422,17 +433,12 @@ export function LandingPage() {
                 >
                   {/* 썸네일 */}
                   <div className="h-[4.5rem] w-[4.5rem] flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-50 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
-                    {req.images && req.images.length > 0 ? (
-                      <ImageWithFallback
-                        src={req.images[0]}
-                        alt={req.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-2xl">
-                        {meetupCategoryEmoji(req.category)}
-                      </div>
-                    )}
+                    <ImageWithFallback
+                      src={meetupCoverImageUrl(req)}
+                      fallbackSrc={virtualDogPhotoForSeed(`explore-moija-thumb-fallback-${req.id}`)}
+                      alt={req.title}
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                   {/* 내용 */}
                   <div className="min-w-0 flex-1 py-0.5">
@@ -500,17 +506,12 @@ export function LandingPage() {
                     className="flex gap-4 rounded-3xl border border-amber-100/90 bg-gradient-to-br from-amber-50/80 to-white p-4 shadow-sm transition-all hover:border-amber-200 hover:shadow-md active:scale-[0.98] max-md:gap-4 max-md:p-4 md:gap-3 md:rounded-2xl md:p-3"
                   >
                     <div className="flex h-[4.5rem] w-[4.5rem] flex-shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 max-md:h-[4.5rem] max-md:w-[4.5rem] md:h-16 md:w-16 md:rounded-xl">
-                      {req.images && req.images.length > 0 ? (
-                        <ImageWithFallback
-                          src={req.images[0]}
-                          alt={req.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl" aria-hidden>
-                          🍼
-                        </span>
-                      )}
+                      <ImageWithFallback
+                        src={meetupCoverImageUrl(req)}
+                        fallbackSrc={virtualDogPhotoForSeed(`explore-dolbom-thumb-fallback-${req.id}`)}
+                        alt={req.title}
+                        className="h-full w-full object-cover"
+                      />
                     </div>
                     <div className="min-w-0 flex-1 py-0.5">
                       <div className="mb-1 flex items-center gap-2">
@@ -575,7 +576,7 @@ export function LandingPage() {
           className="relative rounded-2xl overflow-hidden shadow-xl"
         >
           <ImageWithFallback
-            src="https://images.unsplash.com/photo-1766114314882-89b64589f2c5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkb2dzJTIwcGxheWluZyUyMHRvZ2V0aGVyJTIwcGFyayUyMGdyb3VwfGVufDF8fHx8MTc3MTg2MDU3OXww&ixlib=rb-4.1.0&q=80&w=1080"
+            src={virtualDogPhotoForSeed('landing-hero-banner')}
             alt="댕댕이 모임"
             className="w-full h-40 object-cover"
           />

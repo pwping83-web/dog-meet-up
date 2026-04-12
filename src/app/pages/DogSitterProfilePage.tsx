@@ -2,7 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router';
 import { MapPin, Star, ArrowLeft, MessageCircle, X } from 'lucide-react';
 import { formatDistrictWithDong } from '../data/regions';
 import { mockDogSitters } from '../data/mockData';
-import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { resolveDogSitterPortraitUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -14,8 +14,7 @@ export function DogSitterProfilePage() {
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const dogSitter = mockDogSitters.find((r) => r.id === id);
-  const profilePhoto =
-    dogSitter?.profileImage?.trim() || (dogSitter ? virtualDogPhotoForSeed(`mock-sitter-${dogSitter.id}`) : '');
+  const profilePhoto = dogSitter ? resolveDogSitterPortraitUrl(dogSitter) : '';
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [joinData, setJoinData] = useState({
     message: '',
@@ -64,6 +63,7 @@ export function DogSitterProfilePage() {
           <div className="mx-auto mb-4 h-24 w-24 overflow-hidden rounded-3xl border-4 border-white bg-gradient-to-br from-orange-100 to-yellow-50 shadow-lg">
             <ImageWithFallback
               src={profilePhoto}
+              fallbackSrc={virtualDogPhotoForSeed(`sitter-profile-fallback-${dogSitter.id}`)}
               alt={dogSitter.name}
               className="h-full w-full object-cover"
               loading="lazy"

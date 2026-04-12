@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { mockMeetups } from '../data/mockData';
 import { useAuth } from '../../contexts/AuthContext';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 export function MyMeetupsPage() {
   const location = useLocation();
@@ -125,11 +127,14 @@ export function MyMeetupsPage() {
                     {getStatusBadge(meetup.status)}
                   </div>
 
-                  {meetup.images && meetup.images.length > 0 && (
-                    <div className="mb-4">
-                      <img src={meetup.images[0]} alt={meetup.title} className="w-full h-40 object-cover rounded-2xl" />
-                    </div>
-                  )}
+                  <div className="mb-4 overflow-hidden rounded-2xl bg-slate-100">
+                    <ImageWithFallback
+                      src={meetupCoverImageUrl(meetup)}
+                      fallbackSrc={virtualDogPhotoForSeed(`my-meetups-thumb-fallback-${meetup.id}`)}
+                      alt={meetup.title}
+                      className="h-40 w-full object-cover"
+                    />
+                  </div>
 
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                     <div>

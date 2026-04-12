@@ -14,6 +14,8 @@ import {
 } from '../utils/breedingContentGuard';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { MEETUP_DETAIL_FOOTNOTE } from '../../lib/platformLegalCopy';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { meetupCoverImageUrl, resolveDogSitterPortraitUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 export function MeetupDetailPage() {
   const { id } = useParams();
@@ -146,11 +148,14 @@ export function MeetupDetailPage() {
 
         {/* 1. 모임 정보 */}
         <div className="mb-10">
-          {meetup.images && meetup.images.length > 0 && (
-            <div className="aspect-[4/3] bg-slate-100 rounded-[2rem] overflow-hidden mb-6 shadow-sm">
-              <img src={meetup.images[0]} alt={meetup.title} className="w-full h-full object-cover" />
-            </div>
-          )}
+          <div className="aspect-[4/3] bg-slate-100 rounded-[2rem] overflow-hidden mb-6 shadow-sm">
+            <ImageWithFallback
+              src={meetupCoverImageUrl(meetup)}
+              fallbackSrc={virtualDogPhotoForSeed(`meetup-detail-fallback-${meetup.id}`)}
+              alt={meetup.title}
+              className="h-full w-full object-cover"
+            />
+          </div>
 
           <div className="flex items-center gap-2 mb-3">
             <span className={`text-xs px-3 py-1.5 rounded-xl ${statusColor[meetup.status]}`} style={{ fontWeight: 800 }}>
@@ -264,11 +269,24 @@ export function MeetupDetailPage() {
                       )}
 
                       <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg ${isFirst ? 'bg-orange-500 text-white shadow-inner' : 'bg-slate-100 text-slate-500'}`} style={{ fontWeight: 900 }}>
-                            🐕
+                        <div className="flex min-w-0 flex-1 items-center gap-3">
+                          <div
+                            className={`relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border-2 shadow-inner ${
+                              isFirst ? 'border-orange-200 bg-orange-50' : 'border-slate-100 bg-slate-50'
+                            }`}
+                          >
+                            <ImageWithFallback
+                              src={
+                                sitter
+                                  ? resolveDogSitterPortraitUrl(sitter)
+                                  : virtualDogPhotoForSeed(`join-req-${request.id}`)
+                              }
+                              fallbackSrc={virtualDogPhotoForSeed(`join-req-fallback-${request.id}`)}
+                              alt={request.dogSitterName}
+                              className="h-full w-full object-cover"
+                            />
                           </div>
-                          <div>
+                          <div className="min-w-0">
                             <h3 className="text-slate-800 text-lg flex items-center gap-1" style={{ fontWeight: 800 }}>
                               {request.dogSitterName} <ShieldCheck className="w-4 h-4 text-orange-500" />
                             </h3>
@@ -340,23 +358,43 @@ export function MeetupDetailPage() {
                 
                 return (
                   <div key={sitter.id} className={`rounded-3xl p-5 transition-all ${hasJoined ? 'border border-orange-200 bg-orange-50/30' : 'border border-slate-200 bg-white hover:border-orange-200 hover:shadow-sm'}`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${index === 0 ? 'bg-gradient-to-br from-orange-100 to-yellow-50 text-orange-600' : 'bg-slate-50 text-slate-400'}`} style={{ fontWeight: 900 }}>
-                          {index + 1}위
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 shadow-sm">
+                          <ImageWithFallback
+                            src={resolveDogSitterPortraitUrl(sitter)}
+                            fallbackSrc={virtualDogPhotoForSeed(`nearby-sitter-fallback-${sitter.id}`)}
+                            alt={sitter.name}
+                            className="h-full w-full object-cover"
+                          />
+                          <span
+                            className="absolute -bottom-0.5 -right-0.5 rounded-md bg-orange-500 px-1 py-0.5 text-[9px] leading-none text-white shadow-sm"
+                            style={{ fontWeight: 900 }}
+                          >
+                            {index + 1}위
+                          </span>
                         </div>
-                        <div>
-                          <h3 className="text-slate-800 text-base" style={{ fontWeight: 800 }}>{sitter.name}</h3>
-                          <div className="flex items-center gap-2 text-xs text-slate-500 mt-1" style={{ fontWeight: 500 }}>
-                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                            <span className="text-amber-600" style={{ fontWeight: 700 }}>{sitter.rating}</span>
+                        <div className="min-w-0 pt-0.5">
+                          <h3 className="text-base text-slate-800" style={{ fontWeight: 800 }}>
+                            {sitter.name}
+                          </h3>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500" style={{ fontWeight: 500 }}>
+                            <Star className="h-3.5 w-3.5 shrink-0 fill-amber-400 text-amber-400" />
+                            <span className="text-amber-600" style={{ fontWeight: 700 }}>
+                              {sitter.rating}
+                            </span>
                             <span>• {sitter.experience}</span>
                           </div>
                         </div>
                       </div>
-                      
-                      <div className={`px-3 py-1.5 rounded-xl text-xs flex items-center gap-1 ${isVeryClose ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-500'}`} style={{ fontWeight: 700 }}>
-                        <MapPin className="w-3 h-3" />
+
+                      <div
+                        className={`flex shrink-0 items-center gap-1 rounded-xl px-3 py-1.5 text-xs ${
+                          isVeryClose ? 'bg-orange-50 text-orange-600' : 'bg-slate-50 text-slate-500'
+                        }`}
+                        style={{ fontWeight: 700 }}
+                      >
+                        <MapPin className="h-3 w-3 shrink-0" />
                         {formatDistance(sitter.distance)}
                       </div>
                     </div>

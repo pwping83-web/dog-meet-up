@@ -24,7 +24,6 @@ import { getCertifiedGuardMomPhotoUrl, mockCertifiedGuardMoms } from '../data/mo
 import {
   MANNAJA_CATEGORY_SET,
   MANNAJA_MEETUP_CATEGORIES,
-  meetupCategoryEmoji,
   MOIJA_CATEGORY_SET,
   MOIJA_MEETUP_CATEGORIES,
 } from '../utils/meetupCategory';
@@ -33,6 +32,7 @@ import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { isPromoFreeListings, showCertifiedGuardMomDemosWhenEmpty } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 /** need: 돌봄 맡기기 글(주인) / sitter·guard: 맡아주는 쪽 */
@@ -436,8 +436,6 @@ export function DogSittersPage() {
           <div className="space-y-3">
             {filteredMeetups.map((meetup) => {
               const joinCount = getJoinCount(meetup.id);
-              const thumb =
-                meetup.images?.find((u) => typeof u === 'string' && u.trim().length > 0) ?? '';
               return (
                 <Link
                   key={meetup.id}
@@ -446,18 +444,13 @@ export function DogSittersPage() {
                 >
                   <div className="flex gap-4 p-4">
                     <div className="flex h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-100">
-                      {thumb ? (
-                        <ImageWithFallback
-                          src={thumb}
-                          alt={meetup.title}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-3xl">
-                          {meetupCategoryEmoji(meetup.category)}
-                        </div>
-                      )}
+                      <ImageWithFallback
+                        src={meetupCoverImageUrl(meetup)}
+                        fallbackSrc={virtualDogPhotoForSeed(`sitters-moija-thumb-fallback-${meetup.id}`)}
+                        alt={meetup.title}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -622,8 +615,6 @@ export function DogSittersPage() {
             <div className="space-y-3">
               {filteredCareNeedMeetups.map((meetup) => {
                 const joinCount = getJoinCount(meetup.id);
-                const thumb =
-                  meetup.images?.find((u) => typeof u === 'string' && u.trim().length > 0) ?? '';
                 return (
                   <Link
                     key={meetup.id}
@@ -632,18 +623,13 @@ export function DogSittersPage() {
                   >
                     <div className="flex gap-4 p-4">
                       <div className="flex h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100">
-                        {thumb ? (
-                          <ImageWithFallback
-                            src={thumb}
-                            alt={meetup.title}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-3xl">
-                            {meetupCategoryEmoji(meetup.category)}
-                          </div>
-                        )}
+                        <ImageWithFallback
+                          src={meetupCoverImageUrl(meetup)}
+                          fallbackSrc={virtualDogPhotoForSeed(`sitters-dolbom-thumb-fallback-${meetup.id}`)}
+                          alt={meetup.title}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-extrabold uppercase tracking-wide text-orange-600">

@@ -11,9 +11,10 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import { mockRequests } from '../data/mockData';
-import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
@@ -197,15 +198,14 @@ export function SearchPage() {
                 {filteredRequests.map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
                     <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-200 active:scale-[0.98]">
-                      {request.images && request.images.length > 0 ? (
-                        <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
-                          <img src={request.images[0]} alt={request.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                      ) : (
-                        <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl flex-shrink-0 flex items-center justify-center border border-slate-100">
-                           <span className="text-slate-300 text-xs font-bold">No Image</span>
-                        </div>
-                      )}
+                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 shadow-sm">
+                        <ImageWithFallback
+                          src={meetupCoverImageUrl(request)}
+                          fallbackSrc={virtualDogPhotoForSeed(`search-result-thumb-fallback-${request.id}`)}
+                          alt={request.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
                       <div className="flex-1 min-w-0 py-1">
                         <h3 className="font-extrabold text-base text-slate-800 mb-1.5 line-clamp-2 group-hover:text-brand transition-colors">
                           {request.title}
@@ -319,15 +319,14 @@ export function SearchPage() {
                 {mergedRequests.slice(0, 4).map((request) => (
                   <Link key={request.id} to={`/meetup/${request.id}`} className="block group">
                     <div className="flex gap-4 p-4 bg-white rounded-3xl border border-slate-100 transition-all duration-200 hover:shadow-md hover:border-orange-200 active:scale-[0.98]">
-                      {request.images && request.images.length > 0 ? (
-                        <div className="w-24 h-24 bg-slate-100 rounded-2xl overflow-hidden flex-shrink-0 shadow-sm">
-                          <img src={request.images[0]} alt={request.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                      ) : (
-                        <div className="w-24 h-24 bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl flex-shrink-0 flex items-center justify-center border border-slate-100">
-                          <span className="text-3xl">{meetupCategoryEmoji(request.category)}</span>
-                        </div>
-                      )}
+                      <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 shadow-sm">
+                        <ImageWithFallback
+                          src={meetupCoverImageUrl(request)}
+                          fallbackSrc={virtualDogPhotoForSeed(`search-home-thumb-fallback-${request.id}`)}
+                          alt={request.title}
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      </div>
                       <div className="flex-1 min-w-0 py-1">
                         <h3 className="font-bold text-sm text-slate-800 mb-1 line-clamp-1 group-hover:text-brand transition-colors">
                           {request.title}
