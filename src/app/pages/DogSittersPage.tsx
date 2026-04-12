@@ -33,6 +33,7 @@ import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { isPromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { useAuth } from '../../contexts/AuthContext';
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 /** need: 돌봄 맡기기 글(주인) / sitter·guard: 맡아주는 쪽 */
 type CareFilter = 'need' | 'sitter' | 'guard';
@@ -67,6 +68,7 @@ function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
 }
 
 export function DogSittersPage() {
+  const { user } = useAuth();
   const { location } = useUserLocation();
   const routerLocation = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -85,6 +87,7 @@ export function DogSittersPage() {
   const [careFilter, setCareFilter] = useState<CareFilter>(() => readInitialSittersUrl().care);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
+  const [guardMomsLoadError, setGuardMomsLoadError] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState('전체');
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
@@ -165,6 +168,7 @@ export function DogSittersPage() {
     let cancelled = false;
     (async () => {
       setGuardLoading(true);
+      setGuardMomsLoadError(null);
       const { data, error } = await supabase
         .from('certified_guard_moms')
         .select('*')
@@ -172,26 +176,18 @@ export function DogSittersPage() {
       if (cancelled) return;
       if (error) {
         setGuardMoms([]);
+        setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
       } else {
         const all = (data ?? []) as GuardMomRow[];
-        const now = Date.now();
-        const promo = isPromoFreeListings();
-        setGuardMoms(
-          all.filter((r) => {
-            if (r.certified_at == null) return false;
-            if (promo) return true;
-            return (
-              r.listing_visible_until != null && new Date(r.listing_visible_until).getTime() > now
-            );
-          }),
-        );
+        /** 노출 여부는 Supabase RLS가 결정. 프론트에서 유료/프로모를 한 번 더 걸면 .env 와 DB 정책이 어긋날 때 전부 숨겨질 수 있음 */
+        setGuardMoms(all.filter((r) => r.certified_at != null));
       }
       setGuardLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user?.id]);
 
   const syncCareToUrl = (next: CareFilter) => {
     setCareFilter(next);
@@ -241,9 +237,10 @@ export function DogSittersPage() {
 
   /** DB에 노출 중인 보호맘이 없거나 조회 실패 시 가상 프로필 표시(데모) */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
+    if (guardMomsLoadError) return [];
     if (guardMoms.length > 0) return guardMoms;
     return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
-  }, [guardMoms]);
+  }, [guardMoms, guardMomsLoadError]);
 
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
@@ -697,6 +694,28 @@ export function DogSittersPage() {
             </div>
           ) : (
             <div className="space-y-3">
+              {guardMomsLoadError && careFilter === 'guard' && (
+                <div
+                  role="alert"
+                  className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-center text-[11px] font-semibold leading-snug text-amber-950"
+                >
+                  보호맘 목록을 불러오지 못했어요. 잠시 후 다시 열어 보거나, Supabase{' '}
+                  <span className="font-extrabold">certified_guard_moms</span> RLS를 확인해 주세요.
+                  {import.meta.env.DEV && (
+                    <span className="mt-1 block font-mono text-[10px] font-normal text-amber-900/90">{guardMomsLoadError}</span>
+                  )}
+                </div>
+              )}
+              {!guardMomsLoadError &&
+                !guardLoading &&
+                careFilter === 'guard' &&
+                guardMoms.length === 0 &&
+                !searchQuery.trim() && (
+                  <p className="rounded-2xl border border-sky-100 bg-sky-50/90 px-3 py-2 text-center text-[11px] font-medium text-sky-900">
+                    아직 DB에 <span className="font-extrabold">인증 완료</span>된 보호맘이 없어요. 아래는 예시예요. 운영에서
+                    인증하면 실제 프로필이 올라가요.
+                  </p>
+                )}
               {combinedRows.map((row) =>
                 row.kind === 'sitter' ? (
                   <div key={`s-${row.sitter.id}`} className="relative">
