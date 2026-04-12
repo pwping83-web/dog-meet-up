@@ -12,6 +12,7 @@ import {
   getBreedingLeakInNonBreedingPost,
   shouldSuggestBreedingMislabelReport,
 } from '../utils/breedingContentGuard';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 export function MeetupDetailPage() {
   const { id } = useParams();
@@ -32,6 +33,7 @@ export function MeetupDetailPage() {
   const joinRequests = mockJoinRequests.filter((q) => q.meetupId === id);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
+  const [joinAiSummary, setJoinAiSummary] = useState<string | null>(null);
 
   if (!meetup) {
     return (
@@ -207,13 +209,42 @@ export function MeetupDetailPage() {
         {/* 2. 받은 참여 신청 */}
         {joinRequests.length > 0 && (
           <div className="mb-12">
-            <div className="flex items-center justify-between mb-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-xl text-slate-900" style={{ fontWeight: 800 }}>🐾 참여 신청</h2>
-              <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-xl text-sm" style={{ fontWeight: 700 }}>
-                총 {joinRequests.length}명
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-xl text-sm" style={{ fontWeight: 700 }}>
+                  총 {joinRequests.length}명
+                </span>
+                {user && (
+                  <AiDoumiButton
+                    task="join_summarize"
+                    className="text-[10px]"
+                    payload={{
+                      items: sortedRequests.map((q) => ({
+                        name: q.dogSitterName,
+                        message: q.message,
+                        cost: q.estimatedCost,
+                      })),
+                    }}
+                    onDone={(r) => {
+                      if (!r.ok) {
+                        alert(r.error);
+                        return;
+                      }
+                      setJoinAiSummary(r.text);
+                    }}
+                  >
+                    신청 AI 요약
+                  </AiDoumiButton>
+                )}
+              </div>
             </div>
-            
+            {joinAiSummary && (
+              <div className="mb-4 rounded-2xl border border-violet-100 bg-violet-50/90 p-4 text-sm font-medium leading-relaxed text-slate-800 whitespace-pre-wrap">
+                {joinAiSummary}
+              </div>
+            )}
+
             <div className="space-y-4">
               {sortedRequests.map((request, index) => {
                 const sitter = mockDogSitters.find(r => r.name === request.dogSitterName);

@@ -25,6 +25,7 @@ import { getBreedingLeakInNonBreedingPost } from '../utils/breedingContentGuard'
 import type { Meetup } from '../types';
 import type { User } from '@supabase/supabase-js';
 import { appendUserMeetup } from '../../lib/userMeetupsStore';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 const MOIJA_CATEGORIES = [
   { name: '공원·장소 모임', emoji: '🌳' },
@@ -702,6 +703,37 @@ export function CreateRequestPage() {
               </span>
             </label>
           )}
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <AiDoumiButton
+              task="meetup_draft"
+              payload={{
+                kind,
+                hints:
+                  [formData.title, formData.description].filter((s) => s.trim()).join('\n') ||
+                  '반려견 모임·산책·돌봄 글을 쓰고 싶어요.',
+                currentCategory: formData.category || '',
+              }}
+              onDone={(r) => {
+                if (!r.ok) {
+                  alert(r.error);
+                  return;
+                }
+                if (r.fields?.title || r.fields?.description) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    title: r.fields?.title?.trim() || prev.title,
+                    category: r.fields?.category?.trim() || prev.category,
+                    description: r.fields?.description?.trim() || prev.description,
+                  }));
+                } else {
+                  alert('제목·본문을 파싱하지 못했어요. 한 번 더 시도하거나 직접 입력해 주세요.');
+                }
+              }}
+            >
+              글 초안 만들기
+            </AiDoumiButton>
+          </div>
 
           <div>
             <input

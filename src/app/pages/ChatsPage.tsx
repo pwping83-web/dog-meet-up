@@ -2,6 +2,8 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, Send, Settings2, MoreVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 interface Chat {
   id: string;
@@ -111,6 +113,7 @@ const LEGACY_PEER_NAMES: Record<string, string> = {
 };
 
 export function ChatDetailPage() {
+  const { user } = useAuth();
   const { id = '' } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -202,6 +205,30 @@ export function ChatDetailPage() {
 
       {/* 입력 영역 */}
       <div className="bg-white border-t border-slate-100 p-4 pb-safe flex-shrink-0">
+        {user && (
+          <div className="mb-2 flex justify-start">
+            <AiDoumiButton
+              task="chat_reply"
+              className="text-[10px]"
+              payload={{
+                peerName: peerDisplayName,
+                transcript: messages
+                  .slice(-12)
+                  .map((m) => `${m.isMine ? '나' : peerDisplayName}: ${m.text}`)
+                  .join('\n'),
+              }}
+              onDone={(r) => {
+                if (!r.ok) {
+                  alert(r.error);
+                  return;
+                }
+                setInputText((prev) => (prev.trim() ? `${prev.trim()}\n${r.text}` : r.text));
+              }}
+            >
+              답장 초안
+            </AiDoumiButton>
+          </div>
+        )}
         <div className="flex items-center gap-2 relative">
           <input
             type="text"

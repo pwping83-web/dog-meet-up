@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { mbtiQuestions, dogMbtiResults, calculateMbti, DogMbtiType } from '../data/dogMbtiData';
+import { useAuth } from '../../contexts/AuthContext';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 export function DogMbtiTestPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [scores, setScores] = useState<Record<DogMbtiType, number>>({
@@ -18,6 +21,7 @@ export function DogMbtiTestPage() {
   });
   const [showResult, setShowResult] = useState(false);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
+  const [aiExpand, setAiExpand] = useState('');
 
   const progress = ((currentQuestion + 1) / mbtiQuestions.length) * 100;
   const question = mbtiQuestions[currentQuestion];
@@ -65,6 +69,7 @@ export function DogMbtiTestPage() {
     });
     setShowResult(false);
     setSelectedOption(null);
+    setAiExpand('');
   };
 
   const mbtiType = calculateMbti(scores);
@@ -94,6 +99,32 @@ export function DogMbtiTestPage() {
             <p className="text-slate-600 leading-relaxed mb-6 text-base">
               {result.description}
             </p>
+            {user && (
+              <div className="mb-4 flex justify-center">
+                <AiDoumiButton
+                  task="mbti_expand"
+                  payload={{
+                    typeKey: mbtiType,
+                    name: result.name,
+                    description: result.description,
+                  }}
+                  onDone={(r) => {
+                    if (!r.ok) {
+                      alert(r.error);
+                      return;
+                    }
+                    setAiExpand(r.text);
+                  }}
+                >
+                  AI 해석 더 보기
+                </AiDoumiButton>
+              </div>
+            )}
+            {aiExpand ? (
+              <div className="mb-6 rounded-2xl border border-violet-100 bg-violet-50/90 p-4 text-left text-sm font-medium leading-relaxed text-slate-700 whitespace-pre-wrap">
+                {aiExpand}
+              </div>
+            ) : null}
           </div>
 
           {/* 성격 특징 */}

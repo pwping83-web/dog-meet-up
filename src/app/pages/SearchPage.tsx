@@ -14,6 +14,8 @@ import { mockRequests } from '../data/mockData';
 import { meetupCategoryEmoji } from '../utils/meetupCategory';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { useAuth } from '../../contexts/AuthContext';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 const popularSearches = [
   '소형견', '중형견', '대형견', '산책',
@@ -53,6 +55,7 @@ function upsertRecent(prev: string[], term: string): string[] {
 }
 
 export function SearchPage() {
+  const { user } = useAuth();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
@@ -121,12 +124,12 @@ export function SearchPage() {
     <div className="min-h-screen bg-[#F5F5F7] pb-24">
       {/* 글래스모피즘 헤더 & 검색창 */}
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
-        <div className="px-3 py-3 flex items-center gap-3 max-w-screen-md mx-auto">
+        <div className="px-3 py-3 flex items-center gap-2 max-w-screen-md mx-auto">
           <Link to="/explore" className="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="메인으로">
             <ArrowLeft className="w-6 h-6" />
           </Link>
           
-          <div className="flex-1 relative">
+          <div className="flex-1 relative min-w-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
@@ -149,6 +152,24 @@ export function SearchPage() {
               </button>
             )}
           </div>
+          {user && (
+            <AiDoumiButton
+              task="search_parse"
+              className="shrink-0 px-2 py-1.5 text-[10px]"
+              payload={{ query: searchQuery.trim() || '주말 소형견 산책 모임' }}
+              onDone={(r) => {
+                if (!r.ok) {
+                  alert(r.error);
+                  return;
+                }
+                const q = r.fields?.suggestedSearch?.trim();
+                if (q) selectSearch(q);
+                else alert('검색어를 만들지 못했어요.');
+              }}
+            >
+              검색 도우미
+            </AiDoumiButton>
+          )}
         </div>
       </header>
 

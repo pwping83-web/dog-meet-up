@@ -8,6 +8,7 @@ import { mockRequests, mockRepairers, mockQuotes } from '../data/mockData';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { isPromoFreeListings } from '../../lib/promoFlags';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 type AdminView = 'main' | 'requests' | 'repairers' | 'quotes' | 'guardCare';
 
@@ -351,6 +352,7 @@ function GuardCareAdminView() {
   const [billingOrders, setBillingOrders] = useState<BillingOrderRow[]>([]);
   const [bookings, setBookings] = useState<GuardBookingRow[]>([]);
   const [nameByUserId, setNameByUserId] = useState<Record<string, string>>({});
+  const [adminAiTip, setAdminAiTip] = useState<string | null>(null);
 
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = Boolean(opts?.silent);
@@ -473,18 +475,40 @@ function GuardCareAdminView() {
 
   return (
     <div className="space-y-6 p-4">
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-gray-600">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="min-w-0 flex-1 text-sm text-gray-600">
           인증 보호맘 등록·노출 결제·돌봄 예약을 Supabase에서 불러옵니다. 비어 있으면 DB 마이그레이션·RLS 정책을 확인하세요.
         </p>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="shrink-0 rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 active:bg-gray-50"
-        >
-          새로고침
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <AiDoumiButton
+            task="admin_ops_hint"
+            className="border-gray-200 bg-white from-white to-violet-50 text-[10px]"
+            payload={{ topic: 'guard_mom_certify_listing' }}
+            onDone={(r) => {
+              if (!r.ok) {
+                setError(r.error);
+                return;
+              }
+              setAdminAiTip(r.text);
+            }}
+          >
+            AI 운영 팁
+          </AiDoumiButton>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-bold text-gray-700 active:bg-gray-50"
+          >
+            새로고침
+          </button>
+        </div>
       </div>
+
+      {adminAiTip && (
+        <div className="rounded-xl border border-violet-100 bg-violet-50/90 px-3 py-3 text-xs font-medium leading-relaxed text-slate-800 whitespace-pre-wrap">
+          {adminAiTip}
+        </div>
+      )}
 
       {certBanner && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-900">

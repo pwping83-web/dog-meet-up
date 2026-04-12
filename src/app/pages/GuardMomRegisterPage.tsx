@@ -19,6 +19,7 @@ import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { startStripeCheckout } from '../../lib/billing';
 import { isPromoFreeListings } from '../../lib/promoFlags';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -299,6 +300,25 @@ export function GuardMomRegisterPage() {
                   className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
                 />
               </label>
+              <div className="mt-2 flex justify-end">
+                <AiDoumiButton
+                  task="guard_intro"
+                  payload={{
+                    keywords: intro.trim() || '소형견 맡기기, 산책 하루 3번, 단지 산책로',
+                    regionSi: regionSi.trim(),
+                    regionGu: regionGu.trim(),
+                  }}
+                  onDone={(r) => {
+                    if (!r.ok) {
+                      alert(r.error);
+                      return;
+                    }
+                    if (r.text.trim()) setIntro(r.text.trim());
+                  }}
+                >
+                  소개 AI 초안
+                </AiDoumiButton>
+              </div>
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <label className="block text-xs font-extrabold text-slate-700">
                   시·도
