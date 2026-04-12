@@ -436,7 +436,7 @@ function GuardCareAdminView() {
         !Number.isNaN(new Date(at as string).getTime());
       if (certify && !atValid) {
         throw new Error(
-          'DB에 인증 시각이 반영되지 않았어요. 트리거가 관리자 UPDATE를 막고 있을 수 있어요. Supabase SQL Editor에서 20260416120000_guard_mom_admin_certify_update.sql 전체를 실행한 뒤 다시 시도하세요. (그다음 161300 → 161400 순서)',
+          'DB에 인증 시각이 반영되지 않았어요. 트리거가 관리자 UPDATE를 막고 있을 수 있어요. Supabase SQL Editor에서 sql/apply-guard-mom-admin-once.sql 을 한 번에 실행하거나, migrations 161300→161200→161400 순으로 적용한 뒤 다시 시도하세요.',
         );
       }
       if (!certify && atValid) {
@@ -520,9 +520,8 @@ function GuardCareAdminView() {
                 <span className="font-bold text-gray-800">DB에 인증 넣기</span>는 함수{' '}
                 <code className="rounded bg-gray-100 px-1 text-[10px]">admin_set_guard_mom_certified</code>를
                 써요. Supabase SQL Editor에서 마이그레이션{' '}
-                <code className="rounded bg-gray-100 px-1 text-[10px]">161200</code>(트리거) →{' '}
-                <code className="rounded bg-gray-100 px-1 text-[10px]">161300</code> →{' '}
-                <code className="rounded bg-gray-100 px-1 text-[10px]">161400</code> 순으로 실행하면 돼요.
+                <code className="rounded bg-gray-100 px-1 text-[10px]">sql/apply-guard-mom-admin-once.sql</code> 한
+                번이면 돼요. (또는 CLI: <code className="rounded bg-gray-100 px-1 text-[10px]">supabase db push</code>)
               </span>
             </p>
             {guardMoms.length === 0 ? (
