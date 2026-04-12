@@ -7,6 +7,7 @@ import { ko } from 'date-fns/locale';
 import { mockRequests, mockRepairers, mockQuotes } from '../data/mockData';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
+import { isPromoFreeListings } from '../../lib/promoFlags';
 
 type AdminView = 'main' | 'requests' | 'repairers' | 'quotes' | 'guardCare';
 
@@ -344,14 +345,18 @@ function QuotesView() {
 function GuardCareAdminView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [certifyingId, setCertifyingId] = useState<string | null>(null);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
   const [billingOrders, setBillingOrders] = useState<BillingOrderRow[]>([]);
   const [bookings, setBookings] = useState<GuardBookingRow[]>([]);
   const [nameByUserId, setNameByUserId] = useState<Record<string, string>>({});
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = Boolean(opts?.silent);
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     const [gmRes, boRes, bkRes] = await Promise.all([
       supabase.from('certified_guard_moms').select('*').order('created_at', { ascending: false }).limit(300),
       supabase.from('billing_orders').select('*').order('created_at', { ascending: false }).limit(300),
@@ -360,17 +365,17 @@ function GuardCareAdminView() {
 
     if (gmRes.error) {
       setError(gmRes.error.message);
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
     if (boRes.error) {
       setError(boRes.error.message);
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
     if (bkRes.error) {
       setError(bkRes.error.message);
-      setLoading(false);
+      if (!silent) setLoading(false);
       return;
     }
 
@@ -400,12 +405,32 @@ function GuardCareAdminView() {
       setNameByUserId({});
     }
 
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, []);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  const setGuardMomCertified = async (id: string, certify: boolean) => {
+    setCertifyingId(id);
+    setError(null);
+    try {
+      const { error: upErr } = await supabase
+        .from('certified_guard_moms')
+        .update({ certified_at: certify ? new Date().toISOString() : null })
+        .eq('id', id);
+      if (upErr) throw upErr;
+      await load({ silent: true });
+    } catch (e) {
+      setError(
+        (e as Error)?.message ??
+          '저장에 실패했습니다. Supabase에 migrations/20260416120000_guard_mom_admin_certify_update.sql 을 적용했는지 확인하세요.',
+      );
+    } finally {
+      setCertifyingId(null);
+    }
+  };
 
   const displayName = (userId: string) => nameByUserId[userId] ?? `${userId.slice(0, 8)}…`;
 
@@ -454,14 +479,23 @@ function GuardCareAdminView() {
               돌봄(보호맘) 등록 · 신청 정보
               <span className="text-sm font-semibold text-gray-500">({guardMoms.length}명)</span>
             </h2>
+            <p className="mb-3 text-xs font-medium text-gray-600">
+              미인증 행은 <span className="font-bold text-gray-800">인증 통과</span>로{' '}
+              <code className="rounded bg-gray-100 px-1">certified_at</code>을 넣습니다. DB에{' '}
+              <code className="rounded bg-gray-100 px-1 text-[10px]">20260416120000_guard_mom_admin_certify_update</code>{' '}
+              마이그레이션이 적용돼 있어야 해요.
+            </p>
             {guardMoms.length === 0 ? (
               <p className="rounded-xl bg-white p-4 text-sm text-gray-500">등록된 행이 없습니다.</p>
             ) : (
               <ul className="space-y-2">
                 {guardMoms.map((g) => {
                   const certified = g.certified_at != null;
-                  const visible =
+                  const promoFree = isPromoFreeListings();
+                  const paidListingActive =
                     g.listing_visible_until != null && new Date(g.listing_visible_until).getTime() > Date.now();
+                  const visible = (promoFree && certified) || paidListingActive;
+                  const busy = certifyingId === g.id;
                   return (
                     <li key={g.id} className="rounded-xl border border-gray-100 bg-white p-4">
                       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -498,6 +532,38 @@ function GuardCareAdminView() {
                           ? ` · 노출 만료 ${format(new Date(g.listing_visible_until), 'yyyy.MM.dd HH:mm', { locale: ko })}`
                           : ''}
                       </p>
+                      <div className="mt-3 flex flex-wrap gap-2 border-t border-gray-100 pt-3">
+                        {!certified ? (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void setGuardMomCertified(g.id, true)}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white disabled:opacity-50"
+                          >
+                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                            인증 통과
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  '인증을 해제할까요? 목록에서 내려갈 수 있어요.',
+                                )
+                              ) {
+                                return;
+                              }
+                              void setGuardMomCertified(g.id, false);
+                            }}
+                            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-extrabold text-amber-900 disabled:opacity-50"
+                          >
+                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                            인증 해제
+                          </button>
+                        )}
+                      </div>
                     </li>
                   );
                 })}

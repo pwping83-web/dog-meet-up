@@ -223,3 +223,24 @@ CREATE POLICY "guard_mom_bookings_select_admin"
 -- 만나자 「교배」 글 7일 목록 노출 (결제 → stripe-webhook에서 breeding_listing_until 연장)
 ALTER TABLE public.user_entitlements
   ADD COLUMN IF NOT EXISTS breeding_listing_until TIMESTAMPTZ;
+
+-- ─── 관리자: 보호맘 인증(certified_at) 앱에서 수정 (is_app_admin) ───
+CREATE OR REPLACE FUNCTION public.certified_guard_moms_protect_privileged()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND auth.uid() IS NOT NULL AND NOT public.is_app_admin() THEN
+    NEW.certified_at := OLD.certified_at;
+    NEW.listing_visible_until := OLD.listing_visible_until;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP POLICY IF EXISTS "certified_guard_moms_update_admin" ON public.certified_guard_moms;
+CREATE POLICY "certified_guard_moms_update_admin"
+  ON public.certified_guard_moms FOR UPDATE
+  TO authenticated
+  USING (public.is_app_admin())
+  WITH CHECK (public.is_app_admin());
