@@ -34,8 +34,67 @@ function extractJsonObject(raw: string): Record<string, unknown> | null {
   }
 }
 
-/** Google AI Studio / Cloud에서 발급 (AIza…). Supabase Secret: GEMINI_API_KEY */
+/** Groq 콘솔에서 발급 (gsk_…). 있으면 Gemini보다 우선 사용(테스트·무료 티어에 유리한 경우 많음). */
+const GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"] as const;
+
+/** Google AI Studio (AIza…). Secret: GEMINI_API_KEY */
 const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"] as const;
+
+async function groqChatOnce(
+  model: string,
+  system: string,
+  user: string,
+  maxTokens: number,
+  apiKey: string,
+): Promise<string> {
+  const cap = Math.min(Math.max(maxTokens, 64), 8192);
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      temperature: 0.55,
+      max_tokens: cap,
+    }),
+  });
+  const raw = await res.text();
+  if (!res.ok) {
+    throw new Error(`Groq HTTP ${res.status} (${model}): ${raw.slice(0, 280)}`);
+  }
+  const data = JSON.parse(raw) as { choices?: Array<{ message?: { content?: string } }> };
+  const text = data.choices?.[0]?.message?.content;
+  if (typeof text !== "string" || !text.trim()) throw new Error("빈 응답");
+  return text.trim();
+}
+
+async function groqChat(system: string, user: string, maxTokens: number, apiKey: string): Promise<string> {
+  let lastErr = "";
+  for (const model of GROQ_MODELS) {
+    try {
+      return await groqChatOnce(model, system, user, maxTokens, apiKey);
+    } catch (e) {
+      lastErr = (e as Error).message;
+      const retry = /400|404|model_decommissioned|decommissioned|not found|invalid model/i.test(lastErr);
+      if (!retry) throw e;
+    }
+  }
+  throw new Error(lastErr || "Groq 호출 실패");
+}
+
+async function llmChat(system: string, user: string, maxTokens: number): Promise<string> {
+  const groqKey = Deno.env.get("GROQ_API_KEY")?.trim();
+  if (groqKey) {
+    return groqChat(system, user, maxTokens, groqKey);
+  }
+  return geminiChat(system, user, maxTokens);
+}
 
 async function geminiChatOnce(
   model: string,
@@ -167,7 +226,7 @@ Deno.serve(async (req) => {
           `말투는 친근한 존댓말. description은 2~5문장. 제목은 28자 이내 권장.`;
         const user = `글 유형: ${kind}. 사용자 메모/키워드:\n${hints || "(비어 있음)"}\n` +
           (currentCategory ? `선호 주제(가능하면 맞출 것): ${currentCategory}\n` : "");
-        const raw = await geminiChat(sys, user, 700);
+        const raw = await llmChat(sys, user, 700);
         const obj = extractJsonObject(raw);
         if (!obj?.title || !obj?.description) {
           return jsonResponse({ ok: true, text: raw, fields: {} });
@@ -190,7 +249,7 @@ Deno.serve(async (req) => {
         const sys =
           "너는 인증 보호맘 프로필 소개글 작성 도우미야. 한국어 존댓말. 과장·의료·법적 확약은 피하고, 돌봄 경력·환경·견종 크기·산책·예방접종 확인 등을 담은 4~8문단. 출력은 본문만.";
         const user = `지역: ${regionSi} ${regionGu}\n키워드/메모:\n${keywords || "(없음)"}`;
-        const text = await geminiChat(sys, user, 900);
+        const text = await llmChat(sys, user, 900);
         return jsonResponse({ ok: true, text });
       }
 
@@ -198,7 +257,7 @@ Deno.serve(async (req) => {
         const q = String(payload.query ?? "").slice(0, 200);
         const sys =
           '반드시 JSON만: {"suggestedSearch":"검색창에 넣을 한 줄","chips":["칩1","칩2"]} chips는 0~4개 한국어.';
-        const raw = await geminiChat(sys, `사용자 입력: ${q}`, 300);
+        const raw = await llmChat(sys, `사용자 입력: ${q}`, 300);
         const obj = extractJsonObject(raw);
         const suggestedSearch = typeof obj?.suggestedSearch === "string" ? obj.suggestedSearch : q;
         const chips = Array.isArray(obj?.chips)
@@ -217,7 +276,7 @@ Deno.serve(async (req) => {
         const sys =
           "너는 반려견 산책·모임 채팅 도우미야. 한 줄~세 줄 짧은 답장 초안만. 존댓말. 연락처·주소 과다 요구 금지.";
         const user = `상대 닉네임: ${peerName}\n최근 대화:\n${transcript}`;
-        const text = await geminiChat(sys, user, 350);
+        const text = await llmChat(sys, user, 350);
         return jsonResponse({ ok: true, text });
       }
 
@@ -228,7 +287,7 @@ Deno.serve(async (req) => {
         const sys =
           "강아지 성향(MBTI 유사) 결과에 대한 부드러운 해설을 한국어로 5~10문장. 과학적 단정 금지, '참고로' 톤.";
         const user = `유형 키: ${typeKey}\n이름: ${name}\n기본 설명: ${desc}`;
-        const text = await geminiChat(sys, user, 600);
+        const text = await llmChat(sys, user, 600);
         return jsonResponse({ ok: true, text });
       }
 
@@ -245,7 +304,7 @@ Deno.serve(async (req) => {
         const sys =
           "모임 주최자용 참여 신청 요약. 한국어 불릿 4~10줄. 민감정보 반복·외부 유출 조언 금지.";
         const user = lines.join("\n\n") || "(신청 없음)";
-        const text = await geminiChat(sys, user, 700);
+        const text = await llmChat(sys, user, 700);
         return jsonResponse({ ok: true, text });
       }
 
@@ -253,7 +312,7 @@ Deno.serve(async (req) => {
         const sys =
           "반려견 돌봄 플랫폼 운영자에게 짧은 체크리스트(한국어). 인증·RLS·결제·CS. 6~12줄 불릿, 기술명은 짧게.";
         const user = String(payload.topic ?? "guard_mom_certify_listing").slice(0, 200);
-        const text = await geminiChat(sys, `주제 키: ${user}`, 500);
+        const text = await llmChat(sys, `주제 키: ${user}`, 500);
         return jsonResponse({ ok: true, text });
       }
 
@@ -266,21 +325,25 @@ Deno.serve(async (req) => {
       return jsonResponse({
         ok: false,
         error:
-          "GEMINI_API_KEY가 없습니다. Supabase Dashboard → Edge Functions → Secrets에 GEMINI_API_KEY를 등록하세요.",
+          "GROQ_API_KEY 또는 GEMINI_API_KEY가 없습니다. Supabase → Edge Functions → Secrets에 하나 이상 등록하세요. (테스트는 Groq 키만 넣어도 됩니다)",
       });
     }
     const quotaLike =
-      /Gemini HTTP 429/i.test(msg) ||
+      /Groq HTTP 429|Gemini HTTP 429/i.test(msg) ||
       /RESOURCE_EXHAUSTED|resource_exhausted|quota|rate limit|Too Many Requests|429/i.test(msg) ||
       /insufficient_quota|exceeded your current quota|billing_hard_cap/i.test(msg);
     if (quotaLike) {
       // HTTP 200으로 내려야 supabase-js invoke가 body를 data로 넘깁니다(비-2xx면 메시지가 흐려짐).
-      return jsonResponse({
-        ok: false,
-        error: /Gemini|RESOURCE_EXHAUSTED|generativelanguage/i.test(msg)
-          ? "Gemini 무료 한도에 걸렸어요. 1~2분 뒤 다시 시도하거나 Google AI Studio에서 사용량을 확인해 주세요."
-          : "ai토큰? 이 떨어졌습니다 충전해 주세요",
-      });
+      const groqHit = /Groq|groq\.com/i.test(msg);
+      const geminiHit = /Gemini|RESOURCE_EXHAUSTED|generativelanguage/i.test(msg);
+      let errOut = "ai토큰? 이 떨어졌습니다 충전해 주세요";
+      if (groqHit) {
+        errOut = "Groq 무료 한도에 걸렸어요. 잠시 후 다시 시도하거나 console.groq.com 에서 확인해 주세요.";
+      } else if (geminiHit) {
+        errOut =
+          "Gemini 무료 한도에 걸렸어요. 1~2분 뒤 다시 시도하거나 Google AI Studio에서 사용량을 확인해 주세요.";
+      }
+      return jsonResponse({ ok: false, error: errOut });
     }
     // HTTP 200 + ok:false → supabase-js가 body를 넘겨 alert에 원인이 보임(500이면 메시지가 잘림).
     return jsonResponse({ ok: false, error: msg.slice(0, 900) });

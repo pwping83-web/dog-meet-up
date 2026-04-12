@@ -15,7 +15,7 @@
 | **보호맘** | 등록·상세·예약·결제, 관리자 RPC로 `certified_at` 인증. |
 | **회원** | Supabase Auth(카카오 등), 마이페이지·프로필·탈퇴. |
 | **결제** | Stripe Checkout + Webhook(Edge Functions). |
-| **AI 도우미** | Edge Function `daeng-ai-assist` — 글 초안·소개·검색·채팅 초안 등(로그인 후, Supabase Secret `GEMINI_API_KEY` 필요, Google Gemini API). |
+| **AI 도우미** | Edge Function `daeng-ai-assist` — 글 초안 등(로그인 후). Secret **`GROQ_API_KEY`**(우선, Groq) 또는 **`GEMINI_API_KEY`**(Gemini). |
 
 ---
 
@@ -56,11 +56,11 @@ npm run preview
 앱에서 **「Failed to send a request to the Edge Function」** 이 나오면, 거의 항상 **해당 프로젝트에 함수가 없거나** Secrets가 비어 있는 경우입니다.
 
 1. Supabase Dashboard → **Edge Functions** → `daeng-ai-assist` 가 목록에 있는지 확인 (없으면 배포 필요).
-2. **Edge Functions → Secrets** 에 `GEMINI_API_KEY` 추가 ([Google AI Studio](https://aistudio.google.com/apikey) 등에서 `AIza…` 키 발급).
+2. **Edge Functions → Secrets** 에 **`GROQ_API_KEY`**([Groq Console](https://console.groq.com/keys), `gsk_…`) 또는 **`GEMINI_API_KEY`**([AI Studio](https://aistudio.google.com/apikey), `AIza…`) 추가. **둘 다 있으면 Groq가 우선**입니다.
 3. 터미널에서(프로젝트 루트, Supabase CLI 로그인·링크 후):
 
 ```bash
-npx supabase secrets set GEMINI_API_KEY=AIza여기에_본인_키
+npx supabase secrets set GROQ_API_KEY=gsk_여기에_본인_키
 npx supabase functions deploy daeng-ai-assist --use-api
 ```
 
