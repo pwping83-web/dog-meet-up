@@ -20,7 +20,7 @@ function friendlyCertifiedGuardMomsError(message: string): string {
       m.includes('relation') ||
       m.includes('pgrst'));
   if (tableMissing) {
-    return '지금은 프로필을 저장할 수 없어요. 사이트 DB에 보호맘용 테이블이 아직 없을 때 나는 메시지예요. 배포 담당자가 Supabase → SQL Editor에서 supabase/migrations/20260411120000_guard_moms.sql 을 실행한 뒤, 20260412120000_daeng_pickup.sql 도 실행해 주세요.';
+    return '지금은 프로필을 저장할 수 없어요. 사이트 DB에 보호맘용 테이블이 아직 없을 때 나오는 메시지예요. 배포 담당자가 Supabase → SQL Editor에서 supabase/migrations/20260411120000_guard_moms.sql 을 실행한 뒤, 20260412120000_daeng_pickup.sql 도 실행해 주세요.';
   }
   if (m.includes('offers_daeng_pickup') || (m.includes('column') && m.includes('does not exist'))) {
     return '「댕댕 픽업」 저장을 위해 DB를 한 번 더 업데이트해야 해요. supabase/migrations/20260412120000_daeng_pickup.sql 을 SQL Editor에서 실행해 주세요.';
