@@ -131,9 +131,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } else if (isAnonymousDisabledError(anonError)) {
         throw new Error(
-          '전화 데모 로그인을 쓰려면 Supabase 대시보드 → Authentication → Providers에서 Anonymous(익명) 로그인을 켜 주세요.\n' +
-            '또는 배포 설정에 VITE_PHONE_DEMO_EMAIL, VITE_PHONE_DEMO_PASSWORD를 넣어 데모용 계정으로 폴백할 수 있어요.\n' +
-            '실서비스 로그인은 카카오를 이용해 주세요.',
+          '전화 데모 로그인을 쓰려면 Supabase 대시보드 → Authentication → Sign In / Providers에서\n' +
+            '「Allow anonymous sign-ins」를 켠 뒤 반드시 Save changes까지 눌러 저장하세요.\n' +
+            '이미 켰는데도 이 메시지가 나오면, 배포 사이트의 VITE_SUPABASE_URL·ANON 키가 지금 설정한 프로젝트와 같은지 확인하세요.\n' +
+            '또는 배포에 VITE_PHONE_DEMO_EMAIL, VITE_PHONE_DEMO_PASSWORD를 넣어 데모 계정으로 폴백할 수 있어요.\n' +
+            '실서비스 로그인은 카카오를 이용해 주세요.\n' +
+            `(서버 응답: ${anonError.message})`,
         );
       } else {
         throw anonError;
