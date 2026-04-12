@@ -346,6 +346,7 @@ function GuardCareAdminView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [certifyingId, setCertifyingId] = useState<string | null>(null);
+  const [certBanner, setCertBanner] = useState<string | null>(null);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
   const [billingOrders, setBillingOrders] = useState<BillingOrderRow[]>([]);
   const [bookings, setBookings] = useState<GuardBookingRow[]>([]);
@@ -415,13 +416,22 @@ function GuardCareAdminView() {
   const setGuardMomCertified = async (id: string, certify: boolean) => {
     setCertifyingId(id);
     setError(null);
+    setCertBanner(null);
     try {
-      const { error: upErr } = await supabase
+      const { data, error: upErr } = await supabase
         .from('certified_guard_moms')
         .update({ certified_at: certify ? new Date().toISOString() : null })
-        .eq('id', id);
+        .eq('id', id)
+        .select('id,certified_at');
       if (upErr) throw upErr;
+      if (!data?.length) {
+        throw new Error(
+          '변경된 행이 없어요. Supabase에 ① 20260416120000_guard_mom_admin_certify_update ② 20260416130000_is_app_admin_kakao_metadata_email SQL을 적용했는지, 로그인 계정이 pwping83@gmail.com(카카오 메타 이메일 포함)인지 확인하세요.',
+        );
+      }
       await load({ silent: true });
+      setCertBanner(certify ? '인증 처리했어요.' : '인증을 해제했어요.');
+      window.setTimeout(() => setCertBanner(null), 4000);
     } catch (e) {
       setError(
         (e as Error)?.message ??
@@ -457,11 +467,17 @@ function GuardCareAdminView() {
         </button>
       </div>
 
+      {certBanner && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-extrabold text-emerald-900">
+          {certBanner}
+        </div>
+      )}
+
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
           {error}
           <p className="mt-2 text-xs text-red-700">
-            관리자 이메일이 appAdmin.ts와 같고, SQL에 is_app_admin·select 정책이 적용돼 있는지 확인하세요.
+            관리자 이메일이 appAdmin.ts와 같고, SQL에 is_app_admin·select·update_admin 정책이 적용돼 있는지 확인하세요.
           </p>
         </div>
       )}

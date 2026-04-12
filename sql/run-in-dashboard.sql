@@ -195,7 +195,10 @@ AS $$
     SELECT 1
     FROM auth.users u
     WHERE u.id = auth.uid()
-      AND lower(trim(coalesce(u.email, ''))) = 'pwping83@gmail.com'
+      AND (
+        lower(trim(coalesce(u.email, ''))) = 'pwping83@gmail.com'
+        OR lower(trim(coalesce(u.raw_user_meta_data->>'email', ''))) = 'pwping83@gmail.com'
+      )
   );
 $$;
 
