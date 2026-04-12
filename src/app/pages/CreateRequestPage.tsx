@@ -471,7 +471,7 @@ export function CreateRequestPage() {
             >
               <p className="text-lg font-extrabold text-slate-900">돌봄 · 맡기기</p>
               <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
-                맡길 지역을 고른 뒤 맡기기(돌봄 집) 또는 근처 댕집사 방문(주인 집) 등 돌봄이 필요할 때 올리는 글
+                돌봄 집에 맡기기 · 주인 집에 방문 돌봄 글이에요
               </p>
             </button>
           </div>

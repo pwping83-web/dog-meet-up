@@ -476,7 +476,7 @@ export function LandingPage() {
               className="flex shrink-0 items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs"
               style={{ fontWeight: 800 }}
             >
-              인증 돌봄 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
+              전체보기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
             </Link>
           </motion.div>
 
