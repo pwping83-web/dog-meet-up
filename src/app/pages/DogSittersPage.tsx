@@ -317,19 +317,18 @@ export function DogSittersPage() {
           <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
             {topTab === 'moija' ? (
               <>
-                <strong className="font-extrabold">모이자</strong>는 공원·카페 등{' '}
-                <strong>장소와 일정 정해서 여럿이 모이는 글</strong>만 보여요. 포메 남아 찾기·교배·실종은 위의{' '}
+                <strong className="font-extrabold">모이자</strong>는 공원·카페 등 장소·일정 잡고{' '}
+                <strong>여럿이 모이는 글</strong>만 보여요. 1:1·교배·실종은{' '}
                 <strong>만나자</strong>, 맡기기·댕집사는{' '}
                 <Link to="/sitters?view=care" className="font-extrabold text-brand underline underline-offset-2">
                   인증 돌봄
                 </Link>
-                에서 보세요.
+                .
               </>
             ) : (
               <>
-                <strong className="font-extrabold">만나자</strong>는 1:1로 친구 찾기·교배·실종 등{' '}
-                <strong>개별 맞춤 글</strong>만 보여요. 공원에서 모여 놀기 글은 위의{' '}
-                <strong>모이자</strong>를 눌러 주세요.
+                <strong className="font-extrabold">만나자</strong>는 1:1 친구 찾기·교배·실종{' '}
+                <strong>맞춤 글</strong>만 보여요. 공원 모임은 <strong>모이자</strong>.
               </>
             )}
           </p>
