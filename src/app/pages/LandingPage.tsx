@@ -617,13 +617,13 @@ export function LandingPage() {
           <ImageWithFallback
             src={MOCK_IMG_HANGANG_HERO}
             fallbackSrc={virtualDogPhotoForSeed('landing-hero-banner')}
-            alt="한강공원 대형견 산책 모임"
+            alt="한강공원 산책 모임"
             className="w-full h-40 object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <p className="text-white/80 text-[9px] mb-0.5" style={{ fontWeight: 800 }}>이번 주 인기 모임</p>
-            <h3 className="text-white text-sm mb-1.5" style={{ fontWeight: 900 }}>한강공원 대형견 산책 모임</h3>
+            <h3 className="text-white text-sm mb-1.5" style={{ fontWeight: 900 }}>한강공원 산책 모임</h3>
             <div className="flex items-center gap-2.5 text-white/70 text-[11px]" style={{ fontWeight: 700 }}>
               <span className="flex items-center gap-1"><Users className="w-3 h-3" /> 12명 참여</span>
               <span className="flex items-center gap-1"><Star className="w-3 h-3 fill-yellow-400 text-yellow-400" /> 4.9</span>
