@@ -68,7 +68,7 @@ export function DogProfilePublicPage() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-20 border-b border-slate-100 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button

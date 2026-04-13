@@ -17,6 +17,8 @@
   ],
   "scripts": {
     "build": "vite build",
+    "capture": "node scripts/capture-screenshots.js",
+    "capture:browsers": "playwright install chromium",
     "dev": "vite",
     "preview": "vite preview",
     "git:push": "node scripts/git-commit-push.mjs",
@@ -84,6 +86,7 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
+    "playwright": "^1.51.0",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",

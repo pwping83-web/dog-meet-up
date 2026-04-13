@@ -255,7 +255,7 @@ export function ProfileEditPage() {
   }, [avatarDraft, formData.avatarTheme, localPreviewUrl, committedAvatarUrl]);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28">
+    <div className="min-h-screen bg-slate-50">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">

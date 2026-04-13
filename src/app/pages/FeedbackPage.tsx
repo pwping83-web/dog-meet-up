@@ -71,7 +71,7 @@ export function FeedbackPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
           <button

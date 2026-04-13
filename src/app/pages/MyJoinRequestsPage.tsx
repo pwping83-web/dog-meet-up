@@ -7,7 +7,7 @@ export function MyJoinRequestsPage() {
   const myJoinRequests = mockJoinRequests.filter(jr => myMeetupIds.includes(jr.meetupId));
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-24">
+    <div className="min-h-screen bg-slate-50/50">
       <header className="sticky top-0 bg-white/90 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="px-4 h-14 flex items-center gap-3 max-w-screen-md mx-auto">
           <Link to="/explore" className="p-2 -ml-2 text-slate-500 hover:bg-slate-50 rounded-full transition-colors" aria-label="홈으로">

@@ -177,7 +177,7 @@ export function MyPage() {
   const headerAvatar = profileAvatarVisual(profileAvatarUrl);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-slate-50">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">

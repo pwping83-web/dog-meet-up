@@ -144,7 +144,7 @@ export function GuardMomRegisterPage() {
   const visible = (promoFree && certified) || paidListingWindow;
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-28">
+    <div className="min-h-screen bg-[#F5F5F7]">
       <header className="sticky top-0 z-40 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <Link

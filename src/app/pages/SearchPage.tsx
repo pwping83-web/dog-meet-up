@@ -16,8 +16,8 @@ import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useRecentDogs } from '../../hooks/useRecentDogs';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
 const popularSearches = [
@@ -66,36 +66,10 @@ export function SearchPage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showResults, setShowResults] = useState(false);
-  const [dbDogs, setDbDogs] = useState<any[]>([]);
-  const [dogsLoading, setDogsLoading] = useState(false);
+  const { dogs: dbDogs, loading: dogsLoading } = useRecentDogs({ enabled: dogsListView });
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     typeof window !== 'undefined' ? readRecentFromStorage() : [...DEFAULT_RECENT],
   );
-
-  useEffect(() => {
-    if (!dogsListView) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        setDogsLoading(true);
-        const { data, error } = await supabase
-          .from('dog_profiles')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(100);
-        if (error) throw error;
-        if (!cancelled) setDbDogs(data || []);
-      } catch (e) {
-        console.error('강아지 목록을 불러오지 못했습니다:', e);
-        if (!cancelled) setDbDogs([]);
-      } finally {
-        if (!cancelled) setDogsLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [dogsListView]);
 
   const [meetupFeedTick, setMeetupFeedTick] = useState(0);
   useEffect(() => {
@@ -128,6 +102,7 @@ export function SearchPage() {
         age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
         gender: dog.gender != null ? String(dog.gender) : null,
         photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+        owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
       });
       const hay = `${d.name} ${d.breed ?? ''}`.toLowerCase();
       return hay.includes(q);
@@ -172,7 +147,7 @@ export function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] pb-24">
+    <div className="min-h-screen bg-[#F5F5F7]">
       {/* 글래스모피즘 헤더 & 검색창 */}
       <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 backdrop-blur-xl">
         <div className="px-3 py-3 flex items-center gap-2 max-w-screen-md mx-auto">
@@ -255,6 +230,7 @@ export function SearchPage() {
                       age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
                       gender: dog.gender != null ? String(dog.gender) : null,
                       photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+                      owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
                     });
                     return (
                       <Link
@@ -353,6 +329,7 @@ export function SearchPage() {
                     age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
                     gender: dog.gender != null ? String(dog.gender) : null,
                     photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+                    owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
                   });
                   return (
                     <Link

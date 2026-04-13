@@ -88,7 +88,7 @@ export function DogMbtiTestPage() {
           </div>
         </header>
 
-        <div className="px-4 py-8 max-w-screen-md mx-auto pb-24">
+        <div className="px-4 py-8 max-w-screen-md mx-auto">
           {/* 결과 카드 */}
           <div className="bg-white rounded-3xl p-8 shadow-xl mb-6 text-center">
             <div className="text-8xl mb-6 animate-bounce">{result.emoji}</div>

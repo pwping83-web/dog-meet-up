@@ -63,7 +63,14 @@ export function Root() {
       <div className="relative flex min-h-[100dvh] w-full max-w-[min(100%,480px)] flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           {!hasOwnNav && !isAdminPage && <Header />}
-          <main className="relative min-h-0 flex-1 overflow-x-hidden">
+          <main
+            className="relative min-h-0 flex-1 overflow-x-hidden"
+            style={
+              showPrimaryNav || showCommunityBottom
+                ? { paddingBottom: 'var(--bottom-nav-height)' }
+                : undefined
+            }
+          >
             <Outlet />
           </main>
 

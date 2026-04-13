@@ -23,7 +23,7 @@ const mockChats: Chat[] = [
 
 export function ChatsPage() {
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
+    <div className="min-h-screen bg-slate-50/50">
       {/* 글래스모피즘 헤더 */}
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
         <div className="max-w-screen-md mx-auto px-4 h-14 flex items-center justify-between">

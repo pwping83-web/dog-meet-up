@@ -1,53 +1,35 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Search,
-  MapPin,
-  MessageCircle,
-  Loader2,
-  ClipboardList,
-  Home,
-  CarFront,
-  PawPrint,
-} from 'lucide-react';
-import { Link, useLocation, useSearchParams } from 'react-router';
-import { DogSitterCard } from '../components/DogSitterCard';
+import { Search, ClipboardList, Home, CarFront, PawPrint } from 'lucide-react';
+import { useLocation, useSearchParams } from 'react-router';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
 import { ANYANG_MANAN_DISTANCE_ORIGIN, calculateDistance, formatDistance } from '../utils/distance';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { supabase } from '../../lib/supabase';
-import type { Database } from '../../lib/supabase';
 import type { DogSitter } from '../types';
-import { formatDistanceToNow } from 'date-fns';
-import { ko } from 'date-fns/locale';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
-import { getCertifiedGuardMomPhotoUrl, mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
-import {
-  displayCertifiedGuardMomIntro,
-  displayPublicDolbomMeetupDescription,
-  displayPublicDolbomMeetupTitle,
-} from '../data/virtualDogPhotos';
+import { mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
+import { displayPublicDolbomMeetupDescription, displayPublicDolbomMeetupTitle } from '../data/virtualDogPhotos';
 import {
   MANNAJA_CATEGORY_SET,
   MANNAJA_MEETUP_CATEGORIES,
   MOIJA_CATEGORY_SET,
   MOIJA_MEETUP_CATEGORIES,
 } from '../utils/meetupCategory';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { formatCertifiedGuardMomLocation, formatDistrictWithDong } from '../data/regions';
+import { formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { showCertifiedGuardMomDemosWhenEmpty, usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
-import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
-type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
+import { CareNeedList } from '../components/dogSitters/CareNeedList';
+import { GuardMomSitterList, type CombinedSitterGuardRow, type GuardMomRow } from '../components/dogSitters/GuardMomSitterList';
+import { MoijaMannajaList } from '../components/dogSitters/MoijaMannajaList';
+
 /** need: 돌봄 맡기기 글(주인) / sitter·guard: 맡아주는 쪽 */
 type CareFilter = 'need' | 'sitter' | 'guard';
 
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
-type CombinedRow =
-  | { kind: 'sitter'; distance: number; sitter: DogSitter }
-  | { kind: 'guard'; distance: number; mom: GuardMomRow };
+type CombinedRow = CombinedSitterGuardRow;
 
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
@@ -398,7 +380,7 @@ export function DogSittersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-20">
+    <div className="min-h-screen bg-slate-50/50">
       {/* 상단: 모이자·만나자 탭만 스티키 / 인증 돌봄(certified)은 제목·모이자 링크 없이 바로 필터·목록 */}
       {topTab !== 'certified' && (
         <div className="sticky top-0 z-40 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
@@ -441,81 +423,14 @@ export function DogSittersPage() {
 
       {(topTab === 'moija' || topTab === 'mannaja') && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
-          <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
-            {topTab === 'moija' ? (
-              <>
-                <strong className="font-extrabold">모이자</strong>는 공원·카페 등 장소·일정 잡고 여럿이 모이는 글만 보여요.
-              </>
-            ) : (
-              <>
-                <strong className="font-extrabold">만나자</strong>는 1:1·교배·실종 글만 보여요. 교배글은 지금 무료 노출!
-              </>
-            )}
-          </p>
-          <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {meetupCategoryChips.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`px-4 py-2.5 rounded-xl text-sm whitespace-nowrap transition-all ${
-                  category === cat
-                    ? 'bg-orange-500 text-white shadow-md shadow-orange-500/20'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-                }`}
-                style={{ fontWeight: 700 }}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-3">
-            {filteredMeetups.map((meetup) => {
-              const joinCount = getJoinCount(meetup.id);
-              return (
-                <Link
-                  key={meetup.id}
-                  to={`/meetup/${meetup.id}`}
-                  className="block bg-white rounded-3xl border border-slate-100 overflow-hidden hover:shadow-md hover:border-orange-100 active:scale-[0.98] transition-all"
-                >
-                  <div className="flex gap-4 p-4">
-                    <div className="flex h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-yellow-100">
-                      <ImageWithFallback
-                        src={meetupCoverImageUrl(meetup)}
-                        fallbackSrc={virtualDogPhotoForSeed(`sitters-moija-thumb-fallback-${meetup.id}`)}
-                        alt={meetup.title}
-                        className="h-full w-full object-cover"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base text-slate-800 mb-1 line-clamp-1" style={{ fontWeight: 800 }}>
-                        {meetup.title}
-                      </h3>
-                      <p className="text-sm text-slate-500 mb-2 line-clamp-2" style={{ fontWeight: 500 }}>
-                        {meetup.description}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5 text-xs text-slate-400" style={{ fontWeight: 700 }}>
-                          <span>{meetup.district}</span>
-                          <span>·</span>
-                          <span>{formatDistanceToNow(new Date(meetup.createdAt), { locale: ko })} 전</span>
-                        </div>
-                        {joinCount > 0 && (
-                          <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-lg">
-                            <MessageCircle className="w-3.5 h-3.5" />
-                            <span className="text-xs" style={{ fontWeight: 700 }}>{joinCount}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <MoijaMannajaList
+            topTab={topTab}
+            meetupCategoryChips={meetupCategoryChips}
+            category={category}
+            onCategoryChange={setCategory}
+            filteredMeetups={filteredMeetups}
+            getJoinCount={getJoinCount}
+          />
         </div>
       )}
 
@@ -649,222 +564,17 @@ export function DogSittersPage() {
           )}
 
           {careFilter === 'need' ? (
-            <div className="space-y-3">
-              {filteredCareNeedMeetups.map((meetup) => {
-                const joinCount = getJoinCount(meetup.id);
-                return (
-                  <Link
-                    key={meetup.id}
-                    to={`/meetup/${meetup.id}`}
-                    className="block overflow-hidden rounded-3xl border border-slate-100 bg-white transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98]"
-                  >
-                    <div className="flex gap-4 p-4">
-                      <div className="flex h-20 w-20 flex-shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100">
-                        <ImageWithFallback
-                          src={meetupCoverImageUrl(meetup)}
-                          fallbackSrc={virtualDogPhotoForSeed(`sitters-dolbom-thumb-fallback-${meetup.id}`)}
-                          alt={meetup.title}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-extrabold uppercase tracking-wide text-orange-600">
-                          돌봄 맡기기 글
-                        </p>
-                        <h3 className="mb-1 line-clamp-1 text-base text-slate-800" style={{ fontWeight: 800 }}>
-                          {displayPublicDolbomMeetupTitle(meetup)}
-                        </h3>
-                        <p className="mb-2 line-clamp-2 text-sm text-slate-500" style={{ fontWeight: 500 }}>
-                          {displayPublicDolbomMeetupDescription(meetup)}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <div
-                            className="flex items-center gap-1.5 text-xs text-slate-400"
-                            style={{ fontWeight: 700 }}
-                          >
-                            <span>{meetup.district}</span>
-                            <span>·</span>
-                            <span>
-                              {formatDistanceToNow(new Date(meetup.createdAt), { locale: ko })} 전
-                            </span>
-                          </div>
-                          {joinCount > 0 && (
-                            <div className="flex items-center gap-1 rounded-lg bg-orange-50 px-2 py-1 text-orange-600">
-                              <MessageCircle className="h-3.5 w-3.5" />
-                              <span className="text-xs" style={{ fontWeight: 700 }}>
-                                {joinCount}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-              {filteredCareNeedMeetups.length === 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-                  <p className="text-sm font-bold text-slate-700">맞는 돌봄 글이 없어요</p>
-                  <p className="mt-2 text-xs font-medium text-slate-500">
-                    검색어를 바꾸거나, 글 올리기에서 돌봄·맡기기 글을 올려 보세요.
-                  </p>
-                  <Link
-                    to="/create-meetup?kind=dolbom"
-                    className="mt-4 inline-block rounded-2xl bg-orange-500 px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.98]"
-                  >
-                    돌봄 글 올리기
-                  </Link>
-                </div>
-              )}
-            </div>
-          ) : guardLoading && careFilter === 'guard' ? (
-            <div className="flex justify-center py-16 text-slate-400">
-              <Loader2 className="h-8 w-8 animate-spin" aria-label="불러오는 중" />
-            </div>
+            <CareNeedList filteredCareNeedMeetups={filteredCareNeedMeetups} getJoinCount={getJoinCount} />
           ) : (
-            <div className="space-y-3">
-              {guardMomsLoadError && careFilter === 'guard' && (
-                <div
-                  role="alert"
-                  className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-center text-[11px] font-semibold leading-snug text-amber-950"
-                >
-                  보호맘 목록을 불러오지 못했어요. 잠시 후 다시 열어 보거나, Supabase{' '}
-                  <span className="font-extrabold">certified_guard_moms</span> RLS를 확인해 주세요.
-                  {import.meta.env.DEV && (
-                    <span className="mt-1 block font-mono text-[10px] font-normal text-amber-900/90">{guardMomsLoadError}</span>
-                  )}
-                </div>
-              )}
-              {!guardMomsLoadError &&
-                !guardLoading &&
-                careFilter === 'guard' &&
-                guardMomUiDemoFill &&
-                !searchQuery.trim() && (
-                  <p className="rounded-2xl border border-sky-100 bg-sky-50/90 px-3 py-2 text-center text-[11px] font-medium text-sky-900">
-                    DB에는 아직 인증된 보호맘이 없어요. 아래 카드는{' '}
-                    <span className="font-extrabold">로컬·데모 전용 예시</span>예요. 운영 빌드에서는 예시를 숨기고, 관리자
-                    인증 후 실제 행만 보여요.
-                  </p>
-                )}
-              {combinedRows.map((row) =>
-                row.kind === 'sitter' ? (
-                  <div key={`s-${row.sitter.id}`} className="relative">
-                    <DogSitterCard dogSitter={row.sitter} />
-                    <div
-                      className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1"
-                      aria-hidden
-                    >
-                      <div
-                        className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
-                          row.distance < 2
-                            ? 'bg-orange-500 text-white'
-                            : row.distance < 5
-                              ? 'bg-orange-500 text-white'
-                              : 'bg-slate-300 text-slate-700'
-                        }`}
-                        style={{ fontWeight: 800 }}
-                      >
-                        {formatDistance(row.distance)}
-                      </div>
-                      {row.distance < 2 && (
-                        <span
-                          className="rounded-lg bg-orange-50 px-2 py-0.5 text-xs text-orange-600"
-                          style={{ fontWeight: 800 }}
-                        >
-                          초근거리!
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div key={`g-${row.mom.id}`} className="relative">
-                    <Link
-                      to={`/guard-mom/${row.mom.id}`}
-                      className="block rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:border-orange-200 hover:shadow-md active:scale-[0.98]"
-                    >
-                      <div className="flex gap-4">
-                        <div className="flex h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-inner">
-                          <ImageWithFallback
-                            src={getCertifiedGuardMomPhotoUrl(row.mom.id)}
-                            alt="인증 보호맘"
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1 pt-0.5">
-                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-brand">
-                            인증 보호맘
-                          </p>
-                          <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-800">
-                            {displayCertifiedGuardMomIntro(row.mom)}
-                          </p>
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
-                            <span className="inline-flex items-center gap-1">
-                              <MapPin className="h-3.5 w-3.5 shrink-0" />
-                              {formatCertifiedGuardMomLocation(row.mom)}
-                            </span>
-                            <span className="text-brand">
-                              1일 {row.mom.per_day_fee_krw.toLocaleString('ko-KR')}원부터
-                            </span>
-                            {row.mom.offers_daeng_pickup === true && (
-                              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-extrabold text-sky-800">
-                                댕댕 픽업
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
-                    <div
-                      className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1"
-                      aria-hidden
-                    >
-                      <div
-                        className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
-                          row.distance < 2
-                            ? 'bg-orange-500 text-white'
-                            : row.distance < 5
-                              ? 'bg-orange-500 text-white'
-                              : 'bg-slate-300 text-slate-700'
-                        }`}
-                        style={{ fontWeight: 800 }}
-                      >
-                        {formatDistance(row.distance)}
-                      </div>
-                    </div>
-                  </div>
-                ),
-              )}
-
-              {!guardLoading && combinedRows.length === 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-                  {careFilter === 'guard' && guardMoms.length === 0 && !guardMomUiDemoFill ? (
-                    <>
-                      <p className="text-sm font-bold text-slate-700">표시할 인증 보호맘이 없어요</p>
-                      <p className="mt-2 text-xs font-medium text-slate-500">
-                        {searchQuery.trim()
-                          ? '검색어를 바꿔 보세요.'
-                          : 'DB에 certified_at이 채워진 행이 없거나, 목록용 RLS·161200 트리거·관리자 인증을 확인해 보세요. 등록 후 운영에서 인증하면 여기에 올라와요.'}
-                      </p>
-                      <Link
-                        to="/guard-mom/register"
-                        className="mt-4 inline-block rounded-2xl bg-orange-500 px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.98]"
-                      >
-                        인증 보호맘 등록하기
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-sm font-bold text-slate-700">조건에 맞는 돌보미가 없어요</p>
-                      <p className="mt-2 text-xs font-medium text-slate-500">
-                        필터·검색어를 바꾸거나, 인증 보호맘 등록을 눌러 노출을 시작해 보세요.
-                      </p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+            <GuardMomSitterList
+              careFilter={careFilter}
+              combinedRows={combinedRows}
+              guardLoading={guardLoading}
+              guardMomsLoadError={guardMomsLoadError}
+              guardMomUiDemoFill={guardMomUiDemoFill}
+              guardMomsCount={guardMoms.length}
+              searchQuery={searchQuery}
+            />
           )}
         </div>
       )}

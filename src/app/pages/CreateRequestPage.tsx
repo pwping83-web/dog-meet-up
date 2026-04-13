@@ -442,7 +442,7 @@ export function CreateRequestPage() {
   /** ① 유형 선택 */
   if (!kind) {
     return (
-      <div className="min-h-screen bg-white pb-24">
+      <div className="min-h-screen bg-white">
         <div className="sticky top-0 z-10 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
             <button
@@ -552,7 +552,7 @@ export function CreateRequestPage() {
   );
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-white">
       <div className="sticky top-0 z-10 border-b border-slate-100 bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <button

@@ -11,7 +11,7 @@ import { mockRequests, mockQuotes } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { supabase } from '../../lib/supabase';
+import { useRecentDogs } from '../../hooks/useRecentDogs';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from '../components/LocationPickerModal';
@@ -72,47 +72,7 @@ export function LandingPage() {
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
-  const [dbDogs, setDbDogs] = useState<any[]>([]);
-  const [dogsLoading, setDogsLoading] = useState(true);
-
-  // Supabase에서 등록된 댕댕이 불러오기
-  useEffect(() => {
-    const fetchDogs = async () => {
-      try {
-        setDogsLoading(true);
-        const { data, error } = await supabase
-          .from('dog_profiles')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-        if (error) throw error;
-        const rows = data || [];
-        const ownerIds = [...new Set(rows.map((r) => r.owner_id).filter((id): id is string => Boolean(id)))];
-        let merged: typeof rows = rows;
-        if (ownerIds.length > 0) {
-          const { data: profs, error: profErr } = await supabase
-            .from('profiles')
-            .select('id, avatar_url')
-            .in('id', ownerIds);
-          if (!profErr && profs?.length) {
-            const avatarByUserId = Object.fromEntries(
-              profs.map((p: { id: string; avatar_url: string | null }) => [p.id, p.avatar_url]),
-            );
-            merged = rows.map((r) => ({
-              ...r,
-              owner_avatar_url: (avatarByUserId[r.owner_id as string] as string | null | undefined) ?? null,
-            }));
-          }
-        }
-        setDbDogs(merged);
-      } catch (err) {
-        console.error('강아지 정보를 불러오는데 실패했습니다:', err);
-      } finally {
-        setDogsLoading(false);
-      }
-    };
-    fetchDogs();
-  }, []);
+  const { dogs: dbDogs, loading: dogsLoading } = useRecentDogs({ displayLimit: 10 });
 
   const [meetupFeedTick, setMeetupFeedTick] = useState(0);
   useEffect(() => {
@@ -149,7 +109,7 @@ export function LandingPage() {
   };
 
   return (
-    <div className="flex min-h-dvh min-h-screen flex-col overflow-x-hidden bg-orange-50/30 pb-[5.5rem] md:pb-20">
+    <div className="flex min-h-dvh min-h-screen flex-col overflow-x-hidden bg-orange-50/30">
       <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
 
       <main className="flex w-full min-h-0 flex-1 flex-col">

@@ -199,7 +199,7 @@ export function MeetupDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-white">
       {/* 글래스모피즘 헤더 */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center h-14 px-2 max-w-screen-md mx-auto">

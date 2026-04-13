@@ -146,7 +146,7 @@ export function BillingPage() {
   const breedingProduct = BILLING_PRODUCTS.find((p) => p.key === 'breeding_post_listing_7d')!;
 
   return (
-    <div className="min-h-full bg-slate-50 pb-28">
+    <div className="min-h-full bg-slate-50">
       <header className="sticky top-0 z-40 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-3">
           <Link

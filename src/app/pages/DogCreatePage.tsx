@@ -313,7 +313,7 @@ export function DogCreatePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-10">
+    <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-orange-50 bg-white px-4">
         <button type="button" onClick={() => navigate('/explore')} className="-ml-2 p-2 text-slate-400">
           <ChevronLeft className="w-6 h-6" />

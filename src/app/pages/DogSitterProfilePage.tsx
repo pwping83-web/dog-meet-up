@@ -41,7 +41,7 @@ export function DogSitterProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-44">
+    <div className="min-h-screen bg-white">
       {/* 헤더 */}
       <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-slate-100">
         <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">

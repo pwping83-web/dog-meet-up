@@ -1,0 +1,21 @@
+{
+  "failures": [
+    {
+      "url": "http://localhost:5173/",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/\nCall log:\n  - navigating to \"http://localhost:5173/\", waiting until \"domcontentloaded\"\n"
+    },
+    {
+      "url": "http://localhost:5173/explore",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/explore\nCall log:\n  - navigating to \"http://localhost:5173/explore\", waiting until \"domcontentloaded\"\n"
+    },
+    {
+      "url": "http://localhost:5173/sitters",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/sitters\nCall log:\n  - navigating to \"http://localhost:5173/sitters\", waiting until \"domcontentloaded\"\n"
+    },
+    {
+      "url": "http://localhost:5173/my",
+      "error": "page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:5173/my\nCall log:\n  - navigating to \"http://localhost:5173/my\", waiting until \"domcontentloaded\"\n"
+    }
+  ],
+  "baseUrl": "http://localhost:5173"
+}

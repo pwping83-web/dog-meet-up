@@ -154,7 +154,7 @@ export function NotificationsPage() {
   const canPush = canUseNotifications();
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-28">
+    <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-10 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
