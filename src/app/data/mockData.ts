@@ -11,6 +11,7 @@
 
 import { Meetup, DogSitter, JoinRequest } from '../types';
 import { BREED_STOCK_PHOTO_UNSPLASH, MEETUP_LIST_COVER_PHOTOS } from './breedStockPhotos';
+import { LOCAL_SMALL_BREED_EXTRA } from './localStockPhotos';
 
 // Sample dog meetup requests from owners
 // 모이자: 공원·장소 모임, 산책·놀이, 카페·체험, 훈련·사회화 / 만나자: 1:1 만남, 교배, 실종 / 돌봄: 맡기기(랜딩 돌봄 섹션)
@@ -210,7 +211,7 @@ export const mockMeetups: Meetup[] = [
       '3살 포메 여아 건강해요. 산책 겸 비슷한 아이랑 천천히 친해지고 싶어요. 친구·산책 메이트만 구해요. 포메 가족 편하게 연락 주세요!',
     location: '서울 강남구',
     district: '강남구',
-    images: [MEETUP_LIST_COVER_PHOTOS.smallCute],
+    images: [BREED_STOCK_PHOTO_UNSPLASH.pomeranian],
     estimatedCost: '주말 오후',
     status: 'pending',
     createdAt: new Date('2026-04-09'),
@@ -285,7 +286,7 @@ export const mockMeetups: Meetup[] = [
       '이번 주 토요일 한정 팝업이래요! 굿즈·간식 구경하고 근처 잔디에서 잠깐 놀아요. 소형견 위주로 모이면 좋겠어요. 인원 맞춰서 시간만 정하면 돼요 ✨',
     location: '서울 송파구',
     district: '송파구',
-    images: [MEETUP_LIST_COVER_PHOTOS.smallCute],
+    images: [LOCAL_SMALL_BREED_EXTRA.yorkieBall],
     estimatedCost: '토요일 오후 2시',
     status: 'pending',
     createdAt: new Date('2026-04-09'),
