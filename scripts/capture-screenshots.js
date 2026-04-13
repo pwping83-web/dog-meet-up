@@ -9,7 +9,8 @@
  *   CAPTURE_BASE_URL — 기본 http://localhost:5173
  *   CAPTURE_PATHS    — 쉼표로 구분된 경로 목록 (미설정 시 아래 기본값)
  *
- * 이 저장소의 라우트는 돌봄=/sitters, 마이=/my 입니다. (/dogsitters, /mypage 는 없음)
+ * 기본 캡처 경로는 홈·탐색·돌봄·마이 + 검색·글쓰기·프로필 편집 등입니다.
+ * (CAPTURE_PATHS 로 덮어쓰기 가능)
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';
@@ -24,7 +25,17 @@ const OUT_DIR = path.join(ROOT, '__screenshots__');
 
 const BASE_URL = (process.env.CAPTURE_BASE_URL || 'http://localhost:5173').replace(/\/$/, '');
 
-const DEFAULT_PATHS = ['/', '/explore', '/sitters', '/my'];
+const DEFAULT_PATHS = [
+  '/',
+  '/explore',
+  '/sitters',
+  '/my',
+  '/search',
+  '/create-meetup',
+  '/profile/edit',
+  '/chats',
+  '/login',
+];
 
 const PATHS = (process.env.CAPTURE_PATHS || '')
   .split(',')
@@ -56,8 +67,9 @@ async function main() {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
       await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
-      await new Promise((r) => setTimeout(r, 800));
-      await page.screenshot({ path: outFile, fullPage: false });
+      // 전체 페이지 캡처 전 레이아웃·이미지 안정화 (~2초, waitForTimeout 과 동일 목적)
+      await new Promise((r) => setTimeout(r, 2000));
+      await page.screenshot({ path: outFile, fullPage: true });
       console.log(`OK  ${url} -> ${path.relative(ROOT, outFile)}`);
     } catch (e) {
       console.error(`FAIL ${url}`, e.message || e);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Megaphone, ShieldCheck, ChevronDown, GraduationCap } from 'lucide-react';
+import { Megaphone, ShieldCheck, ChevronDown, ChevronRight, GraduationCap } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
@@ -33,21 +33,50 @@ const GUARD_MOM_BODY =
  */
 export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtualTrainingAdProps) {
   const compact = variant === 'compact';
-  const [open, setOpen] = useState(false);
+  /** 배너 본문(썸네일·긴 카피·CTA) — 기본 접힘 */
+  const [bannerOpen, setBannerOpen] = useState(false);
+  /** 하단 '인증 보호맘' 등 추가 안내 */
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const cardPad = compact ? 'px-5 py-5 max-md:px-4 max-md:py-5' : 'px-6 py-7 max-md:px-5 max-md:py-6 md:px-8 md:py-8';
+  const collapsedPad = compact ? 'px-4 py-3.5 max-md:px-3.5 max-md:py-3.5' : 'px-5 py-4 max-md:px-4 max-md:py-4';
   const thumbBox = compact
     ? 'h-[7.5rem] w-full sm:h-[5.5rem] sm:w-[7.5rem] shrink-0 overflow-hidden rounded-2xl border border-violet-200/60 bg-white/60 shadow-sm'
     : 'h-[10rem] w-full sm:h-[7.5rem] sm:w-[11rem] md:h-[8.25rem] md:w-[12.5rem] shrink-0 overflow-hidden rounded-2xl border border-violet-200/60 bg-white/70 shadow-md shadow-violet-200/30';
 
   return (
     <article
-      className={`relative overflow-hidden rounded-3xl border border-violet-200/80 bg-gradient-to-br from-indigo-50 via-violet-50 to-purple-50/90 shadow-md shadow-violet-200/25 max-md:rounded-2xl ${cardPad}`}
+      className={`relative overflow-hidden rounded-3xl border border-violet-200/80 bg-gradient-to-br from-indigo-50 via-violet-50 to-purple-50/90 shadow-md shadow-violet-200/25 max-md:rounded-2xl ${bannerOpen ? cardPad : collapsedPad}`}
       aria-label="가상 광고 예시 카드"
     >
       <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-violet-300/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-indigo-300/15 blur-3xl" />
 
+      {!bannerOpen ? (
+        <button
+          type="button"
+          onClick={() => setBannerOpen(true)}
+          className="relative flex w-full items-center gap-3 rounded-2xl text-left transition-colors hover:bg-violet-100/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+        >
+          <span
+            className={
+              compact
+                ? 'inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-2.5 py-1.5 text-[11px] font-black text-white shadow-sm max-md:text-xs'
+                : 'inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm'
+            }
+          >
+            <Megaphone className="h-4 w-4 shrink-0" aria-hidden />
+            광고 · 모집
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black leading-snug text-slate-900 max-md:text-[15px]">직업훈련·돌봄 안내 배너</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-500 max-md:text-[13px]">탭하면 상세 내용·신청 안내를 펼칠 수 있어요</p>
+          </div>
+          <ChevronRight className="h-5 w-5 shrink-0 text-violet-600" aria-hidden />
+        </button>
+      ) : null}
+
+      {bannerOpen ? (
       <div className="relative flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-2">
           <span
@@ -109,24 +138,36 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
           </div>
         </div>
 
-        <Link
-          to="/customer-service"
-          className="flex w-full min-h-[48px] items-center justify-center rounded-2xl bg-purple-600 px-4 py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-purple-600/25 transition-all hover:bg-purple-700 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
-        >
-          훈련 과정 신청하기
-        </Link>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setBannerOpen(false);
+              setDetailsOpen(false);
+            }}
+            className="order-2 w-full rounded-xl border border-violet-200/80 bg-white/80 py-2.5 text-sm font-extrabold text-violet-900 transition-colors hover:bg-white sm:order-1 sm:w-auto sm:px-4"
+          >
+            광고 배너 접기
+          </button>
+          <Link
+            to="/customer-service"
+            className="order-1 flex w-full min-h-[48px] items-center justify-center rounded-2xl bg-purple-600 px-4 py-3.5 text-center text-sm font-extrabold text-white shadow-lg shadow-purple-600/25 transition-all hover:bg-purple-700 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 sm:order-2 sm:max-w-xs"
+          >
+            훈련 과정 신청하기
+          </Link>
+        </div>
 
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
+          onClick={() => setDetailsOpen((v) => !v)}
+          aria-expanded={detailsOpen}
           className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm font-bold text-violet-800 transition-colors hover:bg-violet-100/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         >
-          <span>{open ? '상세 안내 접기' : '자세히 알아보기 · 상세 안내'}</span>
-          <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+          <span>{detailsOpen ? '상세 안내 접기' : '자세히 알아보기 · 상세 안내'}</span>
+          <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${detailsOpen ? 'rotate-180' : ''}`} aria-hidden />
         </button>
 
-        {open && (
+        {detailsOpen && (
           <div className="space-y-5 border-t border-violet-200/70 pt-5">
             <div className="rounded-2xl border border-amber-200/90 bg-amber-50/95 px-4 py-4 max-md:px-4 max-md:py-5">
               <p className="mb-3 flex items-center gap-2 text-sm font-extrabold text-amber-950 max-md:text-base">
@@ -155,6 +196,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
           </div>
         )}
       </div>
+      ) : null}
     </article>
   );
 }

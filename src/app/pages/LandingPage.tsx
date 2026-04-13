@@ -11,9 +11,10 @@ import { mockRequests, mockQuotes } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { useRecentDogs } from '../../hooks/useRecentDogs';
+import { useCachedDogs } from '../../hooks/useCachedDogs';
 import { useAuth } from '../../contexts/AuthContext';
 import { isAppAdmin } from '../../lib/appAdmin';
+import { interceptGuestNav } from '../../lib/guestNavGuard';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { usePromoFreeListings } from '../../lib/promoFlags';
@@ -72,7 +73,7 @@ export function LandingPage() {
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
-  const { dogs: dbDogs, loading: dogsLoading } = useRecentDogs({ displayLimit: 10 });
+  const { dogs: dbDogs, loading: dogsLoading } = useCachedDogs({ displayLimit: 10 });
 
   const [meetupFeedTick, setMeetupFeedTick] = useState(0);
   useEffect(() => {
@@ -535,7 +536,11 @@ export function LandingPage() {
             className="rounded-2xl border border-dashed border-amber-200/80 bg-amber-50/40 py-4 text-center text-sm font-medium text-slate-500"
           >
             아직 돌봄·맡기기 글이 없어요.{' '}
-            <Link to="/create-meetup?kind=dolbom" className="font-extrabold text-orange-600 underline underline-offset-2">
+            <Link
+              to="/create-meetup?kind=dolbom"
+              onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
+              className="font-extrabold text-orange-600 underline underline-offset-2"
+            >
               글 올리기
             </Link>
           </motion.p>

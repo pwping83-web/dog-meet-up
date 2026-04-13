@@ -1,4 +1,3 @@
-// src/app/pages/ChatsPage.tsx 전체 교체
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, Send, Settings2, MoreVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -22,6 +21,8 @@ const mockChats: Chat[] = [
 ];
 
 export function ChatsPage() {
+  const chats = mockChats;
+
   return (
     <div className="min-h-screen bg-slate-50/50">
       {/* 글래스모피즘 헤더 */}
@@ -40,20 +41,30 @@ export function ChatsPage() {
       </header>
 
       {/* 채팅 목록 */}
-      <div className="max-w-screen-md mx-auto p-4 space-y-3">
-        {mockChats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 px-4">
-            <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center mb-5">
-              <span className="text-4xl">💬</span>
+      <div className="mx-auto max-w-screen-md space-y-3 p-4">
+        {chats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center px-5 py-16 text-center sm:py-24">
+            <div
+              className="mb-6 flex size-[5.75rem] items-center justify-center rounded-[2rem] bg-orange-50 shadow-inner ring-1 ring-orange-100/80"
+              aria-hidden
+            >
+              <span className="text-5xl leading-none sm:text-6xl">💬</span>
             </div>
-            <p className="text-slate-600 font-bold text-lg mb-2">아직 채팅이 없어요</p>
-            <p className="text-sm text-slate-400 font-medium mb-8">댕친들과 첫 대화를 시작해보세요 🐾</p>
-            <Link to="/sitters" className="bg-gradient-to-r from-orange-500 to-yellow-500 text-white px-8 py-4 rounded-2xl font-bold shadow-md shadow-orange-500/20 active:scale-95 transition-all">
-              우리 동네 댕친 찾기
+            <h2 className="max-w-md text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
+              아직 댕친과 나눈 대화가 없어요 🥺
+            </h2>
+            <p className="mt-3 max-w-sm text-sm font-semibold leading-relaxed text-slate-500">
+              동네 산책 모임에 참여해서 첫 인사를 건네볼까요?
+            </p>
+            <Link
+              to="/explore"
+              className="mt-10 w-full max-w-sm rounded-2xl bg-orange-500 px-8 py-4 text-center text-base font-extrabold text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600 active:scale-[0.98]"
+            >
+              우리 동네 모임 둘러보기
             </Link>
           </div>
         ) : (
-          mockChats.map((chat) => (
+          chats.map((chat) => (
             <Link
               key={chat.id}
               to={`/chat/${chat.id}`}

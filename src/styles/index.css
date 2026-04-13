@@ -1,3 +1,17 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* 가로 스크롤 등에서 스크롤바를 숨겨 네이티브 앱 느낌 (webkit + Firefox) */
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+}

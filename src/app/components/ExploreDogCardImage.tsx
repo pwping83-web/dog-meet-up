@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { exploreDogCardImageFallbackChain } from '../data/virtualDogPhotos';
+import { useMemo, useRef, useState } from 'react';
+import { exploreDogCardImageFallbackChain, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 type ExploreDogCardImageProps = {
   dogId: string;
@@ -16,28 +16,17 @@ type ExploreDogCardImageProps = {
 export function ExploreDogCardImage({ dogId, src, alt, className }: ExploreDogCardImageProps) {
   const chain = useMemo(() => {
     const rest = [...exploreDogCardImageFallbackChain(dogId)];
+    const guaranteed = virtualDogPhotoForSeed(`explore-card-guaranteed-${dogId}`);
     const out: string[] = [];
-    for (const u of [src, ...rest]) {
+    for (const u of [src, ...rest, guaranteed]) {
       if (u && !out.includes(u)) out.push(u);
     }
-    return out.length > 0 ? out : [src];
+    return out.length > 0 ? out : [guaranteed];
   }, [dogId, src]);
 
   const [index, setIndex] = useState(0);
-  const [dead, setDead] = useState(false);
-  const active = chain[Math.min(index, chain.length - 1)] ?? src;
-
-  if (dead) {
-    return (
-      <div
-        className={`flex h-full w-full items-center justify-center bg-gradient-to-br from-orange-100 to-amber-50 text-2xl ${className ?? ''}`}
-        role="img"
-        aria-label={alt}
-      >
-        🐕
-      </div>
-    );
-  }
+  const errorOnLast = useRef(false);
+  const active = chain[Math.min(index, chain.length - 1)] ?? chain[0];
 
   return (
     <img
@@ -48,9 +37,10 @@ export function ExploreDogCardImage({ dogId, src, alt, className }: ExploreDogCa
       loading="lazy"
       decoding="async"
       onError={() => {
+        if (errorOnLast.current) return;
         setIndex((i) => {
           if (i + 1 < chain.length) return i + 1;
-          setDead(true);
+          errorOnLast.current = true;
           return i;
         });
       }}

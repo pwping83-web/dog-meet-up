@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     const bookingId = parsed.bookingId!.trim();
     const { data: booking, error: bErr } = await supabase
       .from("guard_mom_bookings")
-      .select("id, applicant_id, days, per_day_fee_snapshot, total_krw, status")
+      .select("id, applicant_id, days, start_date, end_date, per_day_fee_snapshot, total_krw, status")
       .eq("id", bookingId)
       .maybeSingle();
 

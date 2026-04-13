@@ -1,6 +1,6 @@
-// src/app/pages/SearchPage.tsx 전체 교체
-import { Link, useLocation, useSearchParams } from 'react-router';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDebounce } from '../../hooks/useDebounce';
 import {
   ArrowLeft,
   Search,
@@ -17,7 +17,8 @@ import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
-import { useRecentDogs } from '../../hooks/useRecentDogs';
+import { interceptGuestNav } from '../../lib/guestNavGuard';
+import { useCachedDogs } from '../../hooks/useCachedDogs';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
 const popularSearches = [
@@ -59,14 +60,16 @@ function upsertRecent(prev: string[], term: string): string[] {
 
 export function SearchPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const promoFree = usePromoFreeListings();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const dogsListView = searchParams.get('view') === 'dogs';
 
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showResults, setShowResults] = useState(false);
-  const { dogs: dbDogs, loading: dogsLoading } = useRecentDogs({ enabled: dogsListView });
+  const { dogs: dbDogs, loading: dogsLoading } = useCachedDogs({ enabled: dogsListView });
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     typeof window !== 'undefined' ? readRecentFromStorage() : [...DEFAULT_RECENT],
   );
@@ -83,16 +86,20 @@ export function SearchPage() {
     [location.key, location.pathname, meetupFeedTick],
   );
 
-  const filteredRequests = mergedRequests.filter(
-    (request) =>
-      meetupVisibleInPublicFeed(request, promoFree) &&
-      (request.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.description.toLowerCase().includes(searchQuery.toLowerCase())),
+  const filteredRequests = useMemo(
+    () =>
+      mergedRequests.filter(
+        (request) =>
+          meetupVisibleInPublicFeed(request, promoFree) &&
+          (request.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            request.category.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            request.description.toLowerCase().includes(debouncedSearchQuery.toLowerCase())),
+      ),
+    [mergedRequests, debouncedSearchQuery, promoFree],
   );
 
   const filteredDogs = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = debouncedSearchQuery.trim().toLowerCase();
     if (!q) return dbDogs;
     return dbDogs.filter((dog) => {
       const d = sanitizeDogProfileForPublicDisplay({
@@ -107,7 +114,7 @@ export function SearchPage() {
       const hay = `${d.name} ${d.breed ?? ''}`.toLowerCase();
       return hay.includes(q);
     });
-  }, [dbDogs, searchQuery]);
+  }, [dbDogs, debouncedSearchQuery]);
 
   /** 입력창 타이핑 — 최근 검색 목록에는 넣지 않음 */
   const handleInputChange = (value: string) => {
@@ -372,7 +379,7 @@ export function SearchPage() {
                   <button
                     type="button"
                     onClick={clearAllRecent}
-                    className="text-xs font-bold text-slate-400 hover:text-slate-600"
+                    className="min-h-10 touch-manipulation rounded-lg px-2 py-2 text-xs font-bold text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                   >
                     전체 삭제
                   </button>
@@ -381,12 +388,12 @@ export function SearchPage() {
                   {recentSearches.map((term) => (
                     <div
                       key={term}
-                      className="flex items-center gap-1.5 pl-3 pr-1.5 py-1.5 bg-slate-50 border border-slate-100 rounded-xl group hover:bg-slate-100 transition-colors"
+                      className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 py-2 pl-3 pr-2 transition-colors group hover:bg-slate-100"
                     >
                       <button
                         type="button"
                         onClick={() => selectSearch(term)}
-                        className="text-sm font-bold text-slate-600 group-hover:text-brand transition-colors"
+                        className="touch-manipulation py-0.5 pr-1 text-left text-sm font-bold text-slate-600 transition-colors group-hover:text-brand"
                       >
                         {term}
                       </button>
@@ -396,10 +403,10 @@ export function SearchPage() {
                           e.stopPropagation();
                           removeRecent(term);
                         }}
-                        className="p-1 text-slate-300 hover:text-slate-500 rounded-full"
+                        className="flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-200/90 hover:text-slate-600 active:bg-slate-300/50"
                         aria-label={`${term} 삭제`}
                       >
-                        <X className="w-3.5 h-3.5" />
+                        <X className="h-4 w-4" strokeWidth={2.25} />
                       </button>
                     </div>
                   ))}
@@ -507,6 +514,7 @@ export function SearchPage() {
           
           <Link
             to="/create-meetup"
+            onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
             className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
             aria-label="글 올리기 · 모이자·만나자·돌봄 맡기기"
             title="글 올리기 · 모이자·만나자·돌봄 맡기기"
@@ -516,11 +524,19 @@ export function SearchPage() {
             </div>
           </Link>
           
-          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 hover:text-brand transition-colors">
+          <Link
+            to="/chats"
+            onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
+            className="flex flex-col items-center gap-1 text-slate-400 transition-colors hover:text-brand"
+          >
             <MessageCircle className="w-6 h-6" />
             <span className="text-[10px] font-bold">채팅</span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 hover:text-brand transition-colors">
+          <Link
+            to="/my"
+            onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
+            className="flex flex-col items-center gap-1 text-slate-400 transition-colors hover:text-brand"
+          >
             <User className="w-6 h-6" />
             <span className="text-[10px] font-bold">내댕댕</span>
           </Link>

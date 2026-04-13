@@ -10,3 +10,28 @@ verify_jwt = false
 # 게이트 verify_jwt만 켜면 ES256 세션에서 401이 나는 경우가 있어, 함수 내부에서 getUser()로 검증합니다.
 [functions.daeng-ai-assist]
 verify_jwt = false
+
+# ── Auth 이메일 템플릿 (supabase start 로컬). 프로덕션은 대시보드에 동일 HTML을 붙여넣기.
+#    파일: supabase/email-templates/*.html — 변수: {{ .ConfirmationURL }}, {{ .Email }}, {{ .SiteURL }} 등
+[auth.email.template.confirmation]
+subject = "🐕 댕댕마켓 — 이메일을 인증해 주세요"
+content_path = "./email-templates/confirmation.html"
+
+[auth.email.template.magic_link]
+subject = "🐾 댕댕마켓 — 로그인 링크가 도착했어요"
+content_path = "./email-templates/magic_link.html"
+
+[auth.email.template.recovery]
+subject = "댕댕마켓 — 비밀번호 재설정"
+content_path = "./email-templates/recovery.html"
+
+# 네이버 SMTP (로컬 전용). 비밀번호는 절대 커밋하지 말고 환경 변수로 주입하세요.
+# 프로덕션: Dashboard → Project Settings → Auth → SMTP Settings 에 동일 값 입력.
+# [auth.email.smtp]
+# enabled = true
+# host = "smtp.naver.com"
+# port = 465
+# user = "tseizou@naver.com"
+# pass = "env(SUPABASE_AUTH_SMTP_PASS)"
+# admin_email = "tseizou@naver.com"
+# sender_name = "댕댕마켓"

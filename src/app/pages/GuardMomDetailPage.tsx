@@ -17,6 +17,24 @@ import { GUARD_MOM_REQUEST_LEGAL_FOOTNOTE } from '../../lib/platformLegalCopy';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
+/** Asia/Seoul 달력 기준 오늘부터 dayCount일(포함) 돌봄 구간 → YYYY-MM-DD */
+function seoulCareDateRange(dayCount: number): { start_date: string; end_date: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const y = Number(parts.find((p) => p.type === 'year')?.value);
+  const m = Number(parts.find((p) => p.type === 'month')?.value);
+  const d = Number(parts.find((p) => p.type === 'day')?.value);
+  const start = new Date(Date.UTC(y, m - 1, d));
+  const end = new Date(Date.UTC(y, m - 1, d + dayCount - 1));
+  const iso = (dt: Date) =>
+    `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+  return { start_date: iso(start), end_date: iso(end) };
+}
+
 export function GuardMomDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -74,12 +92,15 @@ export function GuardMomDetailPage() {
     setSubmitErr(null);
     setPayBusy(true);
     try {
+      const { start_date, end_date } = seoulCareDateRange(days);
       const { data: row, error: insErr } = await supabase
         .from('guard_mom_bookings')
         .insert({
           guard_mom_id: mom.id,
           applicant_id: user.id,
           days,
+          start_date,
+          end_date,
           message: message.trim(),
           per_day_fee_snapshot: mom.per_day_fee_krw,
           total_krw: days * mom.per_day_fee_krw,

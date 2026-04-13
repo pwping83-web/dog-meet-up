@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { Home, MapPin, PlusCircle, MessageCircle, User } from 'lucide-react';
 import { useUserLocation } from '../../contexts/UserLocationContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { interceptGuestNav } from '../../lib/guestNavGuard';
 import { LocationPickerModal } from './LocationPickerModal';
 
 /** 탐색(/explore)·모임 상세(/meetup/*) 등 — 중앙 + 는 라벨 없음(홈·내댕댕과 동일 톤) */
 export function CommunityBottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { shortLabel: locationShortLabel } = useUserLocation();
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const { pathname } = location;
@@ -16,7 +20,7 @@ export function CommunityBottomNav() {
     <>
       <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
       <nav
-        className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-orange-50 bg-white/95 pb-[max(0px,env(safe-area-inset-bottom))] backdrop-blur-xl max-md:border-slate-200/80"
+        className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 border-t border-orange-50 bg-white/95 pb-[max(0.35rem,env(safe-area-inset-bottom,0px))] backdrop-blur-xl max-md:border-slate-200/80"
         aria-label="하단 메뉴"
       >
         <div className="flex h-[3.75rem] items-center justify-around px-1 max-md:h-16 max-md:px-2 md:h-14">
@@ -42,6 +46,7 @@ export function CommunityBottomNav() {
           </button>
           <Link
             to="/create-meetup"
+            onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
             className="group -mt-1 flex flex-shrink-0 items-center justify-center max-md:-mt-0.5"
             aria-label="글 올리기 · 모이자·만나자·돌봄 맡기기"
             title="글 올리기 · 모이자·만나자·돌봄 맡기기"
@@ -50,13 +55,21 @@ export function CommunityBottomNav() {
               <PlusCircle className="h-7 w-7 text-white max-md:h-7 max-md:w-7 md:h-6 md:w-6" />
             </div>
           </Link>
-          <Link to="/chats" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
+          <Link
+            to="/chats"
+            onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
+            className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1"
+          >
             <MessageCircle className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
             <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>
               댕팅
             </span>
           </Link>
-          <Link to="/my" className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1">
+          <Link
+            to="/my"
+            onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
+            className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1"
+          >
             <User className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
             <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>
               내댕댕

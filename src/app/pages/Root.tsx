@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
-import { Outlet, useLocation, Link } from 'react-router';
+import { Outlet, useLocation, Link, useNavigate } from 'react-router';
 import { Home, User, Search } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { interceptGuestNav } from '../../lib/guestNavGuard';
 import { Header } from '../components/Header';
 import { CommunityBottomNav } from '../components/CommunityBottomNav';
 import { AuthReturnRedirect } from '../components/AuthReturnRedirect';
@@ -16,6 +18,8 @@ const showAppInstallPromo =
 
 export function Root() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const isHomePage = location.pathname === '/';
   const isAdminPage = location.pathname === '/admin';
@@ -77,7 +81,7 @@ export function Root() {
           {showCommunityBottom && <CommunityBottomNav />}
 
           {showPrimaryNav && (
-            <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200/90 bg-white/95 backdrop-blur-md">
+            <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[430px] -translate-x-1/2 border-t border-slate-200/90 bg-white/95 pb-[max(0.35rem,env(safe-area-inset-bottom,0px))] backdrop-blur-md">
               <div className="flex items-center justify-around">
                 <Link
                   to="/explore"
@@ -111,6 +115,7 @@ export function Root() {
                 </Link>
                 <Link
                   to="/my"
+                  onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
                   className={`flex flex-1 flex-col items-center gap-0.5 py-2 ${
                     location.pathname === '/my' ? 'text-brand' : 'text-gray-500'
                   }`}

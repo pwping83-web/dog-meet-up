@@ -34,6 +34,7 @@ import { router } from './routes';
 import { AuthProvider } from '../contexts/AuthContext';
 import { PromoModeProvider } from '../contexts/PromoModeProvider';
 import { UserLocationProvider } from '../contexts/UserLocationContext';
+import { Toaster } from 'sonner';
 
 export default function App() {
   return (
@@ -41,6 +42,7 @@ export default function App() {
       <PromoModeProvider>
         <UserLocationProvider>
           <RouterProvider router={router} />
+          <Toaster richColors position="top-center" closeButton />
         </UserLocationProvider>
       </PromoModeProvider>
     </AuthProvider>

@@ -382,10 +382,17 @@ export interface Database {
           guard_mom_id: string;
           applicant_id: string;
           days: number;
+          start_date: string;
+          end_date: string;
           message: string;
           per_day_fee_snapshot: number;
           total_krw: number;
-          status: 'pending_payment' | 'paid' | 'cancelled';
+          status:
+            | 'pending_payment'
+            | 'paid'
+            | 'cancelled'
+            | 'refund_requested'
+            | 'refunded';
         };
         Insert: {
           id?: string;
@@ -393,10 +400,12 @@ export interface Database {
           guard_mom_id: string;
           applicant_id: string;
           days: number;
+          start_date: string;
+          end_date: string;
           message?: string;
           per_day_fee_snapshot: number;
           total_krw: number;
-          status?: 'pending_payment' | 'paid' | 'cancelled';
+          status?: 'pending_payment' | 'paid' | 'cancelled' | 'refund_requested' | 'refunded';
         };
         Update: {
           id?: string;
@@ -404,10 +413,12 @@ export interface Database {
           guard_mom_id?: string;
           applicant_id?: string;
           days?: number;
+          start_date?: string;
+          end_date?: string;
           message?: string;
           per_day_fee_snapshot?: number;
           total_krw?: number;
-          status?: 'pending_payment' | 'paid' | 'cancelled';
+          status?: 'pending_payment' | 'paid' | 'cancelled' | 'refund_requested' | 'refunded';
         };
       };
     };

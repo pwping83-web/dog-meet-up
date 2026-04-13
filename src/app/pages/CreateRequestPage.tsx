@@ -13,7 +13,9 @@ import {
   CarFront,
   PawPrint,
   MapPin,
+  Loader2,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { RegionSelector } from '../components/RegionSelector';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
@@ -86,6 +88,8 @@ export function CreateRequestPage() {
   const [breedingListingUntil, setBreedingListingUntil] = useState<string | null>(null);
   const [breedingEntLoadFailed, setBreedingEntLoadFailed] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
+  /** null: dog_profiles 개수 확인 중, true: 1마리 이상 있음 */
+  const [registeredDogOk, setRegisteredDogOk] = useState<boolean | null>(null);
   const [meetupLiabilityAgree, setMeetupLiabilityAgree] = useState(false);
   const [regionGpsBusy, setRegionGpsBusy] = useState(false);
   const draftRestoredRef = useRef(false);
@@ -181,6 +185,35 @@ export function CreateRequestPage() {
       navigate('/login', { replace: true });
     }
   }, [authLoading, user, navigate, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (authLoading || !user) {
+      setRegisteredDogOk(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { count, error } = await supabase
+        .from('dog_profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_id', user.id);
+      if (cancelled) return;
+      if (error) {
+        setRegisteredDogOk(true);
+        return;
+      }
+      const n = count ?? 0;
+      if (n < 1) {
+        toast.error('댕댕이 프로필을 먼저 등록해야 글을 쓸 수 있어요!');
+        navigate('/create-dog', { replace: true });
+        return;
+      }
+      setRegisteredDogOk(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, user, navigate]);
 
   /** kind URL과 폼 category 동기화 */
   useEffect(() => {
@@ -327,6 +360,7 @@ export function CreateRequestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitBusy) return;
     if (!user || !kind) return;
     if (!meetupLiabilityAgree) {
       alert('올리기 전에 아래 플랫폼 이용 범위·책임 고지에 동의해 주세요.');
@@ -407,34 +441,47 @@ export function CreateRequestPage() {
       newMeetup.listingVisibleUntil = breedingListingUntil;
     }
 
-    appendUserMeetup(newMeetup);
+    setSubmitBusy(true);
+    try {
+      appendUserMeetup(newMeetup);
 
-    if (kind === 'dolbom') {
-      const pickupNote = wantDaengPickup ? '\n댕댕 픽업 희망으로 함께 표시돼요.' : '';
-      alert(
-        `🍼 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
-      );
-    } else if (isBreedingPost) {
-      try {
-        sessionStorage.removeItem(BREEDING_DRAFT_KEY);
-      } catch {
-        /* ignore */
+      if (kind === 'dolbom') {
+        const pickupNote = wantDaengPickup ? '\n댕댕 픽업 희망으로 함께 표시돼요.' : '';
+        alert(
+          `🍼 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
+        );
+      } else if (isBreedingPost) {
+        try {
+          sessionStorage.removeItem(BREEDING_DRAFT_KEY);
+        } catch {
+          /* ignore */
+        }
+        alert(
+          promoFree
+            ? '교배 글이 올라갔어요. 지금은 한시 무료로 피드에도 보여요. 1:1·실종은 무료예요.'
+            : '교배 글이 올라갔어요. 결제한 7일 동안 피드에 보여요. 1:1·실종은 무료예요.',
+        );
+      } else {
+        alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
       }
-      alert(
-        promoFree
-          ? '교배 글이 올라갔어요. 지금은 한시 무료로 피드에도 보여요. 1:1·실종은 무료예요.'
-          : '교배 글이 올라갔어요. 결제한 7일 동안 피드에 보여요. 1:1·실종은 무료예요.',
-      );
-    } else {
-      alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
+      navigate('/explore');
+    } finally {
+      setSubmitBusy(false);
     }
-    navigate('/explore');
   };
 
   if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white text-sm font-medium text-slate-500">
         {authLoading ? '잠시만요…' : '로그인 페이지로 이동 중…'}
+      </div>
+    );
+  }
+
+  if (registeredDogOk !== true) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white text-sm font-medium text-slate-500">
+        잠시만요…
       </div>
     );
   }
@@ -898,13 +945,20 @@ export function CreateRequestPage() {
           <button
             type="submit"
             disabled={!categoryOk || submitBusy || Boolean(breedingLeakLabel) || !meetupLiabilityAgree}
-            className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-5 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-5 text-lg font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-50"
           >
-            {kind === 'dolbom'
-              ? '🍼 돌봄 · 맡기기 🚀'
-              : kind === 'mannaja' && formData.category === '교배' && !breedingListingActive
-                ? '결제 후 올리기'
-                : '올리기 🚀'}
+            {submitBusy ? (
+              <>
+                <Loader2 className="h-5 w-5 shrink-0 animate-spin" aria-hidden />
+                등록 중…
+              </>
+            ) : kind === 'dolbom' ? (
+              '🍼 돌봄 · 맡기기 🚀'
+            ) : kind === 'mannaja' && formData.category === '교배' && !breedingListingActive ? (
+              '결제 후 올리기'
+            ) : (
+              '올리기 🚀'
+            )}
           </button>
         </form>
       </div>

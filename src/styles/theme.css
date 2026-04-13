@@ -196,7 +196,7 @@
     line-height: 1.5;
   }
 
-  /* 스크롤바 숨기기 유틸리티 */
+  /* 스크롤바 숨기기 — index.css @layer utilities 의 .no-scrollbar 와 동일 규칙 */
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -204,16 +204,8 @@
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-
-  /* 가로 스크롤 스크롤바 숨기기 (댕댕마켓 스타일) */
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+    width: 0;
+    height: 0;
   }
 
   /* 애니메이션 */

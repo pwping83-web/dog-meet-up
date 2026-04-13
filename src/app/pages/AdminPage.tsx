@@ -737,7 +737,7 @@ function GuardCareAdminView() {
                             {mom ? displayName(mom.user_id) : b.guard_mom_id.slice(0, 8)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {b.days}일 · 합계 {b.total_krw.toLocaleString()}원
+                            {b.start_date} ~ {b.end_date} · {b.days}일 · 합계 {b.total_krw.toLocaleString()}원
                           </p>
                         </div>
                         <span
@@ -746,7 +746,13 @@ function GuardCareAdminView() {
                               ? 'bg-green-100 text-green-800'
                               : b.status === 'pending_payment'
                                 ? 'bg-amber-100 text-amber-800'
-                                : 'bg-gray-100 text-gray-600'
+                                : b.status === 'refund_requested'
+                                  ? 'bg-orange-100 text-orange-900'
+                                  : b.status === 'refunded'
+                                    ? 'bg-slate-200 text-slate-800'
+                                    : b.status === 'cancelled'
+                                      ? 'bg-gray-100 text-gray-600'
+                                      : 'bg-gray-100 text-gray-600'
                           }`}
                         >
                           {b.status}
