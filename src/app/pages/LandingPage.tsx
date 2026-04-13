@@ -23,7 +23,13 @@ import type { User as AuthUser } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
-import { MOCK_IMG_HANGANG_HERO, MOCK_IMG_LANDING_BORI, MOCK_IMG_LANDING_PPORI } from '../data/mockPromoImages';
+import {
+  MOCK_IMG_HANGANG_HERO,
+  MOCK_IMG_LANDING_BORI,
+  MOCK_IMG_LANDING_CHOCO,
+  MOCK_IMG_LANDING_KONG,
+  MOCK_IMG_LANDING_PPORI,
+} from '../data/mockPromoImages';
 
 function uniqueImageUrls(...urls: (string | undefined)[]): string[] {
   const out: string[] = [];
@@ -80,6 +86,12 @@ const UNSPLASH_BORI =
 const UNSPLASH_KONG =
   'https://images.unsplash.com/photo-1537151608804-ea6d1522e51e?q=80&w=300&h=300&auto=format&fit=crop';
 
+/** 앱 내 가상 풀과 동일 출처·안정적인 대체 Unsplash(히어로 전용 ID 실패 시). */
+const UNSPLASH_HERO_CHOCO_ALT =
+  'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?q=80&w=300&h=300&auto=format&fit=crop';
+const UNSPLASH_HERO_KONG_ALT =
+  'https://images.unsplash.com/photo-1534567115038-b2ed281cd54c?q=80&w=300&h=300&auto=format&fit=crop';
+
 const dogProfiles = [
   {
     name: '뽀삐',
@@ -93,7 +105,12 @@ const dogProfiles = [
     breed: '웰시코기',
     age: '3살',
     mbti: '사교적아이',
-    imgUrls: uniqueImageUrls(UNSPLASH_CHOCO, virtualDogPhotoForSeed('landing-dog-choco')),
+    imgUrls: uniqueImageUrls(
+      MOCK_IMG_LANDING_CHOCO,
+      UNSPLASH_HERO_CHOCO_ALT,
+      UNSPLASH_CHOCO,
+      virtualDogPhotoForSeed('landing-dog-choco'),
+    ),
   },
   {
     name: '보리',
@@ -107,7 +124,12 @@ const dogProfiles = [
     breed: '비글',
     age: '1살',
     mbti: '호기심아이',
-    imgUrls: uniqueImageUrls(UNSPLASH_KONG, virtualDogPhotoForSeed('landing-dog-kong')),
+    imgUrls: uniqueImageUrls(
+      MOCK_IMG_LANDING_KONG,
+      UNSPLASH_HERO_KONG_ALT,
+      UNSPLASH_KONG,
+      virtualDogPhotoForSeed('landing-dog-kong'),
+    ),
   },
 ];
 

@@ -17,3 +17,11 @@ export const MOCK_IMG_LANDING_PPORI =
 
 export const MOCK_IMG_LANDING_BORI =
   'https://cdn.pixabay.com/photo/2018/10/01/21/36/golden-retriever-3717813_960_720.jpg';
+
+/** 히어로 초코(웰시코기) — Unsplash 특정 ID가 실패할 때를 대비한 Pixabay 1순위용 */
+export const MOCK_IMG_LANDING_CHOCO =
+  'https://cdn.pixabay.com/photo/2015/07/09/19/32/dog-838281_960_720.jpg';
+
+/** 히어로 콩이(비글·소형견) — 동일 */
+export const MOCK_IMG_LANDING_KONG =
+  'https://cdn.pixabay.com/photo/2016/12/13/05/15/puppy-1903313_960_720.jpg';
