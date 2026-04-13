@@ -269,6 +269,50 @@ export function resolveDogProfilePhotoUrl(dog: { id: string; photo_url?: string 
   return raw;
 }
 
+/**
+ * 탐색 카드용: `dog_profiles.photo_url` 우선, 비면 보호자 `profiles.avatar_url` 사용 후 가상 강아지.
+ * (공개 상세 `sanitizeDogProfileForPublicDisplay`에서 `owner_avatar_url`을 넘기면 동일 규칙 적용)
+ */
+export function resolveExploreDogPhotoUrl(input: {
+  id: string;
+  photo_url?: string | null;
+  owner_avatar_url?: string | null;
+}): string {
+  const resolved = resolveDogProfilePhotoUrl(input);
+  const virtualOnly = virtualDogPhotoForSeed(`db-dog-${input.id}`);
+  if (resolved !== virtualOnly) return resolved;
+
+  const av = typeof input.owner_avatar_url === 'string' ? input.owner_avatar_url.trim() : '';
+  if (av && /^https?:\/\//i.test(av)) {
+    if (!shouldUseVirtualDogPhoto(av)) {
+      try {
+        if (!PLACEHOLDER_OR_STOCK_HOST.test(new URL(av).hostname)) {
+          return av;
+        }
+      } catch {
+        return av;
+      }
+    }
+  }
+  return virtualOnly;
+}
+
+/** `source.unsplash.com` 서비스 종료로, 동일 용도의 Unsplash CDN + Pixabay 시드 URL(안정적). */
+export function exploreDogCardImageFallbackChain(dogId: string): readonly string[] {
+  const u1 = virtualDogPhotoForSeed(`explore-card-fb-a-${dogId}`);
+  const u2 = virtualDogPhotoForSeed(`explore-card-fb-b-${dogId}`);
+  const u3 = virtualDogPhotoForSeed(`explore-card-fb-c-${dogId}`);
+  const pix = EXPLORE_DOG_PIXABAY_FALLBACKS[hashSeed(dogId) % EXPLORE_DOG_PIXABAY_FALLBACKS.length]!;
+  return [u1, u2, u3, pix];
+}
+
+const EXPLORE_DOG_PIXABAY_FALLBACKS: readonly string[] = [
+  'https://cdn.pixabay.com/photo/2019/07/30/05/53/dog-4372039_640.jpg',
+  'https://cdn.pixabay.com/photo/2016/01/19/17/41/golden-retriever-1149724_640.jpg',
+  'https://cdn.pixabay.com/photo/2016/11/22/23/37/dog-1850464_640.jpg',
+  'https://cdn.pixabay.com/photo/2020/11/04/18/54/pomeranian-5711687_640.jpg',
+];
+
 const VIRTUAL_DOG_PROFILE_NAMES = [
   '초코',
   '보리',
@@ -369,9 +413,15 @@ export function sanitizeDogProfileForPublicDisplay(dog: {
   age: number | null;
   gender: string | null;
   photo_url: string | null;
+  /** `profiles.avatar_url` — 탐색 카드 등에서만 전달 */
+  owner_avatar_url?: string | null;
 }): DogProfilePublicDisplay {
   const rawUrl = typeof dog.photo_url === 'string' ? dog.photo_url.trim() : '';
-  const photoUrl = resolveDogProfilePhotoUrl(dog);
+  const photoUrl = resolveExploreDogPhotoUrl({
+    id: dog.id,
+    photo_url: dog.photo_url,
+    owner_avatar_url: dog.owner_avatar_url ?? null,
+  });
   const photoSanitized = !rawUrl || photoUrl !== rawUrl;
 
   const badName = isGarbageDogNameForPublic(dog.name);

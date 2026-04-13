@@ -444,23 +444,11 @@ export function DogSittersPage() {
           <p className="mb-3 rounded-2xl border border-orange-100 bg-orange-50/80 px-3 py-2.5 text-xs font-semibold leading-relaxed text-orange-950">
             {topTab === 'moija' ? (
               <>
-                <strong className="font-extrabold">모이자</strong>는 공원·카페 등 장소·일정 잡고{' '}
-                <strong>여럿이 모이는 글</strong>만 보여요. 1:1·교배·실종은{' '}
-                <strong>만나자</strong>, 맡기기(보호맘 집)·방문 돌봄(댕집사)는{' '}
-                <Link to="/sitters?view=care&care=sitter" className="font-extrabold text-brand underline underline-offset-2">
-                  인증 돌봄
-                </Link>
-                .
+                <strong className="font-extrabold">모이자</strong>는 공원·카페 등 장소·일정 잡고 여럿이 모이는 글만 보여요.
               </>
             ) : (
               <>
-                <strong className="font-extrabold">만나자</strong>는 1:1·교배·실종 글만 보여요. 교배는{' '}
-                {promoFree ? (
-                  <>지금 무료 노출. </>
-                ) : (
-                  <>결제 후 7일 노출. </>
-                )}
-                공원 모임은 <strong>모이자</strong>.
+                <strong className="font-extrabold">만나자</strong>는 1:1·교배·실종 글만 보여요. 교배글은 지금 무료 노출!
               </>
             )}
           </p>
@@ -565,7 +553,7 @@ export function DogSittersPage() {
                 </div>
               </div>
               <p className="mt-2 text-center text-[11px] font-medium leading-snug text-amber-900/90">
-                아이는 소중하니까, 바래다주기·데리러 오기 등은 보호맘님이랑 채팅으로 천천히 정하면 돼요 ~~
+                바래다주기·데리러 오기 등은 보호맘님이랑 채팅으로 천천히 정하면 돼요~
               </p>
             </div>
           )}

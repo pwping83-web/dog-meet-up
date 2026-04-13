@@ -21,6 +21,7 @@ import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import type { User } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
 import { MOCK_IMG_HANGANG_HERO, MOCK_IMG_LANDING_BORI, MOCK_IMG_LANDING_PPORI } from '../data/mockPromoImages';
 
 function shortProfileLabel(user: User): string {
@@ -85,7 +86,25 @@ export function LandingPage() {
           .order('created_at', { ascending: false })
           .limit(10);
         if (error) throw error;
-        setDbDogs(data || []);
+        const rows = data || [];
+        const ownerIds = [...new Set(rows.map((r) => r.owner_id).filter((id): id is string => Boolean(id)))];
+        let merged: typeof rows = rows;
+        if (ownerIds.length > 0) {
+          const { data: profs, error: profErr } = await supabase
+            .from('profiles')
+            .select('id, avatar_url')
+            .in('id', ownerIds);
+          if (!profErr && profs?.length) {
+            const avatarByUserId = Object.fromEntries(
+              profs.map((p: { id: string; avatar_url: string | null }) => [p.id, p.avatar_url]),
+            );
+            merged = rows.map((r) => ({
+              ...r,
+              owner_avatar_url: (avatarByUserId[r.owner_id as string] as string | null | undefined) ?? null,
+            }));
+          }
+        }
+        setDbDogs(merged);
       } catch (err) {
         console.error('강아지 정보를 불러오는데 실패했습니다:', err);
       } finally {
@@ -229,9 +248,9 @@ export function LandingPage() {
                     className="min-w-[5.75rem] flex-shrink-0 rounded-2xl border border-white/70 bg-white/95 p-3 text-center shadow-lg shadow-orange-600/10 backdrop-blur-md max-md:min-w-[6.25rem] max-md:p-3.5 md:min-w-[72px] md:rounded-xl md:p-2"
                   >
                     <div className="mx-auto mb-2 h-[4.25rem] w-[4.25rem] overflow-hidden rounded-full bg-orange-100 ring-[3px] ring-white/90 max-md:h-[4.5rem] max-md:w-[4.5rem] md:mb-1.5 md:h-12 md:w-12 md:ring-2">
-                      <ImageWithFallback
+                      <ExploreDogCardImage
+                        dogId={`landing-hero-${dog.name}`}
                         src={dog.img}
-                        fallbackSrc={virtualDogPhotoForSeed(`landing-hero-fallback-${dog.name}`)}
                         alt={dog.name}
                         className={`h-full w-full object-cover transition-transform duration-500 ${hoveredDog === i ? 'scale-110' : 'scale-100'}`}
                       />
@@ -292,6 +311,7 @@ export function LandingPage() {
                 age: typeof dog.age === 'number' && Number.isFinite(dog.age) ? dog.age : null,
                 gender: dog.gender != null ? String(dog.gender) : null,
                 photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
+                owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
               });
               return (
               <motion.div
@@ -305,12 +325,7 @@ export function LandingPage() {
                   className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-transform active:scale-95 max-md:p-4 md:rounded-2xl md:p-3"
                 >
                   <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
-                    <ImageWithFallback
-                      src={d.photoUrl}
-                      fallbackSrc={virtualDogPhotoForSeed(`explore-db-dog-fallback-${dog.id}`)}
-                      alt={d.name}
-                      className="h-full w-full object-cover"
-                    />
+                    <ExploreDogCardImage dogId={String(dog.id)} src={d.photoUrl} alt={d.name} className="h-full w-full object-cover" />
                   </div>
                   <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{d.name}</p>
                   <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
