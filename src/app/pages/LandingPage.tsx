@@ -23,7 +23,7 @@ import type { User as AuthUser } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
-import { MOCK_IMG_HANGANG_HERO, MOCK_IMG_LANDING_BORI, MOCK_IMG_LANDING_PPORI } from '../data/mockPromoImages';
+import { MOCK_IMG_HANGANG_HERO } from '../data/mockPromoImages';
 
 function shortProfileLabel(user: AuthUser): string {
   const m = user.user_metadata ?? {};
@@ -39,12 +39,36 @@ function shortProfileLabel(user: AuthUser): string {
   return '내 정보';
 }
 
-// 댕친 프로필 데이터 — 뽀삐·보리는 Pixabay 고정 URL + ImageWithFallback 폴백.
+// 댕친 프로필 데이터 — 히어로 썸네일은 고정 Unsplash URL + 네이티브 <img>.
 const dogProfiles = [
-  { name: '뽀삐', breed: '포메라니안', age: '2살', mbti: '활발한아이', img: MOCK_IMG_LANDING_PPORI },
-  { name: '초코', breed: '웰시코기', img: virtualDogPhotoForSeed('landing-dog-choco'), age: '3살', mbti: '사교적아이' },
-  { name: '보리', breed: '골든리트리버', img: MOCK_IMG_LANDING_BORI, age: '5살', mbti: '듬직한아이' },
-  { name: '콩이', breed: '비글', img: virtualDogPhotoForSeed('landing-dog-kong'), age: '1살', mbti: '호기심아이' },
+  {
+    name: '뽀삐',
+    breed: '포메라니안',
+    age: '2살',
+    mbti: '활발한아이',
+    img: 'https://images.unsplash.com/photo-1605897472359-85e4b94d685d?q=80&w=300&h=300&auto=format&fit=crop',
+  },
+  {
+    name: '초코',
+    breed: '웰시코기',
+    img: 'https://images.unsplash.com/photo-1589926839603-5147814b301a?q=80&w=300&h=300&auto=format&fit=crop',
+    age: '3살',
+    mbti: '사교적아이',
+  },
+  {
+    name: '보리',
+    breed: '골든리트리버',
+    img: 'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=300&h=300&auto=format&fit=crop',
+    age: '5살',
+    mbti: '듬직한아이',
+  },
+  {
+    name: '콩이',
+    breed: '비글',
+    img: 'https://images.unsplash.com/photo-1537151608804-ea6d1522e51e?q=80&w=300&h=300&auto=format&fit=crop',
+    age: '1살',
+    mbti: '호기심아이',
+  },
 ];
 
 // MBTI 타입 프리뷰
@@ -209,11 +233,10 @@ export function LandingPage() {
                     className="min-w-[5.75rem] flex-shrink-0 rounded-2xl border border-white/70 bg-white/95 p-3 text-center shadow-lg shadow-orange-600/10 backdrop-blur-md max-md:min-w-[6.25rem] max-md:p-3.5 md:min-w-[72px] md:rounded-xl md:p-2"
                   >
                     <div className="mx-auto mb-2 h-[4.25rem] w-[4.25rem] overflow-hidden rounded-full bg-orange-100 ring-[3px] ring-white/90 max-md:h-[4.5rem] max-md:w-[4.5rem] md:mb-1.5 md:h-12 md:w-12 md:ring-2">
-                      <ExploreDogCardImage
-                        dogId={`landing-hero-${dog.name}`}
+                      <img
                         src={dog.img}
                         alt={dog.name}
-                        className={`h-full w-full object-cover transition-transform duration-500 ${hoveredDog === i ? 'scale-110' : 'scale-100'}`}
+                        className={`h-full w-full object-cover rounded-full transition-transform duration-500 ${hoveredDog === i ? 'scale-110' : 'scale-100'}`}
                       />
                     </div>
                     <p className="truncate text-slate-800 text-xs max-md:text-[13px] md:text-[10px]" style={{ fontWeight: 900 }}>{dog.name}</p>
