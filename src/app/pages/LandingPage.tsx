@@ -25,6 +25,7 @@ import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhot
 import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
 import { MOCK_IMG_HANGANG_HERO } from '../data/mockPromoImages';
 import { landingHeroDogImgChains } from '../data/landingHeroDogImages';
+import { OwnerWeeklyAiCard } from '../components/OwnerWeeklyAiCard';
 
 function uniqueImageUrls(...urls: (string | undefined)[]): string[] {
   const out: string[] = [];
@@ -297,6 +298,15 @@ export function LandingPage() {
           ))}
         </div>
       </section>
+
+      {user ? (
+        <section className="mt-4 px-4">
+          <p className="mb-2 px-1 text-[11px] font-extrabold text-slate-500">
+            뭘 할지 고민될 때
+          </p>
+          <OwnerWeeklyAiCard />
+        </section>
+      ) : null}
 
       {/* ─── REAL REGISTERED DOGS (Supabase) ─── */}
       {(!dogsLoading && dbDogs.length > 0) && (
