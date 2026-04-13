@@ -17,6 +17,9 @@
   ],
   "scripts": {
     "build": "vite build",
+    "build:app": "vite build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:sync": "npx cap sync android",
     "capture": "node scripts/capture-screenshots.js",
     "capture:browsers": "playwright install chromium",
     "dev": "vite",
@@ -28,6 +31,8 @@
     "supabase:link": "npx --yes supabase@latest link --project-ref silbyvmcuymjewurkrfn"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.1",
+    "@capacitor/core": "^7.6.1",
     "@emailjs/browser": "^4.4.1",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
@@ -86,9 +91,10 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
-    "playwright": "^1.51.0",
+    "@capacitor/cli": "^7.6.1",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "playwright": "^1.51.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5",
     "vite-plugin-pwa": "^1.2.0"

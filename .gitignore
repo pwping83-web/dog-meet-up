@@ -8,3 +8,9 @@ dist
 *.log
 .DS_Store
 .cursor/disable-auto-push
+
+# Capacitor Android — 로컬 빌드 산출물
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
