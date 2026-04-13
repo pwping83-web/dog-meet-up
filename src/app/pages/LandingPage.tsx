@@ -18,13 +18,13 @@ import { LocationPickerModal } from '../components/LocationPickerModal';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
-import type { User } from '@supabase/supabase-js';
+import type { User as AuthUser } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
 import { MOCK_IMG_HANGANG_HERO, MOCK_IMG_LANDING_BORI, MOCK_IMG_LANDING_PPORI } from '../data/mockPromoImages';
 
-function shortProfileLabel(user: User): string {
+function shortProfileLabel(user: AuthUser): string {
   const m = user.user_metadata ?? {};
   for (const key of ['nickname', 'name', 'full_name'] as const) {
     const v = m[key];
