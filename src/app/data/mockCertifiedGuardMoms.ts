@@ -2,7 +2,8 @@
  * 가상 인증 보호맘 — DB에 노출 중인 행이 없거나 조회 오류 시 인증 돌봄 탭 데모용.
  * 상세(/guard-mom/:id)는 getMockCertifiedGuardMomById 로 동일 데이터를 씁니다.
  */
-import { virtualDogPhotoForSeed } from './virtualDogPhotos';
+import { BREED_STOCK_UNSPLASH_LIST } from './breedStockPhotos';
+import { hashSeed } from './virtualDogPhotos';
 
 const ISO_PAST = '2026-03-01T12:00:00.000+09:00';
 const ISO_FUTURE = '2027-12-31T23:59:59.000+09:00';
@@ -111,9 +112,10 @@ export function isMockGuardMomId(id: string) {
   return MOCK_GUARD_MOM_IDS.has(id);
 }
 
-/** 목록·상세용 데모 프로필 사진 — DB에 photo가 없을 때도 ID마다 다른 가상 강아지 이미지 */
+/** 목록·상세용 데모 프로필 사진 — DB에 photo가 없을 때도 ID마다 견종 고정 풀에서 안정적으로 선택 */
 export function getCertifiedGuardMomPhotoUrl(id: string | undefined | null): string {
   const key = id?.trim();
-  if (!key) return virtualDogPhotoForSeed('guard-mom-unknown');
-  return virtualDogPhotoForSeed(`certified-guard-mom-${key}`);
+  const seed = key ? `certified-guard-mom-${key}` : 'guard-mom-unknown';
+  const idx = hashSeed(seed) % BREED_STOCK_UNSPLASH_LIST.length;
+  return BREED_STOCK_UNSPLASH_LIST[idx]!;
 }

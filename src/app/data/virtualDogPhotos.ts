@@ -1,40 +1,14 @@
 import type { DogSitter, Meetup } from '../types';
+import { BREED_STOCK_UNSPLASH_LIST, isBreedStockPhotoUrl, isPreservedMeetupCoverUrl } from './breedStockPhotos';
 
 /**
- * 목업·폴백용 강아지 스톡 사진만 사용합니다. (드론·풍경 등 비반려 이미지 대체용)
- * 동일 시드 → 동일 URL(화면 깜빡임 최소화), 시드마다 풀에서 고르게 분배.
+ * 목업·폴백용 강아지 스톡 — 견종별 고정 Unsplash 6종만 순환 (`breedStockPhotos`).
+ * 동일 시드 → 동일 URL(화면 깜빡임 최소화).
  */
-const Q = 'w=960&h=960&fit=crop&q=85';
+const VIRTUAL_DOG_PHOTOS: readonly string[] = BREED_STOCK_UNSPLASH_LIST;
 
-const VIRTUAL_DOG_PHOTOS: readonly string[] = [
-  `https://images.unsplash.com/photo-1543466835-00a7907e9de1?${Q}`,
-  `https://images.unsplash.com/photo-1517423440428-a5a00ad493e2?${Q}`,
-  `https://images.unsplash.com/photo-1583511665977-2b1c39aace49?${Q}`,
-  `https://images.unsplash.com/photo-1596492784531-5997e95e006d?${Q}`,
-  `https://images.unsplash.com/photo-1605568427561-40c23fa6adc4?${Q}`,
-  `https://images.unsplash.com/photo-1593134257789-471d46b0ce2d?${Q}`,
-  `https://images.unsplash.com/photo-1576201836106-db1758fd1c97?${Q}`,
-  `https://images.unsplash.com/photo-1568393698422-23a7767527a5?${Q}`,
-  `https://images.unsplash.com/photo-1525253086316-d0c936c814f0?${Q}`,
-  `https://images.unsplash.com/photo-1507146426986-505756756a54?${Q}`,
-  `https://images.unsplash.com/photo-1558788353-f76d92427f16?${Q}`,
-  `https://images.unsplash.com/photo-1530281700549-e82cae7f15a5?${Q}`,
-  `https://images.unsplash.com/photo-1568572933382-376960a653c3?${Q}`,
-  `https://images.unsplash.com/photo-1591169194246-8a933f3d60f4?${Q}`,
-  `https://images.unsplash.com/photo-1522276498395-a041d935f22d?${Q}`,
-  `https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?${Q}`,
-  `https://images.unsplash.com/photo-1604081470199-47f0a6158019?${Q}`,
-  `https://images.unsplash.com/photo-1596825145855-89840b290d32?${Q}`,
-  `https://images.unsplash.com/photo-1534567115038-b2ed281cd54c?${Q}`,
-  `https://images.unsplash.com/photo-1558944351-88b8ce1d8509?${Q}`,
-  `https://images.unsplash.com/photo-1560963695-d6a13cf7b96a?${Q}`,
-  `https://images.unsplash.com/photo-1529476490802-43c0223ccf7a?${Q}`,
-  `https://images.unsplash.com/photo-1577349908390-f407c1f7bcf0?${Q}`,
-  `https://images.unsplash.com/photo-1598133894008-8f4523a1d086?${Q}`,
-];
-
-/** 목업에서 잘못 쓰이기 쉬운 비(또는 논쟁) 반려 이미지 ID → 가상 강아지로 교체 */
-const REPLACED_UNSPLASH_IDS = /photo-1583337130417|drone|quadcopter|dji\.com/i;
+/** 목업에서 잘못 쓰이기 쉬운 비반려·드론 이미지(구체 ID만). 푸들용 `photo-1583337130417-3346a1be7dee`는 제외 */
+const REPLACED_UNSPLASH_IDS = /photo-1583337130417-33480f6d3eaa|drone|quadcopter|dji\.com/i;
 
 /** 업로드 JPEG/PNG 앞부분(메타·XMP)에 흔한 드론·스톡 표지 힌트 */
 const NON_PET_COVER_HINTS =
@@ -206,7 +180,7 @@ export function enrichMeetupWithVirtualDogCover(m: Meetup): Meetup {
   const raw = m.images ?? [];
   const first = raw.find((u) => typeof u === 'string' && u.trim().length > 8) ?? '';
   const isUnsplashStock = /^https:\/\/images\.unsplash\.com\//i.test(first);
-  if (first && !shouldUseVirtualDogPhoto(first) && !isUnsplashStock) return m;
+  if (first && !shouldUseVirtualDogPhoto(first) && (!isUnsplashStock || isPreservedMeetupCoverUrl(first))) return m;
   const seed = m.category === '돌봄' ? `dolbom-${m.id}` : `meetup-${m.id}`;
   return { ...m, images: [virtualDogPhotoForSeed(seed)] };
 }
@@ -225,7 +199,8 @@ export function resolveDogSitterPortraitUrl(s: Pick<DogSitter, 'id' | 'profileIm
   const raw = typeof s.profileImage === 'string' ? s.profileImage.trim() : '';
   if (!raw) return virtualDogPhotoForSeed(`mock-sitter-${s.id}`);
   if (shouldUseVirtualDogPhoto(raw)) return virtualDogPhotoForSeed(`mock-sitter-${s.id}`);
-  if (/^https:\/\/images\.unsplash\.com\//i.test(raw)) return virtualDogPhotoForSeed(`mock-sitter-${s.id}`);
+  if (/^https:\/\/images\.unsplash\.com\//i.test(raw) && !isBreedStockPhotoUrl(raw))
+    return virtualDogPhotoForSeed(`mock-sitter-${s.id}`);
   return raw;
 }
 
@@ -255,7 +230,8 @@ export function resolveDogProfilePhotoUrl(dog: { id: string; photo_url?: string 
   const raw = typeof dog.photo_url === 'string' ? dog.photo_url.trim() : '';
   if (!raw) return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
   if (shouldUseVirtualDogPhoto(raw)) return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
-  if (/^https:\/\/images\.unsplash\.com\//i.test(raw)) return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
+  if (/^https:\/\/images\.unsplash\.com\//i.test(raw) && !isBreedStockPhotoUrl(raw))
+    return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
   if (dogProfilePhotoUrlLooksNonPet(raw)) {
     return virtualDogPhotoForSeed(`db-dog-${dog.id}`);
   }

@@ -23,13 +23,8 @@ import type { User as AuthUser } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
-import {
-  MOCK_IMG_HANGANG_HERO,
-  MOCK_IMG_LANDING_BORI,
-  MOCK_IMG_LANDING_CHOCO,
-  MOCK_IMG_LANDING_KONG,
-  MOCK_IMG_LANDING_PPORI,
-} from '../data/mockPromoImages';
+import { MOCK_IMG_HANGANG_HERO } from '../data/mockPromoImages';
+import { landingHeroDogImgChains } from '../data/landingHeroDogImages';
 
 function uniqueImageUrls(...urls: (string | undefined)[]): string[] {
   const out: string[] = [];
@@ -39,7 +34,7 @@ function uniqueImageUrls(...urls: (string | undefined)[]): string[] {
   return out;
 }
 
-/** 히어로 댕친: 1순위 Unsplash → 차단·실패 시 Pixabay·시드 Unsplash로 순회 (네이티브 img 유지). */
+/** 히어로 댕친: 품종 맞는 URL 순서대로 시도, 실패 시 다음(네이티브 img). */
 function LandingHeroDogPhoto({ urls, alt, className }: { urls: string[]; alt: string; className: string }) {
   const [idx, setIdx] = useState(0);
   const last = Math.max(0, urls.length - 1);
@@ -76,60 +71,35 @@ function shortProfileLabel(user: AuthUser): string {
   return '내 정보';
 }
 
-// 댕친 프로필 데이터 — 히어로는 Unsplash 우선 + onError 시 Pixabay·다른 Unsplash 시드.
-const UNSPLASH_PPORI =
-  'https://images.unsplash.com/photo-1605897472359-85e4b94d685d?q=80&w=300&h=300&auto=format&fit=crop';
-const UNSPLASH_CHOCO =
-  'https://images.unsplash.com/photo-1589926839603-5147814b301a?q=80&w=300&h=300&auto=format&fit=crop';
-const UNSPLASH_BORI =
-  'https://images.unsplash.com/photo-1552053831-71594a27632d?q=80&w=300&h=300&auto=format&fit=crop';
-const UNSPLASH_KONG =
-  'https://images.unsplash.com/photo-1537151608804-ea6d1522e51e?q=80&w=300&h=300&auto=format&fit=crop';
-
-/** 앱 내 가상 풀과 동일 출처·안정적인 대체 Unsplash(히어로 전용 ID 실패 시). */
-const UNSPLASH_HERO_CHOCO_ALT =
-  'https://images.unsplash.com/photo-1546527868-ccb7ee7dfa6a?q=80&w=300&h=300&auto=format&fit=crop';
-const UNSPLASH_HERO_KONG_ALT =
-  'https://images.unsplash.com/photo-1534567115038-b2ed281cd54c?q=80&w=300&h=300&auto=format&fit=crop';
-
+// 댕친 프로필 데이터 — 히어로 이미지는 `landingHeroDogImages`에서 품종별 URL 체인 사용.
 const dogProfiles = [
   {
     name: '뽀삐',
     breed: '포메라니안',
     age: '2살',
     mbti: '활발한아이',
-    imgUrls: uniqueImageUrls(UNSPLASH_PPORI, MOCK_IMG_LANDING_PPORI, virtualDogPhotoForSeed('landing-hero-ppori')),
+    imgUrls: uniqueImageUrls(...landingHeroDogImgChains.ppori, virtualDogPhotoForSeed('landing-hero-ppori')),
   },
   {
     name: '초코',
     breed: '웰시코기',
     age: '3살',
     mbti: '사교적아이',
-    imgUrls: uniqueImageUrls(
-      MOCK_IMG_LANDING_CHOCO,
-      UNSPLASH_HERO_CHOCO_ALT,
-      UNSPLASH_CHOCO,
-      virtualDogPhotoForSeed('landing-dog-choco'),
-    ),
+    imgUrls: uniqueImageUrls(...landingHeroDogImgChains.choco, virtualDogPhotoForSeed('landing-dog-choco')),
   },
   {
     name: '보리',
     breed: '골든리트리버',
     age: '5살',
     mbti: '듬직한아이',
-    imgUrls: uniqueImageUrls(UNSPLASH_BORI, MOCK_IMG_LANDING_BORI, virtualDogPhotoForSeed('landing-hero-bori')),
+    imgUrls: uniqueImageUrls(...landingHeroDogImgChains.bori, virtualDogPhotoForSeed('landing-hero-bori')),
   },
   {
     name: '콩이',
     breed: '비글',
     age: '1살',
     mbti: '호기심아이',
-    imgUrls: uniqueImageUrls(
-      MOCK_IMG_LANDING_KONG,
-      UNSPLASH_HERO_KONG_ALT,
-      UNSPLASH_KONG,
-      virtualDogPhotoForSeed('landing-dog-kong'),
-    ),
+    imgUrls: uniqueImageUrls(...landingHeroDogImgChains.kong, virtualDogPhotoForSeed('landing-dog-kong')),
   },
 ];
 
