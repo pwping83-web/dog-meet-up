@@ -32,6 +32,10 @@ type TopTab = 'moija' | 'mannaja' | 'certified';
 
 type CombinedRow = CombinedSitterGuardRow;
 
+function normalizeGuText(v: string): string {
+  return v.replace(/\s+/g, '').replace(/시/g, '').trim();
+}
+
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
   const p = new URLSearchParams(window.location.search);
@@ -243,18 +247,25 @@ export function DogSittersPage() {
 
   const guardMomsRegionFiltered = useMemo(() => {
     if (!locationBasedEnabled) return guardMoms;
-    const setD = new Set(referenceDistricts.map((x) => x.trim()).filter(Boolean));
+    const setD = new Set(referenceDistricts.map((x) => normalizeGuText(x)).filter(Boolean));
     if (setD.size === 0) return guardMoms;
-    return guardMoms.filter((m) => setD.has((m.region_gu ?? '').trim()));
+    return guardMoms.filter((m) => setD.has(normalizeGuText(m.region_gu ?? '')));
   }, [guardMoms, locationBasedEnabled, referenceDistricts]);
+
+  const guardRegionFallbackUsed =
+    careFilter === 'guard' &&
+    locationBasedEnabled &&
+    guardMoms.length > 0 &&
+    guardMomsRegionFiltered.length === 0;
 
   /** DB에서 온 인증 행만 쓰고, 데모 모드일 때만 목업을 이어 붙임. */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
     if (guardMomsLoadError) return [];
     if (guardMomsRegionFiltered.length > 0) return guardMomsRegionFiltered;
+    if (guardRegionFallbackUsed) return guardMoms;
     if (guardMomUiDemoFill) return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
     return [];
-  }, [guardMomsRegionFiltered, guardMomsLoadError, guardMomUiDemoFill]);
+  }, [guardMomsRegionFiltered, guardMomsLoadError, guardRegionFallbackUsed, guardMoms, guardMomUiDemoFill]);
 
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
@@ -543,6 +554,11 @@ export function DogSittersPage() {
               </p>
               {careFilter === 'guard' && guardMomUiDemoFill && (
                 <p className="mt-0.5 text-[11px] font-semibold text-sky-800">실제 DB 노출 0명 · 카드는 UI 데모</p>
+              )}
+              {careFilter === 'guard' && guardRegionFallbackUsed && !guardMomUiDemoFill && (
+                <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
+                  내 동네와 일치하는 보호맘이 없어 전체 지역 순으로 보여줘요.
+                </p>
               )}
             </div>
             {careFilter !== 'need' && (

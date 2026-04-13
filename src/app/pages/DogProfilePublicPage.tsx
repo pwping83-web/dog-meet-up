@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, MessageCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { useAuth } from '../../contexts/AuthContext';
+import { interceptGuestNav } from '../../lib/guestNavGuard';
 
 type DogProfileRow = {
   id: string;
+  owner_id: string | null;
   name: string;
   breed: string | null;
   age: number | null;
@@ -20,6 +23,7 @@ type DogProfileRow = {
 export function DogProfilePublicPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dog, setDog] = useState<DogProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -138,8 +142,30 @@ export function DogProfilePublicPage() {
               </p>
               <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                 <Link
+                  to={
+                    user?.id && dog.owner_id === user.id
+                      ? '/my'
+                      : `/chat/${encodeURIComponent(String(dog.owner_id || dog.id))}?name=${encodeURIComponent(display.name)}`
+                  }
+                  onClick={(e) => {
+                    if (!(user?.id && dog.owner_id === user.id)) {
+                      interceptGuestNav(e, Boolean(user), navigate);
+                    }
+                  }}
+                  className={`flex-1 rounded-2xl py-3.5 text-center text-sm font-extrabold active:scale-[0.99] ${
+                    user?.id && dog.owner_id === user.id
+                      ? 'border-2 border-slate-200 bg-white text-slate-600'
+                      : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+                    {user?.id && dog.owner_id === user.id ? '내 프로필' : `${display.name}에게 채팅`}
+                  </span>
+                </Link>
+                <Link
                   to="/sitters"
-                  className="flex-1 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-center text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.99]"
+                  className="flex-1 rounded-2xl border-2 border-orange-200 bg-white py-3.5 text-center text-sm font-extrabold text-orange-700 active:scale-[0.99]"
                 >
                   모임·댕친 보러가기
                 </Link>
