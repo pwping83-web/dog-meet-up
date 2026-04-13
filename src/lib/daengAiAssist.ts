@@ -7,7 +7,13 @@ export type DaengAiTask =
   | 'chat_reply'
   | 'mbti_expand'
   | 'join_summarize'
-  | 'admin_ops_hint';
+  | 'admin_ops_hint'
+  | 'owner_weekly_plan';
+
+export type DaengAiWeeklyItem =
+  | { kind: 'meetup'; meetupId: string; label: string; detail?: string }
+  | { kind: 'dog'; dogId: string; label: string; detail?: string }
+  | { kind: 'tip'; label: string; detail?: string };
 
 export type DaengAiFields = {
   title?: string;
@@ -15,6 +21,9 @@ export type DaengAiFields = {
   description?: string;
   suggestedSearch?: string;
   chips?: string[];
+  /** owner_weekly_plan */
+  weeklyIntro?: string;
+  weeklyItems?: DaengAiWeeklyItem[];
 };
 
 export type DaengAiAssistResult =

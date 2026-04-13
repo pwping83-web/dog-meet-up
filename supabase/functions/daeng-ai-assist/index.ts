@@ -316,6 +316,119 @@ Deno.serve(async (req) => {
         return jsonResponse({ ok: true, text });
       }
 
+      case "owner_weekly_plan": {
+        type MeetBrief = { id: string; title: string; category?: string; district?: string; estimatedCost?: string };
+        type DogBrief = { id: string; name: string; breed: string; gender: string; age?: string | number | null };
+
+        const rawMeetups = payload.candidateMeetups;
+        const rawDogs = payload.candidateDogs;
+        const meetups: MeetBrief[] = Array.isArray(rawMeetups)
+          ? (rawMeetups as unknown[]).filter((x): x is MeetBrief =>
+            Boolean(x && typeof x === "object" && typeof (x as MeetBrief).id === "string")
+          )
+          : [];
+        const dogs: DogBrief[] = Array.isArray(rawDogs)
+          ? (rawDogs as unknown[]).filter((x): x is DogBrief =>
+            Boolean(x && typeof x === "object" && typeof (x as DogBrief).id === "string")
+          )
+          : [];
+
+        const bundle = {
+          today: String(payload.today ?? "").slice(0, 24),
+          userDistrict: String(payload.userDistrict ?? "").slice(0, 80),
+          myDogs: payload.myDogs,
+          myPosts: payload.myPosts,
+          candidateMeetups: meetups.map((m, i) => ({
+            i,
+            id: m.id,
+            title: String(m.title ?? "").slice(0, 120),
+            category: String(m.category ?? "").slice(0, 60),
+            district: String(m.district ?? "").slice(0, 40),
+            schedule: String(m.estimatedCost ?? "").slice(0, 80),
+          })),
+          candidateDogs: dogs.map((d, i) => ({
+            i,
+            id: d.id,
+            name: String(d.name ?? "").slice(0, 40),
+            breed: String(d.breed ?? "").slice(0, 40),
+            gender: String(d.gender ?? "").slice(0, 8),
+          })),
+        };
+        const userJson = JSON.stringify(bundle).slice(0, 14_000);
+
+        const sys =
+          `너는 댕댕마켓 반려견 앱의 "이번 주 할 일" 코치야. 입력은 JSON 한 덩어리이며, 후보 모임·댕친은 i가 인덱스야.\n` +
+          `반드시 아래 스키마의 JSON만 출력해. 마크다운·코드펜스 금지.\n` +
+          `{"intro":"2~4문장 격려+상황 요약, 존댓말","steps":[{"type":"join_meetup","meetupIndex":0,"line":"한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"한 줄"},{"type":"free_tip","line":"한 줄"}]}\n` +
+          `규칙:\n` +
+          `- steps는 2~5개.\n` +
+          `- type은 "join_meetup" | "say_hi" | "free_tip" 만.\n` +
+          `- join_meetup은 candidateMeetups가 비어 있으면 쓰지 마. meetupIndex는 배열 길이 안의 정수만.\n` +
+          `- say_hi는 candidateDogs가 비어 있으면 쓰지 마. dogIndex는 배열 길이 안의 정수만.\n` +
+          `- 내가 올린 글이 있으면 비슷한 글만 또 쓰라고 하지 말고, 모임 참여·댕친 인사·산책/사회화 등 다음 행동을 제안해.\n` +
+          `- 환각 금지: 인덱스·id를 새로 만들지 마.`;
+
+        const raw = await llmChat(sys, userJson, 1000);
+        const obj = extractJsonObject(raw);
+        const intro = typeof obj?.intro === "string" ? obj.intro.trim().slice(0, 1200) : "";
+        const stepsRaw = Array.isArray(obj?.steps) ? obj.steps : [];
+
+        const weeklyItems: Array<
+          | { kind: "meetup"; meetupId: string; label: string; detail?: string }
+          | { kind: "dog"; dogId: string; label: string; detail?: string }
+          | { kind: "tip"; label: string; detail?: string }
+        > = [];
+
+        for (const s of stepsRaw.slice(0, 6)) {
+          if (!s || typeof s !== "object") continue;
+          const st = s as Record<string, unknown>;
+          const line = String(st.line ?? "").trim().slice(0, 220);
+          if (!line) continue;
+          const typ = String(st.type ?? "");
+
+          if (typ === "join_meetup" && meetups.length > 0) {
+            const idx = typeof st.meetupIndex === "number" ? Math.floor(st.meetupIndex) : -1;
+            if (idx >= 0 && idx < meetups.length) {
+              const m = meetups[idx]!;
+              weeklyItems.push({
+                kind: "meetup",
+                meetupId: m.id,
+                label: line,
+                detail: String(m.title ?? "").slice(0, 120),
+              });
+            }
+          } else if (typ === "say_hi" && dogs.length > 0) {
+            const idx = typeof st.dogIndex === "number" ? Math.floor(st.dogIndex) : -1;
+            if (idx >= 0 && idx < dogs.length) {
+              const d = dogs[idx]!;
+              weeklyItems.push({
+                kind: "dog",
+                dogId: d.id,
+                label: line,
+                detail: `${d.name} · ${d.breed}`.slice(0, 80),
+              });
+            }
+          } else if (typ === "free_tip") {
+            weeklyItems.push({ kind: "tip", label: line });
+          }
+        }
+
+        const textBody =
+          intro +
+          (weeklyItems.length
+            ? "\n\n" + weeklyItems.map((w, n) => `${n + 1}. ${w.label}${w.detail ? ` (${w.detail})` : ""}`).join("\n")
+            : "");
+
+        return jsonResponse({
+          ok: true,
+          text: textBody || raw.slice(0, 2000),
+          fields: {
+            weeklyIntro: intro || undefined,
+            weeklyItems: weeklyItems.length ? weeklyItems : undefined,
+          },
+        });
+      }
+
       default:
         return jsonResponse({ ok: false, error: `알 수 없는 task: ${task}` }, 400);
     }

@@ -39,6 +39,7 @@ import { supabase } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { profileAvatarAlt, profileAvatarVisual } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { OwnerWeeklyAiCard } from '../components/OwnerWeeklyAiCard';
 
 export function MyPage() {
   const navigate = useNavigate();
@@ -290,6 +291,8 @@ export function MyPage() {
             </div>
           </div>
         </div>
+
+        <OwnerWeeklyAiCard />
 
         <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-start gap-3">
