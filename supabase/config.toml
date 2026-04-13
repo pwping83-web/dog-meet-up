@@ -15,15 +15,15 @@ verify_jwt = false
 #    파일: supabase/email-templates/*.html — 변수: {{ .ConfirmationURL }}, {{ .Email }}, {{ .SiteURL }} 등
 [auth.email.template.confirmation]
 subject = "🐕 댕댕마켓 — 이메일을 인증해 주세요"
-content_path = "./email-templates/confirmation.html"
+content_path = "supabase/email-templates/confirmation.html"
 
 [auth.email.template.magic_link]
 subject = "🐾 댕댕마켓 — 로그인 링크가 도착했어요"
-content_path = "./email-templates/magic_link.html"
+content_path = "supabase/email-templates/magic_link.html"
 
 [auth.email.template.recovery]
 subject = "댕댕마켓 — 비밀번호 재설정"
-content_path = "./email-templates/recovery.html"
+content_path = "supabase/email-templates/recovery.html"
 
 # 네이버 SMTP (로컬 전용). 비밀번호는 절대 커밋하지 말고 환경 변수로 주입하세요.
 # 프로덕션: Dashboard → Project Settings → Auth → SMTP Settings 에 동일 값 입력.
