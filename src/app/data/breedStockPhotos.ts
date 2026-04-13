@@ -2,7 +2,12 @@
  * 목업·가상 프로필용 견종별 대표 이미지 + 모임 썸네일.
  * 로컬 번들(`localStockPhotos`)은 견종/테마별로만 배정해 같은 파일이 다른 의미로 겹치지 않게 함.
  */
-import { LOCAL_BREED_REPRESENTATIVE, LOCAL_MEETUP_SCENE } from './localStockPhotos';
+import {
+  LOCAL_BREED_ALTERNATE,
+  LOCAL_BREED_REPRESENTATIVE,
+  LOCAL_MEETUP_SCENE,
+  LOCAL_WELSH_CORGI_SCENE,
+} from './localStockPhotos';
 
 const BREED_UNSPLASH_Q = 'q=80&w=400&h=400&auto=format&fit=crop';
 
@@ -17,12 +22,12 @@ export const BREED_STOCK_FALLBACK_UNSPLASH = {
 } as const;
 
 /**
- * 앱에서 쓰는 견종 키별 **주** 이미지 (로컬 우선, 코기·말티즈·푸들은 Unsplash만).
+ * 앱에서 쓰는 견종 키별 **주** 이미지.
  * 이름은 역사적 이유로 `UNSPLASH` 유지.
  */
 export const BREED_STOCK_PHOTO_UNSPLASH = {
   pomeranian: LOCAL_BREED_REPRESENTATIVE.pomeranian,
-  welshCorgi: BREED_STOCK_FALLBACK_UNSPLASH.welshCorgi,
+  welshCorgi: LOCAL_WELSH_CORGI_SCENE.runningSolo,
   goldenRetriever: LOCAL_BREED_REPRESENTATIVE.goldenRetriever,
   beagle: LOCAL_BREED_REPRESENTATIVE.beagle,
   maltese: BREED_STOCK_FALLBACK_UNSPLASH.maltese,
@@ -46,21 +51,25 @@ const BREED_STOCK_ID_SNIPPETS = [
   'photo-1537151608804-ea6d1522e51e',
   'photo-1516382760297-f57951a70014',
   'photo-1583337130417-3346a1be7dee',
+  /** 로컬과 동일 출처로 저장된 URL이 DB에 있을 때 */
+  'photo-1622964430174-052069e0e1ad',
+  'photo-1654535871938-78c504de015f',
+  'photo-1715033694586-26520baed94b',
 ] as const;
 
-const BREED_STOCK_LOCAL_PRIMARY_PATHS: readonly string[] = [
+/** 프로필·댕집사에서 치환하지 않을 번들 경로 */
+const BREED_STOCK_LOCAL_PATHS: readonly string[] = [
   LOCAL_BREED_REPRESENTATIVE.pomeranian,
   LOCAL_BREED_REPRESENTATIVE.goldenRetriever,
   LOCAL_BREED_REPRESENTATIVE.beagle,
+  LOCAL_BREED_ALTERNATE.pomeranianSpitzWhite,
+  LOCAL_WELSH_CORGI_SCENE.runningSolo,
+  LOCAL_MEETUP_SCENE.indoorBeagleSofa,
 ];
 
-/**
- * 모이자·만나자·돌봄 목록 썸네일 — `LOCAL_MEETUP_SCENE`만 사용 (견종 대표 경로와 파일 중복 없음).
- * `enrichMeetupWithVirtualDogCover`에서 Unsplash 예전 ID면 목업 유지.
- */
 export const MEETUP_LIST_COVER_PHOTOS = {
   walkOutdoor: LOCAL_MEETUP_SCENE.walkPairLake,
-  indoorCare: `https://images.unsplash.com/photo-1517849845537-4d257902454a?${BREED_UNSPLASH_Q}`,
+  indoorCare: LOCAL_MEETUP_SCENE.indoorBeagleSofa,
   socialization: LOCAL_MEETUP_SCENE.socialPuppies,
   dachshund: LOCAL_MEETUP_SCENE.dachshundBeach,
   smallCute: LOCAL_MEETUP_SCENE.smallCuteCavalier,
@@ -74,6 +83,7 @@ const MEETUP_LIST_COVER_ID_SNIPPETS = [
   'photo-1612236359045-8ed96bd95d0d',
   'photo-1583511655857-d19b40a7a54e',
   'photo-1534361960057-19889db9621e',
+  'photo-1715033694586-26520baed94b',
 ] as const;
 
 export function isMeetupListCoverPhotoUrl(url: string | undefined | null): boolean {
@@ -89,7 +99,7 @@ export function isBreedStockPhotoUrl(url: string | undefined | null): boolean {
   const t = url.trim();
   if (!t) return false;
   if (BREED_STOCK_ID_SNIPPETS.some((id) => t.includes(id))) return true;
-  return BREED_STOCK_LOCAL_PRIMARY_PATHS.some((path) => t === path);
+  return BREED_STOCK_LOCAL_PATHS.some((path) => t === path);
 }
 
 /** 모임 썸네일: 견종 6종 + 모임용 6컷 — `enrichMeetupWithVirtualDogCover`에서 유지 */
