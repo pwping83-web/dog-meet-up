@@ -23,6 +23,7 @@ import {
   resolveDogSitterPortraitUrl,
   virtualDogPhotoForSeed,
 } from '../data/virtualDogPhotos';
+import { isCareMeetupCategory } from '../utils/meetupCategory';
 import type { Meetup } from '../types';
 
 const ADMIN_MEETUP_CATEGORIES = [
@@ -83,9 +84,9 @@ export function MeetupDetailPage() {
   const timeAgo = formatDistanceToNow(meetup.createdAt, { addSuffix: true, locale: ko });
 
   const dolbomTitleShown =
-    meetup.category === '돌봄' ? displayPublicDolbomMeetupTitle(meetup) : meetup.title;
+    isCareMeetupCategory(meetup.category) ? displayPublicDolbomMeetupTitle(meetup) : meetup.title;
   const dolbomDescriptionShown =
-    meetup.category === '돌봄' ? displayPublicDolbomMeetupDescription(meetup) : meetup.description;
+    isCareMeetupCategory(meetup.category) ? displayPublicDolbomMeetupDescription(meetup) : meetup.description;
 
   const breedingMislabelHint = shouldSuggestBreedingMislabelReport(
     meetup.category,
@@ -315,7 +316,7 @@ export function MeetupDetailPage() {
             </button>
           </div>
 
-          {meetup.category === '돌봄' && (
+          {isCareMeetupCategory(meetup.category) && (
             <Link
               to="/sitters?view=care&care=sitter"
               className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200/80 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 px-4 py-3 text-sm font-extrabold text-orange-600 transition-colors hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100"

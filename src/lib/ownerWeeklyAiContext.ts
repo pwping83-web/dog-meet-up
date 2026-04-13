@@ -1,6 +1,7 @@
 import { mockMeetups } from '../app/data/mockData';
 import { supabase } from './supabase';
 import { getMergedMeetups, readUserMeetups } from './userMeetupsStore';
+import { isCareMeetupCategory } from '../app/utils/meetupCategory';
 
 export type OwnerWeeklyDogBrief = { id: string; name: string; breed: string; gender: string; age: string | number | null };
 
@@ -103,7 +104,7 @@ export async function buildOwnerWeeklyAiPayload(
 
   const merged = getMergedMeetups(mockMeetups);
   const districtNeedle = userDistrict.replace(/구$/, '').trim();
-  const others = merged.filter((m) => m.userId !== userId && m.category !== '돌봄');
+  const others = merged.filter((m) => m.userId !== userId && !isCareMeetupCategory(m.category));
   const sorted = [...others].sort((a, b) => {
     const aNear = districtNeedle && a.district.includes(districtNeedle) ? 1 : 0;
     const bNear = districtNeedle && b.district.includes(districtNeedle) ? 1 : 0;

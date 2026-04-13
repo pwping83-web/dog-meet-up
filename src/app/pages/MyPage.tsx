@@ -65,16 +65,25 @@ export function MyPage() {
   const [extraDistrict, setExtraDistrict] = useState('');
   const [extraHint, setExtraHint] = useState<string | null>(null);
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
+  const [profileNameFromProfile, setProfileNameFromProfile] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
       setProfileAvatarUrl(null);
+      setProfileNameFromProfile(null);
       return;
     }
     let cancelled = false;
     void (async () => {
-      const { data } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).maybeSingle();
-      if (!cancelled) setProfileAvatarUrl(data?.avatar_url?.trim() ?? null);
+      const { data } = await supabase
+        .from('profiles')
+        .select('avatar_url, name')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!cancelled) {
+        setProfileAvatarUrl(data?.avatar_url?.trim() ?? null);
+        setProfileNameFromProfile(data?.name?.trim() ?? null);
+      }
     })();
     return () => {
       cancelled = true;
@@ -174,7 +183,9 @@ export function MyPage() {
     }
   };
 
-  const profileName = user ? displayNameFromUser(user) : '로그인 후 이용';
+  const profileName = user
+    ? (profileNameFromProfile?.trim() || displayNameFromUser(user))
+    : '로그인 후 이용';
   const headerAvatar = profileAvatarVisual(profileAvatarUrl);
 
   return (

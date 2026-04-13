@@ -339,25 +339,46 @@ export function SearchPage() {
                     owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
                   });
                   return (
-                    <Link
+                    <div
                       key={dog.id}
-                      to={`/dog/${dog.id}`}
-                      className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all active:scale-[0.98] hover:border-orange-200 hover:shadow-md"
+                      className="rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all hover:border-orange-200 hover:shadow-md"
                     >
-                      <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner">
-                        <ImageWithFallback
-                          src={d.photoUrl}
-                          fallbackSrc={virtualDogPhotoForSeed(`search-dogs-list-fallback-${dog.id}`)}
-                          alt={d.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <p className="truncate text-sm font-black text-slate-800">{d.name}</p>
-                      <p className="truncate text-xs font-semibold text-slate-400">
-                        {d.breed ?? ''}
-                        {d.age != null ? ` · ${d.age}살` : ''}
-                      </p>
-                    </Link>
+                      <Link to={`/dog/${dog.id}`} className="block rounded-2xl active:scale-[0.98]">
+                        <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner">
+                          <ImageWithFallback
+                            src={d.photoUrl}
+                            fallbackSrc={virtualDogPhotoForSeed(`search-dogs-list-fallback-${dog.id}`)}
+                            alt={d.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <p className="truncate text-sm font-black text-slate-800">{d.name}</p>
+                        <p className="truncate text-xs font-semibold text-slate-400">
+                          {d.breed ?? ''}
+                          {d.age != null ? ` · ${d.age}살` : ''}
+                        </p>
+                      </Link>
+                      <Link
+                        to={
+                          user?.id && String(dog.owner_id || '') === user.id
+                            ? '/my'
+                            : `/chat/${encodeURIComponent(String((dog.owner_id as string) || dog.id))}?name=${encodeURIComponent(d.name)}`
+                        }
+                        onClick={(e) => {
+                          if (!(user?.id && String(dog.owner_id || '') === user.id)) {
+                            interceptGuestNav(e, Boolean(user), navigate);
+                          }
+                        }}
+                        className={`mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-extrabold ${
+                          user?.id && String(dog.owner_id || '') === user.id
+                            ? 'bg-slate-100 text-slate-500'
+                            : 'bg-orange-100 text-orange-700'
+                        }`}
+                      >
+                        <MessageCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '바로 채팅'}
+                      </Link>
+                    </div>
                   );
                 })}
               </div>

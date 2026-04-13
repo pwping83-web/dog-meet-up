@@ -17,6 +17,7 @@ import {
 } from '../utils/meetupCategory';
 import { formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { isCareMeetupCategory } from '../utils/meetupCategory';
 import { showCertifiedGuardMomDemosWhenEmpty, usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { useAuth } from '../../contexts/AuthContext';
@@ -362,7 +363,7 @@ export function DogSittersPage() {
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
   const filteredCareNeedMeetups = useMemo(() => {
     return allMeetups
-      .filter((req) => req.category === '돌봄')
+      .filter((req) => isCareMeetupCategory(req.category))
       .filter((req) => meetupVisibleInPublicFeed(req, promoFree))
       .filter((req) => meetupMatchesRegion(req.district))
       .filter((req) => {

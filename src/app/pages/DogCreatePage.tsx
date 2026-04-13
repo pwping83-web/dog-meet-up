@@ -247,6 +247,7 @@ export function DogCreatePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
 
     try {
@@ -286,18 +287,43 @@ export function DogCreatePage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      const { error: dbError } = await supabase.from('dog_profiles').insert([
-        {
-          owner_id: user?.id,
-          name: formData.name,
-          breed: formData.breed,
-          age: parseInt(formData.age, 10),
-          gender: formData.gender,
-          photo_url: publicUrl,
-          city: '서울',
-          district: '강남구',
-        },
-      ]);
+      if (!user?.id) {
+        throw new Error('로그인 후 등록할 수 있어요.');
+      }
+
+      const { data: existingDog, error: existingDogError } = await supabase
+        .from('dog_profiles')
+        .select('id')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (existingDogError) throw existingDogError;
+
+      const payload = {
+        owner_id: user.id,
+        name: formData.name,
+        breed: formData.breed,
+        age: parseInt(formData.age, 10),
+        gender: formData.gender,
+        photo_url: publicUrl,
+        city: '서울',
+        district: '강남구',
+      };
+
+      const dbError = existingDog
+        ? (
+            await supabase
+              .from('dog_profiles')
+              .update(payload)
+              .eq('id', existingDog.id)
+          ).error
+        : (
+            await supabase
+              .from('dog_profiles')
+              .insert([payload])
+          ).error;
 
       if (dbError) throw dbError;
 

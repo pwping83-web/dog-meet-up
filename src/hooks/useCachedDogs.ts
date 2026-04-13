@@ -15,6 +15,47 @@ let inflight: Promise<{ dogs: CachedDogRow[]; error: string | null }> | null = n
 
 const FETCH_LIMIT = 100;
 
+function normalizeText(v: unknown): string {
+  return typeof v === 'string' ? v.trim().toLowerCase() : '';
+}
+
+function dedupeDogs(rows: CachedDogRow[]): CachedDogRow[] {
+  const bySignature = new Map<string, CachedDogRow>();
+  for (const row of rows) {
+    const id = normalizeText(row.id);
+    const ownerId = normalizeText(row.owner_id);
+    const name = normalizeText(row.name);
+    const breed = normalizeText(row.breed);
+    const gender = normalizeText(row.gender);
+    const age = typeof row.age === 'number' || typeof row.age === 'string' ? String(row.age).trim() : '';
+    const createdAt = normalizeText(row.created_at);
+
+    // 1순위: 고유 id 기준 중복 제거
+    const signatureById = `id:${id}`;
+    if (id && bySignature.has(signatureById)) continue;
+    if (id) {
+      bySignature.set(signatureById, row);
+      continue;
+    }
+
+    // 2순위: id가 비어 있거나 비정상일 때 프로필 시그니처로 중복 제거
+    const profileSignature = `profile:${ownerId}|${name}|${breed}|${gender}|${age}`;
+    const prev = bySignature.get(profileSignature);
+    if (!prev) {
+      bySignature.set(profileSignature, row);
+      continue;
+    }
+
+    // 같은 시그니처면 created_at이 최신인 행을 유지
+    const prevTs = Date.parse(normalizeText(prev.created_at));
+    const nextTs = Date.parse(createdAt);
+    if (!Number.isNaN(nextTs) && (Number.isNaN(prevTs) || nextTs > prevTs)) {
+      bySignature.set(profileSignature, row);
+    }
+  }
+  return [...bySignature.values()];
+}
+
 async function fetchMergedDogs(): Promise<{ dogs: CachedDogRow[]; error: string | null }> {
   const { data, error } = await supabase
     .from('dog_profiles')
@@ -24,7 +65,7 @@ async function fetchMergedDogs(): Promise<{ dogs: CachedDogRow[]; error: string 
   if (error) {
     return { dogs: [], error: error.message };
   }
-  const rows = (data || []) as CachedDogRow[];
+  const rows = dedupeDogs((data || []) as CachedDogRow[]);
   const ownerIds = [...new Set(rows.map((r) => r.owner_id).filter((id): id is string => Boolean(id)))];
   if (ownerIds.length === 0) {
     return { dogs: rows, error: null };

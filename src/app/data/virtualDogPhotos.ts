@@ -1,4 +1,5 @@
 import type { DogSitter, Meetup } from '../types';
+import { isCareMeetupCategory } from '../utils/meetupCategory';
 import { BREED_STOCK_UNSPLASH_LIST, isBreedStockPhotoUrl, isPreservedMeetupCoverUrl } from './breedStockPhotos';
 
 /**
@@ -181,7 +182,7 @@ export function enrichMeetupWithVirtualDogCover(m: Meetup): Meetup {
   const first = raw.find((u) => typeof u === 'string' && u.trim().length > 8) ?? '';
   const isUnsplashStock = /^https:\/\/images\.unsplash\.com\//i.test(first);
   if (first && !shouldUseVirtualDogPhoto(first) && (!isUnsplashStock || isPreservedMeetupCoverUrl(first))) return m;
-  const seed = m.category === '돌봄' ? `dolbom-${m.id}` : `meetup-${m.id}`;
+  const seed = isCareMeetupCategory(m.category) ? `dolbom-${m.id}` : `meetup-${m.id}`;
   return { ...m, images: [virtualDogPhotoForSeed(seed)] };
 }
 
@@ -190,7 +191,7 @@ export function meetupCoverImageUrl(m: Meetup): string {
   const e = enrichMeetupWithVirtualDogCover(m);
   const u = e.images?.find((x) => typeof x === 'string' && x.trim().length > 0)?.trim();
   if (u) return u;
-  const seed = m.category === '돌봄' ? `dolbom-${m.id}` : `meetup-${m.id}`;
+  const seed = isCareMeetupCategory(m.category) ? `dolbom-${m.id}` : `meetup-${m.id}`;
   return virtualDogPhotoForSeed(seed);
 }
 

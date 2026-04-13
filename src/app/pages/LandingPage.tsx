@@ -26,6 +26,7 @@ import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
 import { MOCK_IMG_HANGANG_HERO } from '../data/mockPromoImages';
 import { landingHeroDogImgChains } from '../data/landingHeroDogImages';
 import { OwnerWeeklyAiCard } from '../components/OwnerWeeklyAiCard';
+import { isCareMeetupCategory } from '../utils/meetupCategory';
 
 function uniqueImageUrls(...urls: (string | undefined)[]): string[] {
   const out: string[] = [];
@@ -146,9 +147,11 @@ export function LandingPage() {
 
   const getQuoteCount = (id: string) => mockQuotes.filter((q) => q.meetupId === id).length;
   const meetupFeedItems = mergedRequests
-    .filter((r) => r.category !== '돌봄' && meetupVisibleInPublicFeed(r, promoFree))
+    .filter((r) => !isCareMeetupCategory(r.category) && meetupVisibleInPublicFeed(r, promoFree))
     .slice(0, 6);
-  const dolbomFeedItems = mergedRequests.filter((r) => r.category === '돌봄');
+  const dolbomFeedItems = mergedRequests
+    .filter((r) => isCareMeetupCategory(r.category))
+    .filter((r) => meetupVisibleInPublicFeed(r, promoFree));
 
   const closeExploreMenu = () => setExploreMenuOpen(false);
 
@@ -346,18 +349,40 @@ export function LandingPage() {
                 custom={i + 1}
                 className="min-w-[7.25rem] flex-shrink-0 max-md:min-w-[7.5rem] md:min-w-[100px]"
               >
-                <Link
-                  to={`/dog/${dog.id}`}
-                  className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-transform active:scale-95 max-md:p-4 md:rounded-2xl md:p-3"
-                >
-                  <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
-                    <ExploreDogCardImage dogId={String(dog.id)} src={d.photoUrl} alt={d.name} className="h-full w-full object-cover" />
-                  </div>
-                  <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{d.name}</p>
-                  <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
-                    {d.breed ?? ''}{d.age != null ? ` · ${d.age}살` : ''}
-                  </p>
-                </Link>
+                <div className="rounded-3xl border border-slate-100 bg-white p-3 text-center shadow-sm md:rounded-2xl md:p-2.5">
+                  <Link
+                    to={`/dog/${dog.id}`}
+                    className="block rounded-2xl px-1 pb-1 pt-0.5 transition-transform active:scale-95"
+                  >
+                    <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner max-md:h-[4.25rem] max-md:w-[4.25rem] md:mb-2 md:h-14 md:w-14 md:rounded-xl">
+                      <ExploreDogCardImage dogId={String(dog.id)} src={d.photoUrl} alt={d.name} className="h-full w-full object-cover" />
+                    </div>
+                    <p className="truncate text-sm text-slate-800 max-md:text-[13px] md:text-[11px]" style={{ fontWeight: 900 }}>{d.name}</p>
+                    <p className="truncate text-xs text-slate-400 max-md:text-[11px] md:text-[9px]" style={{ fontWeight: 600 }}>
+                      {d.breed ?? ''}{d.age != null ? ` · ${d.age}살` : ''}
+                    </p>
+                  </Link>
+                  <Link
+                    to={
+                      user?.id && String(dog.owner_id || '') === user.id
+                        ? '/my'
+                        : `/chat/${encodeURIComponent(String((dog.owner_id as string) || dog.id))}?name=${encodeURIComponent(d.name)}`
+                    }
+                    onClick={(e) => {
+                      if (!(user?.id && String(dog.owner_id || '') === user.id)) {
+                        interceptGuestNav(e, Boolean(user), navigate);
+                      }
+                    }}
+                    className={`mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-extrabold ${
+                      user?.id && String(dog.owner_id || '') === user.id
+                        ? 'bg-slate-100 text-slate-500'
+                        : 'bg-orange-100 text-orange-700'
+                    }`}
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '바로 채팅'}
+                  </Link>
+                </div>
               </motion.div>
             );
             })}
