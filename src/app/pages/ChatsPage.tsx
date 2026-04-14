@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ArrowLeft, Send, Settings2, MoreVertical, Loader2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { supabase } from '../../lib/supabase';
@@ -234,10 +234,13 @@ export function ChatDetailPage() {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const messageScrollRef = useRef<HTMLDivElement | null>(null);
+  const messageBottomRef = useRef<HTMLDivElement | null>(null);
 
   const peerDisplayName = useMemo(() => peerName || fallbackName || '댕친', [peerName, fallbackName]);
 
-  const loadMessages = useCallback(async () => {
+  const loadMessages = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = Boolean(opts?.silent);
     if (!user?.id || !id) {
       setMessages([]);
       setLoading(false);
@@ -256,8 +259,10 @@ export function ChatDetailPage() {
       setLoading(false);
       return;
     }
-    setLoading(true);
-    setErr(null);
+    if (!silent) {
+      setLoading(true);
+      setErr(null);
+    }
     const { data, error } = await supabase
       .from('messages')
       .select('id, created_at, sender_id, receiver_id, content, read')
@@ -266,26 +271,37 @@ export function ChatDetailPage() {
       .limit(1000);
     if (error) {
       setErr(error.message);
-      setMessages([]);
-      setLoading(false);
+      if (!silent) setMessages([]);
+      if (!silent) setLoading(false);
       return;
     }
     const rows = (data ?? []) as DbMessage[];
-    setMessages(
-      rows.map((m) => ({
-        id: m.id,
-        text: m.content,
-        isMine: m.sender_id === user.id,
-        timestamp: formatTime(m.created_at),
-      })),
-    );
+    const nextMessages: Message[] = rows.map((m) => ({
+      id: m.id,
+      text: m.content,
+      isMine: m.sender_id === user.id,
+      timestamp: formatTime(m.created_at),
+    }));
+    setMessages((prev) => {
+      if (prev.length === nextMessages.length) {
+        const same = prev.every(
+          (m, i) =>
+            m.id === nextMessages[i]?.id &&
+            m.text === nextMessages[i]?.text &&
+            m.isMine === nextMessages[i]?.isMine &&
+            m.timestamp === nextMessages[i]?.timestamp,
+        );
+        if (same) return prev;
+      }
+      return nextMessages;
+    });
     await supabase
       .from('messages')
       .update({ read: true })
       .eq('sender_id', peerId)
       .eq('receiver_id', user.id)
       .eq('read', false);
-    setLoading(false);
+    if (!silent) setLoading(false);
   }, [user?.id, id]);
 
   useEffect(() => {
@@ -349,10 +365,14 @@ export function ChatDetailPage() {
   useEffect(() => {
     if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
     const timer = window.setInterval(() => {
-      void loadMessages();
+      void loadMessages({ silent: true });
     }, 2500);
     return () => window.clearInterval(timer);
   }, [user?.id, id, loadMessages]);
+
+  useEffect(() => {
+    messageBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages.length]);
 
   const handleSend = async () => {
     if (!user?.id || !id || !inputText.trim()) return;
@@ -436,7 +456,7 @@ export function ChatDetailPage() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messageScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {authLoading || loading ? (
           <div className="flex justify-center py-16 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -461,6 +481,7 @@ export function ChatDetailPage() {
             </div>
           ))
         )}
+        <div ref={messageBottomRef} />
       </div>
 
       <div className="bg-white border-t border-slate-100 p-4 pb-safe flex-shrink-0">
