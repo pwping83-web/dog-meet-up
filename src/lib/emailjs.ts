@@ -1,9 +1,10 @@
 import emailjs from '@emailjs/browser';
 
 // EmailJS 설정
-const EMAILJS_PUBLIC_KEY = readViteEnv('VITE_EMAILJS_PUBLIC_KEY')?.trim() || 'TbIjGPIbKGSMdRMt-';
-const EMAILJS_TEMPLATE_ID = readViteEnv('VITE_EMAILJS_TEMPLATE_ID')?.trim() || 'template_4nf36gq';
-const EMAILJS_SERVICE_ID = readViteEnv('VITE_EMAILJS_SERVICE_ID')?.trim() || 'service_fm3t60r';
+// 운영 전환 중 env 충돌(구 Service ID) 방지: 우선 고정값으로 강제
+const EMAILJS_PUBLIC_KEY = 'TbIjGPIbKGSMdRMt-';
+const EMAILJS_TEMPLATE_ID = 'template_4nf36gq';
+const EMAILJS_SERVICE_ID = 'service_fm3t60r';
 
 // EmailJS 초기화
 emailjs.init(EMAILJS_PUBLIC_KEY);
