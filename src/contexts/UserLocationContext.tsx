@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { formatDistrictWithDong, formatRegion } from '../app/data/regions';
+import { formatDistrictWithDong, formatRegionInline } from '../app/data/regions';
 import { getCurrentBrowserPosition } from '../lib/browserGeolocation';
 import { coord2AddressParts, loadKakaoMapScript } from '../lib/kakaoMaps';
 import { matchKakaoAdministrative } from '../lib/matchKakaoToRegion';
@@ -279,7 +279,7 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
         : location.city || '지역';
     const regionFullLabel =
       location.city && location.district
-        ? formatRegion(location.city, location.district, dongTrim || undefined)
+        ? formatRegionInline(location.city, location.district, dongTrim || undefined)
         : location.city || '지역 미설정';
 
     const shortLabel = locationBasedEnabled ? regionShortLabel : '전국';

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { Home, MapPin, PlusCircle, MessageCircle, User } from 'lucide-react';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { interceptGuestNav } from '../../lib/guestNavGuard';
 import { LocationPickerModal } from './LocationPickerModal';
+import { supabase } from '../../lib/supabase';
 
 /** 탐색(/explore)·모임 상세(/meetup/*) 등 — 중앙 + 는 라벨 없음(홈·내댕댕과 동일 톤) */
 export function CommunityBottomNav() {
@@ -13,8 +14,46 @@ export function CommunityBottomNav() {
   const { user } = useAuth();
   const { shortLabel: locationShortLabel } = useUserLocation();
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const { pathname } = location;
   const homeActive = pathname === '/explore' || pathname.startsWith('/meetup/');
+  const chatsActive = pathname.startsWith('/chat') || pathname.startsWith('/chats');
+  const myActive = pathname === '/my';
+
+  const loadChatUnreadCount = useCallback(async () => {
+    if (!user?.id) {
+      setChatUnreadCount(0);
+      return;
+    }
+    const { count, error } = await supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('receiver_id', user.id)
+      .eq('read', false);
+    if (error) return;
+    setChatUnreadCount(count ?? 0);
+  }, [user?.id]);
+
+  useEffect(() => {
+    void loadChatUnreadCount();
+  }, [loadChatUnreadCount]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`bottom-nav-unread-${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+        void loadChatUnreadCount();
+      })
+      .subscribe();
+    const timer = window.setInterval(() => {
+      void loadChatUnreadCount();
+    }, 5000);
+    return () => {
+      window.clearInterval(timer);
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadChatUnreadCount]);
 
   return (
     <>
@@ -58,9 +97,16 @@ export function CommunityBottomNav() {
           <Link
             to="/chats"
             onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
-            className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1"
+            className={`relative flex flex-col items-center gap-1 max-md:gap-1 ${
+              chatsActive ? 'text-orange-600' : 'text-slate-400'
+            }`}
           >
             <MessageCircle className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
+            {chatUnreadCount > 0 && (
+              <span className="absolute -right-2 top-0 inline-flex min-w-4 items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-black leading-4 text-white">
+                {chatUnreadCount > 99 ? '99+' : chatUnreadCount}
+              </span>
+            )}
             <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>
               댕팅
             </span>
@@ -68,7 +114,7 @@ export function CommunityBottomNav() {
           <Link
             to="/my"
             onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
-            className="flex flex-col items-center gap-1 text-slate-400 max-md:gap-1"
+            className={`flex flex-col items-center gap-1 max-md:gap-1 ${myActive ? 'text-orange-600' : 'text-slate-400'}`}
           >
             <User className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />
             <span className="text-[11px] max-md:text-xs md:text-[9px]" style={{ fontWeight: 800 }}>

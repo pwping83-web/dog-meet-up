@@ -42,6 +42,7 @@ const ADMIN_MEETUP_CATEGORIES = [
 type MeetupComment = {
   id: string;
   meetupId: string;
+  authorId?: string;
   authorName: string;
   text: string;
   createdAt: string;
@@ -67,6 +68,12 @@ function writeMeetupCommentsMap(map: Record<string, MeetupComment[]>) {
   localStorage.setItem(MEETUP_COMMENTS_STORAGE_KEY, JSON.stringify(map));
 }
 
+function maskPhoneLast4(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 4) return '';
+  return `휴대폰 ···${digits.slice(-4)}`;
+}
+
 export function MeetupDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -89,6 +96,7 @@ export function MeetupDetailPage() {
   const [joinAiSummary, setJoinAiSummary] = useState<string | null>(null);
   const [adminEditOpen, setAdminEditOpen] = useState(false);
   const [comments, setComments] = useState<MeetupComment[]>([]);
+  const [commentAuthorById, setCommentAuthorById] = useState<Record<string, string>>({});
   const [commentDraft, setCommentDraft] = useState('');
   const [adminForm, setAdminForm] = useState({
     title: '',
@@ -113,6 +121,31 @@ export function MeetupDetailPage() {
     const map = readMeetupCommentsMap();
     setComments(Array.isArray(map[id]) ? map[id] : []);
   }, [id, location.key]);
+
+  useEffect(() => {
+    const ids = Array.from(new Set(comments.map((c) => c.authorId?.trim() ?? '').filter(Boolean)));
+    if (ids.length === 0) {
+      setCommentAuthorById({});
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data, error } = await supabase.from('profiles').select('id,name,phone').in('id', ids);
+      if (cancelled || error) return;
+      const byId: Record<string, string> = {};
+      for (const row of data ?? []) {
+        const uid = String(row.id ?? '').trim();
+        if (!uid) continue;
+        const name = String(row.name ?? '').trim();
+        const phone = String(row.phone ?? '').trim();
+        byId[uid] = name || maskPhoneLast4(phone) || `${uid.slice(0, 8)}…`;
+      }
+      setCommentAuthorById(byId);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [comments]);
 
   if (!meetup) {
     return (
@@ -266,7 +299,7 @@ export function MeetupDetailPage() {
     navigate('/explore', { replace: true });
   };
 
-  const handleCommentSubmit = () => {
+  const handleCommentSubmit = async () => {
     if (!requireLoginForAction()) return;
     const text = commentDraft.trim();
     if (!text) {
@@ -274,11 +307,17 @@ export function MeetupDetailPage() {
       return;
     }
     if (!id) return;
-
-    const authorName = user ? displayNameFromUser(user) : '이웃';
+    let authorName = user ? displayNameFromUser(user) : '이웃';
+    if (user?.id) {
+      const { data: prof } = await supabase.from('profiles').select('name,phone').eq('id', user.id).maybeSingle();
+      const n = String(prof?.name ?? '').trim();
+      const p = String(prof?.phone ?? '').trim();
+      authorName = n || maskPhoneLast4(p) || authorName;
+    }
     const nextComment: MeetupComment = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       meetupId: id,
+      authorId: user?.id ?? '',
       authorName,
       text: text.slice(0, 300),
       createdAt: new Date().toISOString(),
@@ -440,7 +479,7 @@ export function MeetupDetailPage() {
             />
             <button
               type="button"
-              onClick={handleCommentSubmit}
+              onClick={() => void handleCommentSubmit()}
               disabled={authLoading}
               className="self-end rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-extrabold text-white disabled:opacity-50"
             >
@@ -457,7 +496,9 @@ export function MeetupDetailPage() {
               {[...comments].reverse().map((c) => (
                 <div key={c.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 px-3 py-2.5">
                   <div className="mb-1 flex items-center justify-between gap-2">
-                    <span className="text-xs font-extrabold text-slate-800">{c.authorName}</span>
+                    <span className="text-xs font-extrabold text-slate-800">
+                      {(c.authorId && commentAuthorById[c.authorId]) || c.authorName}
+                    </span>
                     <span className="text-[10px] font-medium text-slate-400">
                       {formatDistanceToNow(new Date(c.createdAt), { addSuffix: true, locale: ko })}
                     </span>

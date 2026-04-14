@@ -404,28 +404,43 @@ export function DogSittersPage() {
     [locationBasedEnabled, referenceDistricts],
   );
 
-  const filteredMeetups = useMemo(
-    () =>
-      allMeetups
-        .filter((req) => {
-          const viewerId = user?.id ?? '';
-          const isMine = viewerId !== '' && req.userId === viewerId;
-          const inTab =
-            topTab === 'moija'
-              ? MOIJA_CATEGORY_SET.has(req.category)
-              : topTab === 'mannaja'
-                ? MANNAJA_CATEGORY_SET.has(req.category)
-                : false;
-          if (!inTab) return false;
-          if (!meetupVisibleInPublicFeed(req, promoFree)) return false;
-          /** 로딩 중엔 user가 비어 내 글도 지역 필터에 걸릴 수 있음 → 세션 확인 후에만 타인 글 지역 필터 */
-          if (!authLoading && !isMine && !meetupMatchesRegion(req.district)) return false;
-          const categoryMatch = category === '전체' || req.category === category;
-          return categoryMatch;
-        })
-        .slice(0, 20),
-    [allMeetups, topTab, category, promoFree, meetupMatchesRegion, user?.id, authLoading],
-  );
+  const filteredMeetups = useMemo(() => {
+    const viewerId = user?.id ?? '';
+    const inTabRows = allMeetups.filter((req) => {
+      const inTab =
+        topTab === 'moija'
+          ? MOIJA_CATEGORY_SET.has(req.category)
+          : topTab === 'mannaja'
+            ? MANNAJA_CATEGORY_SET.has(req.category)
+            : false;
+      if (!inTab) return false;
+      if (!meetupVisibleInPublicFeed(req, promoFree)) return false;
+      const categoryMatch = category === '전체' || req.category === category;
+      return categoryMatch;
+    });
+
+    // 하이퍼로컬 우선: 먼저 내 동네 글을 보여주고, 결과가 0이면 같은 탭 글 전체로 폴백
+    if (!authLoading && locationBasedEnabled && referenceDistricts.length > 0) {
+      const regionRows = inTabRows.filter((req) => {
+        const isMine = viewerId !== '' && req.userId === viewerId;
+        if (isMine) return true;
+        return meetupMatchesRegion(req.district);
+      });
+      if (regionRows.length > 0) return regionRows.slice(0, 20);
+    }
+
+    return inTabRows.slice(0, 20);
+  }, [
+    allMeetups,
+    topTab,
+    category,
+    promoFree,
+    meetupMatchesRegion,
+    user?.id,
+    authLoading,
+    locationBasedEnabled,
+    referenceDistricts,
+  ]);
 
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
   const filteredCareNeedMeetups = useMemo(() => {

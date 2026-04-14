@@ -182,6 +182,14 @@ export function formatRegion(city: string, district: string, dong?: string): str
   return base;
 }
 
+/** 지역명 인라인 포맷 (예: "안양시 동안구 관양동") */
+export function formatRegionInline(city: string, district: string, dong?: string): string {
+  const c = (city ?? '').trim();
+  const gu = (district ?? '').trim();
+  const d = (dong ?? '').trim();
+  return [c, gu, d].filter(Boolean).join(' ').trim();
+}
+
 /** 인증 보호맘: 시·구 + 선택 동 (DB에 동 컬럼이 없으면 생략) */
 export function formatCertifiedGuardMomLocation(mom: {
   region_si: string;

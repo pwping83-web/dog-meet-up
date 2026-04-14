@@ -71,6 +71,17 @@ function scrubOwnerWeeklyIntro(s: string): string {
   return t.slice(0, 100);
 }
 
+/** 이번 주 코스는 한국어만 노출: social/socail 등 영문 토큰 제거 */
+function normalizeWeeklyKoreanOnly(input: string): string {
+  return input
+    .replace(/[_\s-]*\b(?:social|socail|socialization)\b/gi, ' 사회화')
+    .replace(/[_\s-]*\b(?:class|course|playdate|mate|friend)\b/gi, ' ')
+    .replace(/[_-]*[a-zA-Z]+(?:[_-][a-zA-Z]+)*/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
 function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
   if (!fields) return fields;
   const next: DaengAiFields = { ...fields };
@@ -82,15 +93,19 @@ function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
     next.chips = next.chips.map((c) => stripHanChars(String(c)));
   }
   if (typeof next.weeklyIntro === 'string') {
-    const cleaned = scrubOwnerWeeklyIntro(fixWeeklyParticleSpacing(stripHanChars(next.weeklyIntro)));
+    const cleaned = scrubOwnerWeeklyIntro(
+      normalizeWeeklyKoreanOnly(fixWeeklyParticleSpacing(stripHanChars(next.weeklyIntro))),
+    );
     next.weeklyIntro = cleaned || undefined;
   }
   if (Array.isArray(next.weeklyItems)) {
     next.weeklyItems = next.weeklyItems.map((item) => ({
       ...item,
-      label: fixWeeklyParticleSpacing(stripHanChars(item.label)),
+      label: normalizeWeeklyKoreanOnly(fixWeeklyParticleSpacing(stripHanChars(item.label))),
       detail:
-        typeof item.detail === 'string' ? fixWeeklyParticleSpacing(stripHanChars(item.detail)) : item.detail,
+        typeof item.detail === 'string'
+          ? normalizeWeeklyKoreanOnly(fixWeeklyParticleSpacing(stripHanChars(item.detail)))
+          : item.detail,
     }));
   }
   return next;

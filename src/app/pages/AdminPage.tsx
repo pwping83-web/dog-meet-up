@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search, Shield } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -11,7 +11,7 @@ import type { Database } from '../../lib/supabase';
 import { usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 
-type AdminView = 'main' | 'requests' | 'repairers' | 'quotes' | 'guardCare';
+type AdminView = 'main' | 'requests' | 'quotes' | 'guardCare';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 type BillingOrderRow = Database['public']['Tables']['billing_orders']['Row'];
@@ -58,7 +58,6 @@ export function AdminPage() {
 
       {currentView === 'main' && <MainView onNavigate={setCurrentView} />}
       {currentView === 'requests' && <RequestsView searchQuery={searchQuery} setSearchQuery={setSearchQuery} selectedFilter={selectedFilter} setSelectedFilter={setSelectedFilter} />}
-      {currentView === 'repairers' && <RepairersView searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
       {currentView === 'quotes' && <QuotesView />}
       {currentView === 'guardCare' && <GuardCareAdminView />}
     </div>
@@ -70,13 +69,12 @@ function MainView({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
     { label: '대기중인 모임', value: mockRequests.filter(r => r.status === 'pending').length, icon: '⏳', color: 'bg-orange-100 text-orange-600' },
     { label: '진행중인 모임', value: mockRequests.filter(r => r.status === 'in-progress').length, icon: '🐾', color: 'bg-amber-100 text-amber-600' },
     { label: '완료된 모임', value: mockRequests.filter(r => r.status === 'completed').length, icon: '✅', color: 'bg-orange-100 text-orange-700' },
-    { label: '전체 댕집사', value: mockRepairers.length, icon: '🐕', color: 'bg-amber-100 text-orange-800' },
+    { label: '인증 돌봄 관리', value: mockRepairers.length, icon: '🐕', color: 'bg-amber-100 text-orange-800' },
   ];
 
   const menuItems = [
-    { id: 'guardCare' as AdminView, label: '돌봄 회원·결제', icon: '🦴', count: null as number | null },
+    { id: 'guardCare' as AdminView, label: '보호맘·댕집사 인증/노출', icon: '🦴', count: null as number | null },
     { id: 'requests' as AdminView, label: '모임 관리', icon: '📝', count: mockRequests.length },
-    { id: 'repairers' as AdminView, label: '댕집사 관리', icon: '🐕', count: mockRepairers.length },
     { id: 'quotes' as AdminView, label: '참여 신청 관리', icon: '💰', count: mockQuotes.length },
   ];
 
@@ -486,10 +484,7 @@ function GuardCareAdminView() {
 
   return (
     <div className="space-y-6 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 text-sm text-gray-600">
-          보호맘·댕집사 등록, 노출 결제, 돌봄 예약을 Supabase에서 불러옵니다. 비어 있으면 DB 마이그레이션·RLS를 확인하세요.
-        </p>
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <AiDoumiButton
             task="admin_ops_hint"
@@ -530,9 +525,6 @@ function GuardCareAdminView() {
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800">
           {error}
-          <p className="mt-2 text-xs text-red-700">
-            관리자 이메일이 appAdmin.ts와 같고, SQL에 is_app_admin·select·update_admin 정책이 적용돼 있는지 확인하세요.
-          </p>
         </div>
       )}
 
@@ -549,16 +541,6 @@ function GuardCareAdminView() {
               돌봄(보호맘·댕집사) 등록 · 신청
               <span className="text-sm font-semibold text-gray-500">({guardMoms.length}명)</span>
             </h2>
-            <p className="mb-3 flex items-start gap-2 text-xs font-medium text-gray-600">
-              <Shield className="mt-0.5 h-4 w-4 shrink-0 text-orange-500" aria-hidden />
-              <span>
-                <span className="font-bold text-gray-800">DB에 인증 넣기</span>는 함수{' '}
-                <code className="rounded bg-gray-100 px-1 text-[10px]">admin_set_guard_mom_certified</code>를
-                써요. Supabase SQL Editor에서 마이그레이션{' '}
-                <code className="rounded bg-gray-100 px-1 text-[10px]">sql/apply-guard-mom-admin-once.sql</code> 한
-                번이면 돼요. (또는 CLI: <code className="rounded bg-gray-100 px-1 text-[10px]">supabase db push</code>)
-              </span>
-            </p>
             {guardMoms.length === 0 ? (
               <p className="rounded-xl bg-white p-4 text-sm text-gray-500">등록된 행이 없습니다.</p>
             ) : (
