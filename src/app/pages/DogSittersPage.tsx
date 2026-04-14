@@ -88,7 +88,7 @@ function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
 }
 
 export function DogSittersPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { location, locationBasedEnabled } = useUserLocation();
   const promoFree = usePromoFreeListings();
   const routerLocation = useLocation();
@@ -423,16 +423,14 @@ export function DogSittersPage() {
     });
 
     const canApplyRadius =
-      !authLoading &&
-      locationBasedEnabled &&
-      meetupRadiusKm > 0 &&
-      referenceDistricts.length > 0;
+      locationBasedEnabled && meetupRadiusKm > 0 && referenceDistricts.length > 0;
 
     const passesRadius = (district: string) =>
       !canApplyRadius || distForDistrict(district) <= meetupRadiusKm;
 
     // 하이퍼로컬 우선: 동네 매칭 + (선택) 거리(km). 결과 0이면 거리만 적용한 폴백 → 그다음 탭 전체
-    if (!authLoading && locationBasedEnabled && referenceDistricts.length > 0) {
+    // 인증 로딩(authLoading)과 무관하게 적용 — 로딩 중에만 필터를 끄면 모바일 새로고침 시 글이 잠깐 많이 보였다 사라지는 깜빡임이 남
+    if (locationBasedEnabled && referenceDistricts.length > 0) {
       const regionRows = inTabRows.filter((req) => {
         const isMine = viewerId !== '' && req.userId === viewerId;
         if (isMine) return true;
@@ -462,7 +460,6 @@ export function DogSittersPage() {
     promoFree,
     meetupMatchesRegion,
     user?.id,
-    authLoading,
     locationBasedEnabled,
     referenceDistricts,
     meetupRadiusKm,
@@ -477,8 +474,8 @@ export function DogSittersPage() {
       .filter((req) => {
         const viewerId = user?.id ?? '';
         const isMine = viewerId !== '' && req.userId === viewerId;
-        if (!authLoading && !isMine && !meetupMatchesRegion(req.district)) return false;
-        return true;
+        if (isMine) return true;
+        return meetupMatchesRegion(req.district);
       })
       .filter((req) => {
         if (!q) return true;
@@ -487,7 +484,7 @@ export function DogSittersPage() {
         return blob.includes(q);
       })
       .slice(0, 50);
-  }, [allMeetups, q, promoFree, meetupMatchesRegion, user?.id, authLoading]);
+  }, [allMeetups, q, promoFree, meetupMatchesRegion, user?.id]);
 
   // 신청 수 계산
   const getJoinCount = (meetupId: string) => {
