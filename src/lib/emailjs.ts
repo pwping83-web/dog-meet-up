@@ -3,7 +3,7 @@ import emailjs from '@emailjs/browser';
 // EmailJS 설정
 const EMAILJS_PUBLIC_KEY = '7-EF2vKlS3sc_N5rp';
 const EMAILJS_PRIVATE_KEY = 'xPexQmGxFSJlKC0LVrDIt';
-const EMAILJS_TEMPLATE_ID = 'template_tfb0g9l';
+const EMAILJS_TEMPLATE_ID = 'template_4nf36gq';
 const EMAILJS_SERVICE_ID = 'service_yde5guq'; // ✅ Gmail Service 연결 완료!
 
 // EmailJS 초기화
@@ -277,7 +277,7 @@ export async function trySendEmail(
   }
 }
 
-const DEFAULT_FEEDBACK_INBOX = 'support@daengdaeng.com';
+const DEFAULT_FEEDBACK_INBOX = '091234kim@naver.com';
 
 /** 운영 수신함 — `.env`에 `VITE_FEEDBACK_INBOX_EMAIL` 이 있으면 우선 */
 export function getFeedbackInboxEmail(): string {
