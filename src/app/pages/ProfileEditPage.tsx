@@ -20,14 +20,8 @@ import {
   writeCareProviderTrack,
   type CareProviderTrack,
 } from '../../lib/careProviderTrack';
-
-/** 숫자만 받아 010-0000-0000 형태로 (최대 11자리) */
-function formatKoreanMobileDigits(raw: string): string {
-  const d = raw.replace(/\D/g, '').slice(0, 11);
-  if (d.length <= 3) return d;
-  if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`;
-  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
-}
+import { formatKoreanMobileDigits } from '../../lib/phoneAuth';
+import { imageContentTypeForDogPhotosUpload, safeImageExtForDogPhotos } from '../../lib/storageImageMime';
 
 function phoneDigitsOk(digits: string): boolean {
   if (digits.length === 0) return true;
@@ -35,6 +29,8 @@ function phoneDigitsOk(digits: string): boolean {
 }
 
 type AvatarDraft = 'theme' | 'custom';
+
+const PROFILE_AVATAR_FILE_ID = 'daeng-profile-avatar-file';
 
 export function ProfileEditPage() {
   const navigate = useNavigate();
@@ -194,12 +190,12 @@ export function ProfileEditPage() {
           alert('사진은 5MB 이하로 올려 주세요.');
           return;
         }
-        const ext = (pending.name.split('.').pop() || 'jpg').toLowerCase();
-        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+        const safeExt = safeImageExtForDogPhotos(pending);
         const path = `user-avatars/${user.id}/${Date.now()}.${safeExt}`;
         const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, pending, {
           cacheControl: '3600',
           upsert: false,
+          contentType: imageContentTypeForDogPhotosUpload(pending, safeExt),
         });
         if (upErr) {
           alert(upErr.message || '프로필 사진 업로드에 실패했습니다. Storage 정책(dog-photos)을 확인해 주세요.');
@@ -257,8 +253,11 @@ export function ProfileEditPage() {
   const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !file.type.startsWith('image/')) {
-      if (file) alert('이미지 파일만 선택할 수 있어요.');
+    if (!file) return;
+    const imageOk =
+      file.type.startsWith('image/') || /\.(heic|heif|jpg|jpeg|png|webp|gif)$/i.test(file.name);
+    if (!imageOk) {
+      alert('이미지 파일만 선택할 수 있어요.');
       return;
     }
     pendingFileRef.current = file;
@@ -371,26 +370,26 @@ export function ProfileEditPage() {
         <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <h3 className="text-sm font-extrabold text-slate-800 mb-4">프로필 이미지</h3>
           <input
+            id={PROFILE_AVATAR_FILE_ID}
             ref={fileInputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/gif"
-            className="hidden"
+            accept="image/*"
+            className="sr-only"
             onChange={handleAvatarFile}
           />
           <div className="flex flex-col items-center">
-            <button
-              type="button"
+            <label
+              htmlFor={PROFILE_AVATAR_FILE_ID}
               className="relative mb-5 group cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
-              aria-label="프로필 사진 올리기"
             >
+              <span className="sr-only">프로필 사진 올리기</span>
               {avatarMain.kind === 'image' ? (
                 <div className="relative h-24 w-24 overflow-hidden rounded-3xl border-4 border-orange-200 shadow-inner">
                   <ImageWithFallback
                     src={avatarMain.src}
                     fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
                     alt="프로필 사진"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover pointer-events-none"
                   />
                 </div>
               ) : (
@@ -403,7 +402,7 @@ export function ProfileEditPage() {
               <div className="pointer-events-none absolute -bottom-2 -right-2 rounded-full border-2 border-white bg-slate-800 p-2 text-white shadow-lg transition-transform group-hover:scale-110">
                 <Camera className="h-4 w-4" aria-hidden />
               </div>
-            </button>
+            </label>
 
             <div className="flex gap-3 justify-center rounded-2xl bg-slate-50 p-2.5">
               {PROFILE_THEME_AVATARS.map((theme) => (

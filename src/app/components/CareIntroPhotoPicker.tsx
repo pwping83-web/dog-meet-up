@@ -7,7 +7,7 @@ function looksLikeImageFile(file: File): boolean {
   if (file.type.startsWith('image/')) return true;
   if (!file.name.includes('.')) return false;
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
-  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'bmp'].includes(ext);
+  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'bmp', 'jfif', 'dng'].includes(ext);
 }
 
 function storageErrorMessage(err: unknown): string {
@@ -89,25 +89,30 @@ export function CareIntroPhotoPicker({ userId, urls, onUrlsChange, disabled, hin
         ))}
         {urls.length < CARE_INTRO_PHOTO_MAX && (
           <label
-            className={`flex h-[4.5rem] w-[4.5rem] shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/80 text-slate-500 transition-colors hover:border-orange-300 hover:bg-orange-50/50 ${
+            className={`relative flex h-[4.5rem] min-h-[4.5rem] w-[4.5rem] min-w-[4.5rem] shrink-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-slate-300 bg-slate-50/80 text-slate-500 transition-colors hover:border-orange-300 hover:bg-orange-50/50 active:border-orange-400 ${
               disabled || busy ? 'pointer-events-none opacity-50' : ''
             }`}
           >
-            {busy ? (
-              <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
-            ) : (
-              <>
-                <Camera className="h-5 w-5" aria-hidden />
-                <span className="mt-0.5 text-[10px] font-extrabold">추가</span>
-              </>
-            )}
+            <span className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center">
+              {busy ? (
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+              ) : (
+                <>
+                  <Camera className="h-5 w-5" aria-hidden />
+                  <span className="mt-0.5 text-[10px] font-extrabold">추가</span>
+                </>
+              )}
+            </span>
+            {/* 모바일: 탭 영역이 곧 file input 이 되도록 전면 덮음(sr-only+자식만 label 보다 안정적) */}
             <input
               type="file"
               accept="image/*"
               multiple={CARE_INTRO_PHOTO_MAX > 1}
-              className="sr-only"
+              className="absolute inset-0 z-[1] h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+              style={{ fontSize: '1rem' }}
               onChange={(ev) => void onPick(ev)}
               disabled={disabled || busy}
+              aria-label="소개 사진 추가"
             />
           </label>
         )}

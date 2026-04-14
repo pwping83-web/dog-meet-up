@@ -1,19 +1,35 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { DAENG_AUTH_RETURN_KEY, DAENG_AUTH_RETURN_TS } from "../components/AuthReturnRedirect";
+import { isSupabaseSmsPhoneAuth } from "../../lib/phoneAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { signInWithKakao, signInWithPhoneDemo } = useAuth();
+  const { signInWithKakao, sendPhoneOtp, verifyPhoneOtp } = useAuth();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"phone" | "code">("phone");
   const [loading, setLoading] = useState(false);
+  const [phoneSendBusy, setPhoneSendBusy] = useState(false);
 
-  const handleSendCode = (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep("code");
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      alert("휴대폰 번호를 확인해 주세요.");
+      return;
+    }
+    try {
+      setPhoneSendBusy(true);
+      await sendPhoneOtp(phone);
+      setStep("code");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "인증 문자를 보내지 못했습니다.");
+    } finally {
+      setPhoneSendBusy(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -29,7 +45,7 @@ export function LoginPage() {
     }
     try {
       setLoading(true);
-      await signInWithPhoneDemo(phone, code);
+      await verifyPhoneOtp(phone, code);
     } catch (err) {
       const msg =
         err instanceof Error
@@ -122,14 +138,25 @@ export function LoginPage() {
                 className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 font-medium placeholder:text-slate-400"
                 required
               />
+              {!isSupabaseSmsPhoneAuth() ? (
+                <p className="mt-2 text-xs text-slate-500">연습 모드: 문자 없음 · 다음에서 000000</p>
+              ) : null}
             </div>
 
             {/* 인증번호 받기 버튼 */}
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+              disabled={phoneSendBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-60"
             >
-              인증번호 받기
+              {phoneSendBusy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+                  보내는 중…
+                </>
+              ) : (
+                "인증번호 받기"
+              )}
             </button>
 
             {/* 간편 로그인 */}
@@ -191,9 +218,10 @@ export function LoginPage() {
                 <span className="font-extrabold text-orange-700">
                   {phone}
                 </span>
-                으로
                 <br />
-                인증번호를 전송했어요
+                {isSupabaseSmsPhoneAuth()
+                  ? "문자로 인증번호를 보냈어요"
+                  : "연습 모드예요. 아래 코드만 입력하면 돼요"}
               </div>
 
               <label className="block text-sm font-bold mb-2 text-slate-700">
@@ -208,6 +236,9 @@ export function LoginPage() {
                 className="w-full px-4 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 text-center text-2xl tracking-widest font-bold placeholder:text-slate-300"
                 required
               />
+              <p className="mt-2 text-center text-xs text-slate-500">
+                {isSupabaseSmsPhoneAuth() ? "문자로 온 숫자 6자리" : "데모: 000000"}
+              </p>
 
               <button
                 type="button"
@@ -231,9 +262,27 @@ export function LoginPage() {
             <div className="mt-4 text-center">
               <button
                 type="button"
-                className="text-sm text-orange-600 font-bold hover:underline"
+                disabled={phoneSendBusy}
+                className="text-sm text-orange-600 font-bold hover:underline disabled:opacity-50"
+                onClick={() => {
+                  void (async () => {
+                    if (!isSupabaseSmsPhoneAuth()) {
+                      alert("데모 모드에서는 문자를 다시 보내지 않아요. 000000을 입력해 주세요.");
+                      return;
+                    }
+                    try {
+                      setPhoneSendBusy(true);
+                      await sendPhoneOtp(phone);
+                      alert("인증번호를 다시 보냈어요.");
+                    } catch (err) {
+                      alert(err instanceof Error ? err.message : "재전송에 실패했어요.");
+                    } finally {
+                      setPhoneSendBusy(false);
+                    }
+                  })();
+                }}
               >
-                인증번호 다시 받기
+                {phoneSendBusy ? "전송 중…" : "인증번호 다시 받기"}
               </button>
             </div>
           </form>

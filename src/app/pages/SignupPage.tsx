@@ -3,12 +3,17 @@ import { Link, useNavigate } from 'react-router';
 import { Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { formatKoreanMobileDigits, isSupabaseSmsPhoneAuth } from '../../lib/phoneAuth';
+import { imageContentTypeForDogPhotosUpload, safeImageExtForDogPhotos } from '../../lib/storageImageMime';
 import { SIGNUP_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
+/** 모바일에서 `input.click()` 대신 label 연결이 더 안정적 */
+const SIGNUP_AVATAR_FILE_ID = 'daeng-signup-avatar-file';
+
 export function SignupPage() {
   const navigate = useNavigate();
-  const { signInWithKakao, signInWithPhoneDemo, user } = useAuth();
+  const { signInWithKakao, sendPhoneOtp, verifyPhoneOtp, user } = useAuth();
   const [step, setStep] = useState<'terms' | 'phone' | 'code' | 'profile'>('terms');
   
   const [phone, setPhone] = useState('');
@@ -17,6 +22,7 @@ export function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
   const [phoneAuthBusy, setPhoneAuthBusy] = useState(false);
+  const [phoneSendBusy, setPhoneSendBusy] = useState(false);
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const pendingAvatarFileRef = useRef<File | null>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
@@ -66,21 +72,31 @@ export function SignupPage() {
     setStep('phone');
   };
 
-  const handlePhoneSubmit = (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const digits = phone.replace(/\D/g, '');
     if (digits.length < 10) {
       alert('휴대폰 번호를 확인해 주세요.');
       return;
     }
-    setStep('code');
+    try {
+      setPhoneSendBusy(true);
+      await sendPhoneOtp(phone);
+      setStep('code');
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : '인증 문자를 보내지 못했습니다. 잠시 후 다시 시도해 주세요.';
+      alert(msg);
+    } finally {
+      setPhoneSendBusy(false);
+    }
   };
 
   const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setPhoneAuthBusy(true);
-      await signInWithPhoneDemo(phone, code);
+      await verifyPhoneOtp(phone, code);
       setStep('profile');
     } catch (err) {
       const msg =
@@ -97,7 +113,9 @@ export function SignupPage() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
+    const imageOk =
+      file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name);
+    if (!imageOk) {
       alert('이미지 파일만 선택할 수 있어요.');
       return;
     }
@@ -128,8 +146,11 @@ export function SignupPage() {
       alert('닉네임은 2~10자로 입력해 주세요.');
       return;
     }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const { data: got } = await supabase.auth.getUser();
-    const authUser = user ?? got.user;
+    const authUser = session?.user ?? user ?? got.user;
     if (!authUser?.id) {
       alert(
         '프로필·사진을 서버에 저장하려면 로그인이 필요해요.\n휴대폰 인증(다음)을 다시 진행하거나 카카오 가입을 완료해 주세요.',
@@ -142,12 +163,12 @@ export function SignupPage() {
       let avatar_url: string | null = null;
       const pending = pendingAvatarFileRef.current;
       if (pending) {
-        const ext = (pending.name.split('.').pop() || 'jpg').toLowerCase();
-        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+        const safeExt = safeImageExtForDogPhotos(pending);
         const path = `user-avatars/${authUser.id}/${Date.now()}.${safeExt}`;
         const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, pending, {
           cacheControl: '3600',
           upsert: false,
+          contentType: imageContentTypeForDogPhotosUpload(pending, safeExt),
         });
         if (upErr) {
           alert(upErr.message || '프로필 사진 업로드에 실패했어요. dog-photos 버킷·정책을 확인해 주세요.');
@@ -161,8 +182,8 @@ export function SignupPage() {
       const metaPhone =
         typeof authUser.user_metadata?.phone === 'string' ? authUser.user_metadata.phone.trim() : '';
       const digits = phone.replace(/\D/g, '');
-      const phoneFromSignup = digits.length >= 10 ? digits : phone.trim();
-      const nextPhone = existing?.phone?.trim() || metaPhone || phoneFromSignup || null;
+      const rawForProfile = existing?.phone?.trim() || metaPhone || (digits.length >= 10 ? phone : '');
+      const nextPhone = rawForProfile ? formatKoreanMobileDigits(rawForProfile) : null;
       const { error } = await supabase.from('profiles').upsert(
         {
           id: authUser.id,
@@ -344,6 +365,9 @@ export function SignupPage() {
               <p className="text-sm text-gray-600">
                 본인 확인을 위해 필요해요
               </p>
+              {!isSupabaseSmsPhoneAuth() ? (
+                <p className="mt-2 text-xs text-slate-500">연습 모드: 문자 없음 · 다음에서 000000</p>
+              ) : null}
             </div>
 
             <div className="mb-6">
@@ -362,9 +386,17 @@ export function SignupPage() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+              disabled={phoneSendBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-60"
             >
-              인증번호 받기
+              {phoneSendBusy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+                  보내는 중…
+                </>
+              ) : (
+                '인증번호 받기'
+              )}
             </button>
           </form>
         )}
@@ -377,8 +409,11 @@ export function SignupPage() {
                 인증번호를<br />입력해주세요 🔐
               </h2>
               <p className="text-sm text-gray-600">
-                <span className="font-medium">{phone}</span>으로<br />
-                인증번호를 전송했어요
+                <span className="font-medium">{phone}</span>
+                <br />
+                {isSupabaseSmsPhoneAuth()
+                  ? '문자로 인증번호를 보냈어요'
+                  : '연습 모드예요. 아래 코드만 입력하면 돼요'}
               </p>
             </div>
 
@@ -395,7 +430,9 @@ export function SignupPage() {
                 className="w-full px-4 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 text-center text-2xl tracking-widest font-bold placeholder:text-slate-300"
                 required
               />
-              <p className="mt-2 text-center text-xs text-slate-500">데모: 인증번호 000000</p>
+              <p className="mt-2 text-center text-xs text-slate-500">
+                {isSupabaseSmsPhoneAuth() ? '문자로 온 숫자 6자리' : '데모: 000000'}
+              </p>
 
               <div className="flex justify-between items-center mt-2">
                 <button
@@ -407,9 +444,27 @@ export function SignupPage() {
                 </button>
                 <button
                   type="button"
-                  className="text-sm text-orange-600 font-bold"
+                  className="text-sm text-orange-600 font-bold disabled:opacity-50"
+                  disabled={phoneSendBusy}
+                  onClick={() => {
+                    void (async () => {
+                      if (!isSupabaseSmsPhoneAuth()) {
+                        alert('데모 모드에서는 문자를 다시 보내지 않아요. 000000을 입력해 주세요.');
+                        return;
+                      }
+                      try {
+                        setPhoneSendBusy(true);
+                        await sendPhoneOtp(phone);
+                        alert('인증번호를 다시 보냈어요.');
+                      } catch (err) {
+                        alert(err instanceof Error ? err.message : '재전송에 실패했어요.');
+                      } finally {
+                        setPhoneSendBusy(false);
+                      }
+                    })();
+                  }}
                 >
-                  인증번호 다시 받기
+                  {phoneSendBusy ? '전송 중…' : '인증번호 다시 받기'}
                 </button>
               </div>
             </div>
@@ -446,19 +501,19 @@ export function SignupPage() {
             {/* 프로필 사진 */}
             <div className="mb-6">
               <input
+                id={SIGNUP_AVATAR_FILE_ID}
                 ref={avatarFileInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
+                accept="image/*"
                 className="sr-only"
                 onChange={handleAvatarPick}
               />
               <div className="mb-4 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => avatarFileInputRef.current?.click()}
-                  className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-100 text-4xl transition-colors hover:border-orange-500"
-                  aria-label="프로필 사진 선택"
+                <label
+                  htmlFor={SIGNUP_AVATAR_FILE_ID}
+                  className="relative flex h-28 w-28 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-100 text-4xl transition-colors active:border-orange-500"
                 >
+                  <span className="sr-only">프로필 사진 선택</span>
                   {avatarPreviewUrl ? (
                     <ImageWithFallback
                       src={avatarPreviewUrl}
@@ -466,18 +521,17 @@ export function SignupPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <Camera className="h-10 w-10 text-slate-400" aria-hidden />
+                    <Camera className="h-10 w-10 text-slate-400 pointer-events-none" aria-hidden />
                   )}
-                </button>
+                </label>
               </div>
               <div className="mb-2 flex justify-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => avatarFileInputRef.current?.click()}
-                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-extrabold text-white active:scale-[0.98]"
+                <label
+                  htmlFor={SIGNUP_AVATAR_FILE_ID}
+                  className="cursor-pointer rounded-full bg-slate-900 px-4 py-2 text-xs font-extrabold text-white active:scale-[0.98]"
                 >
                   사진 선택
-                </button>
+                </label>
                 {avatarPreviewUrl ? (
                   <button
                     type="button"

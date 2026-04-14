@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getAuthRedirectUrl } from '../lib/site';
 import { ensurePublicProfile } from '../lib/ensurePublicProfile';
+import { isSupabaseSmsPhoneAuth, koreanMobileDigitsToE164 } from '../lib/phoneAuth';
 
 interface AuthContextType {
   user: User | null;
@@ -11,11 +12,14 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signInWithKakao: () => Promise<void>;
+  /** SMS 모드에서만 실제 발송. 데모 모드에서는 즉시 성공(문자 없음). */
+  sendPhoneOtp: (rawPhone: string) => Promise<void>;
   /**
-   * 데모: 인증번호 000000
-   * - 1순위: Supabase 익명 로그인(대시보드 Authentication → Providers → Anonymous ON)
-   * - 익명이 꺼져 있으면: VITE_PHONE_DEMO_EMAIL + VITE_PHONE_DEMO_PASSWORD 로 signInWithPassword 폴백
+   * SMS 모드: 문자로 받은 6자리로 세션 생성.
+   * 데모: 000000 + 익명 로그인(또는 VITE_PHONE_DEMO_* 폴백).
    */
+  verifyPhoneOtp: (rawPhone: string, code: string) => Promise<void>;
+  /** @deprecated verifyPhoneOtp 와 동일 */
   signInWithPhoneDemo: (phone: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -108,7 +112,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return /anonymous sign[-\s]?ins? are disabled/i.test(m) || /anonymous provider is disabled/i.test(m);
   };
 
-  const signInWithPhoneDemo = async (phone: string, code: string) => {
+  const syncPhoneUserMetadata = async (rawPhone: string) => {
+    const digits = rawPhone.replace(/\D/g, '');
+    const label =
+      digits.length >= 4 ? `휴대폰 ···${digits.slice(-4)}` : '휴대폰 로그인';
+    const { error: metaError } = await supabase.auth.updateUser({
+      data: {
+        nickname: label,
+        phone: rawPhone.trim(),
+      },
+    });
+    if (metaError) {
+      console.warn('[댕댕마켓] 전화 로그인: 프로필 메타 동기화 실패', metaError.message);
+    }
+  };
+
+  const sendPhoneOtp = async (rawPhone: string) => {
+    if (!isSupabaseSmsPhoneAuth()) return;
+    const e164 = koreanMobileDigitsToE164(rawPhone);
+    if (!e164) {
+      throw new Error('휴대폰 번호 형식을 확인해 주세요. (예: 010-1234-5678)');
+    }
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: e164,
+      options: {
+        channel: 'sms',
+        shouldCreateUser: true,
+      },
+    });
+    if (error) {
+      throw new Error(
+        `인증 문자 발송에 실패했습니다.\nSupabase에서 Phone 제공자를 설정했는지 확인해 주세요.\n(${error.message})`,
+      );
+    }
+  };
+
+  const verifyPhoneDemo = async (rawPhone: string, code: string) => {
     const trimmed = code.trim();
     if (trimmed !== '000000') {
       throw new Error('데모 환경에서는 인증번호 000000을 입력해 주세요.');
@@ -135,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             '「Allow anonymous sign-ins」를 켠 뒤 반드시 Save changes까지 눌러 저장하세요.\n' +
             '이미 켰는데도 이 메시지가 나오면, 배포 사이트의 VITE_SUPABASE_URL·ANON 키가 지금 설정한 프로젝트와 같은지 확인하세요.\n' +
             '또는 배포에 VITE_PHONE_DEMO_EMAIL, VITE_PHONE_DEMO_PASSWORD를 넣어 데모 계정으로 폴백할 수 있어요.\n' +
-            '실서비스 로그인은 카카오를 이용해 주세요.\n' +
+            '실서비스 전화 가입은 `.env`에 VITE_PHONE_AUTH=sms 로 SMS를 켜 주세요.\n' +
             `(서버 응답: ${anonError.message})`,
         );
       } else {
@@ -147,19 +186,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       data: { user: u },
     } = await supabase.auth.getUser();
     if (!u) throw new Error('로그인 세션을 만들지 못했습니다.');
-    const digits = phone.replace(/\D/g, '');
-    const label =
-      digits.length >= 4 ? `휴대폰 ···${digits.slice(-4)}` : '휴대폰 로그인';
-    const { error: metaError } = await supabase.auth.updateUser({
-      data: {
-        nickname: label,
-        phone: phone.trim(),
-      },
+    await syncPhoneUserMetadata(rawPhone);
+    await supabase.auth.refreshSession();
+  };
+
+  const verifyPhoneSms = async (rawPhone: string, code: string) => {
+    const e164 = koreanMobileDigitsToE164(rawPhone);
+    if (!e164) {
+      throw new Error('휴대폰 번호 형식을 확인해 주세요.');
+    }
+    const { data, error } = await supabase.auth.verifyOtp({
+      phone: e164,
+      token: code.trim(),
+      type: 'sms',
     });
-    if (metaError) {
-      console.warn('[댕댕마켓] 전화 데모 로그인: 프로필 메타 업데이트 실패', metaError.message);
+    if (error) {
+      throw new Error(`인증번호를 확인해 주세요.\n${error.message}`);
+    }
+    if (!data.user) throw new Error('로그인 세션을 만들지 못했습니다.');
+    await syncPhoneUserMetadata(rawPhone);
+    await supabase.auth.refreshSession();
+  };
+
+  const verifyPhoneOtp = async (rawPhone: string, code: string) => {
+    if (isSupabaseSmsPhoneAuth()) {
+      await verifyPhoneSms(rawPhone, code);
+    } else {
+      await verifyPhoneDemo(rawPhone, code);
     }
   };
+
+  const signInWithPhoneDemo = verifyPhoneOtp;
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
@@ -168,7 +225,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, loading, signIn, signUp, signInWithKakao, signInWithPhoneDemo, signOut }}
+      value={{
+        user,
+        session,
+        loading,
+        signIn,
+        signUp,
+        signInWithKakao,
+        sendPhoneOtp,
+        verifyPhoneOtp,
+        signInWithPhoneDemo,
+        signOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

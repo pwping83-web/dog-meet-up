@@ -16,13 +16,14 @@ export function Header() {
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
       <div className="mx-auto w-full max-w-[min(100%,480px)] px-4 pt-[env(safe-area-inset-top)] sm:px-5">
         <div className="flex min-h-[56px] items-center gap-2 py-1.5 sm:gap-3">
-          {/* 동네명이 길어도 로고·알림과 겹치지 않도록: 왼쪽만 flex-1 + truncate, 로고/우측은 고정 폭 */}
-          <div className="min-w-0 flex-1 overflow-hidden">
+          {/* 동네 글자는 좁은 헤더에서 로고와 겹침 → 시각 숨김, 핀·title·스크린리더로 유지 */}
+          <div className="flex shrink-0 items-center">
             <button
               type="button"
               title={fullLabel}
+              aria-label={`동네 설정: ${fullLabel}`}
               onClick={() => setLocationOpen(true)}
-              className={`flex w-full max-w-full min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 shadow-inner transition-colors sm:px-3 ${
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 shadow-inner transition-colors sm:px-3 ${
                 locationBasedEnabled
                   ? 'bg-slate-100/80 hover:bg-slate-200/80'
                   : 'bg-slate-200/70 hover:bg-slate-200'
@@ -31,9 +32,7 @@ export function Header() {
               <MapPin
                 className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-brand' : 'text-slate-500'}`}
               />
-              <span className="min-w-0 flex-1 truncate text-left text-sm font-extrabold tracking-tight text-slate-800">
-                {shortLabel}
-              </span>
+              <span className="sr-only">{shortLabel}</span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
             </button>
           </div>
