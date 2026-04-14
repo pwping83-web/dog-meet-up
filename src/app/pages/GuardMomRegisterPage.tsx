@@ -27,24 +27,29 @@ import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
-/** PostgREST 영문 오류 → 한글 안내 (배포 담당자용 파일 경로 포함) */
+/** PostgREST·Postgres 오류 → 한글 안내 (배포 담당자용 파일 경로 포함) */
 function friendlyCertifiedGuardMomsError(message: string): string {
   const m = message.toLowerCase();
+  const columnMissing = m.includes('column') && m.includes('does not exist');
+
+  if (columnMissing && m.includes('provider_kind')) {
+    return '댕집사·보호맘 구분 컬럼이 DB에 없어요. Supabase → SQL Editor에서 supabase/migrations/20260421120000_certified_guard_moms_provider_kind.sql 을 실행한 뒤 다시 저장해 주세요.';
+  }
+  if (m.includes('intro_photo_urls') || (columnMissing && m.includes('intro_photo'))) {
+    return '소개 사진 컬럼이 없어요. supabase/migrations/20260424160000_certified_guard_moms_intro_photo_urls.sql 을 SQL Editor에서 실행해 주세요.';
+  }
+  if (m.includes('offers_daeng_pickup') || (columnMissing && m.includes('offers_daeng'))) {
+    return '「댕댕 픽업」 컬럼이 없어요. supabase/migrations/20260412120000_daeng_pickup.sql 을 SQL Editor에서 실행해 주세요.';
+  }
+
   const tableMissing =
     m.includes('certified_guard_moms') &&
+    !columnMissing &&
     (m.includes('could not find') ||
-      m.includes('schema cache') ||
-      m.includes('does not exist') ||
-      m.includes('relation') ||
-      m.includes('pgrst'));
+      (m.includes('relation') && m.includes('does not exist')) ||
+      (m.includes('schema cache') && m.includes('could not find')));
   if (tableMissing) {
-    return '지금은 프로필을 저장할 수 없어요. 사이트 DB에 보호맘용 테이블이 아직 없을 때 나오는 메시지예요. 배포 담당자가 Supabase → SQL Editor에서 supabase/migrations/20260411120000_guard_moms.sql 을 실행한 뒤, 20260412120000_daeng_pickup.sql 도 실행해 주세요.';
-  }
-  if (m.includes('offers_daeng_pickup') || (m.includes('column') && m.includes('does not exist'))) {
-    return '「댕댕 픽업」 저장을 위해 DB를 한 번 더 업데이트해야 해요. supabase/migrations/20260412120000_daeng_pickup.sql 을 SQL Editor에서 실행해 주세요.';
-  }
-  if (m.includes('intro_photo_urls') || (m.includes('column') && m.includes('intro_photo'))) {
-    return '소개 사진 저장을 위해 DB를 한 번 더 업데이트해야 해요. supabase/migrations/20260424160000_certified_guard_moms_intro_photo_urls.sql 을 SQL Editor에서 실행해 주세요.';
+    return '인증 돌봄 테이블을 찾을 수 없어요. Supabase → SQL Editor에서 supabase/migrations/20260411120000_guard_moms.sql 과 20260412120000_daeng_pickup.sql 을 순서대로 실행해 주세요.';
   }
   return message;
 }
