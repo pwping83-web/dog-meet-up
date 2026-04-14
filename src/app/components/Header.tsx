@@ -41,9 +41,13 @@ export function Header() {
 
           {/* 중앙: 앱 타이틀 (절대 위치로 정중앙 고정) */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <h1 className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-lg font-black tracking-tight text-transparent">
+            <Link
+              to="/explore"
+              className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-lg font-black tracking-tight text-transparent"
+              aria-label="홈으로 이동"
+            >
               댕댕마켓
-            </h1>
+            </Link>
           </div>
           
           {/* 우측: 유틸리티 아이콘 */}
