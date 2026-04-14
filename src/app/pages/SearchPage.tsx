@@ -10,6 +10,7 @@ import {
   User,
   PlusCircle,
   ChevronRight,
+  Trash2,
 } from 'lucide-react';
 import { mockRequests } from '../data/mockData';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
@@ -18,6 +19,8 @@ import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
+import { isAppAdmin } from '../../lib/appAdmin';
+import { supabase } from '../../lib/supabase';
 import { interceptGuestNav } from '../../lib/guestNavGuard';
 import { useCachedDogs } from '../../hooks/useCachedDogs';
 import { AiDoumiButton } from '../components/AiDoumiButton';
@@ -70,7 +73,8 @@ export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [showResults, setShowResults] = useState(false);
-  const { dogs: dbDogs, loading: dogsLoading } = useCachedDogs({ enabled: dogsListView });
+  const { dogs: dbDogs, loading: dogsLoading, refetch: refetchDogs } = useCachedDogs({ enabled: dogsListView });
+  const [deletingDogId, setDeletingDogId] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>(() =>
     typeof window !== 'undefined' ? readRecentFromStorage() : [...DEFAULT_RECENT],
   );
@@ -153,6 +157,26 @@ export function SearchPage() {
     setSearchQuery('');
     setShowResults(false);
   };
+
+  const handleAdminDeleteDog = useCallback(
+    async (id: string) => {
+      if (!user || !isAppAdmin(user)) return;
+      if (!window.confirm('이 댕친 프로필을 삭제할까요?')) return;
+      setDeletingDogId(id);
+      try {
+        const { error } = await supabase.from('dog_profiles').delete().eq('id', id);
+        if (error) throw error;
+        window.dispatchEvent(new CustomEvent('daeng-dogs-changed'));
+        await refetchDogs();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : '삭제에 실패했어요.';
+        alert(msg);
+      } finally {
+        setDeletingDogId(null);
+      }
+    },
+    [user, refetchDogs],
+  );
 
   return (
     <div className="min-h-screen bg-[#F5F5F7]">
@@ -240,26 +264,39 @@ export function SearchPage() {
                       photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
                       owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
                     });
+                    const dogId = String(dog.id);
                     return (
-                      <Link
+                      <div
                         key={dog.id}
-                        to={`/dog/${dog.id}`}
-                        className="block rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all active:scale-[0.98] hover:border-orange-200 hover:shadow-md"
+                        className="rounded-3xl border border-slate-100 bg-white p-4 text-center shadow-sm transition-all hover:border-orange-200 hover:shadow-md"
                       >
-                        <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner">
-                          <ImageWithFallback
-                            src={d.photoUrl}
-                            fallbackSrc={virtualDogPhotoForSeed(`search-dogs-grid-fallback-${dog.id}`)}
-                            alt={d.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <p className="truncate text-sm font-black text-slate-800">{d.name}</p>
-                        <p className="truncate text-xs font-semibold text-slate-400">
-                          {d.breed ?? ''}
-                          {d.age != null ? ` · ${d.age}살` : ''}
-                        </p>
-                      </Link>
+                        <Link to={`/dog/${dog.id}`} className="block active:scale-[0.98]">
+                          <div className="mx-auto mb-2 flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-orange-100 shadow-inner">
+                            <ImageWithFallback
+                              src={d.photoUrl}
+                              fallbackSrc={virtualDogPhotoForSeed(`search-dogs-grid-fallback-${dog.id}`)}
+                              alt={d.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <p className="truncate text-sm font-black text-slate-800">{d.name}</p>
+                          <p className="truncate text-xs font-semibold text-slate-400">
+                            {d.breed ?? ''}
+                            {d.age != null ? ` · ${d.age}살` : ''}
+                          </p>
+                        </Link>
+                        {isAppAdmin(user) && (
+                          <button
+                            type="button"
+                            onClick={() => void handleAdminDeleteDog(dogId)}
+                            disabled={deletingDogId === dogId}
+                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-red-100 bg-red-50 py-2 text-[11px] font-extrabold text-red-600 active:scale-[0.98] disabled:opacity-60"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                            {deletingDogId === dogId ? '삭제 중…' : '삭제'}
+                          </button>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -339,6 +376,7 @@ export function SearchPage() {
                     photo_url: dog.photo_url != null ? String(dog.photo_url) : null,
                     owner_avatar_url: typeof dog.owner_avatar_url === 'string' ? dog.owner_avatar_url : null,
                   });
+                  const dogId = String(dog.id);
                   return (
                     <div
                       key={dog.id}
@@ -370,6 +408,17 @@ export function SearchPage() {
                         <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
                         {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '프로필 보기'}
                       </Link>
+                      {isAppAdmin(user) && (
+                        <button
+                          type="button"
+                          onClick={() => void handleAdminDeleteDog(dogId)}
+                          disabled={deletingDogId === dogId}
+                          className="mt-2 flex w-full items-center justify-center gap-1 rounded-xl border border-red-100 bg-red-50 py-2 text-[11px] font-extrabold text-red-600 active:scale-[0.98] disabled:opacity-60"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          {deletingDogId === dogId ? '삭제 중…' : '삭제'}
+                        </button>
+                      )}
                     </div>
                   );
                 })}

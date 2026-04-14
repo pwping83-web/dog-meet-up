@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation, Link } from 'react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag, PencilLine, Trash2, Shield } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag, PencilLine, Trash2, Shield, UserPlus } from 'lucide-react';
 import { mockMeetups, mockJoinRequests, mockDogSitters } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -492,6 +492,23 @@ export function MeetupDetailPage() {
             <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /><span>{meetup.district}</span></div>
             <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /><span>{timeAgo}</span></div>
           </div>
+
+          {meetup.status === 'pending' &&
+            !isCareMeetupCategory(meetup.category) &&
+            (!user || meetup.userId !== user.id) && (
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => handleInvite({ id: '', name: '' })}
+                disabled={authLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-base font-extrabold text-white shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
+                참여하기
+              </button>
+              <p className="mt-2 text-center text-[11px] font-semibold text-slate-400">작성자와 채팅으로 일정을 맞춰요</p>
+            </div>
+          )}
 
           <div className="bg-slate-50/50 border border-slate-100 rounded-3xl p-6 text-slate-700 leading-relaxed" style={{ fontWeight: 500 }}>
             {dolbomDescriptionShown}

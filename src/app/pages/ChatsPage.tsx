@@ -1,10 +1,11 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
-import { ArrowLeft, Send, Settings2, MoreVertical, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, Settings2, MoreVertical, Loader2, LogOut, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { supabase } from '../../lib/supabase';
 import { isAuthUserUuid } from '../../lib/profileIds';
+import { getHiddenChatPeerIds, hideChatPeerId, unhideChatPeerId } from '../../lib/chatHiddenPeers';
 
 interface Chat {
   id: string;
@@ -89,7 +90,8 @@ export function ChatsPage() {
         });
       }
     }
-    const peerIds = [...byPeer.keys()];
+    const hiddenPeers = new Set(getHiddenChatPeerIds());
+    const peerIds = [...byPeer.keys()].filter((pid) => !hiddenPeers.has(pid));
     let nameById: Record<string, string> = {};
     if (peerIds.length > 0) {
       const { data: profiles } = await supabase.from('profiles').select('id,name').in('id', peerIds);
@@ -134,6 +136,14 @@ export function ChatsPage() {
   }, [loadChats]);
 
   useEffect(() => {
+    const onHidden = () => {
+      void loadChats({ silent: true });
+    };
+    window.addEventListener('daeng-chat-hidden-changed', onHidden);
+    return () => window.removeEventListener('daeng-chat-hidden-changed', onHidden);
+  }, [loadChats]);
+
+  useEffect(() => {
     if (!user?.id) return;
     const channel = supabase
       .channel(`chat-list-${user.id}`)
@@ -141,7 +151,17 @@ export function ChatsPage() {
         'postgres_changes',
         { event: '*', schema: 'public', table: 'messages' },
         (payload) => {
-          const row = payload.new as Partial<DbMessage>;
+          const row =
+            payload.eventType === 'DELETE'
+              ? (payload.old as Partial<DbMessage>)
+              : (payload.new as Partial<DbMessage>);
+          if (!row?.sender_id && !row?.receiver_id) {
+            void loadChats({ silent: true });
+            return;
+          }
+          if (payload.eventType === 'INSERT' && row.receiver_id === user.id && row.sender_id) {
+            unhideChatPeerId(String(row.sender_id));
+          }
           if (row.sender_id === user.id || row.receiver_id === user.id) {
             void loadChats({ silent: true });
           }
@@ -253,6 +273,9 @@ export function ChatDetailPage() {
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const messageBottomRef = useRef<HTMLDivElement | null>(null);
   const [hasInteractedInRoom, setHasInteractedInRoom] = useState(false);
+  const [roomMenuOpen, setRoomMenuOpen] = useState(false);
+  const [roomActionBusy, setRoomActionBusy] = useState(false);
+  const roomMenuRef = useRef<HTMLDivElement | null>(null);
 
   const peerDisplayName = useMemo(() => peerName || fallbackName || '댕친', [peerName, fallbackName]);
 
@@ -341,6 +364,24 @@ export function ChatDetailPage() {
     };
   }, [id]);
 
+  /** 프로필 등에서 다시 들어오면 목록에도 다시 보이도록 */
+  useEffect(() => {
+    const peerId = id?.trim();
+    if (!peerId || !isAuthUserUuid(peerId)) return;
+    unhideChatPeerId(peerId);
+  }, [id]);
+
+  useEffect(() => {
+    if (!roomMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (roomMenuRef.current && !roomMenuRef.current.contains(e.target as Node)) {
+        setRoomMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [roomMenuOpen]);
+
   useEffect(() => {
     void loadMessages();
     setInputText('');
@@ -406,6 +447,34 @@ export function ChatDetailPage() {
     void markPeerMessagesAsRead();
   }, [messages, hasInteractedInRoom, markPeerMessagesAsRead]);
 
+  const handleLeaveChat = () => {
+    if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
+    if (!window.confirm('채팅 목록에서 숨길까요?\n대화 내용은 그대로예요.')) return;
+    hideChatPeerId(id.trim());
+    setRoomMenuOpen(false);
+    navigate('/chats');
+  };
+
+  const handleDeleteAllMessages = async () => {
+    if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
+    if (!window.confirm('이 대화의 메시지를 모두 지울까요?\n나와 상대 모두에서 삭제돼요.')) return;
+    const peerId = id.trim();
+    setRoomActionBusy(true);
+    setRoomMenuOpen(false);
+    try {
+      const orFilter = `and(sender_id.eq.${user.id},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${user.id})`;
+      const { error } = await supabase.from('messages').delete().or(orFilter);
+      if (error) throw error;
+      setMessages([]);
+      navigate('/chats');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '삭제에 실패했어요.';
+      alert(msg);
+    } finally {
+      setRoomActionBusy(false);
+    }
+  };
+
   const handleSend = async () => {
     if (!user?.id || !id || !inputText.trim()) return;
     const peerId = id.trim();
@@ -470,9 +539,47 @@ export function ChatDetailPage() {
               <h1 className="font-extrabold text-slate-800 text-base truncate">{peerDisplayName}</h1>
             </div>
           </div>
-          <button className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-colors">
-            <MoreVertical className="w-5 h-5" />
-          </button>
+          <div className="relative" ref={roomMenuRef}>
+            <button
+              type="button"
+              onClick={() => setRoomMenuOpen((o) => !o)}
+              disabled={!user || !id || !isAuthUserUuid(id.trim()) || user.id === id.trim()}
+              className="p-2 text-slate-400 hover:text-orange-600 hover:bg-orange-50 rounded-full transition-colors disabled:opacity-40"
+              aria-expanded={roomMenuOpen}
+              aria-haspopup="menu"
+              aria-label="채팅 메뉴"
+            >
+              <MoreVertical className="w-5 h-5" />
+            </button>
+            {roomMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-2xl border border-slate-100 bg-white py-1 shadow-lg"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 active:bg-slate-100"
+                  onClick={() => {
+                    handleLeaveChat();
+                  }}
+                >
+                  <LogOut className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
+                  채팅 나가기
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={roomActionBusy}
+                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-red-600 hover:bg-red-50 active:bg-red-100 disabled:opacity-50"
+                  onClick={() => void handleDeleteAllMessages()}
+                >
+                  <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                  {roomActionBusy ? '삭제 중…' : '전체 삭제'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
