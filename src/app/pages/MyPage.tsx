@@ -1,16 +1,9 @@
 // src/app/pages/MyPage.tsx 전체 교체
-import type { ComponentType } from 'react';
 import {
   User,
-  FileText,
   MessageCircle,
-  Settings,
   ChevronRight,
-  Play,
   Shield,
-  Bell,
-  Heart,
-  Power,
   Home,
   Search,
   Sparkles,
@@ -22,6 +15,9 @@ import {
   CheckCircle2,
   Plus,
   PlusCircle,
+  PawPrint,
+  BadgeCheck,
+  Bell,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
@@ -39,8 +35,6 @@ import { supabase } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { profileAvatarAlt, profileAvatarVisual } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
-import { OwnerWeeklyAiCard } from '../components/OwnerWeeklyAiCard';
-
 export function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,9 +50,6 @@ export function MyPage() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  /** 댕집사 DB 연동 전까지 비활성 — 인증 돌봄 안내 배너 표시 */
-  const [isRepairer] = useState(false);
-  const [isActive, setIsActive] = useState(true); 
   const [dogMbtiType, setDogMbtiType] = useState<DogMbtiType | null>(null);
   const [extraCareRegions, setExtraCareRegions] = useState(() => readExtraCareRegions());
   const [extraCity, setExtraCity] = useState('');
@@ -66,6 +57,8 @@ export function MyPage() {
   const [extraHint, setExtraHint] = useState<string | null>(null);
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [profileNameFromProfile, setProfileNameFromProfile] = useState<string | null>(null);
+  /** 첫 댕댕이 프로필 썸네일(마이 섹션 2) */
+  const [dogPreview, setDogPreview] = useState<{ photo: string | null; name: string } | null>(null);
 
   /** 프로필 저장 후 auth.updateUser 시 user.updated_at이 바뀌므로 여기서 profiles를 다시 읽음 */
   useEffect(() => {
@@ -90,6 +83,34 @@ export function MyPage() {
       cancelled = true;
     };
   }, [user?.id, user?.updated_at, location.key]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setDogPreview(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from('dog_profiles')
+        .select('name, photo_url')
+        .eq('owner_id', user.id)
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) {
+        setDogPreview({
+          photo: typeof data.photo_url === 'string' ? data.photo_url.trim() || null : null,
+          name: typeof data.name === 'string' ? data.name.trim() : '',
+        });
+      } else {
+        setDogPreview(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, location.key]);
 
   const referenceDistrictsForExtras = useMemo(() => {
     const primary = userLoc.district?.trim();
@@ -145,34 +166,6 @@ export function MyPage() {
     }
   }, []);
 
-  const menuItems: Array<{
-    icon: ComponentType<{ className?: string }>;
-    label: string;
-    to: string;
-    disabled?: boolean;
-    replace?: boolean;
-  }> = [
-    { icon: User, label: '프로필 수정', to: '/profile/edit' },
-    { icon: PawTabIcon, label: '인증 돌봄 · 인증 보호맘', to: '/sitters?view=care&care=guard' },
-    ...(user && isAppAdmin(user)
-      ? [{ icon: Shield, label: '관리자 페이지', to: '/admin' as const }]
-      : []),
-    { icon: Settings, label: '설정', to: '#', disabled: true },
-    { icon: Bell, label: '알림 설정', to: '/notifications', replace: true },
-  ];
-
-  const supportItems: Array<{
-    icon: ComponentType<{ className?: string }>;
-    label: string;
-    to: string;
-    sub?: string;
-  }> = [
-    { icon: MessageCircle, label: '고객센터', sub: 'FAQ · 문의 · 개선·의견', to: '/customer-service' },
-    { icon: Power, label: '회원 탈퇴', to: '/delete-account' },
-  ];
-
-  const handleToggleActive = () => setIsActive(!isActive);
-
   const handleGpsRefresh = async () => {
     setGpsBusy(true);
     try {
@@ -200,13 +193,22 @@ export function MyPage() {
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
-          <Link
-            to="/notifications"
-            className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
-            aria-label="알림 설정"
-          >
-            <Settings className="h-6 w-6" />
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/profile/edit"
+              className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
+              aria-label="프로필 수정"
+            >
+              <User className="h-6 w-6" />
+            </Link>
+            <Link
+              to="/notifications"
+              className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
+              aria-label="알림"
+            >
+              <Bell className="h-6 w-6" />
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -308,8 +310,110 @@ export function MyPage() {
           </div>
         </div>
 
-        <OwnerWeeklyAiCard />
+        {/* 2 · 강아지 프로필(사진) · MBTI */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="flex gap-4">
+            <Link
+              to="/create-dog"
+              className="relative block h-[5.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner"
+            >
+              {dogPreview?.photo ? (
+                <ImageWithFallback
+                  src={dogPreview.photo}
+                  fallbackSrc={virtualDogPhotoForSeed(`my-dog-${user?.id ?? 'x'}`)}
+                  alt={dogPreview.name ? `${dogPreview.name} 사진` : '강아지 사진'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center text-4xl" aria-hidden>
+                  🐕
+                </span>
+              )}
+            </Link>
+            <div className="min-w-0 flex-1 space-y-2">
+              <div>
+                <p className="text-[11px] font-extrabold text-slate-500">강아지 프로필</p>
+                <p className="truncate text-base font-extrabold text-slate-900">
+                  {dogPreview?.name || '사진·이름 등록'}
+                </p>
+              </div>
+              {dogMbtiType ? (
+                <div className="flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/10 px-2.5 py-2">
+                  <span className="text-xl" aria-hidden>
+                    {dogMbtiResults[dogMbtiType].emoji}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-black text-slate-900">{dogMbtiResults[dogMbtiType].name}</p>
+                    <p className="text-[10px] font-bold text-brand">{dogMbtiType.toUpperCase()}</p>
+                  </div>
+                  <Link
+                    to="/dog-mbti-test"
+                    className="ml-auto shrink-0 rounded-lg bg-white/80 p-1.5 text-brand shadow-sm"
+                    aria-label="MBTI 다시 하기"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : (
+                <p className="text-[11px] font-semibold text-slate-500">MBTI로 성격 타입을 맞춰 보세요.</p>
+              )}
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Link
+                  to="/create-dog"
+                  className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-800"
+                >
+                  <PawPrint className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />
+                  사진·프로필
+                </Link>
+                <Link
+                  to="/dog-mbti-test"
+                  className="inline-flex items-center gap-1 rounded-xl bg-market-cta px-3 py-2 text-xs font-extrabold text-white shadow-sm"
+                >
+                  MBTI {dogMbtiType ? '업데이트' : '시작'}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        {/* 3 · 인증 보호맘 · 댕집사 신청·등록 */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="mb-3 flex items-start gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50">
+              <BadgeCheck className="h-5 w-5 text-orange-600" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-extrabold text-slate-900">인증 보호맘 · 댕집사</h3>
+              <p className="mt-0.5 text-[10px] font-semibold leading-snug text-slate-500">
+                신청 후 운영자 인증을 거쳐 노출돼요.
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link
+              to="/guard-mom/register"
+              className="flex items-center justify-between gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
+                인증 보호맘 등록
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </Link>
+            <Link
+              to="/profile/edit"
+              className="flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-800 active:scale-[0.99]"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <PawTabIcon className="h-4 w-4 shrink-0 text-brand" aria-hidden />
+                댕집사·돌봄 신청
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+            </Link>
+          </div>
+        </div>
+
+        {/* 4 · 인증 돌봄 거리 기준 */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
@@ -318,8 +422,9 @@ export function MyPage() {
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-extrabold text-slate-900">인증 돌봄 · 거리 기준</h3>
               <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600">
-                위에서 저장한 <strong className="text-slate-800">기본 동네</strong>와 아래 <strong className="text-slate-800">추가 동네</strong> 중
-                가까운 쪽으로 「모임·돌봄」 인증 돌봄 목록 거리를 계산해요.
+                위에서 저장한 <strong className="text-slate-800">기본 동네</strong>와 아래{' '}
+                <strong className="text-slate-800">추가 동네</strong> 중 가까운 쪽으로 「모임·돌봄」 인증 돌봄 목록
+                거리를 계산해요.
               </p>
             </div>
           </div>
@@ -345,7 +450,7 @@ export function MyPage() {
               {extraCareRegions.map((ex) => (
                 <li
                   key={ex.id}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 pl-3 pr-1 py-1 text-[11px] font-bold text-slate-800"
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
                 >
                   {formatRegion(ex.city, ex.district)}
                   <button
@@ -360,296 +465,31 @@ export function MyPage() {
               ))}
             </ul>
           )}
-          <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
-            <Link
-              to="/guard-mom/register"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 py-3 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
-            >
-              <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
-              인증 보호맘 등록
-            </Link>
-            <Link
-              to="/billing"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 py-3 text-sm font-extrabold text-slate-800 active:scale-[0.99]"
-            >
-              <PawTabIcon className="h-4 w-4 shrink-0 text-brand" aria-hidden />
-              인증 돌봄 · 목록 노출
-            </Link>
-          </div>
         </div>
 
-        {/* 강아지 MBTI 섹션 */}
-        {dogMbtiType ? (
-          <div className="rounded-3xl border-2 border-brand/25 bg-gradient-to-br from-brand-soft via-white to-brand-muted p-6 shadow-md">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="text-4xl">{dogMbtiResults[dogMbtiType].emoji}</div>
-                <div>
-                  <h3 className="text-lg font-black text-slate-900">{dogMbtiResults[dogMbtiType].name}</h3>
-                  <p className="text-sm font-bold text-brand">{dogMbtiType.toUpperCase()} 타입</p>
-                </div>
-              </div>
-              <Link
-                to="/dog-mbti-test"
-                className="rounded-xl bg-white/60 p-2 transition-colors hover:bg-white"
-              >
-                <Sparkles className="h-5 w-5 text-brand" />
-              </Link>
-            </div>
-            <p className="text-sm text-slate-600 leading-relaxed mb-4">
-              {dogMbtiResults[dogMbtiType].description}
-            </p>
-            <div className="flex flex-wrap gap-2 mb-4">
-              {dogMbtiResults[dogMbtiType].traits.map((trait) => (
-                <span
-                  key={trait}
-                  className="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-brand"
-                >
-                  {trait}
-                </span>
-              ))}
-            </div>
-            <Link
-              to="/create-dog"
-              className="block w-full rounded-xl bg-market-cta py-3 text-center text-sm font-bold text-white shadow-market transition-all hover:opacity-[0.92]"
-            >
-              프로필 업데이트하기 🐾
-            </Link>
-          </div>
-        ) : (
-          <div className="rounded-3xl border-2 border-dashed border-brand/30 bg-gradient-to-br from-brand-soft to-brand-muted p-6 text-center">
-            <div className="text-5xl mb-4">🐕</div>
-            <h3 className="font-black text-lg text-slate-900 mb-2">우리 강아지 성격은?</h3>
-            <p className="text-sm text-slate-600 mb-5">
-              MBTI 테스트로 우리 강아지에게<br />
-              딱 맞는 친구를 찾아보세요!
-            </p>
-            <Link
-              to="/dog-mbti-test"
-              className="inline-block rounded-xl bg-market-cta px-6 py-3 text-sm font-bold text-white shadow-market-lg transition-all hover:opacity-[0.92] active:scale-95"
-            >
-              강아지 MBTI 테스트 시작 🎯
-            </Link>
-          </div>
+        {user && isAppAdmin(user) && (
+          <Link
+            to="/admin"
+            className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-extrabold text-slate-800 shadow-sm"
+          >
+            <span className="flex items-center gap-2">
+              <Shield className="h-4 w-4 text-brand" aria-hidden />
+              관리자 페이지
+            </span>
+            <ChevronRight className="h-4 w-4 text-slate-300" />
+          </Link>
         )}
-
-        {/* 인증 돌봄(댕집사): 주인 집 방문 돌봄 의뢰 — 모임 글과 무관 */}
-        {isRepairer && (
-          <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
-            <div className="mb-5 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10">
-                  <Heart className="h-6 w-6 fill-brand text-brand" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-800">인증 돌봄(댕집사)</h3>
-                  <p className="mt-0.5 text-xs font-bold text-slate-500">
-                    {isActive
-                      ? '주인 집 방문 돌봄·산책 의뢰를 받고 있어요'
-                      : '방문 돌봄 의뢰 받기를 쉬는 중이에요'}
-                  </p>
-                </div>
-              </div>
-              
-              {/* iOS 스타일 토글 스위치 */}
-              <button
-                onClick={handleToggleActive}
-                className={`relative h-8 w-14 rounded-full transition-all duration-300 ${isActive ? 'bg-market-cta shadow-inner' : 'bg-slate-200'}`}
-              >
-                <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${isActive ? 'translate-x-6' : 'translate-x-0'}`} />
-              </button>
-            </div>
-
-            {/* 활동 상태 뱃지 */}
-            <div
-              className={`rounded-2xl border px-4 py-3.5 text-sm transition-colors ${isActive ? 'border-brand/20 bg-brand/10' : 'border border-slate-100 bg-slate-50'}`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`h-2.5 w-2.5 rounded-full ${isActive ? 'animate-pulse bg-yellow-300' : 'bg-slate-400'}`} />
-                <div>
-                  <p className={`font-bold ${isActive ? 'text-slate-800' : 'text-slate-600'}`}>
-                    {isActive ? '지금 방문 돌봄 의뢰를 받을 수 있어요 🐕' : '방문 돌봄 접수를 잠시 멈췄어요'}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* 통계 그리드 */}
-            <div className="grid grid-cols-3 gap-3 mt-5 pt-5 border-t border-slate-100">
-              <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-brand">12</p>
-                <p className="mt-1 text-[10px] font-bold text-slate-400">들어온 돌봄</p>
-              </div>
-              <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-brand">8</p>
-                <p className="mt-1 text-[10px] font-bold text-slate-400">완료 돌봄</p>
-              </div>
-              <div className="text-center bg-slate-50 py-3 rounded-2xl">
-                <p className="text-xl font-black text-amber-500">4.8</p>
-                <p className="text-[10px] font-bold text-slate-400 mt-1">평균 평점</p>
-              </div>
-            </div>
-
-            <Link
-              to="/sitter/r1"
-              className="mt-4 block w-full rounded-2xl border-2 border-brand/30 bg-brand-soft py-3.5 text-center text-sm font-bold text-brand shadow-sm underline decoration-brand decoration-2 underline-offset-4 transition-colors hover:border-brand/40 hover:bg-brand/10"
-            >
-              내 프로필 미리보기
-            </Link>
-          </div>
-        )}
-
-        <div>
-          <p className="mb-2 px-1 text-xs font-extrabold text-slate-500">내 활동</p>
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            <Link
-              to="/my/meetups"
-              className="group flex items-center justify-between border-b border-slate-100 p-4 transition-colors hover:bg-slate-50"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
-                  <FileText className="h-[18px] w-[18px] text-brand" />
-                </div>
-                <span className="text-sm font-bold text-slate-900">모이자·만나자 글</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-brand">
-                  3건
-                </span>
-                <ChevronRight className="h-4 w-4 text-slate-300" />
-              </div>
-            </Link>
-            <Link
-              to="/my/join-requests"
-              className="group flex items-center justify-between border-b border-slate-100 p-4 transition-colors hover:bg-slate-50"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
-                  <MessageCircle className="h-[18px] w-[18px] text-brand" />
-                </div>
-                <span className="text-sm font-bold text-slate-900">받은 참여 신청</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-bold text-brand">
-                  5건
-                </span>
-                <ChevronRight className="h-4 w-4 text-slate-300" />
-              </div>
-            </Link>
-            <Link
-              to="/billing"
-              className="group flex items-center justify-between p-4 transition-colors hover:bg-slate-50"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 transition-all group-hover:bg-brand/15">
-                  <PawTabIcon className="h-[18px] w-[18px] text-brand" />
-                </div>
-                <span className="text-sm font-bold text-slate-900">인증 돌봄 · 목록 노출</span>
-              </div>
-              <ChevronRight className="h-4 w-4 text-slate-300" />
-            </Link>
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 px-1 text-xs font-extrabold text-slate-500">설정</p>
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            {menuItems.map((item, index) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                replace={item.replace === true}
-                className={`group flex w-full items-center justify-between p-4 transition-colors hover:bg-slate-50 ${
-                  index !== menuItems.length - 1 ? 'border-b border-slate-100' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 transition-all group-hover:bg-brand/10">
-                    <item.icon className="h-[18px] w-[18px] text-slate-600 transition-colors group-hover:text-brand" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-900">{item.label}</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-300" />
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="mb-2 px-1 text-xs font-extrabold text-slate-500">고객지원</p>
-          <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-            {supportItems.map((item, index) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                className={`group flex w-full items-center justify-between p-4 transition-colors hover:bg-slate-50 ${
-                  index !== supportItems.length - 1 ? 'border-b border-slate-100' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      item.label === '회원 탈퇴' ? 'bg-red-50' : 'bg-slate-100 group-hover:bg-brand/10'
-                    }`}
-                  >
-                    <item.icon
-                      className={`h-[18px] w-[18px] ${
-                        item.label === '회원 탈퇴'
-                          ? 'text-red-500'
-                          : 'text-slate-600 group-hover:text-brand'
-                      } transition-colors`}
-                    />
-                  </div>
-                  <div className="min-w-0 text-left">
-                    <span
-                      className={`block text-sm font-bold ${
-                        item.label === '회원 탈퇴' ? 'text-red-500' : 'text-slate-900'
-                      }`}
-                    >
-                      {item.label}
-                    </span>
-                    {item.sub ? (
-                      <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">{item.sub}</span>
-                    ) : null}
-                  </div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-300" />
-              </Link>
-            ))}
-          </div>
-        </div>
 
         {user && (
           <button
             type="button"
             onClick={() => void handleLogout()}
             disabled={loggingOut}
-            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-slate-200 bg-white font-bold text-sm text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-colors disabled:opacity-50 shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-600 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
           >
-            <LogOut className="w-5 h-5 shrink-0" />
+            <LogOut className="h-5 w-5 shrink-0" />
             {loggingOut ? '로그아웃 중…' : '로그아웃'}
           </button>
-        )}
-
-        {/* 인증 돌봄(댕집사) 등록 배너 */}
-        {!isRepairer && (
-          <Link
-            to="/sitters?view=care&care=guard"
-            className="group relative block overflow-hidden rounded-3xl bg-market-header p-6 text-white shadow-market-lg transition-all active:scale-[0.99]"
-          >
-            <div className="relative z-10">
-              <h3 className="mb-1.5 flex items-center gap-2 text-xl font-extrabold">
-                인증 돌봄 살펴보기 <Play className="h-4 w-4 fill-white" />
-              </h3>
-              <p className="mb-5 text-sm font-medium text-white/85">
-                인증 보호맘은 프로필 등록 후 운영자 인증을 거쳐요. 댕집사(방문 돌봄) 목록은 탭에서 확인할 수 있어요.
-              </p>
-              <div className="inline-block rounded-xl bg-white/20 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-md transition-colors group-hover:bg-white group-hover:text-brand">
-                인증 돌봄 탭으로 이동
-              </div>
-            </div>
-            <Heart className="absolute -right-4 -bottom-4 w-32 h-32 text-white opacity-10 transform -rotate-12 fill-white" />
-          </Link>
         )}
         
       </div>
