@@ -187,18 +187,6 @@ export function DogProfilePublicPage() {
                     채팅은 보호자 연결 후 가능해요
                   </span>
                 )}
-                <Link
-                  to="/sitters"
-                  className="flex-1 rounded-2xl border-2 border-orange-200 bg-white py-3.5 text-center text-sm font-extrabold text-orange-700 active:scale-[0.99]"
-                >
-                  모임·댕친 보러가기
-                </Link>
-                <Link
-                  to="/create-meetup"
-                  className="flex-1 rounded-2xl border-2 border-orange-200 bg-white py-3.5 text-center text-sm font-extrabold text-orange-700 active:scale-[0.99]"
-                >
-                  글 올리기
-                </Link>
               </div>
               {isOwner && (
                 <button
