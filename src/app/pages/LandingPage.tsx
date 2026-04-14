@@ -846,14 +846,6 @@ export function LandingPage() {
                 마이페이지
               </Link>
               <Link
-                to="/profile/edit"
-                onClick={closeExploreMenu}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
-              >
-                <Settings className="h-5 w-5 text-slate-500" />
-                프로필 · 계정 설정
-              </Link>
-              <Link
                 to="/notifications"
                 replace
                 onClick={closeExploreMenu}

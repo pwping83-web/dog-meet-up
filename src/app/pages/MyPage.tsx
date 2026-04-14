@@ -35,6 +35,19 @@ import { supabase } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { profileAvatarAlt, profileAvatarVisual } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+
+function formatKoreanMobileDigits(raw: string): string {
+  const d = raw.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 3) return d;
+  if (d.length <= 7) return `${d.slice(0, 3)}-${d.slice(3)}`;
+  return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+}
+
+function phoneDigitsOk(digits: string): boolean {
+  if (digits.length === 0) return true;
+  return digits.length >= 10 && digits.length <= 11;
+}
+
 export function MyPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -57,6 +70,8 @@ export function MyPage() {
   const [extraHint, setExtraHint] = useState<string | null>(null);
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [profileNameFromProfile, setProfileNameFromProfile] = useState<string | null>(null);
+  const [profilePhone, setProfilePhone] = useState('');
+  const [phoneSaving, setPhoneSaving] = useState(false);
   /** 첫 댕댕이 프로필 썸네일(마이 섹션 2) */
   const [dogPreview, setDogPreview] = useState<{ photo: string | null; name: string } | null>(null);
 
@@ -65,18 +80,20 @@ export function MyPage() {
     if (!user?.id) {
       setProfileAvatarUrl(null);
       setProfileNameFromProfile(null);
+      setProfilePhone('');
       return;
     }
     let cancelled = false;
     void (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('avatar_url, name')
+        .select('avatar_url, name, phone')
         .eq('id', user.id)
         .maybeSingle();
       if (!cancelled) {
         setProfileAvatarUrl(data?.avatar_url?.trim() ?? null);
         setProfileNameFromProfile(data?.name?.trim() ?? null);
+        setProfilePhone(data?.phone?.trim() ? formatKoreanMobileDigits(data.phone) : '');
       }
     })();
     return () => {
@@ -185,6 +202,42 @@ export function MyPage() {
     ? (profileNameFromProfile?.trim() || displayNameFromUser(user))
     : '로그인 후 이용';
   const headerAvatar = profileAvatarVisual(profileAvatarUrl);
+  const phoneDigits = profilePhone.replace(/\D/g, '');
+  const phoneOk = phoneDigitsOk(phoneDigits);
+
+  const handleSavePhone = async () => {
+    if (!user?.id) {
+      alert('로그인 후 저장할 수 있어요.');
+      return;
+    }
+    if (!phoneDigits.length) {
+      alert('전화번호를 입력해 주세요.');
+      return;
+    }
+    if (!phoneOk) {
+      alert('전화번호는 10~11자리 숫자로 입력해 주세요. (예: 010-1234-5678)');
+      return;
+    }
+    setPhoneSaving(true);
+    try {
+      const { error } = await supabase.from('profiles').upsert(
+        {
+          id: user.id,
+          name: profileName,
+          phone: formatKoreanMobileDigits(phoneDigits),
+          avatar_url: profileAvatarUrl,
+        },
+        { onConflict: 'id' },
+      );
+      if (error) {
+        alert(error.message || '저장에 실패했습니다.');
+        return;
+      }
+      alert('전화번호를 저장했어요.');
+    } finally {
+      setPhoneSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -194,13 +247,6 @@ export function MyPage() {
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
           <div className="flex items-center gap-1">
-            <Link
-              to="/profile/edit"
-              className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
-              aria-label="프로필 수정"
-            >
-              <User className="h-6 w-6" />
-            </Link>
             <Link
               to="/notifications"
               className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
@@ -306,6 +352,32 @@ export function MyPage() {
                 )}
                 {gpsBusy ? '현재 위치 확인 중…' : '현재 위치로 동네 다시 맞추기'}
               </button>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+                <label className="mb-1.5 block text-[11px] font-extrabold text-slate-700">전화번호</label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  placeholder="010-0000-0000"
+                  value={profilePhone}
+                  onChange={(e) => setProfilePhone(formatKoreanMobileDigits(e.target.value))}
+                  disabled={!user}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 placeholder:text-slate-400 focus:border-brand focus:outline-none"
+                />
+                <div className="mt-2 flex items-center justify-between gap-2">
+                  <p className={`text-[10px] font-semibold ${phoneOk ? 'text-slate-500' : 'text-red-500'}`}>
+                    연락 가능한 번호를 저장해 주세요.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={!user || phoneSaving}
+                    onClick={() => void handleSavePhone()}
+                    className="rounded-lg bg-slate-900 px-3 py-1.5 text-[11px] font-extrabold text-white disabled:opacity-50"
+                  >
+                    {phoneSaving ? '저장 중…' : '저장'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -389,28 +461,16 @@ export function MyPage() {
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link
-              to="/guard-mom/register"
-              className="flex items-center justify-between gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
-                인증 보호맘 등록
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-            </Link>
-            <Link
-              to="/profile/edit"
-              className="flex items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-sm font-extrabold text-slate-800 active:scale-[0.99]"
-            >
-              <span className="flex items-center gap-2 min-w-0">
-                <PawTabIcon className="h-4 w-4 shrink-0 text-brand" aria-hidden />
-                댕집사·돌봄 신청
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-            </Link>
-          </div>
+          <Link
+            to="/guard-mom/register"
+            className="flex items-center justify-between gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
+          >
+            <span className="flex items-center gap-2 min-w-0">
+              <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
+              신청하기
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+          </Link>
         </div>
 
         {/* 4 · 인증 돌봄 거리 기준 */}
