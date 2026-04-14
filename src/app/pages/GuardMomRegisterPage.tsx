@@ -12,11 +12,13 @@ import {
   Shield,
   Eye,
   EyeOff,
+  LocateFixed,
 } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserLocation } from '../../contexts/UserLocationContext';
 import { startStripeCheckout } from '../../lib/billing';
 import { PROMO_FREE_LAUNCH_TITLE, usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
@@ -78,6 +80,7 @@ export function GuardMomRegisterPage() {
   const [searchParams] = useSearchParams();
   const promoFree = usePromoFreeListings();
   const { user, loading: authLoading } = useAuth();
+  const { applyGpsLocation, locationBasedEnabled, regionFullLabel } = useUserLocation();
   const [careRole, setCareRole] = useState<'guard_mom' | 'sitter'>(() => {
     if (searchParams.get('role') === 'sitter') return 'sitter';
     if (readCareProviderTrack() === 'sitter_only') return 'sitter';
@@ -99,6 +102,28 @@ export function GuardMomRegisterPage() {
   const [sitterSaving, setSitterSaving] = useState(false);
   const [sitterSaveOk, setSitterSaveOk] = useState(false);
   const [introPhotoUrls, setIntroPhotoUrls] = useState<string[]>([]);
+  const [regionGpsBusy, setRegionGpsBusy] = useState(false);
+
+  const handleFindCurrentLocation = async () => {
+    if (!locationBasedEnabled) {
+      alert('하단 「위치」탭에서 위치 기반을 켠 뒤, 다시 「현재 위치 찾기」를 눌러 주세요.');
+      return;
+    }
+    setRegionGpsBusy(true);
+    try {
+      const snap = await applyGpsLocation();
+      const guLine = [snap.district, snap.dong].filter(Boolean).join(' ').trim() || snap.district;
+      if (careRole === 'guard_mom') {
+        setRegionSi(snap.city);
+        setRegionGu(guLine);
+      }
+      setSaveErr(null);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : '위치를 확인할 수 없어요.');
+    } finally {
+      setRegionGpsBusy(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!user) {
@@ -490,6 +515,27 @@ export function GuardMomRegisterPage() {
                     disabled={saving}
                     hint="집·산책 환경 등, 맡기는 분이 볼 수 있어요. 대표 1장만."
                   />
+                  <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/90 px-3 py-2.5">
+                    <p className="text-[11px] font-bold text-slate-600">돌봄 지역</p>
+                    <button
+                      type="button"
+                      disabled={saving || regionGpsBusy}
+                      onClick={() => void handleFindCurrentLocation()}
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-xs font-extrabold text-white shadow-sm transition-opacity active:scale-[0.99] disabled:opacity-50"
+                    >
+                      <LocateFixed className="h-4 w-4 shrink-0" aria-hidden />
+                      {regionGpsBusy ? '위치 확인 중…' : '현재 위치 찾기'}
+                    </button>
+                    <p className="mt-2 text-center text-[11px] font-semibold text-slate-700">
+                      {locationBasedEnabled ? (
+                        <>
+                          지금 맞춰진 동네: <span className="font-extrabold text-slate-900">{regionFullLabel}</span>
+                        </>
+                      ) : (
+                        <span className="text-amber-800">위치 기반이 꺼져 있으면 GPS로 찾을 수 없어요.</span>
+                      )}
+                    </p>
+                  </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <label className="block text-xs font-extrabold text-slate-700">
                       시·도
@@ -639,6 +685,27 @@ export function GuardMomRegisterPage() {
                       className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
                     />
                   </label>
+                  <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/90 px-3 py-2.5">
+                    <p className="text-[11px] font-bold text-slate-600">방문 지역은 프로필 동네를 써요</p>
+                    <button
+                      type="button"
+                      disabled={sitterSaving || regionGpsBusy}
+                      onClick={() => void handleFindCurrentLocation()}
+                      className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-2.5 text-xs font-extrabold text-white shadow-sm transition-opacity active:scale-[0.99] disabled:opacity-50"
+                    >
+                      <LocateFixed className="h-4 w-4 shrink-0" aria-hidden />
+                      {regionGpsBusy ? '위치 확인 중…' : '현재 위치 찾기'}
+                    </button>
+                    <p className="mt-2 text-center text-[11px] font-semibold text-slate-700">
+                      {locationBasedEnabled ? (
+                        <>
+                          지금 맞춰진 동네: <span className="font-extrabold text-slate-900">{regionFullLabel}</span>
+                        </>
+                      ) : (
+                        <span className="text-amber-800">위치 기반이 꺼져 있으면 GPS로 찾을 수 없어요.</span>
+                      )}
+                    </p>
+                  </div>
                   <CareIntroPhotoPicker
                     userId={user.id}
                     urls={introPhotoUrls}
