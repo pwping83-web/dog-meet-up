@@ -9,6 +9,7 @@ import {
   type KakaoMap,
 } from '../../lib/kakaoMaps';
 import { getCurrentBrowserPosition } from '../../lib/browserGeolocation';
+import { formatRegionInline } from '../data/regions';
 
 type Props = {
   open: boolean;
@@ -32,6 +33,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
   const [selCity, setSelCity] = useState(location.city);
   const [selDistrict, setSelDistrict] = useState(location.district);
+  const currentFullLabel = formatRegionInline(location.city, location.district, location.dong);
   const selCityRef = useRef(selCity);
   selCityRef.current = selCity;
 
@@ -229,6 +231,10 @@ export function LocationPickerModal({ open, onClose }: Props) {
             </p>
           )}
 
+          <p className="rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700">
+            현재 저장된 위치: <span className="font-extrabold">{currentFullLabel || '지역 미설정'}</span>
+          </p>
+
           {/* 카카오/키 관련 설명은 고객 화면에 노출하지 않음 — 로컬 개발 시에만 힌트 */}
           {import.meta.env.DEV && !hasKey && (
             <p className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-2.5 py-1.5 font-mono text-[10px] text-amber-900">
@@ -283,7 +289,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
           <div
             className={`border-t border-slate-100 pt-4 ${!locationBasedEnabled ? 'rounded-2xl bg-slate-50/40 px-1' : ''}`}
           >
-            <p className="mb-2 text-xs font-bold text-slate-500">또는 시·구 선택</p>
+            <p className="mb-2 text-xs font-bold text-slate-500">또는 시·구(동) 선택</p>
             <button
               type="button"
               disabled={busy !== null || !locationBasedEnabled}
@@ -291,7 +297,7 @@ export function LocationPickerModal({ open, onClose }: Props) {
               className="mb-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-transform active:scale-[0.99] disabled:opacity-50"
             >
               <LocateFixed className="h-5 w-5 shrink-0" aria-hidden />
-              {busy === 'findMe' ? '현재 위치 확인 중…' : '현재 위치로 시·구 맞추기'}
+              {busy === 'findMe' ? '현재 위치 확인 중…' : '현재 위치로 시·구·동 맞추기'}
             </button>
             <RegionSelector
               layout="modal"

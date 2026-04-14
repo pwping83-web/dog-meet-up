@@ -5,6 +5,8 @@ const STORAGE_KEY = 'daeng-user-meetups-v1';
 const MAX_STORED = 50;
 const ADMIN_DELETED_IDS_KEY = 'daeng-admin-deleted-meetup-ids-v1';
 const ADMIN_OVERRIDE_KEY = 'daeng-admin-meetup-overrides-v1';
+const TEMP_FIXED_MEETUP_LOCATION = '경기 안양시 동안구 관양동';
+const TEMP_FIXED_MEETUP_DISTRICT = '안양시 동안구 관양동';
 
 function reviveMeetup(row: Record<string, unknown>): Meetup | null {
   if (typeof row.id !== 'string' || typeof row.title !== 'string' || typeof row.category !== 'string') return null;
@@ -243,6 +245,12 @@ export function getMergedMeetups(mock: Meetup[]): Meetup[] {
     .map((m) => mergeMeetupWithOverride(m, m.id));
   const userMapped = user.map((m) => mergeMeetupWithOverride(m, m.id));
   return [...userMapped, ...rest]
+    .map((m) => ({
+      ...m,
+      // 요청: 모이자·만나자·돌봄 포함 모든 글 위치를 관양동 기준으로 통일(임시)
+      location: TEMP_FIXED_MEETUP_LOCATION,
+      district: TEMP_FIXED_MEETUP_DISTRICT,
+    }))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .map(enrichMeetupWithVirtualDogCover);
 }

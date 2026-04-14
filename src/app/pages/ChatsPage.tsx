@@ -52,14 +52,17 @@ export function ChatsPage() {
     }
   }, []);
 
-  const loadChats = useCallback(async () => {
+  const loadChats = useCallback(async (opts?: { silent?: boolean }) => {
+    const silent = Boolean(opts?.silent);
     if (!user?.id) {
       setChats([]);
       setLoading(false);
       return;
     }
-    setLoading(true);
-    setErr(null);
+    if (!silent) {
+      setLoading(true);
+      setErr(null);
+    }
     const { data, error } = await supabase
       .from('messages')
       .select('id, created_at, sender_id, receiver_id, content, read')
@@ -68,8 +71,8 @@ export function ChatsPage() {
       .limit(500);
     if (error) {
       setErr(error.message);
-      setChats([]);
-      setLoading(false);
+      if (!silent) setChats([]);
+      if (!silent) setLoading(false);
       return;
     }
     const rows = (data ?? []) as DbMessage[];
@@ -109,8 +112,21 @@ export function ChatsPage() {
         const bTs = byPeer.get(b.id)?.last.created_at ?? '';
         return new Date(bTs).getTime() - new Date(aTs).getTime();
       });
-    setChats(nextChats);
-    setLoading(false);
+    setChats((prev) => {
+      if (prev.length === nextChats.length) {
+        const same = prev.every(
+          (row, i) =>
+            row.id === nextChats[i]?.id &&
+            row.name === nextChats[i]?.name &&
+            row.lastMessage === nextChats[i]?.lastMessage &&
+            row.timestamp === nextChats[i]?.timestamp &&
+            row.unreadCount === nextChats[i]?.unreadCount,
+        );
+        if (same) return prev;
+      }
+      return nextChats;
+    });
+    if (!silent) setLoading(false);
   }, [user?.id]);
 
   useEffect(() => {
@@ -127,7 +143,7 @@ export function ChatsPage() {
         (payload) => {
           const row = payload.new as Partial<DbMessage>;
           if (row.sender_id === user.id || row.receiver_id === user.id) {
-            void loadChats();
+            void loadChats({ silent: true });
           }
         },
       )
@@ -141,7 +157,7 @@ export function ChatsPage() {
   useEffect(() => {
     if (!user?.id) return;
     const timer = window.setInterval(() => {
-      void loadChats();
+      void loadChats({ silent: true });
     }, 4000);
     return () => window.clearInterval(timer);
   }, [user?.id, loadChats]);
@@ -236,8 +252,20 @@ export function ChatDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const messageScrollRef = useRef<HTMLDivElement | null>(null);
   const messageBottomRef = useRef<HTMLDivElement | null>(null);
+  const [hasInteractedInRoom, setHasInteractedInRoom] = useState(false);
 
   const peerDisplayName = useMemo(() => peerName || fallbackName || '댕친', [peerName, fallbackName]);
+
+  const markPeerMessagesAsRead = useCallback(async () => {
+    if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
+    const peerId = id.trim();
+    await supabase
+      .from('messages')
+      .update({ read: true })
+      .eq('sender_id', peerId)
+      .eq('receiver_id', user.id)
+      .eq('read', false);
+  }, [user?.id, id]);
 
   const loadMessages = useCallback(async (opts?: { silent?: boolean }) => {
     const silent = Boolean(opts?.silent);
@@ -295,12 +323,6 @@ export function ChatDetailPage() {
       }
       return nextMessages;
     });
-    await supabase
-      .from('messages')
-      .update({ read: true })
-      .eq('sender_id', peerId)
-      .eq('receiver_id', user.id)
-      .eq('read', false);
     if (!silent) setLoading(false);
   }, [user?.id, id]);
 
@@ -350,9 +372,6 @@ export function ChatDetailPage() {
               },
             ];
           });
-          if (row.sender_id === peerId) {
-            void supabase.from('messages').update({ read: true }).eq('id', row.id);
-          }
         },
       )
       .subscribe();
@@ -373,6 +392,19 @@ export function ChatDetailPage() {
   useEffect(() => {
     messageBottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length]);
+
+  useEffect(() => {
+    setHasInteractedInRoom(false);
+  }, [id]);
+
+  useEffect(() => {
+    if (!hasInteractedInRoom) return;
+    const el = messageScrollRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= 44;
+    if (!nearBottom) return;
+    void markPeerMessagesAsRead();
+  }, [messages, hasInteractedInRoom, markPeerMessagesAsRead]);
 
   const handleSend = async () => {
     if (!user?.id || !id || !inputText.trim()) return;
@@ -456,7 +488,13 @@ export function ChatDetailPage() {
         </div>
       )}
 
-      <div ref={messageScrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div
+        ref={messageScrollRef}
+        onScroll={() => setHasInteractedInRoom(true)}
+        onTouchStart={() => setHasInteractedInRoom(true)}
+        onMouseDown={() => setHasInteractedInRoom(true)}
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
         {authLoading || loading ? (
           <div className="flex justify-center py-16 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin" />
