@@ -137,6 +137,15 @@ export function ChatsPage() {
     };
   }, [user?.id, loadChats]);
 
+  /** Realtime 누락/지연 대비: 목록은 짧은 주기 재동기화 */
+  useEffect(() => {
+    if (!user?.id) return;
+    const timer = window.setInterval(() => {
+      void loadChats();
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [user?.id, loadChats]);
+
   return (
     <div className="min-h-screen bg-slate-50/50">
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-100 z-50">
@@ -335,6 +344,15 @@ export function ChatDetailPage() {
       void supabase.removeChannel(channel);
     };
   }, [user?.id, id]);
+
+  /** Realtime 누락/지연 대비: 채팅방은 더 촘촘히 재동기화 */
+  useEffect(() => {
+    if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
+    const timer = window.setInterval(() => {
+      void loadMessages();
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [user?.id, id, loadMessages]);
 
   const handleSend = async () => {
     if (!user?.id || !id || !inputText.trim()) return;
