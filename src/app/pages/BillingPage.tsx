@@ -7,7 +7,13 @@ import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BILLING_PRODUCTS, startStripeCheckout, type BillingProductKey } from '../../lib/billing';
-import { usePromoFreeListings } from '../../lib/promoFlags';
+import {
+  BILLING_GUARD_LISTING_EYEBROW,
+  PROMO_FREE_CERTIFIED_GUARD_NOTE,
+  PROMO_FREE_LAUNCH_BLURB,
+  PROMO_FREE_LAUNCH_TITLE,
+  usePromoFreeListings,
+} from '../../lib/promoFlags';
 import { BILLING_LEGAL_NOTICE_PARAGRAPH } from '../../lib/platformLegalCopy';
 
 type OrderRow = {
@@ -184,11 +190,8 @@ export function BillingPage() {
 
         {promoFree && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm font-semibold leading-relaxed text-emerald-950">
-            <p className="text-center font-extrabold">🎉 현재 런칭 기념 무료 노출 프로모션 중입니다!</p>
-            <p className="mt-2 text-xs font-semibold">
-              인증만 완료되면 인증 돌봄 목록에 바로 노출돼요. 교배 글도 같은 기간 동안 무료로 피드에 올라갈 수 있어요. 정책이
-              바뀌면 사전에 안내할게요.
-            </p>
+            <p className="text-center font-extrabold">{PROMO_FREE_LAUNCH_TITLE}</p>
+            <p className="mt-2 text-center text-xs font-semibold">{PROMO_FREE_LAUNCH_BLURB}</p>
           </div>
         )}
 
@@ -215,7 +218,7 @@ export function BillingPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-brand">
-                    인증 돌봄 목록 노출
+                    {BILLING_GUARD_LISTING_EYEBROW}
                   </p>
                   <p className="mt-1 text-lg font-black text-slate-900">
                     {listingActive ? '노출 중' : '미노출'}
@@ -239,9 +242,7 @@ export function BillingPage() {
                     </p>
                   )}
                   {!listingVisibleUntil && promoFree && guardCertified && (
-                    <p className="mt-1 text-xs font-medium text-slate-500">
-                      인증이 완료된 보호맘은 지금 무료로 목록에 노출돼요. 이후 정책이 바뀌면 안내드릴게요.
-                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">{PROMO_FREE_CERTIFIED_GUARD_NOTE}</p>
                   )}
                 </div>
               </div>
@@ -260,7 +261,15 @@ export function BillingPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm leading-relaxed text-slate-600">{guardMomProduct.description}</p>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-relaxed text-slate-600">
+                  <span className="min-w-0">{guardMomProduct.description}</span>
+                  <Link
+                    to="/customer-service#legal"
+                    className="shrink-0 font-extrabold text-brand underline decoration-brand/40 underline-offset-2"
+                  >
+                    법적 고지 보기
+                  </Link>
+                </div>
                 {promoFree ? (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50/80 py-3.5 text-center text-sm font-extrabold text-emerald-900">
                     한시적 무료 — 인증 완료 시 목록 노출

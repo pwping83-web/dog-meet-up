@@ -60,3 +60,11 @@ export function showCertifiedGuardMomDemosWhenEmpty(): boolean {
   if (v === 'false' || v === '0') return false;
   return Boolean(import.meta.env.DEV);
 }
+
+/** 런칭 무료 노출 프로모 — 짧은 안내 카피 */
+export const PROMO_FREE_LAUNCH_TITLE = '🎉 런칭 기념 · 무료 노출 중';
+export const PROMO_FREE_LAUNCH_BLURB = '인증 후 돌봄 목록·교배 글 무료 노출. 정책 바뀌면 미리 안내합니다.';
+
+/** 결제·내 구독 화면 — 인증 돌봄 노출 카드 라벨·프로모 시 안내 */
+export const BILLING_GUARD_LISTING_EYEBROW = '인증 돌봄 노출';
+export const PROMO_FREE_CERTIFIED_GUARD_NOTE = '목록 무료 노출 중. 정책 바뀌면 안내합니다.';

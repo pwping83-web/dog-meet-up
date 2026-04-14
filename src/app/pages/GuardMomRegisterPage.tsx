@@ -18,7 +18,7 @@ import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { startStripeCheckout } from '../../lib/billing';
-import { usePromoFreeListings } from '../../lib/promoFlags';
+import { PROMO_FREE_LAUNCH_TITLE, usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { readCareProviderTrack, writeCareProviderTrack } from '../../lib/careProviderTrack';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
@@ -298,7 +298,7 @@ export function GuardMomRegisterPage() {
               <>
                 {promoFree && (
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-3 text-center text-sm font-extrabold leading-snug text-emerald-950">
-                    🎉 현재 런칭 기념 무료 노출 프로모션 중입니다!
+                    {PROMO_FREE_LAUNCH_TITLE}
                   </div>
                 )}
 
