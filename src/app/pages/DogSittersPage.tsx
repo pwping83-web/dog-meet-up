@@ -33,6 +33,34 @@ type TopTab = 'moija' | 'mannaja' | 'certified';
 
 type CombinedRow = CombinedSitterGuardRow;
 
+function careProviderTabVisible(m: GuardMomRow, promoFree: boolean): boolean {
+  const certified =
+    m.certified_at != null &&
+    String(m.certified_at).trim() !== '' &&
+    !Number.isNaN(new Date(m.certified_at as string).getTime());
+  if (!certified) return false;
+  const paidListingActive =
+    m.listing_visible_until != null && new Date(m.listing_visible_until).getTime() > Date.now();
+  return (promoFree && certified) || paidListingActive;
+}
+
+function dogSitterFromCertifiedCareRow(m: GuardMomRow): DogSitter {
+  const gu = (m.region_gu ?? '').trim() || (m.region_si ?? '').trim() || '동네';
+  return {
+    id: m.user_id,
+    name: `댕집사·${gu}`,
+    profileImage: '',
+    location: [m.region_si, m.region_gu].filter(Boolean).join(' ').trim() || gu,
+    district: gu,
+    specialties: ['방문 돌봄'],
+    rating: 5,
+    reviewCount: 0,
+    experience: '인증',
+    description: (m.intro ?? '').slice(0, 400),
+    estimatedPrices: [{ category: '방문', priceRange: `1일 약 ${m.per_day_fee_krw.toLocaleString()}원` }],
+  };
+}
+
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
   const p = new URLSearchParams(window.location.search);
@@ -57,7 +85,7 @@ function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
 }
 
 export function DogSittersPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { location, locationBasedEnabled } = useUserLocation();
   const promoFree = usePromoFreeListings();
   const routerLocation = useLocation();
@@ -76,6 +104,8 @@ export function DogSittersPage() {
   const [topTab, setTopTab] = useState<TopTab>(() => readInitialSittersUrl().topTab);
   const [careFilter, setCareFilter] = useState<CareFilter>(() => readInitialSittersUrl().care);
   const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
+  /** 인증된 댕집사(provider_kind=dog_sitter) — 목록·노출 규칙은 보호맘과 동일 */
+  const [dbDogSitters, setDbDogSitters] = useState<GuardMomRow[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
   const [guardMomsLoadError, setGuardMomsLoadError] = useState<string | null>(null);
   const [specialty, setSpecialty] = useState('전체');
@@ -168,11 +198,17 @@ export function DogSittersPage() {
       .order('listing_visible_until', { ascending: false, nullsFirst: false });
     if (error) {
       setGuardMoms([]);
+      setDbDogSitters([]);
       setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
     } else {
       const all = (data ?? []) as GuardMomRow[];
-      /** 노출 여부는 Supabase RLS가 결정. 프론트에서 유료/프로모를 한 번 더 걸면 .env 와 DB 정책이 어긋날 때 전부 숨겨질 수 있음 */
-      setGuardMoms(all.filter((r) => r.certified_at != null));
+      const certifiedRows = all.filter((r) => {
+        if (r.certified_at == null || String(r.certified_at).trim() === '') return false;
+        return !Number.isNaN(new Date(r.certified_at as string).getTime());
+      });
+      const kind = (r: GuardMomRow) => (r as { provider_kind?: string }).provider_kind ?? 'guard_mom';
+      setGuardMoms(certifiedRows.filter((r) => kind(r) !== 'dog_sitter'));
+      setDbDogSitters(certifiedRows.filter((r) => kind(r) === 'dog_sitter'));
     }
     setGuardLoading(false);
   }, []);
@@ -266,18 +302,35 @@ export function DogSittersPage() {
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
 
-    let sitters = mockDogSitters.filter((s) => {
-      if (locationBasedEnabled) {
-        const d = s.district?.trim();
-        if (!d || !districtMatchesAnyReference(d, referenceDistricts)) return false;
-      }
-      if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
-      if (q) {
-        const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
-        if (!blob.includes(q)) return false;
-      }
-      return true;
-    });
+    const sittersFromDb: DogSitter[] = dbDogSitters
+      .filter((m) => careProviderTabVisible(m, promoFree))
+      .filter(
+        (m) =>
+          !locationBasedEnabled ||
+          districtMatchesAnyReference((m.region_gu ?? m.region_si ?? '').trim(), referenceDistricts),
+      )
+      .filter((m) => {
+        if (!q) return true;
+        const blob = `${m.intro ?? ''} ${m.region_si ?? ''} ${m.region_gu ?? ''}`.toLowerCase();
+        return blob.includes(q);
+      })
+      .map(dogSitterFromCertifiedCareRow);
+
+    let sitters = [
+      ...sittersFromDb,
+      ...mockDogSitters.filter((s) => {
+        if (locationBasedEnabled) {
+          const d = s.district?.trim();
+          if (!d || !districtMatchesAnyReference(d, referenceDistricts)) return false;
+        }
+        if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
+        if (q) {
+          const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
+          if (!blob.includes(q)) return false;
+        }
+        return true;
+      }),
+    ];
 
     let moms = guardMomsForList.filter((m) => {
       if (q) {
@@ -332,6 +385,8 @@ export function DogSittersPage() {
     sortBy,
     distForDistrict,
     guardMomsForList,
+    dbDogSitters,
+    promoFree,
     q,
     locationBasedEnabled,
     referenceDistricts,
@@ -340,6 +395,8 @@ export function DogSittersPage() {
   const meetupMatchesRegion = useCallback(
     (district: string) => {
       if (!locationBasedEnabled) return true;
+      /** 기준 구가 없으면 `districtMatchesAnyReference(..., [])`가 항상 false라 피드가 비는 것을 막음 */
+      if (referenceDistricts.length === 0) return true;
       const d = district?.trim();
       if (!d) return false;
       return districtMatchesAnyReference(d, referenceDistricts);
@@ -361,12 +418,13 @@ export function DogSittersPage() {
                 : false;
           if (!inTab) return false;
           if (!meetupVisibleInPublicFeed(req, promoFree)) return false;
-          if (!isMine && !meetupMatchesRegion(req.district)) return false;
+          /** 로딩 중엔 user가 비어 내 글도 지역 필터에 걸릴 수 있음 → 세션 확인 후에만 타인 글 지역 필터 */
+          if (!authLoading && !isMine && !meetupMatchesRegion(req.district)) return false;
           const categoryMatch = category === '전체' || req.category === category;
           return categoryMatch;
         })
         .slice(0, 20),
-    [allMeetups, topTab, category, promoFree, meetupMatchesRegion, user?.id],
+    [allMeetups, topTab, category, promoFree, meetupMatchesRegion, user?.id, authLoading],
   );
 
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
@@ -374,7 +432,12 @@ export function DogSittersPage() {
     return allMeetups
       .filter((req) => isCareMeetupCategory(req.category))
       .filter((req) => meetupVisibleInPublicFeed(req, promoFree))
-      .filter((req) => meetupMatchesRegion(req.district))
+      .filter((req) => {
+        const viewerId = user?.id ?? '';
+        const isMine = viewerId !== '' && req.userId === viewerId;
+        if (!authLoading && !isMine && !meetupMatchesRegion(req.district)) return false;
+        return true;
+      })
       .filter((req) => {
         if (!q) return true;
         const blob = `${displayPublicDolbomMeetupTitle(req)} ${displayPublicDolbomMeetupDescription(req)} ${req.title} ${req.description} ${req.district} ${req.userName}`
@@ -382,7 +445,7 @@ export function DogSittersPage() {
         return blob.includes(q);
       })
       .slice(0, 50);
-  }, [allMeetups, q, promoFree, meetupMatchesRegion]);
+  }, [allMeetups, q, promoFree, meetupMatchesRegion, user?.id, authLoading]);
 
   // 신청 수 계산
   const getJoinCount = (meetupId: string) => {

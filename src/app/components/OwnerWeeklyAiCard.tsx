@@ -5,6 +5,17 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { invokeDaengAiAssist, type DaengAiAssistResult, type DaengAiWeeklyItem } from '../../lib/daengAiAssist';
 import { buildOwnerWeeklyAiPayload } from '../../lib/ownerWeeklyAiContext';
+import { getMergedMeetups, readUserMeetups } from '../../lib/userMeetupsStore';
+import { mockMeetups } from '../data/mockData';
+
+/** 상세 페이지에 실제로 있는 모임 id만 링크 (환각·구버전 id 차단) */
+function weeklyItemsWithValidMeetupLinks(items: DaengAiWeeklyItem[]): DaengAiWeeklyItem[] {
+  const allowed = new Set([
+    ...getMergedMeetups(mockMeetups).map((m) => m.id),
+    ...readUserMeetups().map((m) => m.id),
+  ]);
+  return items.filter((it) => (it.kind === 'meetup' ? allowed.has(it.meetupId) : true));
+}
 
 function WeeklyItemRow({ item }: { item: DaengAiWeeklyItem }) {
   if (item.kind === 'meetup') {
@@ -75,7 +86,8 @@ export function OwnerWeeklyAiCard() {
     setErr(null);
     // 장황한 폴백(r.text) 금지 — 짧은 weeklyIntro만 표시
     setIntro((r.fields?.weeklyIntro ?? '').trim());
-    setItems(Array.isArray(r.fields?.weeklyItems) ? r.fields!.weeklyItems! : []);
+    const rawItems = Array.isArray(r.fields?.weeklyItems) ? r.fields!.weeklyItems! : [];
+    setItems(weeklyItemsWithValidMeetupLinks(rawItems));
     setOpen(true);
   };
 
@@ -127,7 +139,7 @@ export function OwnerWeeklyAiCard() {
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-violet-400/30 transition hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : <Sparkles className="h-4 w-4 shrink-0" />}
-              {busy ? '짧게 짜는 중…' : 'AI 추천 받기'}
+              {busy ? '작성중...' : 'AI 추천 받기'}
             </button>
           </div>
         </div>

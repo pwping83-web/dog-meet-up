@@ -347,6 +347,8 @@ export interface Database {
           offers_daeng_pickup: boolean;
           certified_at: string | null;
           listing_visible_until: string | null;
+          /** guard_mom | dog_sitter */
+          provider_kind: string;
         };
         Insert: {
           id?: string;
@@ -360,6 +362,7 @@ export interface Database {
           offers_daeng_pickup?: boolean;
           certified_at?: string | null;
           listing_visible_until?: string | null;
+          provider_kind?: string;
         };
         Update: {
           id?: string;
@@ -373,6 +376,7 @@ export interface Database {
           offers_daeng_pickup?: boolean;
           certified_at?: string | null;
           listing_visible_until?: string | null;
+          provider_kind?: string;
         };
       };
       guard_mom_bookings: {

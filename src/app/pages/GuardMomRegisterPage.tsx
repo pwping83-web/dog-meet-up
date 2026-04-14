@@ -110,13 +110,16 @@ export function GuardMomRegisterPage() {
       return;
     }
     if (data) {
-      const r = data as GuardMomRow;
-      setRow(r);
+      const r = data as GuardMomRow & { provider_kind?: string };
+      setRow(r as GuardMomRow);
       setIntro(r.intro);
       setRegionSi(r.region_si);
       setRegionGu(r.region_gu);
       setFee(r.per_day_fee_krw);
       setOffersDaengPickup(Boolean(r.offers_daeng_pickup));
+      if (r.provider_kind === 'dog_sitter') {
+        setSitterIntro((r.intro ?? '').trim());
+      }
     } else {
       setRow(null);
       setIntro('');
@@ -163,11 +166,13 @@ export function GuardMomRegisterPage() {
         region_gu: regionGu.trim(),
         per_day_fee_krw: Math.min(500000, Math.max(1000, Math.round(fee))),
         offers_daeng_pickup: offersDaengPickup,
+        provider_kind: 'guard_mom' as const,
       };
       const { error } = await supabase.from('certified_guard_moms').upsert(payload, { onConflict: 'user_id' });
       if (error) throw new Error(friendlyCertifiedGuardMomsError(error.message));
       setSaveOk(true);
       await load();
+      window.dispatchEvent(new CustomEvent('daeng-certified-guard-moms-changed'));
     } catch (e) {
       setSaveErr((e as Error).message);
     } finally {
@@ -188,7 +193,11 @@ export function GuardMomRegisterPage() {
     try {
       writeCareProviderTrack('sitter_only');
       writeSitterIntro(user.id, text.slice(0, 800));
-      const { data: p } = await supabase.from('profiles').select('name, phone, avatar_url').eq('id', user.id).maybeSingle();
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('name, phone, avatar_url, region_si, region_gu')
+        .eq('id', user.id)
+        .maybeSingle();
       const name = (p?.name?.trim() || displayNameFromUser(user)).slice(0, 10);
       const { error } = await supabase.from('profiles').upsert(
         {
@@ -203,6 +212,25 @@ export function GuardMomRegisterPage() {
       if (error) {
         throw new Error(error.message || '프로필 저장에 실패했습니다.');
       }
+      const rs = (p?.region_si ?? '').trim() || '미입력';
+      const rg = (p?.region_gu ?? '').trim() || '미입력';
+      const { error: gmErr } = await supabase.from('certified_guard_moms').upsert(
+        {
+          user_id: user.id,
+          intro: text.slice(0, 8000),
+          region_si: rs,
+          region_gu: rg,
+          per_day_fee_krw: 20000,
+          offers_daeng_pickup: false,
+          provider_kind: 'dog_sitter',
+        },
+        { onConflict: 'user_id' },
+      );
+      if (gmErr) {
+        throw new Error(friendlyCertifiedGuardMomsError(gmErr.message));
+      }
+      await load();
+      window.dispatchEvent(new CustomEvent('daeng-certified-guard-moms-changed'));
       setSitterSaveOk(true);
     } catch (e) {
       setSaveErr((e as Error).message);
@@ -506,6 +534,73 @@ export function GuardMomRegisterPage() {
                 <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-3 py-2.5 text-center text-[11px] font-extrabold text-violet-950">
                   돌봄 목표가 댕집사(방문)로 저장됐어요.
                 </div>
+                {row ? (
+                  <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
+                    <div className="mb-4 flex items-center gap-2">
+                      <PawTabIcon className="h-5 w-5 text-brand" />
+                      <h2 className="text-sm font-extrabold text-slate-800">상태</h2>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                        <Shield
+                          className={`mt-0.5 h-5 w-5 shrink-0 ${certified ? 'text-emerald-600' : 'text-amber-500'}`}
+                          aria-hidden
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-extrabold text-slate-500">인증</p>
+                          <p className={`text-sm font-extrabold ${certified ? 'text-emerald-700' : 'text-amber-800'}`}>
+                            {certified ? '완료' : '검토 전'}
+                          </p>
+                          {!certified && (
+                            <p className="mt-0.5 text-[11px] font-medium leading-snug text-slate-500">
+                              서비스 관리자가 확인한 뒤 통과시켜요.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
+                        {visible ? (
+                          <Eye className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" aria-hidden />
+                        ) : (
+                          <EyeOff className="mt-0.5 h-5 w-5 shrink-0 text-slate-400" aria-hidden />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[11px] font-extrabold text-slate-500">인증 돌봄 탭 노출</p>
+                          <p className={`text-sm font-extrabold ${visible ? 'text-orange-600' : 'text-slate-500'}`}>
+                            {!certified
+                              ? '인증 후 공개'
+                              : visible && promoFree
+                                ? '무료 노출 중'
+                                : visible && row?.listing_visible_until
+                                  ? `~ ${new Date(row.listing_visible_until).toLocaleString('ko-KR')}`
+                                  : '비노출 · 노출 신청'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {promoFree ? (
+                      <p className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50/90 px-3 py-2.5 text-center text-[11px] font-extrabold leading-snug text-emerald-900">
+                        {certified
+                          ? '지금은 한시 무료 — 결제 없이 목록에 보여요.'
+                          : '인증만 통과되면 한시 무료로 목록에 올라가요.'}
+                      </p>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          disabled={listingBusy || !certified}
+                          onClick={() => void handleListingPay()}
+                          className="mt-4 w-full rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 py-3 text-sm font-extrabold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {listingBusy ? '이동 중…' : '7일 목록 노출 신청'}
+                        </button>
+                        {!certified && (
+                          <p className="mt-2 text-[11px] font-medium text-slate-500">인증 완료 후 버튼이 활성화됩니다.</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                ) : null}
                 <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                   <h2 className="text-sm font-extrabold text-slate-800">댕집사 신청서</h2>
                   <p className="mt-1 text-[11px] font-semibold leading-snug text-slate-500">

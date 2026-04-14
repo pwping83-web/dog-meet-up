@@ -116,8 +116,25 @@ export function MeetupDetailPage() {
 
   if (!meetup) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <p className="text-slate-500" style={{ fontWeight: 500 }}>🐕 모임을 찾을 수 없습니다</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 px-6 text-center">
+        <p className="text-base font-extrabold text-slate-700">🐕 모임을 찾을 수 없습니다</p>
+        <p className="max-w-sm text-xs font-semibold leading-relaxed text-slate-500">
+          샘플·내 글 모두 주소의 id로만 열려요. 내 글은 이 브라우저에만 저장될 수 있어 다른 기기·시크릿에서는 안 보일 수 있어요.
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Link
+            to="/explore"
+            className="rounded-2xl bg-orange-500 px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/25"
+          >
+            탐색으로
+          </Link>
+          <Link
+            to="/sitters"
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-extrabold text-slate-700"
+          >
+            모이자·만나자
+          </Link>
+        </div>
       </div>
     );
   }

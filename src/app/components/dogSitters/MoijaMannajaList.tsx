@@ -57,6 +57,14 @@ export function MoijaMannajaList({
       </div>
 
       <div className="space-y-3">
+        {filteredMeetups.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-slate-200 bg-white/90 px-4 py-10 text-center">
+            <p className="text-sm font-extrabold text-slate-700">이 탭·동네 조건에 맞는 글이 없어요</p>
+            <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">
+              글은 이 브라우저에만 저장돼요. 다른 기기·시크릿 창이면 목록에 안 보일 수 있어요.
+            </p>
+          </div>
+        ) : null}
         {filteredMeetups.map((meetup) => {
           const joinCount = getJoinCount(meetup.id);
           return (

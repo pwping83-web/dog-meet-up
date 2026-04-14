@@ -488,7 +488,7 @@ function GuardCareAdminView() {
     <div className="space-y-6 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="min-w-0 flex-1 text-sm text-gray-600">
-          인증 보호맘 등록·노출 결제·돌봄 예약을 Supabase에서 불러옵니다. 비어 있으면 DB 마이그레이션·RLS 정책을 확인하세요.
+          보호맘·댕집사 등록, 노출 결제, 돌봄 예약을 Supabase에서 불러옵니다. 비어 있으면 DB 마이그레이션·RLS를 확인하세요.
         </p>
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <AiDoumiButton
@@ -546,7 +546,7 @@ function GuardCareAdminView() {
           <section>
             <h2 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-900">
               <PawTabIcon className="h-5 w-5 text-orange-600" />
-              돌봄(보호맘) 등록 · 신청 정보
+              돌봄(보호맘·댕집사) 등록 · 신청
               <span className="text-sm font-semibold text-gray-500">({guardMoms.length}명)</span>
             </h2>
             <p className="mb-3 flex items-start gap-2 text-xs font-medium text-gray-600">
@@ -564,6 +564,12 @@ function GuardCareAdminView() {
             ) : (
               <ul className="space-y-2">
                 {guardMoms.map((g) => {
+                  const kind = g.provider_kind === 'dog_sitter' ? 'dog_sitter' : 'guard_mom';
+                  const kindLabel = kind === 'dog_sitter' ? '댕집사' : '보호맘';
+                  const kindBadgeClass =
+                    kind === 'dog_sitter'
+                      ? 'bg-violet-100 text-violet-800'
+                      : 'bg-orange-100 text-orange-800';
                   const certified =
                     g.certified_at != null &&
                     g.certified_at !== '' &&
@@ -581,7 +587,14 @@ function GuardCareAdminView() {
                     <li key={g.id} className="rounded-xl border border-gray-100 bg-white p-4">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
-                          <p className="font-bold text-gray-900">{displayName(g.user_id)}</p>
+                          <p className="flex flex-wrap items-center gap-2 font-bold text-gray-900">
+                            {displayName(g.user_id)}
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${kindBadgeClass}`}
+                            >
+                              {kindLabel}
+                            </span>
+                          </p>
                           <p className="text-xs text-gray-500">
                             {g.region_si} {g.region_gu} · 일당 {g.per_day_fee_krw.toLocaleString()}원
                             {g.offers_daeng_pickup === true ? ' · 댕댕 픽업' : ''}
