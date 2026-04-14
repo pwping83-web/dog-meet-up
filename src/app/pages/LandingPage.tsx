@@ -134,6 +134,12 @@ export function LandingPage() {
   const [extraCareRegions, setExtraCareRegions] = useState<ExtraCareRegion[]>(() => readExtraCareRegions());
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+  const [scrolledPastHero, setScrolledPastHero] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolledPastHero(window.scrollY > 60);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const [logoutBusy, setLogoutBusy] = useState(false);
   const [hoveredDog, setHoveredDog] = useState<number | null>(null);
   const { dogs: dbDogs, loading: dogsLoading } = useCachedDogs({ displayLimit: 10 });
@@ -198,6 +204,21 @@ export function LandingPage() {
     <div className="flex min-h-dvh min-h-screen flex-col overflow-x-hidden bg-orange-50/30">
       <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
 
+      {/* 우측 상단 고정 메뉴 버튼 — 스크롤과 무관하게 동일 위치 */}
+      {user && (
+        <button
+          type="button"
+          onClick={() => setExploreMenuOpen(true)}
+          className={`fixed right-4 top-4 z-[100] p-2 transition-all active:scale-90 ${
+            scrolledPastHero ? 'text-slate-700' : 'text-white'
+          }`}
+          aria-label="메뉴·설정"
+          aria-expanded={exploreMenuOpen}
+        >
+          <Menu className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+        </button>
+      )}
+
       <main className="flex w-full min-h-0 flex-1 flex-col">
       {/* ─── HERO SECTION ─── */}
       <section className="relative overflow-hidden bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 px-4 pt-5 pb-12 max-md:pb-14 md:pt-4 md:pb-10">
@@ -222,21 +243,7 @@ export function LandingPage() {
               <span className="text-2xl max-md:text-[1.75rem] md:text-xl" aria-hidden>🐕</span>
               <span className="text-xl max-md:text-[1.35rem] text-white/90 tracking-tight md:text-lg" style={{ fontWeight: 900 }}>댕댕마켓</span>
             </div>
-            {authLoading ? (
-              <span className="flex h-10 w-[4.5rem] max-md:h-11 items-center justify-center rounded-xl border border-white/20 bg-white/10 md:h-8 md:w-16 md:rounded-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-white max-md:h-5 md:h-4 md:w-4" aria-hidden />
-              </span>
-            ) : user ? (
-              <button
-                type="button"
-                onClick={() => setExploreMenuOpen(true)}
-                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/40 bg-white/20 text-white backdrop-blur-md active:scale-95 transition-all md:h-9 md:w-9 md:rounded-xl"
-                aria-label="메뉴·설정"
-                aria-expanded={exploreMenuOpen}
-              >
-                <Menu className="h-6 w-6 md:h-5 md:w-5" strokeWidth={2.5} aria-hidden />
-              </button>
-            ) : (
+            {!user && !authLoading && (
               <Link
                 to="/login"
                 className="bg-white/20 backdrop-blur-md text-white px-4 py-2.5 rounded-xl text-sm border border-white/30 active:scale-95 transition-all md:px-3 md:py-1.5 md:rounded-lg md:text-xs"

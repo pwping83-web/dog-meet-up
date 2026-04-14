@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search } from 'lucide-react';
+import { ArrowLeft, ChevronRight, CreditCard, Loader2, Search, Syringe } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -74,7 +74,7 @@ function MainView({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
   ];
 
   const menuItems = [
-    { id: 'guardCare' as AdminView, label: '보호맘·댕집사 인증/노출', icon: '🦴', count: null as number | null },
+    { id: 'guardCare' as AdminView, label: '보호맘·댕집사 인증/노출', icon: null, count: null as number | null },
     { id: 'requests' as AdminView, label: '모임 관리', icon: '📝', count: mockRequests.length },
     { id: 'quotes' as AdminView, label: '참여 신청 관리', icon: '💰', count: mockQuotes.length },
   ];
@@ -108,13 +108,17 @@ function MainView({ onNavigate }: { onNavigate: (view: AdminView) => void }) {
               } active:bg-gray-50`}
             >
               <div className="flex items-center gap-3">
-                <div className="text-xl">{item.icon}</div>
+                <div className="text-xl">
+                  {item.icon === null
+                    ? <Syringe className="h-5 w-5 text-orange-500" aria-hidden />
+                    : item.icon}
+                </div>
                 <span className="font-medium">{item.label}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">
-                  {item.count != null ? `${item.count}건` : 'Supabase'}
-                </span>
+                {item.count != null && (
+                  <span className="text-sm text-gray-500">{item.count}건</span>
+                )}
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
             </button>

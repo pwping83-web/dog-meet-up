@@ -159,12 +159,14 @@ export function SearchPage() {
   };
 
   const handleAdminDeleteDog = useCallback(
-    async (id: string) => {
+    async (dogId: string) => {
       if (!user || !isAppAdmin(user)) return;
       if (!window.confirm('이 댕친 프로필을 삭제할까요?')) return;
-      setDeletingDogId(id);
+      setDeletingDogId(dogId);
       try {
-        const { error } = await supabase.from('dog_profiles').delete().eq('id', id);
+        const { error } = await supabase.rpc('admin_delete_dog_profile', {
+          p_dog_id: dogId,
+        });
         if (error) throw error;
         window.dispatchEvent(new CustomEvent('daeng-dogs-changed'));
         await refetchDogs();

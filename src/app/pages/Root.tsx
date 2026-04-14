@@ -53,6 +53,11 @@ export function Root() {
     isChatDetailPage ||
     isDogPublicProfilePage;
 
+  // 페이지 전환 시 항상 최상단으로 스크롤
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
+
   // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
   useEffect(() => {
     document.title = '댕댕마켓 - 우리 동네 댕친 · 여행·출장 때 맡기기';

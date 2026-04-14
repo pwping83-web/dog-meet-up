@@ -73,6 +73,15 @@ export function MyPage() {
   const [phoneSaving, setPhoneSaving] = useState(false);
   /** 첫 댕댕이 프로필 썸네일(마이 섹션 2) */
   const [dogPreview, setDogPreview] = useState<{ photo: string | null; name: string } | null>(null);
+  /** 인증 보호맘·댕집사 프로필 (마이 섹션 3) */
+  const [carePreview, setCarePreview] = useState<{
+    providerKind: string;
+    regionSi: string;
+    regionGu: string;
+    intro: string;
+    certified: boolean;
+    introPhotoUrls: string[];
+  } | null>(null);
 
   /** 프로필 저장 후 auth.updateUser 시 user.updated_at이 바뀌므로 여기서 profiles를 다시 읽음 */
   useEffect(() => {
@@ -174,6 +183,44 @@ export function MyPage() {
     }
   };
 
+  // 인증 보호맘·댕집사 미리보기 로드
+  useEffect(() => {
+    if (!user?.id) {
+      setCarePreview(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from('certified_guard_moms')
+        .select('provider_kind, region_si, region_gu, intro, certified_at, intro_photo_urls')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data) {
+        const certified =
+          data.certified_at != null &&
+          String(data.certified_at).trim() !== '' &&
+          !Number.isNaN(new Date(data.certified_at as string).getTime());
+        setCarePreview({
+          providerKind: String(data.provider_kind ?? 'guard_mom'),
+          regionSi: String(data.region_si ?? '').trim(),
+          regionGu: String(data.region_gu ?? '').trim(),
+          intro: String(data.intro ?? '').trim(),
+          certified,
+          introPhotoUrls: Array.isArray(data.intro_photo_urls)
+            ? (data.intro_photo_urls as string[]).filter((u) => typeof u === 'string' && u.trim())
+            : [],
+        });
+      } else {
+        setCarePreview(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, location.key]);
+
   // MBTI 로드
   useEffect(() => {
     const savedMbti = localStorage.getItem('dogMbtiType') as DogMbtiType | null;
@@ -273,32 +320,6 @@ export function MyPage() {
             <div className="flex-1 min-w-0 space-y-3">
               <div>
                 <h2 className="font-extrabold text-xl text-slate-800 mb-1 truncate">{profileName}</h2>
-                <div className="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-3 py-2.5">
-                  <div className="min-w-0">
-                    <p className="text-xs font-extrabold text-slate-800">위치 기반</p>
-                    <p className="text-[10px] font-medium leading-snug text-slate-500">
-                      켜면 우리 동네 기준, 끄면 전국. 켜고 동네를 맞추면 내 주변 글이 보여요.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={locationBasedEnabled}
-                    onClick={(ev) => {
-                      ev.stopPropagation();
-                      setLocationBasedEnabled(!locationBasedEnabled);
-                    }}
-                    className={`relative z-10 h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-300 ${
-                      locationBasedEnabled ? 'bg-market-cta shadow-inner' : 'bg-slate-300'
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-1 left-1 h-6 w-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-                        locationBasedEnabled ? 'translate-x-6' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
-                </div>
                 <button
                   type="button"
                   title={fullLabel}
@@ -438,81 +459,147 @@ export function MyPage() {
           </div>
         </div>
 
-        {/* 3 · 인증 보호맘 · 댕집사 신청·등록 */}
+        {/* 3+4 · 인증 보호맘 · 댕집사 + 추가 동네 — 하나의 카드 */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="mb-3 flex items-start gap-2">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50">
-              <BadgeCheck className="h-5 w-5 text-orange-600" aria-hidden />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-extrabold text-slate-900">인증 보호맘 · 댕집사</h3>
-              <p className="mt-0.5 text-[10px] font-semibold leading-snug text-slate-500">
-                신청 후 운영자 인증을 거쳐 노출돼요.
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/guard-mom/register"
-            className="flex items-center justify-between gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
-          >
-            <span className="flex items-center gap-2 min-w-0">
-              <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
-              신청하기
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
-          </Link>
-        </div>
-
-        {/* 4 · 인증 돌봄 거리 기준 */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="mb-4 flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
-              <MapPin className="h-5 w-5 text-amber-700" aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-extrabold text-slate-900">인증 돌봄 · 거리 기준</h3>
-              <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600">
-                인증돌봄 추가할 동네를 선택해 주세요.
-              </p>
-            </div>
-          </div>
-          <p className="mb-2 text-xs font-extrabold text-slate-800">추가 동네</p>
-          <RegionSelector
-            selectedCity={extraCity}
-            selectedDistrict={extraDistrict}
-            onCityChange={setExtraCity}
-            onDistrictChange={setExtraDistrict}
-            placeholder="추가할 시·구 선택"
-          />
-          <button
-            type="button"
-            onClick={addExtraCareRegion}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
-          >
-            <Plus className="h-4 w-4 shrink-0" aria-hidden />
-            이 동네 추가
-          </button>
-          {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
-          {extraCareRegions.length > 0 && (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {extraCareRegions.map((ex) => (
-                <li
-                  key={ex.id}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
-                >
-                  {formatRegion(ex.city, ex.district)}
-                  <button
-                    type="button"
-                    onClick={() => removeExtraCareRegion(ex.id)}
-                    className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
-                    aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+          {carePreview ? (
+            /* ── 등록 완료: 강아지 프로필과 같은 카드 레이아웃 ── */
+            <div className="flex gap-4">
+              <Link
+                to="/guard-mom/register"
+                className="relative block h-[5.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-amber-50 shadow-inner"
+              >
+                {carePreview.introPhotoUrls[0] ? (
+                  <ImageWithFallback
+                    src={carePreview.introPhotoUrls[0]}
+                    fallbackSrc={virtualDogPhotoForSeed(`care-preview-${user?.id ?? 'x'}`)}
+                    alt="소개 사진"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-4xl" aria-hidden>
+                    {carePreview.providerKind === 'dog_sitter' ? '🏠' : '🤱'}
+                  </span>
+                )}
+                {carePreview.certified && (
+                  <span className="absolute bottom-0 right-0 flex items-center justify-center rounded-tl-xl bg-orange-500 p-1 shadow">
+                    <BadgeCheck className="h-3.5 w-3.5 text-white" aria-hidden />
+                  </span>
+                )}
+              </Link>
+              <div className="min-w-0 flex-1 space-y-2">
+                <div>
+                  <p className="text-[11px] font-extrabold text-slate-500">
+                    {carePreview.providerKind === 'dog_sitter' ? '인증 댕집사' : '인증 보호맘'}
+                  </p>
+                  <p className="truncate text-base font-extrabold text-slate-900">
+                    {[carePreview.regionSi, carePreview.regionGu].filter(Boolean).join(' ') || '지역 미설정'}
+                  </p>
+                </div>
+                {carePreview.certified ? (
+                  <div className="flex items-center gap-1.5 rounded-xl border border-orange-200 bg-orange-50 px-2.5 py-1.5">
+                    <BadgeCheck className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+                    <span className="text-xs font-black text-orange-700">인증 완료</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5">
+                    <span className="text-[11px] font-bold text-slate-500">운영자 인증 검토 중</span>
+                  </div>
+                )}
+                {carePreview.intro ? (
+                  <p className="line-clamp-2 text-[11px] font-medium leading-snug text-slate-500">
+                    {carePreview.intro}
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Link
+                    to="/guard-mom/register"
+                    className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-800"
                   >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
+                    <PawTabIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    프로필 수정
+                  </Link>
+                  {carePreview.certified && (
+                    <Link
+                      to="/sitters"
+                      className="inline-flex items-center gap-1 rounded-xl bg-market-cta px-3 py-2 text-xs font-extrabold text-white shadow-sm"
+                    >
+                      <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      목록 보기
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ── 미등록: 신청 버튼 ── */
+            <>
+              <div className="mb-3 flex items-start gap-2">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50">
+                  <BadgeCheck className="h-5 w-5 text-orange-600" aria-hidden />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-extrabold text-slate-900">인증 보호맘 · 댕집사</h3>
+                  <p className="mt-0.5 text-[10px] font-semibold leading-snug text-slate-500">
+                    신청 후 운영자 인증을 거쳐 노출돼요.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/guard-mom/register"
+                className="flex items-center justify-between gap-2 rounded-2xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 px-4 py-3.5 text-sm font-extrabold text-brand shadow-sm active:scale-[0.99]"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <PawTabIcon className="h-4 w-4 shrink-0" aria-hidden />
+                  신청하기
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
+              </Link>
+            </>
           )}
+
+          {/* 추가 동네 — 같은 카드 내 구분선 아래 */}
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <div className="mb-3 flex items-center gap-2">
+              <MapPin className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+              <p className="text-xs font-extrabold text-slate-800">추가 동네</p>
+            </div>
+            <RegionSelector
+              selectedCity={extraCity}
+              selectedDistrict={extraDistrict}
+              onCityChange={setExtraCity}
+              onDistrictChange={setExtraDistrict}
+              placeholder="추가할 시·구 선택"
+            />
+            <button
+              type="button"
+              onClick={addExtraCareRegion}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
+            >
+              <Plus className="h-4 w-4 shrink-0" aria-hidden />
+              이 동네 추가
+            </button>
+            {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
+            {extraCareRegions.length > 0 && (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {extraCareRegions.map((ex) => (
+                  <li
+                    key={ex.id}
+                    className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
+                  >
+                    {formatRegion(ex.city, ex.district)}
+                    <button
+                      type="button"
+                      onClick={() => removeExtraCareRegion(ex.id)}
+                      className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
+                      aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
 
         {user && isAppAdmin(user) && (

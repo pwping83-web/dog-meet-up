@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
-import { ArrowLeft, Send, Settings2, MoreVertical, Loader2, LogOut, Trash2 } from 'lucide-react';
+import { ArrowLeft, Send, Settings2, MoreVertical, Loader2, LogOut } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDoumiButton } from '../components/AiDoumiButton';
@@ -447,17 +447,9 @@ export function ChatDetailPage() {
     void markPeerMessagesAsRead();
   }, [messages, hasInteractedInRoom, markPeerMessagesAsRead]);
 
-  const handleLeaveChat = () => {
+  const handleLeaveChat = async () => {
     if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
-    if (!window.confirm('채팅 목록에서 숨길까요?\n대화 내용은 그대로예요.')) return;
-    hideChatPeerId(id.trim());
-    setRoomMenuOpen(false);
-    navigate('/chats');
-  };
-
-  const handleDeleteAllMessages = async () => {
-    if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
-    if (!window.confirm('이 대화의 메시지를 모두 지울까요?\n나와 상대 모두에서 삭제돼요.')) return;
+    if (!window.confirm('대화를 나가면 메시지가 모두 삭제돼요.\n계속할까요?')) return;
     const peerId = id.trim();
     setRoomActionBusy(true);
     setRoomMenuOpen(false);
@@ -466,6 +458,7 @@ export function ChatDetailPage() {
       const { error } = await supabase.from('messages').delete().or(orFilter);
       if (error) throw error;
       setMessages([]);
+      hideChatPeerId(peerId);
       navigate('/chats');
     } catch (e) {
       const msg = e instanceof Error ? e.message : '삭제에 실패했어요.';
@@ -559,23 +552,12 @@ export function ChatDetailPage() {
                 <button
                   type="button"
                   role="menuitem"
-                  className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-slate-700 hover:bg-slate-50 active:bg-slate-100"
-                  onClick={() => {
-                    handleLeaveChat();
-                  }}
-                >
-                  <LogOut className="h-4 w-4 shrink-0 text-slate-500" aria-hidden />
-                  채팅 나가기
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
                   disabled={roomActionBusy}
                   className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-bold text-red-600 hover:bg-red-50 active:bg-red-100 disabled:opacity-50"
-                  onClick={() => void handleDeleteAllMessages()}
+                  onClick={() => void handleLeaveChat()}
                 >
-                  <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
-                  {roomActionBusy ? '삭제 중…' : '전체 삭제'}
+                  <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+                  {roomActionBusy ? '나가는 중…' : '채팅 나가기'}
                 </button>
               </div>
             )}
