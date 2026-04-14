@@ -63,6 +63,46 @@ function pickGuFromAdminNames(adminNames: string[]): string {
   return best;
 }
 
+type NominatimAddress = {
+  city?: string;
+  town?: string;
+  county?: string;
+  state?: string;
+  suburb?: string;
+  neighbourhood?: string;
+  quarter?: string;
+  village?: string;
+  borough?: string;
+  city_district?: string;
+};
+
+async function reverseGeocodeViaNominatim(lat: number, lng: number): Promise<{ gu: string; dong: string }> {
+  const u = new URL('https://nominatim.openstreetmap.org/reverse');
+  u.searchParams.set('format', 'jsonv2');
+  u.searchParams.set('lat', String(lat));
+  u.searchParams.set('lon', String(lng));
+  u.searchParams.set('addressdetails', '1');
+  u.searchParams.set('accept-language', 'ko');
+
+  const res = await fetch(u.toString());
+  if (!res.ok) return { gu: '', dong: '' };
+
+  const j = (await res.json()) as { address?: NominatimAddress };
+  const addr = j.address ?? {};
+  const guCandidates = [addr.city_district, addr.borough, addr.county];
+  const dongCandidates = [addr.suburb, addr.neighbourhood, addr.quarter, addr.village];
+
+  const gu =
+    guCandidates
+      .map((s) => String(s ?? '').trim())
+      .find((s) => /(구|군)$/.test(s)) ?? '';
+  const dong =
+    dongCandidates
+      .map((s) => String(s ?? '').trim())
+      .find((s) => /(동|읍|면|리)$/.test(s)) ?? '';
+  return { gu, dong };
+}
+
 /**
  * 위·경도로 행정 단서 문자열을 만든 뒤 앱 regions 와 맞춤.
  */
@@ -86,8 +126,17 @@ export async function reverseGeocodeToKoreaAdmin(
   const adminNames = (admin?.administrative ?? []).map((x) => String(x.name ?? ''));
 
   const fromStack = matchAdministrativeNames(adminNames);
-  const inferredDong = pickDongFromAdminNames(adminNames);
-  const inferredGu = pickGuFromAdminNames(adminNames);
+  let inferredDong = pickDongFromAdminNames(adminNames);
+  let inferredGu = pickGuFromAdminNames(adminNames);
+  if (!inferredDong || !inferredGu) {
+    try {
+      const osm = await reverseGeocodeViaNominatim(lat, lng);
+      if (!inferredGu && osm.gu) inferredGu = osm.gu;
+      if (!inferredDong && osm.dong) inferredDong = osm.dong;
+    } catch {
+      /* ignore fallback network errors */
+    }
+  }
   if (fromStack.matched) {
     const depth1Ko =
       Object.entries({
