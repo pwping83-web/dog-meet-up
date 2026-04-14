@@ -24,6 +24,11 @@ function guessContentType(file: File, ext: string): string {
 }
 
 export async function uploadCareIntroPhoto(userId: string, file: File): Promise<string> {
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess.session) {
+    throw new Error('로그인이 필요해요. 다시 로그인한 뒤 사진을 올려 주세요.');
+  }
+
   const ext = extFromFileName(file);
   const safeExt = ext && IMAGE_EXT.has(ext) ? ext : 'jpg';
   const path = `care-intro/${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${safeExt}`;

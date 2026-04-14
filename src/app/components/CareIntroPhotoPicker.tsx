@@ -31,12 +31,14 @@ export function CareIntroPhotoPicker({ userId, urls, onUrlsChange, disabled, hin
   const [busy, setBusy] = useState(false);
 
   const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    e.target.value = '';
+    const input = e.target;
+    const files = input.files;
     if (!files?.length || disabled) return;
     const room = CARE_INTRO_PHOTO_MAX - urls.length;
     if (room <= 0) return;
+    /* value 초기화는 File 복사 뒤에: 일부 모바일(Safari)에서 먼저 비우면 FileList가 비어 0장처럼 동작함 */
     const list = Array.from(files).slice(0, room);
+    input.value = '';
     setBusy(true);
     try {
       const next: string[] = [...urls];
