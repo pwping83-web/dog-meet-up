@@ -225,6 +225,8 @@ export function MeetupDetailPage() {
 
   const timeAgo = formatDistanceToNow(meetup.createdAt, { addSuffix: true, locale: ko });
 
+  const detailHeaderLabel = isCareMeetupCategory(meetup.category) ? '돌봄·구인 상세 🦴' : '만남 상세 🐾';
+
   const dolbomTitleShown =
     isCareMeetupCategory(meetup.category) ? displayPublicDolbomMeetupTitle(meetup) : meetup.title;
   const dolbomDescriptionShown =
@@ -417,7 +419,7 @@ export function MeetupDetailPage() {
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
-          <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>만남 상세 🐾</span>
+          <span className="ml-2 text-slate-800 text-lg" style={{ fontWeight: 700 }}>{detailHeaderLabel}</span>
         </div>
       </div>
 
