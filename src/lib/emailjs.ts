@@ -49,6 +49,30 @@ export function getEmailJsRuntimeSummary(): string {
   return `service=${maskMiddle(EMAILJS_SERVICE_ID)}, template=${maskMiddle(EMAILJS_TEMPLATE_ID)}, publicKey=${maskMiddle(EMAILJS_PUBLIC_KEY)}`;
 }
 
+function describeEmailJsError(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (!error || typeof error !== 'object') return String(error);
+  const e = error as {
+    text?: unknown;
+    message?: unknown;
+    status?: unknown;
+    statusText?: unknown;
+    name?: unknown;
+  };
+  const parts: string[] = [];
+  if (e.status != null) parts.push(`status=${String(e.status)}`);
+  if (e.statusText != null) parts.push(`statusText=${String(e.statusText)}`);
+  if (typeof e.text === 'string' && e.text.trim()) parts.push(`text=${e.text.trim()}`);
+  if (typeof e.message === 'string' && e.message.trim()) parts.push(`message=${e.message.trim()}`);
+  if (typeof e.name === 'string' && e.name.trim()) parts.push(`name=${e.name.trim()}`);
+  if (parts.length > 0) return parts.join(', ');
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 /**
  * 이메일 전송 함수
  */
@@ -73,7 +97,7 @@ export async function sendEmail(params: EmailParams): Promise<void> {
     console.log('✅ 이메일 전송 성공:', response);
   } catch (error) {
     console.error('❌ 이메일 전송 실패:', error);
-    const msg = error instanceof Error ? error.message : String(error);
+    const msg = describeEmailJsError(error);
     throw new Error(`EmailJS 전송 실패: ${msg}`);
   }
 }
