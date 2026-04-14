@@ -1,4 +1,4 @@
--- 인증 돌봄: 보호맘(맡기기) vs 댕집사(방문) 구분. 기존 행은 보호맘으로 간주.
+/* 인증 돌봄: 보호맘(맡기기) vs 댕집사(방문) 구분. 기존 행은 보호맘으로 간주. */
 
 ALTER TABLE public.certified_guard_moms
   ADD COLUMN IF NOT EXISTS provider_kind TEXT NOT NULL DEFAULT 'guard_mom';
