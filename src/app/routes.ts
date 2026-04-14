@@ -42,7 +42,6 @@ import { NotificationsPage } from './pages/NotificationsPage';
 import { NotFound } from './pages/NotFound';
 import { MyMeetupsPage } from './pages/MyMeetupsPage';
 import { MyJoinRequestsPage } from './pages/MyJoinRequestsPage';
-import { ProfileEditPage } from './pages/ProfileEditPage';
 import { DogCreatePage } from './pages/DogCreatePage';
 import { DogProfilePublicPage } from './pages/DogProfilePublicPage';
 import { DogMbtiTestPage } from './pages/DogMbtiTestPage';
@@ -64,7 +63,7 @@ export const router = createBrowserRouter([
       { path: 'sitter/:id', Component: DogSitterProfilePage },   // Dog sitter profile
       { path: 'meetup/:id', Component: MeetupDetailPage },        // Meetup detail + join requests
       { path: 'my', Component: MyPage },                          // User profile
-      { path: 'profile/edit', Component: ProfileEditPage },       // Profile edit page
+      { path: 'profile/edit', Component: MyPage },                // Legacy path -> MyPage
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration
       { path: 'dog/:id', Component: DogProfilePublicPage },       // Public dog profile from dog_profiles
       { path: 'dog-mbti-test', Component: DogMbtiTestPage },      // Dog MBTI test

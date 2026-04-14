@@ -427,10 +427,10 @@ export function GuardMomRegisterPage() {
                   댕집사는 프로필·계정 설정에서 돌봄 목표를 댕집사로 선택하면 신청이 완료돼요.
                 </p>
                 <Link
-                  to="/profile/edit?care=sitter"
+                  to="/my"
                   className="mt-4 flex w-full items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 py-3 text-sm font-extrabold text-violet-900"
                 >
-                  댕집사 신청서로 이동
+                  마이페이지에서 이어서 신청
                 </Link>
               </div>
             )}

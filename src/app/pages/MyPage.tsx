@@ -17,7 +17,6 @@ import {
   PlusCircle,
   PawPrint,
   BadgeCheck,
-  Bell,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
@@ -244,17 +243,8 @@ export function MyPage() {
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
-        <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
-          <div className="flex items-center gap-1">
-            <Link
-              to="/notifications"
-              className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/15"
-              aria-label="알림"
-            >
-              <Bell className="h-6 w-6" />
-            </Link>
-          </div>
         </div>
       </header>
 

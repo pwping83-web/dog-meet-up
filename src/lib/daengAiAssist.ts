@@ -36,6 +36,36 @@ const GEMINI_STYLE_QUOTA_MESSAGE =
 const GROQ_STYLE_QUOTA_MESSAGE =
   'Groq 무료 한도에 걸렸어요. 잠시 후 다시 시도하거나 console.groq.com 에서 확인해 주세요.';
 
+/** 한자 제거: CJK Unified Ideographs + Extension A + Compatibility Ideographs */
+function stripHanChars(input: string): string {
+  return input
+    .replace(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
+  if (!fields) return fields;
+  const next: DaengAiFields = { ...fields };
+  if (typeof next.title === 'string') next.title = stripHanChars(next.title);
+  if (typeof next.category === 'string') next.category = stripHanChars(next.category);
+  if (typeof next.description === 'string') next.description = stripHanChars(next.description);
+  if (typeof next.suggestedSearch === 'string') next.suggestedSearch = stripHanChars(next.suggestedSearch);
+  if (Array.isArray(next.chips)) {
+    next.chips = next.chips.map((c) => stripHanChars(String(c)));
+  }
+  if (typeof next.weeklyIntro === 'string') next.weeklyIntro = stripHanChars(next.weeklyIntro);
+  if (Array.isArray(next.weeklyItems)) {
+    next.weeklyItems = next.weeklyItems.map((item) => ({
+      ...item,
+      label: stripHanChars(item.label),
+      detail: typeof item.detail === 'string' ? stripHanChars(item.detail) : item.detail,
+    }));
+  }
+  return next;
+}
+
 function isLikelyModelQuotaMessage(text: string): boolean {
   const l = text.toLowerCase();
   return (
@@ -152,12 +182,16 @@ export async function invokeDaengAiAssist(
   }
 
   if (!d.ok) {
-    const errText = d.error || '';
+    const errText = stripHanChars(d.error || '');
     if (isLikelyModelQuotaMessage(errText)) {
       return { ok: false, error: quotaUserMessageForText(errText) };
     }
     return { ok: false, error: errText || 'AI 도우미 처리 실패' };
   }
 
-  return { ok: true, text: typeof d.text === 'string' ? d.text : '', fields: d.fields };
+  return {
+    ok: true,
+    text: typeof d.text === 'string' ? stripHanChars(d.text) : '',
+    fields: sanitizeAiFields(d.fields),
+  };
 }
