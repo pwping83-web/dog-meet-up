@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import { supabase } from '../../lib/supabase';
 import { dogSitterFromCertifiedCareRow } from '../../lib/dogSitterFromCertifiedCareRow';
+import { isCertifiedGuardMomPublicRow } from '../../lib/certifiedGuardCareVisibility';
 import type { DogSitter } from '../types';
 
 export function DogSitterProfilePage() {
@@ -54,13 +55,19 @@ export function DogSitterProfilePage() {
         setProfileLoading(false);
         return;
       }
+      const viewerOwns = Boolean(user?.id && user.id === id);
+      if (!isCertifiedGuardMomPublicRow(data) && !viewerOwns) {
+        setDogSitter(null);
+        setProfileLoading(false);
+        return;
+      }
       setDogSitter(dogSitterFromCertifiedCareRow(data));
       setProfileLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, user?.id]);
 
   const profilePhoto = dogSitter ? resolveDogSitterPortraitUrl(dogSitter) : '';
 

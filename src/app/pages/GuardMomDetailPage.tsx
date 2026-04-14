@@ -19,6 +19,7 @@ import { GUARD_MOM_REQUEST_LEGAL_FOOTNOTE } from '../../lib/platformLegalCopy';
 import { showGuardMomCarePaymentBooking } from '../../lib/promoFlags';
 import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
 import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
+import { isCertifiedGuardMomPublicRow } from '../../lib/certifiedGuardCareVisibility';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -65,8 +66,15 @@ export function GuardMomDetailPage() {
       if (c) return;
       const mockRow = getMockCertifiedGuardMomById(id);
       if (data && !error) {
-        setMom(data as GuardMomRow);
-        setLoadErr(null);
+        const row = data as GuardMomRow;
+        const viewerOwns = Boolean(user?.id && user.id === row.user_id);
+        if (!isCertifiedGuardMomPublicRow(row) && !viewerOwns) {
+          setMom(null);
+          setLoadErr('운영 인증이 해제되어 이 프로필은 비공개예요.');
+        } else {
+          setMom(row);
+          setLoadErr(null);
+        }
       } else if (mockRow) {
         setMom(mockRow as GuardMomRow);
         setLoadErr(null);
@@ -82,7 +90,7 @@ export function GuardMomDetailPage() {
     return () => {
       c = true;
     };
-  }, [id]);
+  }, [id, user?.id]);
 
   const isOwn = user && mom && user.id === mom.user_id;
   const total = mom ? days * mom.per_day_fee_krw : 0;

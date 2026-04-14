@@ -26,6 +26,7 @@ import { readCareProviderTrack, writeCareProviderTrack } from '../../lib/carePro
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
 import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
+import { broadcastCertifiedCareDataChanged } from '../../lib/certifiedCareSync';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -211,7 +212,7 @@ export function GuardMomRegisterPage() {
       if (error) throw new Error(friendlyCertifiedGuardMomsError(error.message));
       setSaveOk(true);
       await load();
-      window.dispatchEvent(new CustomEvent('daeng-certified-guard-moms-changed'));
+      broadcastCertifiedCareDataChanged();
     } catch (e) {
       setSaveErr((e as Error).message);
     } finally {
@@ -270,7 +271,7 @@ export function GuardMomRegisterPage() {
         throw new Error(friendlyCertifiedGuardMomsError(gmErr.message));
       }
       await load();
-      window.dispatchEvent(new CustomEvent('daeng-certified-guard-moms-changed'));
+      broadcastCertifiedCareDataChanged();
       setSitterSaveOk(true);
     } catch (e) {
       setSaveErr((e as Error).message);

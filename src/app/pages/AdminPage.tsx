@@ -7,6 +7,7 @@ import { ko } from 'date-fns/locale';
 import { mockRequests, mockRepairers, mockQuotes } from '../data/mockData';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
 import { supabase } from '../../lib/supabase';
+import { broadcastCertifiedCareDataChanged } from '../../lib/certifiedCareSync';
 import type { Database } from '../../lib/supabase';
 import { usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
@@ -459,7 +460,7 @@ function GuardCareAdminView() {
         prev.map((m) => (m.id === id ? { ...m, certified_at: at } : m)),
       );
       await load({ silent: true });
-      window.dispatchEvent(new CustomEvent('daeng-certified-guard-moms-changed'));
+      broadcastCertifiedCareDataChanged();
       setCertBanner(certify ? '인증 처리했어요.' : '인증을 해제했어요.');
       window.setTimeout(() => setCertBanner(null), 4000);
     } catch (e) {

@@ -19,6 +19,9 @@ import { LocationPickerModal } from '../components/LocationPickerModal';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
 import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { useUserLocation } from '../../contexts/UserLocationContext';
+import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
+import { filterCareNeedMeetupsForDistrictTab } from '../../lib/careNeedMeetupFilters';
 import type { User as AuthUser } from '@supabase/supabase-js';
 import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
@@ -127,6 +130,8 @@ export function LandingPage() {
   const navigate = useNavigate();
   const promoFree = usePromoFreeListings();
   const { user, loading: authLoading, signOut } = useAuth();
+  const { location: userLocation, locationBasedEnabled } = useUserLocation();
+  const [extraCareRegions, setExtraCareRegions] = useState<ExtraCareRegion[]>(() => readExtraCareRegions());
   const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const [locationPickerOpen, setLocationPickerOpen] = useState(false);
   const [logoutBusy, setLogoutBusy] = useState(false);
@@ -140,18 +145,38 @@ export function LandingPage() {
     return () => window.removeEventListener('daeng-user-meetups-changed', onMeetups);
   }, []);
 
+  useEffect(() => {
+    const syncExtras = () => setExtraCareRegions(readExtraCareRegions());
+    syncExtras();
+    window.addEventListener('daeng-extra-care-regions', syncExtras);
+    return () => window.removeEventListener('daeng-extra-care-regions', syncExtras);
+  }, []);
+
   const mergedRequests = useMemo(
     () => getMergedMeetups(mockRequests),
     [location.key, location.pathname, meetupFeedTick],
   );
 
+  const referenceDistricts = useMemo(() => {
+    const primary = userLocation.district?.trim();
+    const fromExtras = extraCareRegions.map((e) => e.district.trim()).filter(Boolean);
+    return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
+  }, [userLocation.district, extraCareRegions]);
+
   const getQuoteCount = (id: string) => mockQuotes.filter((q) => q.meetupId === id).length;
   const meetupFeedItems = mergedRequests
     .filter((r) => !isCareMeetupCategory(r.category) && meetupVisibleInPublicFeed(r, promoFree))
     .slice(0, 6);
-  const dolbomFeedItems = mergedRequests
-    .filter((r) => isCareMeetupCategory(r.category))
-    .filter((r) => meetupVisibleInPublicFeed(r, promoFree));
+  /** `/sitters` 맡기는 사람 탭과 같은 동네 필터 — 홈에만 전국 글이 섞여 보이던 문제 방지 */
+  const dolbomFeedItems = useMemo(() => {
+    const rows = filterCareNeedMeetupsForDistrictTab(mergedRequests, {
+      promoFree,
+      locationBasedEnabled,
+      referenceDistricts,
+      viewerUserId: user?.id ?? '',
+    });
+    return rows.slice(0, 6);
+  }, [mergedRequests, promoFree, locationBasedEnabled, referenceDistricts, user?.id]);
 
   const closeExploreMenu = () => setExploreMenuOpen(false);
 

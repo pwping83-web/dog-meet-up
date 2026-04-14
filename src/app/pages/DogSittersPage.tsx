@@ -22,6 +22,9 @@ import { districtMatchesAnyReference } from '../utils/districtRefMatch';
 import { isCareMeetupCategory } from '../utils/meetupCategory';
 import { showCertifiedGuardMomDemosWhenEmpty, usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import { careProviderListedInFeed } from '../../lib/certifiedGuardCareVisibility';
+import { subscribeCertifiedCareDataChanged } from '../../lib/certifiedCareSync';
+import { filterCareNeedMeetupsForDistrictTab } from '../../lib/careNeedMeetupFilters';
 import {
   labelMeetupNearbyRadiusKm,
   readMeetupNearbyRadiusKm,
@@ -52,17 +55,6 @@ type CareFilter = 'need' | 'sitter' | 'guard';
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
 type CombinedRow = CombinedSitterGuardRow;
-
-function careProviderTabVisible(m: GuardMomRow, promoFree: boolean): boolean {
-  const certified =
-    m.certified_at != null &&
-    String(m.certified_at).trim() !== '' &&
-    !Number.isNaN(new Date(m.certified_at as string).getTime());
-  if (!certified) return false;
-  const paidListingActive =
-    m.listing_visible_until != null && new Date(m.listing_visible_until).getTime() > Date.now();
-  return (promoFree && certified) || paidListingActive;
-}
 
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
@@ -224,13 +216,7 @@ export function DogSittersPage() {
     void refetchGuardMoms();
   }, [refetchGuardMoms, user?.id]);
 
-  useEffect(() => {
-    const on = () => {
-      void refetchGuardMoms();
-    };
-    window.addEventListener('daeng-certified-guard-moms-changed', on);
-    return () => window.removeEventListener('daeng-certified-guard-moms-changed', on);
-  }, [refetchGuardMoms]);
+  useEffect(() => subscribeCertifiedCareDataChanged(() => void refetchGuardMoms()), [refetchGuardMoms]);
 
   const syncCareToUrl = (next: CareFilter) => {
     setCareFilter(next);
@@ -320,7 +306,7 @@ export function DogSittersPage() {
     if (careFilter === 'need') return [];
 
     const sittersFromDb: DogSitter[] = dbDogSitters
-      .filter((m) => careProviderTabVisible(m, promoFree))
+      .filter((m) => careProviderListedInFeed(m, promoFree))
       .filter((m) => {
         const label = (m.region_gu ?? m.region_si ?? '').trim();
         const km = distForDistrict(label);
@@ -468,23 +454,22 @@ export function DogSittersPage() {
 
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
   const filteredCareNeedMeetups = useMemo(() => {
-    return allMeetups
-      .filter((req) => isCareMeetupCategory(req.category))
-      .filter((req) => meetupVisibleInPublicFeed(req, promoFree))
+    const base = filterCareNeedMeetupsForDistrictTab(allMeetups, {
+      promoFree,
+      locationBasedEnabled,
+      referenceDistricts,
+      viewerUserId: user?.id ?? '',
+    });
+    const qq = q.trim().toLowerCase();
+    return base
       .filter((req) => {
-        const viewerId = user?.id ?? '';
-        const isMine = viewerId !== '' && req.userId === viewerId;
-        if (isMine) return true;
-        return meetupMatchesRegion(req.district);
-      })
-      .filter((req) => {
-        if (!q) return true;
+        if (!qq) return true;
         const blob = `${displayPublicDolbomMeetupTitle(req)} ${displayPublicDolbomMeetupDescription(req)} ${req.title} ${req.description} ${req.district} ${req.userName}`
           .toLowerCase();
-        return blob.includes(q);
+        return blob.includes(qq);
       })
       .slice(0, 50);
-  }, [allMeetups, q, promoFree, meetupMatchesRegion, user?.id]);
+  }, [allMeetups, q, promoFree, locationBasedEnabled, referenceDistricts, user?.id]);
 
   // 신청 수 계산
   const getJoinCount = (meetupId: string) => {
@@ -706,7 +691,7 @@ export function DogSittersPage() {
                 locationBasedEnabled &&
                 referenceDistricts.length > 0 &&
                 combinedRows.length === 0 &&
-                dbDogSitters.some((m) => careProviderTabVisible(m, promoFree)) && (
+                dbDogSitters.some((m) => careProviderListedInFeed(m, promoFree)) && (
                   <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
                     저장된 동네 기준 {CERTIFIED_CARE_RADIUS_KM}km 안에 노출 중인 댕집사가 없어요.
                   </p>
