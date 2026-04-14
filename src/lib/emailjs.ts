@@ -1,10 +1,9 @@
 import emailjs from '@emailjs/browser';
 
 // EmailJS 설정
-const EMAILJS_PUBLIC_KEY = '7-EF2vKlS3sc_N5rp';
-const EMAILJS_PRIVATE_KEY = 'xPexQmGxFSJlKC0LVrDIt';
-const EMAILJS_TEMPLATE_ID = 'template_4nf36gq';
-const EMAILJS_SERVICE_ID = 'service_yde5guq'; // ✅ Gmail Service 연결 완료!
+const EMAILJS_PUBLIC_KEY = readViteEnv('VITE_EMAILJS_PUBLIC_KEY')?.trim() || 'TbIjGPIbKGSMdRMt-';
+const EMAILJS_TEMPLATE_ID = readViteEnv('VITE_EMAILJS_TEMPLATE_ID')?.trim() || 'template_4nf36gq';
+const EMAILJS_SERVICE_ID = readViteEnv('VITE_EMAILJS_SERVICE_ID')?.trim() || 'service_yde5guq';
 
 // EmailJS 초기화
 emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -40,6 +39,16 @@ function readViteEnv(key: string): string | undefined {
   return env?.[key];
 }
 
+function maskMiddle(v: string): string {
+  if (v.length <= 6) return v;
+  return `${v.slice(0, 3)}***${v.slice(-3)}`;
+}
+
+/** 장애 확인용: 실제로 어떤 EmailJS 설정을 읽는지 요약 */
+export function getEmailJsRuntimeSummary(): string {
+  return `service=${maskMiddle(EMAILJS_SERVICE_ID)}, template=${maskMiddle(EMAILJS_TEMPLATE_ID)}, publicKey=${maskMiddle(EMAILJS_PUBLIC_KEY)}`;
+}
+
 /**
  * 이메일 전송 함수
  */
@@ -64,7 +73,8 @@ export async function sendEmail(params: EmailParams): Promise<void> {
     console.log('✅ 이메일 전송 성공:', response);
   } catch (error) {
     console.error('❌ 이메일 전송 실패:', error);
-    throw error;
+    const msg = error instanceof Error ? error.message : String(error);
+    throw new Error(`EmailJS 전송 실패: ${msg}`);
   }
 }
 

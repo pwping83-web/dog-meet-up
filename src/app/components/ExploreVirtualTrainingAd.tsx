@@ -5,9 +5,9 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 import {
+  getEmailJsRuntimeSummary,
   getTrainingPartnerInboxEmail,
   sendTrainingCourseApplicationEmail,
-  trySendEmail,
 } from '../../lib/emailjs';
 
 type ExploreVirtualTrainingAdProps = {
@@ -83,29 +83,42 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
     const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
     setApplySubmitting(true);
     try {
-      const ok = await trySendEmail(
-        () =>
-          sendTrainingCourseApplicationEmail({
-            applicantName: name,
-            applicantPhone: phoneDigits,
-            applicantNote: applicantNote.trim(),
-            applicantEmail: applicantEmail.trim(),
-            accountHint,
-            pageUrl,
-          }),
-        '직업훈련 신청',
+      await sendTrainingCourseApplicationEmail({
+        applicantName: name,
+        applicantPhone: phoneDigits,
+        applicantNote: applicantNote.trim(),
+        applicantEmail: applicantEmail.trim(),
+        accountHint,
+        pageUrl,
+      });
+      alert(
+        '신청이 접수되었어요. 제휴 교육소에서 입력하신 번호로 연락드릴 수 있어요. (이메일로도 전달됩니다)',
       );
-      if (ok) {
-        alert(
-          '신청이 접수되었어요. 제휴 교육소에서 입력하신 번호로 연락드릴 수 있어요. (이메일로도 전달됩니다)',
-        );
-        setApplicantName('');
-        setApplicantPhone('');
-        setApplicantEmail('');
-        setApplicantNote('');
-        setApplyOpen(false);
-        return;
-      }
+      setApplicantName('');
+      setApplicantPhone('');
+      setApplicantEmail('');
+      setApplicantNote('');
+      setApplyOpen(false);
+      return;
+    } catch (err) {
+      const reason = (err as Error)?.message ?? '알 수 없는 오류';
+      const origin = typeof window !== 'undefined' ? window.location.origin : '(origin)';
+      const shouldOpenMailApp = window.confirm(
+        [
+          '이메일 자동 전송에 실패했어요.',
+          '',
+          reason,
+          '',
+          '[확인할 항목]',
+          '- EmailJS Service ID / Template ID / Public Key',
+          '- 템플릿 변수: to_email, subject, message, html_message',
+          `- EmailJS 도메인 허용 목록에 ${origin}`,
+          `- 현재 앱 설정: ${getEmailJsRuntimeSummary()}`,
+          '',
+          '메일 앱으로 직접 보내기 창을 열까요?',
+        ].join('\n'),
+      );
+      if (!shouldOpenMailApp) return;
       const inbox = getTrainingPartnerInboxEmail();
       const body = [
         '[댕댕케어 직업훈련 신청]',
@@ -120,7 +133,6 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
         .join('\n');
       const mailto = `mailto:${inbox}?subject=${encodeURIComponent(`[직업훈련 신청] ${name}`)}&body=${encodeURIComponent(body)}`;
       window.location.href = mailto;
-      alert('메일 앱으로 접수를 열었어요. 보내 주시면 교육소에 전달돼요.');
     } finally {
       setApplySubmitting(false);
     }
