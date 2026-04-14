@@ -254,10 +254,11 @@ export function CreateRequestPage() {
     setRegionGpsBusy(true);
     try {
       const snap = await applyGpsLocation();
+      const districtWithDong = [snap.district, snap.dong].filter(Boolean).join(' ').trim();
       setFormData((prev) => ({
         ...prev,
         city: snap.city,
-        district: snap.district,
+        district: districtWithDong || snap.district,
       }));
     } catch (e) {
       alert(e instanceof Error ? e.message : '위치를 확인할 수 없어요.');
@@ -574,8 +575,8 @@ export function CreateRequestPage() {
         <div>
           <p className="mb-2 text-[11px] font-bold text-slate-600">
             {kind === 'dolbom'
-              ? '① 지금 계신 곳(GPS)으로 시·구 맞추기'
-              : '① 현재 위치로 시·구 맞추기'}
+              ? '① 지금 계신 곳(GPS)으로 시·구·동 맞추기'
+              : '① 현재 위치로 시·구·동 맞추기'}
           </p>
           <button
             type="button"

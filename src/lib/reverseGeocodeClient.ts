@@ -37,6 +37,22 @@ function toDepth1(raw: string): string {
   return EN_SUBDIV_TO_DEPTH1[t] || EN_SUBDIV_TO_DEPTH1[t.replace(/-si$/i, '').trim()] || t;
 }
 
+function isDongUnitName(name: string): boolean {
+  const t = name.trim();
+  if (!t) return false;
+  return /(동|읍|면|리)$/.test(t);
+}
+
+function pickDongFromAdminNames(adminNames: string[]): string {
+  let best = '';
+  for (const raw of adminNames) {
+    const n = String(raw ?? '').trim();
+    if (!isDongUnitName(n)) continue;
+    if (!best || n.length > best.length) best = n;
+  }
+  return best;
+}
+
 /**
  * 위·경도로 행정 단서 문자열을 만든 뒤 앱 regions 와 맞춤.
  */
@@ -60,6 +76,7 @@ export async function reverseGeocodeToKoreaAdmin(
   const adminNames = (admin?.administrative ?? []).map((x) => String(x.name ?? ''));
 
   const fromStack = matchAdministrativeNames(adminNames);
+  const inferredDong = pickDongFromAdminNames(adminNames);
   if (fromStack.matched) {
     const depth1Ko =
       Object.entries({
@@ -82,7 +99,7 @@ export async function reverseGeocodeToKoreaAdmin(
         제주: '제주특별자치도',
       }).find(([key]) => key === fromStack.city)?.[1] ?? fromStack.city;
 
-    return { depth1: depth1Ko, depth2: fromStack.district, depth3: '' };
+    return { depth1: depth1Ko, depth2: fromStack.district, depth3: inferredDong };
   }
 
   const principal = String(j.principalSubdivision ?? '');
@@ -92,7 +109,8 @@ export async function reverseGeocodeToKoreaAdmin(
 
   const depth1 = toDepth1(principal || city) || toDepth1(locality);
   const depth2 = locality || admin0 || city || '';
-  const depth3 = '';
+  // BigDataCloud는 지역별로 동 정보가 비어 있을 수 있어 administrative 스택에서 보강
+  const depth3 = inferredDong || '';
 
   if (!depth1 && !depth2) {
     throw new Error('이 위치의 시·구 정보를 가져오지 못했습니다.');
