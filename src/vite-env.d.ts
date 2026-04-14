@@ -23,6 +23,8 @@ interface ImportMetaEnv {
   readonly VITE_PHONE_DEMO_PASSWORD?: string;
   /** 개선·오류 접수 메일 수신 주소(비우면 support@daengdaeng.com) */
   readonly VITE_FEEDBACK_INBOX_EMAIL?: string;
+  /** 댕댕케어 직업훈련 신청 메일 수신(제휴 교육소). 비우면 피드백 수신함과 동일 */
+  readonly VITE_TRAINING_PARTNER_INBOX_EMAIL?: string;
 }
 
 interface ImportMeta {

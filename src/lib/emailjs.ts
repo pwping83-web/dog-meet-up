@@ -285,6 +285,52 @@ export function getFeedbackInboxEmail(): string {
   return v && v.includes('@') ? v : DEFAULT_FEEDBACK_INBOX;
 }
 
+/** 직업훈련 신청(제휴 교육소) 수신 — `VITE_TRAINING_PARTNER_INBOX_EMAIL` 없으면 피드백함으로 폴백 */
+export function getTrainingPartnerInboxEmail(): string {
+  const v = import.meta.env.VITE_TRAINING_PARTNER_INBOX_EMAIL?.trim();
+  return v && v.includes('@') ? v : getFeedbackInboxEmail();
+}
+
+/** 탐색 광고「댕댕케어 직업훈련」신청 → 제휴 교육소(또는 운영) 메일. 본문에 전화번호 포함 — 교육소에서 회신 전화 */
+export async function sendTrainingCourseApplicationEmail(params: {
+  applicantName: string;
+  applicantPhone: string;
+  applicantNote: string;
+  applicantEmail: string;
+  accountHint: string;
+  pageUrl: string;
+}): Promise<void> {
+  const to_email = getTrainingPartnerInboxEmail();
+  const lines = [
+    '[댕댕케어 직업훈련 · 신청]',
+    '신청자에게 연락(전화) 부탁드립니다.',
+    '',
+    `이름: ${params.applicantName}`,
+    `전화: ${params.applicantPhone}`,
+  ];
+  if (params.applicantEmail.trim()) {
+    lines.push(`이메일: ${params.applicantEmail.trim()}`);
+  }
+  if (params.applicantNote.trim()) {
+    lines.push('', '문의·희망:', params.applicantNote.trim());
+  }
+  lines.push('', '---', `앱 계정 참고: ${params.accountHint}`, `접수 URL: ${params.pageUrl}`);
+
+  const reply =
+    params.applicantEmail.trim() && params.applicantEmail.includes('@')
+      ? params.applicantEmail.trim()
+      : 'noreply@daengdaengmarket.com';
+
+  return sendEmail({
+    to_email,
+    to_name: '제휴 교육',
+    subject: `[직업훈련 신청] ${params.applicantName} · ${params.applicantPhone}`,
+    message: lines.join('\n'),
+    from_name: '댕댕마켓 직업훈련',
+    reply_to: reply,
+  });
+}
+
 /** 고객 의견·오류·불편 접수 → 운영 메일(EmailJS 템플릿 경유) */
 export async function sendUserFeedbackEmail(params: {
   kindLabel: string;
