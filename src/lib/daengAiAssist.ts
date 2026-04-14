@@ -61,6 +61,16 @@ function fixWeeklyParticleSpacing(input: string): string {
   return s.replace(/[ \t]{2,}/g, ' ').trim();
 }
 
+/** 이번 주 코스: 장황한 인사·날짜 읽기·견주 호칭 나열은 UI에 쓰지 않음 */
+function scrubOwnerWeeklyIntro(s: string): string {
+  const t = s.trim();
+  if (!t) return '';
+  if (/안녕하세요[,\s]*\S+의\s*주인님/.test(t)) return '';
+  if (/오늘은\s*\d{4}\s*년\s*\d{1,2}\s*월\s*\d{1,2}\s*일입니다/.test(t)) return '';
+  if (/오늘은\s*\d{4}-\d{2}-\d{2}/.test(t)) return '';
+  return t.slice(0, 100);
+}
+
 function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
   if (!fields) return fields;
   const next: DaengAiFields = { ...fields };
@@ -72,7 +82,8 @@ function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
     next.chips = next.chips.map((c) => stripHanChars(String(c)));
   }
   if (typeof next.weeklyIntro === 'string') {
-    next.weeklyIntro = fixWeeklyParticleSpacing(stripHanChars(next.weeklyIntro));
+    const cleaned = scrubOwnerWeeklyIntro(fixWeeklyParticleSpacing(stripHanChars(next.weeklyIntro)));
+    next.weeklyIntro = cleaned || undefined;
   }
   if (Array.isArray(next.weeklyItems)) {
     next.weeklyItems = next.weeklyItems.map((item) => ({

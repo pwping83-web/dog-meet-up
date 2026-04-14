@@ -329,7 +329,15 @@ export function BillingPage() {
                     </span>
                   )}
                 </div>
-                <p className="text-sm leading-relaxed text-slate-600">{breedingProduct.description}</p>
+                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm leading-relaxed text-slate-600">
+                  <span className="min-w-0">{breedingProduct.description}</span>
+                  <Link
+                    to="/customer-service#legal"
+                    className="shrink-0 font-extrabold text-pink-700 underline decoration-pink-400/50 underline-offset-2"
+                  >
+                    법적 고지 보기
+                  </Link>
+                </div>
                 {promoFree ? (
                   <div className="rounded-2xl border border-pink-200 bg-pink-50 py-3.5 text-center text-sm font-extrabold text-pink-900">
                     한시적 무료 — 만나자에서 「교배」로 글 작성

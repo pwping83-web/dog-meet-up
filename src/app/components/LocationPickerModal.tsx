@@ -32,6 +32,8 @@ export function LocationPickerModal({ open, onClose }: Props) {
 
   const [selCity, setSelCity] = useState(location.city);
   const [selDistrict, setSelDistrict] = useState(location.district);
+  const selCityRef = useRef(selCity);
+  selCityRef.current = selCity;
 
   useEffect(() => {
     if (!open) return;
@@ -147,11 +149,11 @@ export function LocationPickerModal({ open, onClose }: Props) {
     }
   };
 
-  const handleManualOnly = () => {
+  const persistManualIfComplete = (city: string, district: string) => {
+    if (!city?.trim() || !district?.trim() || !locationBasedEnabled) return;
     setError(null);
     try {
-      setManualRegion(selCity, selDistrict);
-      onClose();
+      setManualRegion(city.trim(), district.trim());
     } catch (e) {
       setError((e as Error).message);
     }
@@ -296,17 +298,12 @@ export function LocationPickerModal({ open, onClose }: Props) {
               selectedCity={selCity}
               selectedDistrict={selDistrict}
               onCityChange={setSelCity}
-              onDistrictChange={setSelDistrict}
+              onDistrictChange={(district) => {
+                setSelDistrict(district);
+                persistManualIfComplete(selCityRef.current, district);
+              }}
               placeholder="시·도와 구·군을 선택하세요"
             />
-            <button
-              type="button"
-              disabled={!locationBasedEnabled}
-              onClick={handleManualOnly}
-              className="mt-3 w-full rounded-2xl border border-slate-200 py-3 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              선택한 시·구만 저장
-            </button>
           </div>
         </div>
       </div>

@@ -73,7 +73,8 @@ export function OwnerWeeklyAiCard() {
       return;
     }
     setErr(null);
-    setIntro(r.fields?.weeklyIntro ?? r.text.split('\n\n')[0]?.trim() ?? r.text);
+    // 장황한 폴백(r.text) 금지 — 짧은 weeklyIntro만 표시
+    setIntro((r.fields?.weeklyIntro ?? '').trim());
     setItems(Array.isArray(r.fields?.weeklyItems) ? r.fields!.weeklyItems! : []);
     setOpen(true);
   };

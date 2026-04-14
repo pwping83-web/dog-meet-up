@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { Megaphone, ShieldCheck, ChevronDown, ChevronRight, GraduationCap, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -60,11 +60,6 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
   const [applicantNote, setApplicantNote] = useState('');
   const [applySubmitting, setApplySubmitting] = useState(false);
 
-  useEffect(() => {
-    const u = user?.email?.trim();
-    if (u) setApplicantEmail((prev) => (prev.trim() ? prev : u));
-  }, [user?.email]);
-
   const cardPad = compact ? 'px-5 py-5 max-md:px-4 max-md:py-5' : 'px-6 py-7 max-md:px-5 max-md:py-6 md:px-8 md:py-8';
   const collapsedPad = compact ? 'px-4 py-3.5 max-md:px-3.5 max-md:py-3.5' : 'px-5 py-4 max-md:px-4 max-md:py-4';
   const thumbBox = compact
@@ -106,6 +101,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
         );
         setApplicantName('');
         setApplicantPhone('');
+        setApplicantEmail('');
         setApplicantNote('');
         setApplyOpen(false);
         return;

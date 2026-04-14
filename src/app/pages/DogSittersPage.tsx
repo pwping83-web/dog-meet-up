@@ -17,6 +17,7 @@ import {
 } from '../utils/meetupCategory';
 import { formatDistrictWithDong } from '../data/regions';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
+import { districtMatchesAnyReference } from '../utils/districtRefMatch';
 import { isCareMeetupCategory } from '../utils/meetupCategory';
 import { showCertifiedGuardMomDemosWhenEmpty, usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
@@ -31,10 +32,6 @@ type CareFilter = 'need' | 'sitter' | 'guard';
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
 type CombinedRow = CombinedSitterGuardRow;
-
-function normalizeGuText(v: string): string {
-  return v.replace(/\s+/g, '').replace(/시/g, '').trim();
-}
 
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
@@ -247,9 +244,8 @@ export function DogSittersPage() {
 
   const guardMomsRegionFiltered = useMemo(() => {
     if (!locationBasedEnabled) return guardMoms;
-    const setD = new Set(referenceDistricts.map((x) => normalizeGuText(x)).filter(Boolean));
-    if (setD.size === 0) return guardMoms;
-    return guardMoms.filter((m) => setD.has(normalizeGuText(m.region_gu ?? '')));
+    if (referenceDistricts.length === 0) return guardMoms;
+    return guardMoms.filter((m) => districtMatchesAnyReference(m.region_gu ?? '', referenceDistricts));
   }, [guardMoms, locationBasedEnabled, referenceDistricts]);
 
   const guardRegionFallbackUsed =
@@ -273,7 +269,7 @@ export function DogSittersPage() {
     let sitters = mockDogSitters.filter((s) => {
       if (locationBasedEnabled) {
         const d = s.district?.trim();
-        if (!d || !referenceDistricts.includes(d)) return false;
+        if (!d || !districtMatchesAnyReference(d, referenceDistricts)) return false;
       }
       if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
       if (q) {
@@ -346,7 +342,7 @@ export function DogSittersPage() {
       if (!locationBasedEnabled) return true;
       const d = district?.trim();
       if (!d) return false;
-      return referenceDistricts.includes(d);
+      return districtMatchesAnyReference(d, referenceDistricts);
     },
     [locationBasedEnabled, referenceDistricts],
   );

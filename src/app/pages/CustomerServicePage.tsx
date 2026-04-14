@@ -131,7 +131,7 @@ export function CustomerServicePage() {
 
       {/* 탭 메뉴 */}
       <div className="sticky top-14 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide">
+        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide px-3 sm:px-4">
           <button
             type="button"
             onClick={() => {

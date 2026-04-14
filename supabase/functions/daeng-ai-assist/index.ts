@@ -14,6 +14,15 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+function scrubOwnerWeeklyIntroKo(s: string): string {
+  const t = s.trim();
+  if (!t) return "";
+  if (/안녕하세요[,\s]*\S+의\s*주인님/.test(t)) return "";
+  if (/오늘은\s*\d{4}\s*년\s*\d{1,2}\s*월\s*\d{1,2}\s*일입니다/.test(t)) return "";
+  if (/오늘은\s*\d{4}-\d{2}-\d{2}/.test(t)) return "";
+  return t.slice(0, 100);
+}
+
 function fixWeeklyParticleSpacingKo(input: string): string {
   return input
     .replace(/에해/g, "에 해")
@@ -357,7 +366,6 @@ Deno.serve(async (req) => {
           : [];
 
         const bundle = {
-          today: String(payload.today ?? "").slice(0, 24),
           userDistrict: String(payload.userDistrict ?? "").slice(0, 80),
           myDogs: payload.myDogs,
           myPosts: payload.myPosts,
@@ -382,7 +390,7 @@ Deno.serve(async (req) => {
         const sys =
           `너는 댕댕마켓 반려견 앱의 "이번 주 할 일" 코치야. 입력은 JSON 한 덩어리이며, 후보 모임·댕친은 i가 인덱스야.\n` +
           `반드시 아래 스키마의 JSON만 출력해. 마크다운·코드펜스 금지.\n` +
-          `{"intro":"최대 2문장, 전체 90자 이하. 장황한 인사·날짜 읽기·견종 설명 금지. 견주에게 격려 한 번 + 이번 주 핵심 한 줄만. 존댓말.","steps":[{"type":"join_meetup","meetupIndex":0,"line":"짧은 한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"짧은 한 줄"},{"type":"free_tip","line":"짧은 한 줄"}]}\n` +
+          `{"intro":"선택. 있으면 한 문장만·72자 이하. 금지: 안녕하세요·주인님 호칭·오늘 날짜·나이·사회화 설명. 없으면 빈 문자열 \"\".","steps":[{"type":"join_meetup","meetupIndex":0,"line":"짧은 한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"짧은 한 줄"},{"type":"free_tip","line":"짧은 한 줄"}]}\n` +
           `규칙:\n` +
           `- 긴 문단·나열·목차 금지. 카드 UI용 초짧은 카피만.\n` +
           `- steps의 line은 각 32자 이하, 행동 한 가지만.\n` +
@@ -397,10 +405,11 @@ Deno.serve(async (req) => {
 
         const raw = await llmChat(sys, userJson, 520);
         const obj = extractJsonObject(raw);
-        const intro =
+        const introRaw =
           typeof obj?.intro === "string"
             ? fixWeeklyParticleSpacingKo(obj.intro).replace(/\s+/g, " ").trim().slice(0, 100)
             : "";
+        const intro = scrubOwnerWeeklyIntroKo(introRaw);
         const stepsRaw = Array.isArray(obj?.steps) ? obj.steps : [];
 
         const weeklyItems: Array<
@@ -451,7 +460,7 @@ Deno.serve(async (req) => {
 
         return jsonResponse({
           ok: true,
-          text: textBody || raw.slice(0, 2000),
+          text: textBody || (weeklyItems.length ? "" : "추천을 불러왔어요. 아래 카드를 눌러 보세요."),
           fields: {
             weeklyIntro: intro || undefined,
             weeklyItems: weeklyItems.length ? weeklyItems : undefined,
