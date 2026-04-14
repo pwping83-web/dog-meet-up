@@ -57,6 +57,12 @@ export function GuardMomDetailPage() {
   const [requestPhotoUrls, setRequestPhotoUrls] = useState<string[]>([]);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+
+  useEffect(() => {
     if (!id) return;
     let c = false;
     (async () => {

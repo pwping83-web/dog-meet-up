@@ -53,9 +53,11 @@ export function Root() {
     isChatDetailPage ||
     isDogPublicProfilePage;
 
-  // 페이지 전환 시 항상 최상단으로 스크롤
+  // 페이지 전환 시 항상 최상단으로 스크롤 (window / body / html 모두 초기화)
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
   }, [location.pathname]);
 
   // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
