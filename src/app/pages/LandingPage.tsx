@@ -599,7 +599,7 @@ export function LandingPage() {
               🍼 돌봄 · 맡기기
             </h2>
             <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-              맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
+              맡기기(돌봄 집에)·방문 돌봄(주인 집으로)
             </p>
           </div>
           <Link
