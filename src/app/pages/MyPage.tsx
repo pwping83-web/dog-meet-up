@@ -482,9 +482,7 @@ export function MyPage() {
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-extrabold text-slate-900">인증 돌봄 · 거리 기준</h3>
               <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600">
-                위에서 저장한 <strong className="text-slate-800">기본 동네</strong>와 아래{' '}
-                <strong className="text-slate-800">추가 동네</strong> 중 가까운 쪽으로 「모임·돌봄」 인증 돌봄 목록
-                거리를 계산해요.
+                인증돌봄 추가할 동네를 선택해 주세요.
               </p>
             </div>
           </div>
