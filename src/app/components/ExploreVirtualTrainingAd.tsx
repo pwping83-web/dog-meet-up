@@ -17,9 +17,9 @@ type ExploreVirtualTrainingAdProps = {
 
 const AD_TITLE = '댕댕케어 직업훈련 · 돌봄·맡기기';
 
-/** 반려견 훈련·교감 느낌의 안정적인 Unsplash CDN */
+/** 직업훈련·실습 교감 느낌 (Unsplash CDN) — 접힌 배너·펼침 썸네일 공통 */
 const AD_THUMB_SRC =
-  'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=560&h=420&fit=crop&q=85';
+  'https://images.unsplash.com/photo-1548199973-03cce0f87e95?w=560&h=420&fit=crop&q=85';
 
 const AD_LEAD = '방문 돌봄·맡기기 직업, 기초·실무 훈련이에요. ';
 
@@ -65,6 +65,10 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
   const thumbBox = compact
     ? 'h-[7.5rem] w-full sm:h-[5.5rem] sm:w-[7.5rem] shrink-0 overflow-hidden rounded-2xl border border-violet-200/60 bg-white/60 shadow-sm'
     : 'h-[10rem] w-full sm:h-[7.5rem] sm:w-[11rem] md:h-[8.25rem] md:w-[12.5rem] shrink-0 overflow-hidden rounded-2xl border border-violet-200/60 bg-white/70 shadow-md shadow-violet-200/30';
+
+  const collapsedThumbBox = compact
+    ? 'relative h-12 w-[3.35rem] shrink-0 overflow-hidden rounded-xl border border-violet-300/60 bg-white shadow-md shadow-violet-400/15 ring-2 ring-white/90'
+    : 'relative h-14 w-[4.5rem] max-md:h-[3.35rem] max-md:w-[4.25rem] shrink-0 overflow-hidden rounded-2xl border-2 border-white/90 bg-white shadow-lg shadow-violet-500/20 ring-1 ring-violet-200/80';
 
   const handleTrainingApplySubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -150,7 +154,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
         <button
           type="button"
           onClick={() => setBannerOpen(true)}
-          className="relative flex w-full items-center gap-3 rounded-2xl text-left transition-colors hover:bg-violet-100/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+          className="relative flex w-full min-w-0 items-center gap-2.5 rounded-2xl text-left transition-colors hover:bg-violet-100/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 sm:gap-3"
         >
           <span
             className={
@@ -165,6 +169,15 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
           <div className="min-w-0 flex-1">
             <p className="text-sm font-black leading-snug text-slate-900 max-md:text-[15px]">댕댕케어 직업훈련</p>
             <p className="mt-0.5 text-xs font-semibold text-slate-500 max-md:text-[13px]">탭하면 요약·신청 안내</p>
+          </div>
+          <div className={collapsedThumbBox} aria-hidden>
+            <ImageWithFallback
+              src={AD_THUMB_SRC}
+              fallbackSrc={virtualDogPhotoForSeed('explore-virtual-training-ad-collapsed')}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+            <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-violet-900/25 to-transparent" />
           </div>
           <ChevronRight className="h-5 w-5 shrink-0 text-violet-600" aria-hidden />
         </button>

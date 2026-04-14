@@ -151,7 +151,22 @@ export function GuardMomSitterList({
 
       {!guardLoading && combinedRows.length === 0 && (
         <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center shadow-sm">
-          {careFilter === 'guard' && guardMomsCount === 0 && !guardMomUiDemoFill ? (
+          {careFilter === 'sitter' ? (
+            <>
+              <p className="text-sm font-bold text-slate-700">노출 중인 인증 댕집사가 없어요</p>
+              <p className="mt-2 text-xs font-medium text-slate-500">
+                {searchQuery.trim()
+                  ? '검색어를 바꿔 보세요.'
+                  : '신청 후 운영 인증·노출 조건을 갖추면 여기에 보여요. 동네 필터도 확인해 주세요.'}
+              </p>
+              <Link
+                to="/guard-mom/register?role=sitter"
+                className="mt-4 inline-block rounded-2xl bg-violet-600 px-5 py-3 text-sm font-extrabold text-white shadow-md active:scale-[0.98]"
+              >
+                댕집사 신청하기
+              </Link>
+            </>
+          ) : careFilter === 'guard' && guardMomsCount === 0 && !guardMomUiDemoFill ? (
             <>
               <p className="text-sm font-bold text-slate-700">표시할 인증 보호맘이 없어요</p>
               <p className="mt-2 text-xs font-medium text-slate-500">
@@ -169,9 +184,7 @@ export function GuardMomSitterList({
           ) : (
             <>
               <p className="text-sm font-bold text-slate-700">조건에 맞는 돌보미가 없어요</p>
-              <p className="mt-2 text-xs font-medium text-slate-500">
-                필터·검색어를 바꾸거나, 인증 보호맘 등록을 눌러 노출을 시작해 보세요.
-              </p>
+              <p className="mt-2 text-xs font-medium text-slate-500">검색어를 바꿔 보세요.</p>
             </>
           )}
         </div>

@@ -7,7 +7,8 @@ import { useUserLocation } from '../../contexts/UserLocationContext';
 import { supabase } from '../../lib/supabase';
 import type { DogSitter } from '../types';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
-import { getCertifiedGuardMomHeroImageUrl, mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
+import { mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
+import { dogSitterFromCertifiedCareRow } from '../../lib/dogSitterFromCertifiedCareRow';
 import { displayPublicDolbomMeetupDescription, displayPublicDolbomMeetupTitle } from '../data/virtualDogPhotos';
 import {
   MANNAJA_CATEGORY_SET,
@@ -49,23 +50,6 @@ function careProviderTabVisible(m: GuardMomRow, promoFree: boolean): boolean {
   const paidListingActive =
     m.listing_visible_until != null && new Date(m.listing_visible_until).getTime() > Date.now();
   return (promoFree && certified) || paidListingActive;
-}
-
-function dogSitterFromCertifiedCareRow(m: GuardMomRow): DogSitter {
-  const gu = (m.region_gu ?? '').trim() || (m.region_si ?? '').trim() || '동네';
-  return {
-    id: m.user_id,
-    name: `댕집사·${gu}`,
-    profileImage: getCertifiedGuardMomHeroImageUrl(m),
-    location: [m.region_si, m.region_gu].filter(Boolean).join(' ').trim() || gu,
-    district: gu,
-    specialties: ['방문 돌봄'],
-    rating: 5,
-    reviewCount: 0,
-    experience: '인증',
-    description: (m.intro ?? '').slice(0, 400),
-    estimatedPrices: [{ category: '방문', priceRange: `1일 약 ${m.per_day_fee_krw.toLocaleString()}원` }],
-  };
 }
 
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
@@ -115,7 +99,6 @@ export function DogSittersPage() {
   const [dbDogSitters, setDbDogSitters] = useState<GuardMomRow[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
   const [guardMomsLoadError, setGuardMomsLoadError] = useState<string | null>(null);
-  const [specialty, setSpecialty] = useState('전체');
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
@@ -128,7 +111,10 @@ export function DogSittersPage() {
     writeMeetupNearbyRadiusKm(meetupRadiusKm);
   }, [meetupRadiusKm]);
 
-  const specialties = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
+  useEffect(() => {
+    if (careFilter === 'sitter' && sortBy !== 'distance') setSortBy('distance');
+  }, [careFilter, sortBy]);
+
   const meetupCategoryChips = useMemo(() => {
     if (topTab === 'mannaja') return ['전체', ...MANNAJA_MEETUP_CATEGORIES] as const;
     if (topTab === 'moija') return ['전체', ...MOIJA_MEETUP_CATEGORIES] as const;
@@ -330,21 +316,22 @@ export function DogSittersPage() {
       })
       .map(dogSitterFromCertifiedCareRow);
 
-    let sitters = [
-      ...sittersFromDb,
-      ...mockDogSitters.filter((s) => {
-        if (locationBasedEnabled) {
-          const d = s.district?.trim();
-          if (!d || !districtMatchesAnyReference(d, referenceDistricts)) return false;
-        }
-        if (specialty !== '전체' && !s.specialties.includes(specialty)) return false;
-        if (q) {
-          const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
-          if (!blob.includes(q)) return false;
-        }
-        return true;
-      }),
-    ];
+    const mockSittersForCare =
+      careFilter === 'sitter'
+        ? []
+        : mockDogSitters.filter((s) => {
+            if (locationBasedEnabled) {
+              const d = s.district?.trim();
+              if (!d || !districtMatchesAnyReference(d, referenceDistricts)) return false;
+            }
+            if (q) {
+              const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
+              if (!blob.includes(q)) return false;
+            }
+            return true;
+          });
+
+    let sitters = [...sittersFromDb, ...mockSittersForCare];
 
     let moms = guardMomsForList.filter((m) => {
       if (q) {
@@ -377,14 +364,15 @@ export function DogSittersPage() {
 
     const rows = [...sitterRows, ...guardRows];
 
+    const sortKey = careFilter === 'sitter' ? 'distance' : sortBy;
     rows.sort((a, b) => {
-      if (sortBy === 'distance') return a.distance - b.distance;
-      if (sortBy === 'rating') {
+      if (sortKey === 'distance') return a.distance - b.distance;
+      if (sortKey === 'rating') {
         if (a.kind !== b.kind) return a.kind === 'sitter' ? -1 : 1;
         if (a.kind === 'sitter' && b.kind === 'sitter') return b.sitter.rating - a.sitter.rating;
         return a.mom.per_day_fee_krw - b.mom.per_day_fee_krw;
       }
-      if (sortBy === 'reviews') {
+      if (sortKey === 'reviews') {
         if (a.kind !== b.kind) return a.kind === 'sitter' ? -1 : 1;
         if (a.kind === 'sitter' && b.kind === 'sitter') return b.sitter.reviewCount - a.sitter.reviewCount;
         return a.mom.per_day_fee_krw - b.mom.per_day_fee_krw;
@@ -395,7 +383,6 @@ export function DogSittersPage() {
     return rows;
   }, [
     careFilter,
-    specialty,
     sortBy,
     distForDistrict,
     guardMomsForList,
@@ -678,28 +665,6 @@ export function DogSittersPage() {
             </div>
           )}
 
-          {careFilter === 'sitter' && (
-            <div className="mb-3 space-y-2 rounded-2xl border border-amber-200/90 bg-white px-3 py-2.5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-[11px] font-bold leading-snug text-slate-700">
-                  댕집사 <span className="text-amber-800">구인</span>도 돌봄 글이에요
-                </p>
-                <Link
-                  to="/create-meetup?kind=dolbom"
-                  className="shrink-0 rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-extrabold text-white shadow-sm active:scale-[0.98]"
-                >
-                  돌봄 글 쓰기
-                </Link>
-              </div>
-              <p className="text-[10px] font-semibold leading-snug text-slate-500">
-                댕집사로 <strong className="text-slate-700">소개·등록</strong> 글은 아직 여기서 못 써요.{' '}
-                <Link to="/customer-service" className="font-extrabold text-violet-700 underline underline-offset-2">
-                  고객센터
-                </Link>
-              </p>
-            </div>
-          )}
-
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
@@ -707,32 +672,16 @@ export function DogSittersPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
-                careFilter === 'need' ? '제목·내용·동네 검색 🐾' : '이름·소개·동네 검색 🐕'
+                careFilter === 'need'
+                  ? '제목·내용·동네 검색 🐾'
+                  : careFilter === 'sitter'
+                    ? '소개·동네 검색'
+                    : '이름·소개·동네 검색 🐕'
               }
               className="h-12 w-full rounded-2xl border-transparent bg-slate-50 pl-11 pr-4 text-sm transition-all placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/10"
               style={{ fontWeight: 500 }}
             />
           </div>
-
-          {careFilter !== 'guard' && careFilter !== 'need' && (
-            <div className="mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-              {specialties.map((spec) => (
-                <button
-                  key={spec}
-                  type="button"
-                  onClick={() => setSpecialty(spec)}
-                  className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm transition-all ${
-                    specialty === spec
-                      ? 'bg-orange-600 text-white shadow-md shadow-orange-500/20'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                  style={{ fontWeight: 700 }}
-                >
-                  {spec}
-                </button>
-              ))}
-            </div>
-          )}
 
           <div className="mb-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -754,14 +703,18 @@ export function DogSittersPage() {
             </div>
             {careFilter !== 'need' && (
               <select
-                value={sortBy}
+                value={careFilter === 'sitter' ? 'distance' : sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'distance' | 'rating' | 'reviews')}
                 className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
                 style={{ fontWeight: 700 }}
               >
                 <option value="distance">🎯 거리 가까운 순</option>
-                <option value="rating">⭐ 평점 높은 순</option>
-                <option value="reviews">💬 리뷰 많은 순</option>
+                {careFilter !== 'sitter' ? (
+                  <>
+                    <option value="rating">⭐ 평점 높은 순</option>
+                    <option value="reviews">💬 리뷰 많은 순</option>
+                  </>
+                ) : null}
               </select>
             )}
           </div>

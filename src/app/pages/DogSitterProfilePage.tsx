@@ -1,26 +1,68 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
-import { MapPin, Star, ArrowLeft, MessageCircle, X } from 'lucide-react';
+import { MapPin, Star, ArrowLeft, MessageCircle, X, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { formatDistrictWithDong } from '../data/regions';
 import { mockDogSitters } from '../data/mockData';
 import { resolveDogSitterPortraitUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { setAuthReturnPath } from '../components/AuthReturnRedirect';
+import { supabase } from '../../lib/supabase';
+import { dogSitterFromCertifiedCareRow } from '../../lib/dogSitterFromCertifiedCareRow';
+import type { DogSitter } from '../types';
 
 export function DogSitterProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading: authLoading } = useAuth();
-  const dogSitter = mockDogSitters.find((r) => r.id === id);
-  const profilePhoto = dogSitter ? resolveDogSitterPortraitUrl(dogSitter) : '';
+  const [dogSitter, setDogSitter] = useState<DogSitter | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [showJoinForm, setShowJoinForm] = useState(false);
   const [joinData, setJoinData] = useState({
     message: '',
     estimatedCost: '',
     estimatedDuration: '',
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!id) {
+        setDogSitter(null);
+        setProfileLoading(false);
+        return;
+      }
+      const mockHit = mockDogSitters.find((r) => r.id === id);
+      if (mockHit) {
+        if (!cancelled) {
+          setDogSitter(mockHit);
+          setProfileLoading(false);
+        }
+        return;
+      }
+      setProfileLoading(true);
+      const { data, error } = await supabase
+        .from('certified_guard_moms')
+        .select('*')
+        .eq('user_id', id)
+        .eq('provider_kind', 'dog_sitter')
+        .maybeSingle();
+      if (cancelled) return;
+      if (error || !data) {
+        setDogSitter(null);
+        setProfileLoading(false);
+        return;
+      }
+      setDogSitter(dogSitterFromCertifiedCareRow(data));
+      setProfileLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const profilePhoto = dogSitter ? resolveDogSitterPortraitUrl(dogSitter) : '';
 
   const handleSubmitJoin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,10 +74,25 @@ export function DogSitterProfilePage() {
     setJoinData({ message: '', estimatedCost: '', estimatedDuration: '' });
   };
 
+  if (profileLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" aria-label="불러오는 중" />
+      </div>
+    );
+  }
+
   if (!dogSitter) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-gray-50 px-6 text-center">
         <p className="text-gray-500">🐕 돌보미를 찾을 수 없습니다</p>
+        <button
+          type="button"
+          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/sitters?view=care&care=sitter'))}
+          className="text-sm font-bold text-orange-600 underline underline-offset-2"
+        >
+          돌봄 목록으로
+        </button>
       </div>
     );
   }

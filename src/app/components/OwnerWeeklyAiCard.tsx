@@ -24,7 +24,7 @@ function WeeklyItemRow({ item }: { item: DaengAiWeeklyItem }) {
         to={`/meetup/${item.meetupId}`}
         className="flex items-start gap-3 rounded-2xl border border-violet-100 bg-white px-3 py-3 text-left shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40"
       >
-        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-sm font-black text-violet-800">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-[10px] font-black leading-tight text-violet-800">
           모임
         </span>
         <span className="min-w-0 flex-1">
