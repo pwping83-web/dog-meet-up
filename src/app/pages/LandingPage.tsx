@@ -845,17 +845,6 @@ export function LandingPage() {
                 <User className="h-5 w-5 text-orange-500" />
                 마이페이지
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  closeExploreMenu();
-                  setLocationPickerOpen(true);
-                }}
-                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-sm font-bold text-slate-800 hover:bg-orange-50"
-              >
-                <MapPin className="h-5 w-5 text-orange-500" />
-                위치·동네 설정
-              </button>
               <Link
                 to="/profile/edit"
                 onClick={closeExploreMenu}
