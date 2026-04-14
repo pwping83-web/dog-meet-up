@@ -112,10 +112,10 @@ export function CustomerServicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 px-4 pb-10 sm:px-5">
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
-        <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center px-0">
           <button
             onClick={() => navigate('/explore')}
             className="-ml-2 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
@@ -131,7 +131,7 @@ export function CustomerServicePage() {
 
       {/* 탭 메뉴 */}
       <div className="sticky top-14 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide px-3 sm:px-4">
+        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide px-0 pb-0.5">
           <button
             type="button"
             onClick={() => {
@@ -207,9 +207,9 @@ export function CustomerServicePage() {
 
       {/* FAQ 탭 */}
       {activeTab === 'faq' && (
-        <div className="max-w-screen-md mx-auto">
+        <div className="mx-auto max-w-screen-md">
           {/* 카테고리 필터 */}
-          <div className="p-4 border-b border-slate-100">
+          <div className="border-b border-slate-100 py-4">
             <div className="flex gap-2 overflow-x-auto pb-2">
               {categories.map((cat) => (
                 <button
@@ -231,14 +231,14 @@ export function CustomerServicePage() {
           <div className="divide-y divide-slate-100">
             {filteredFaqs.map((faq) => (
               <details key={faq.id} className="group bg-white">
-                <summary className="p-4 cursor-pointer hover:bg-slate-50 flex items-start gap-3 transition-colors">
+                <summary className="flex cursor-pointer items-start gap-3 py-4 transition-colors hover:bg-slate-50">
                   <span className="mt-0.5 font-black text-brand">Q</span>
                   <div className="flex-1">
                     <div className="font-bold pr-6 text-slate-800">{faq.question}</div>
                   </div>
                   <ChevronRight className="w-5 h-5 text-slate-400 group-open:rotate-90 transition-transform flex-shrink-0" />
                 </summary>
-                <div className="px-4 pb-4 pl-11 text-sm bg-slate-50 border-t border-slate-100">
+                <div className="border-t border-slate-100 bg-slate-50 pb-4 pl-10 pr-0 pt-4 text-sm sm:pl-11">
                   <div className="flex gap-2 pt-4">
                     <span className="text-slate-400 font-bold">A</span>
                     <div className="text-slate-600 font-medium leading-relaxed">{faq.answer}</div>
@@ -249,7 +249,7 @@ export function CustomerServicePage() {
           </div>
 
           {/* 도움말 */}
-          <div className="p-4 mt-4">
+          <div className="mt-4 py-4">
             <div className="rounded-3xl border border-brand/20 bg-brand-soft p-5">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
@@ -293,7 +293,7 @@ export function CustomerServicePage() {
 
       {/* 1:1 문의 탭 */}
       {activeTab === 'inquiry' && (
-        <div className="p-6 max-w-md mx-auto">
+        <div className="mx-auto max-w-md py-6 sm:py-8">
           <div className="mb-6 text-center">
             <div className="text-5xl mb-3">📨</div>
             <h2 className="text-xl font-extrabold mb-2 text-slate-900">무엇을 도와드릴까요?</h2>
@@ -423,11 +423,11 @@ export function CustomerServicePage() {
 
       {/* 공지사항 탭 */}
       {activeTab === 'notice' && (
-        <div className="divide-y divide-slate-100 max-w-screen-md mx-auto">
+        <div className="mx-auto max-w-screen-md divide-y divide-slate-100">
           {notices.map((notice) => (
             <button
               key={notice.id}
-              className="w-full p-4 bg-white hover:bg-slate-50 transition-colors text-left"
+              className="w-full bg-white py-4 text-left transition-colors hover:bg-slate-50"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
@@ -440,7 +440,7 @@ export function CustomerServicePage() {
           ))}
 
           {/* 더보기 */}
-          <div className="p-4 text-center bg-white">
+          <div className="bg-white py-4 text-center">
             <button type="button" className="text-sm font-bold text-slate-500 hover:text-brand">
               더보기 +
             </button>
@@ -449,7 +449,7 @@ export function CustomerServicePage() {
       )}
 
       {activeTab === 'legal' && (
-        <div className="mx-auto max-w-screen-md px-4 py-6">
+        <div className="mx-auto max-w-screen-md py-6 sm:py-8">
           <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-extrabold text-slate-900">플랫폼 이용 범위 및 이용자 책임</h2>
             <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
@@ -463,7 +463,7 @@ export function CustomerServicePage() {
       )}
 
       {activeTab === 'feedback' && (
-        <div className="mx-auto max-w-md px-4 py-6">
+        <div className="mx-auto max-w-md py-6 sm:py-8">
           <UserFeedbackForm embedded />
         </div>
       )}

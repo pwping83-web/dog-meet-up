@@ -15,6 +15,7 @@ import { displayCertifiedGuardMomIntro } from '../data/virtualDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation } from '../data/regions';
 import { GUARD_MOM_REQUEST_LEGAL_FOOTNOTE } from '../../lib/platformLegalCopy';
+import { showGuardMomCarePaymentBooking } from '../../lib/promoFlags';
 import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
 import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 
@@ -365,17 +366,25 @@ export function GuardMomDetailPage() {
                 >
                   {chatBusy ? '보내는 중…' : '채팅으로 보내기'}
                 </button>
-                <button
-                  type="button"
-                  disabled={payBusy || chatBusy}
-                  onClick={() => void handleRequestPay()}
-                  className="mt-2 w-full rounded-2xl border-2 border-orange-300 bg-white py-3 text-sm font-extrabold text-orange-800 shadow-sm disabled:opacity-60"
-                >
-                  {payBusy ? '처리 중…' : '결제로 예약하기'}
-                </button>
-                <p className="mt-2 text-center text-[10px] font-medium text-slate-500">
-                  먼저 채팅으로 일정을 맞춘 뒤, 필요하면 결제 예약을 이어가면 돼요.
-                </p>
+                {showGuardMomCarePaymentBooking() ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={payBusy || chatBusy}
+                      onClick={() => void handleRequestPay()}
+                      className="mt-2 w-full rounded-2xl border-2 border-orange-300 bg-white py-3 text-sm font-extrabold text-orange-800 shadow-sm disabled:opacity-60"
+                    >
+                      {payBusy ? '처리 중…' : '결제로 예약하기'}
+                    </button>
+                    <p className="mt-2 text-center text-[10px] font-medium text-slate-500">
+                      먼저 채팅으로 일정을 맞춘 뒤, 필요하면 결제 예약을 이어가면 돼요.
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-center text-[10px] font-medium text-slate-500">
+                    일정·요금은 채팅으로 맞춰 주세요.
+                  </p>
+                )}
               </div>
             )}
           </>

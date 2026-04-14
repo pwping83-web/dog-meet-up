@@ -1,12 +1,7 @@
-/* ═══════════════════════════════════════════════════════════════════
-   인증 보호맘 · 관리자 한 번에 적용 (Supabase SQL Editor → 전체 복사 → Run 한 번)
-   개별 파일: migrations/20260416130000 → 161200 → 161400 순 (300이 먼저여야 is_app_admin 존재)
-   동일 내용을 마이그레이션 한 파일로만 적용하려면:
-   supabase/migrations/20260426120000_guard_mom_admin_certify_reapply.sql
-   이 스크립트는 신규 프로젝트에도 안전한 순서로 묶었습니다. 여러 번 실행해도 됩니다.
-   ═══════════════════════════════════════════════════════════════════ */
+/* 관리자 인증 RPC가 certified_at 을 못 바꾸는 경우: 초기 guard_moms 트리거가
+   auth.uid() 가 있으면 무조건 certified_at 을 OLD 로 되돌림 → 161200 내용이 DB에 없으면 발생.
+   이 파일은 is_app_admin + 트리거(관리자 예외) + RLS + RPC 를 한 번에 idempotent 재적용합니다. */
 
--- ─── 161300: 관리자 이메일 (카카오 메타데이터 email 포함) ───
 CREATE OR REPLACE FUNCTION public.is_app_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -28,7 +23,6 @@ $$;
 REVOKE ALL ON FUNCTION public.is_app_admin() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.is_app_admin() TO authenticated;
 
--- ─── 161200: 트리거(일반 사용자만 certified_at 잠금) + 관리자 UPDATE 정책 ───
 CREATE OR REPLACE FUNCTION public.certified_guard_moms_protect_privileged()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -55,7 +49,6 @@ CREATE POLICY "certified_guard_moms_update_admin"
   USING (public.is_app_admin())
   WITH CHECK (public.is_app_admin());
 
--- ─── 161400: RPC admin_set_guard_mom_certified ───
 CREATE OR REPLACE FUNCTION public.admin_set_guard_mom_certified(p_guard_mom_id uuid, p_certified boolean)
 RETURNS TABLE(id uuid, certified_at timestamptz)
 LANGUAGE plpgsql

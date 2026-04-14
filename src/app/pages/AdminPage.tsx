@@ -38,7 +38,7 @@ export function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-white border-b">
-        <div className="px-4 h-14 flex items-center justify-between">
+        <div className="flex h-14 items-center justify-between px-5 sm:px-6">
           {currentView !== 'main' ? (
             <button onClick={() => setCurrentView('main')} className="flex items-center gap-2">
               <ArrowLeft className="w-5 h-5" />
@@ -437,7 +437,7 @@ function GuardCareAdminView() {
       const rows = (data ?? []) as { id: string; certified_at: string | null }[];
       if (!rows.length) {
         throw new Error(
-          '변경된 행이 없어요. Supabase SQL에 ① 20260416130000_is_app_admin_kakao_metadata_email ② 20260416140000_admin_set_guard_mom_certified_rpc 를 적용했는지, 로그인이 pwping83@gmail.com 인지 확인하세요.',
+          '변경된 행이 없어요. Supabase에 migrations/20260426120000_guard_mom_admin_certify_reapply.sql 을 실행했는지, 로그인 계정이 관리자(is_app_admin)인지 확인하세요.',
         );
       }
       const at = rows[0].certified_at;
@@ -447,12 +447,12 @@ function GuardCareAdminView() {
         !Number.isNaN(new Date(at as string).getTime());
       if (certify && !atValid) {
         throw new Error(
-          'DB에 인증 시각이 반영되지 않았어요. 트리거가 관리자 UPDATE를 막고 있을 수 있어요. Supabase SQL Editor에서 sql/apply-guard-mom-admin-once.sql 을 한 번에 실행하거나, migrations 161300→161200→161400 순으로 적용한 뒤 다시 시도하세요.',
+          'DB에 인증 시각이 반영되지 않았어요. 초기 트리거가 관리자 UPDATE까지 막는 상태일 수 있어요. SQL Editor에서 sql/apply-guard-mom-admin-once.sql 을 실행하거나, supabase/migrations/20260426120000_guard_mom_admin_certify_reapply.sql 을 적용한 뒤 다시 시도하세요.',
         );
       }
       if (!certify && atValid) {
         throw new Error(
-          '인증 해제가 반영되지 않았어요. 20260416120000_guard_mom_admin_certify_update.sql 트리거가 적용됐는지 확인하세요.',
+          '인증 해제가 반영되지 않았어요. migrations/20260426120000_guard_mom_admin_certify_reapply.sql 을 적용했는지 확인하세요.',
         );
       }
       setGuardMoms((prev) =>
@@ -465,7 +465,7 @@ function GuardCareAdminView() {
     } catch (e) {
       setError(
         (e as Error)?.message ??
-          '저장에 실패했습니다. Supabase에 migrations/20260416120000_guard_mom_admin_certify_update.sql 을 적용했는지 확인하세요.',
+          '저장에 실패했습니다. Supabase에 migrations/20260426120000_guard_mom_admin_certify_reapply.sql 을 적용했는지 확인하세요.',
       );
     } finally {
       setCertifyingId(null);
@@ -483,7 +483,7 @@ function GuardCareAdminView() {
   );
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6 px-5 py-6 sm:px-6">
       <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           <AiDoumiButton
@@ -566,7 +566,7 @@ function GuardCareAdminView() {
                       : '탭: 유료 노출 대기';
                   const busy = certifyingId === g.id;
                   return (
-                    <li key={g.id} className="rounded-xl border border-gray-100 bg-white p-4">
+                    <li key={g.id} className="rounded-xl border border-gray-100 bg-white p-4 sm:p-5">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="flex flex-wrap items-center gap-2 font-bold text-gray-900">
@@ -672,7 +672,7 @@ function GuardCareAdminView() {
                         ? '돌봄'
                         : null;
                   return (
-                    <li key={o.id} className="rounded-xl border border-gray-100 bg-white p-4">
+                    <li key={o.id} className="rounded-xl border border-gray-100 bg-white p-4 sm:p-5">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="font-bold text-gray-900">{billingProductLabel(o.product_key)}</p>
@@ -724,7 +724,7 @@ function GuardCareAdminView() {
                 {bookings.map((b) => {
                   const mom = guardMoms.find((m) => m.id === b.guard_mom_id);
                   return (
-                    <li key={b.id} className="rounded-xl border border-gray-100 bg-white p-4">
+                    <li key={b.id} className="rounded-xl border border-gray-100 bg-white p-4 sm:p-5">
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
                           <p className="font-bold text-gray-900">

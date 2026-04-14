@@ -65,6 +65,12 @@ export function showCertifiedGuardMomDemosWhenEmpty(): boolean {
 export const PROMO_FREE_LAUNCH_TITLE = '🎉 런칭 기념 · 무료 노출 중';
 export const PROMO_FREE_LAUNCH_BLURB = '인증 후 돌봄 목록·교배 글 무료 노출. 정책 바뀌면 미리 안내합니다.';
 
+/** 보호맘 상세 「결제로 예약하기」 — 오픈 전 기본 숨김. 켤 때만 `VITE_GUARD_MOM_CARE_PAYMENT=true` */
+export function showGuardMomCarePaymentBooking(): boolean {
+  const v = import.meta.env.VITE_GUARD_MOM_CARE_PAYMENT;
+  return v === 'true' || v === '1';
+}
+
 /** 결제·내 구독 화면 — 인증 돌봄 노출 카드 라벨·프로모 시 안내 */
 export const BILLING_GUARD_LISTING_EYEBROW = '인증 돌봄 노출';
 export const PROMO_FREE_CERTIFIED_GUARD_NOTE = '목록 무료 노출 중. 정책 바뀌면 안내합니다.';

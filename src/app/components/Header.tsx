@@ -14,16 +14,15 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/90 shadow-[0_2px_12px_rgba(94,67,255,0.06)] backdrop-blur-xl transition-all">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
-      <div className="mx-auto w-full max-w-[min(100%,480px)] px-4 pt-[env(safe-area-inset-top)]">
-        <div className="relative flex min-h-[56px] items-center justify-between py-1">
-          
-          {/* 좌측: 지역 선택 (카카오맵 / GPS / 수동) */}
-          <div className="flex items-center min-w-0 max-w-[45%]">
+      <div className="mx-auto w-full max-w-[min(100%,480px)] px-4 pt-[env(safe-area-inset-top)] sm:px-5">
+        <div className="grid min-h-[56px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-1.5 sm:gap-3">
+          {/* 좌측: 지역 선택 — 중앙 제목과 겹치지 않도록 그리드 셀 안에서만 truncate */}
+          <div className="min-w-0 justify-self-start">
             <button
               type="button"
               title={fullLabel}
               onClick={() => setLocationOpen(true)}
-              className={`flex min-w-0 items-center gap-1.5 rounded-full px-3 py-1.5 shadow-inner transition-colors ${
+              className={`flex max-w-full min-w-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 shadow-inner transition-colors sm:px-3 ${
                 locationBasedEnabled
                   ? 'bg-slate-100/80 hover:bg-slate-200/80'
                   : 'bg-slate-200/70 hover:bg-slate-200'
@@ -32,26 +31,24 @@ export function Header() {
               <MapPin
                 className={`h-4 w-4 shrink-0 ${locationBasedEnabled ? 'text-brand' : 'text-slate-500'}`}
               />
-              <span className="truncate text-sm font-extrabold tracking-tight text-slate-800">
+              <span className="min-w-0 truncate text-left text-sm font-extrabold tracking-tight text-slate-800">
                 {shortLabel}
               </span>
               <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-500" />
             </button>
           </div>
 
-          {/* 중앙: 앱 타이틀 (절대 위치로 정중앙 고정) */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="shrink-0 justify-self-center px-1">
             <Link
               to="/explore"
-              className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-lg font-black tracking-tight text-transparent"
+              className="whitespace-nowrap bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-base font-black tracking-tight text-transparent sm:text-lg"
               aria-label="홈으로 이동"
             >
               댕댕마켓
             </Link>
           </div>
-          
-          {/* 우측: 유틸리티 아이콘 */}
-          <div className="flex items-center gap-1">
+
+          <div className="flex shrink-0 items-center justify-end gap-0.5 justify-self-end sm:gap-1">
             <Link
               to="/notifications"
               className="relative rounded-full p-2 text-slate-400 transition-all hover:bg-orange-50 hover:text-brand"
@@ -71,7 +68,6 @@ export function Header() {
               </Link>
             )}
           </div>
-
         </div>
       </div>
     </header>
