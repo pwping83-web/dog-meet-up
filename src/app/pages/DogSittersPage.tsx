@@ -29,6 +29,18 @@ import {
   MEETUP_NEARBY_RADIUS_MAX,
   MEETUP_NEARBY_RADIUS_MIN,
 } from '../../lib/meetupNearbyRadiusKm';
+
+/** 인증 댕집사·보호맘: 저장 동네 기준 이 거리 안만 목록에 포함 */
+const CERTIFIED_CARE_RADIUS_KM = MEETUP_NEARBY_RADIUS_MAX;
+
+function passesCertifiedCareRadiusFilter(
+  locationBasedEnabled: boolean,
+  referenceDistricts: readonly string[],
+  distKm: number,
+): boolean {
+  if (!locationBasedEnabled || referenceDistricts.length === 0) return true;
+  return distKm < 900 && distKm <= CERTIFIED_CARE_RADIUS_KM;
+}
 import { useAuth } from '../../contexts/AuthContext';
 import { CareNeedList } from '../components/dogSitters/CareNeedList';
 import { GuardMomSitterList, type CombinedSitterGuardRow, type GuardMomRow } from '../components/dogSitters/GuardMomSitterList';
@@ -99,7 +111,6 @@ export function DogSittersPage() {
   const [dbDogSitters, setDbDogSitters] = useState<GuardMomRow[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
   const [guardMomsLoadError, setGuardMomsLoadError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
   const [meetupRadiusKm, setMeetupRadiusKm] = useState<number>(() =>
@@ -110,10 +121,6 @@ export function DogSittersPage() {
   useEffect(() => {
     writeMeetupNearbyRadiusKm(meetupRadiusKm);
   }, [meetupRadiusKm]);
-
-  useEffect(() => {
-    if (careFilter === 'sitter' && sortBy !== 'distance') setSortBy('distance');
-  }, [careFilter, sortBy]);
 
   const meetupCategoryChips = useMemo(() => {
     if (topTab === 'mannaja') return ['전체', ...MANNAJA_MEETUP_CATEGORIES] as const;
@@ -278,37 +285,47 @@ export function DogSittersPage() {
     guardMoms.length === 0 &&
     showCertifiedGuardMomDemosWhenEmpty();
 
-  const guardMomsRegionFiltered = useMemo(() => {
-    if (!locationBasedEnabled) return guardMoms;
-    if (referenceDistricts.length === 0) return guardMoms;
-    return guardMoms.filter((m) => districtMatchesAnyReference(m.region_gu ?? '', referenceDistricts));
-  }, [guardMoms, locationBasedEnabled, referenceDistricts]);
-
-  const guardRegionFallbackUsed =
-    careFilter === 'guard' &&
-    locationBasedEnabled &&
-    guardMoms.length > 0 &&
-    guardMomsRegionFiltered.length === 0;
-
-  /** DB에서 온 인증 행만 쓰고, 데모 모드일 때만 목업을 이어 붙임. */
+  /** 보호맘 DB+데모: 동네 미설정·위치기반 끔 → 전부. 켜짐+동네 있음 → 저장 동네 기준 CERTIFIED_CARE_RADIUS_KM 이내만 */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
     if (guardMomsLoadError) return [];
-    if (guardMomsRegionFiltered.length > 0) return guardMomsRegionFiltered;
-    if (guardRegionFallbackUsed) return guardMoms;
-    if (guardMomUiDemoFill) return [...mockCertifiedGuardMoms] as unknown as GuardMomRow[];
-    return [];
-  }, [guardMomsRegionFiltered, guardMomsLoadError, guardRegionFallbackUsed, guardMoms, guardMomUiDemoFill]);
+    const filterKm = (rows: GuardMomRow[]) =>
+      rows.filter((m) => {
+        const km = distForDistrict(m.region_gu ?? '');
+        return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
+      });
+    if (guardMomUiDemoFill && guardMoms.length === 0) {
+      return filterKm([...mockCertifiedGuardMoms] as unknown as GuardMomRow[]);
+    }
+    if (guardMoms.length === 0) return [];
+    return filterKm(guardMoms);
+  }, [
+    guardMomsLoadError,
+    guardMomUiDemoFill,
+    guardMoms,
+    locationBasedEnabled,
+    referenceDistricts,
+    distForDistrict,
+  ]);
+
+  /** DB에는 있는데 반경 안에 0명일 때 안내 */
+  const certifiedGuardNobodyInRadius =
+    careFilter === 'guard' &&
+    locationBasedEnabled &&
+    referenceDistricts.length > 0 &&
+    guardMoms.length > 0 &&
+    guardMomsForList.length === 0 &&
+    !guardMomUiDemoFill;
 
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
 
     const sittersFromDb: DogSitter[] = dbDogSitters
       .filter((m) => careProviderTabVisible(m, promoFree))
-      .filter(
-        (m) =>
-          !locationBasedEnabled ||
-          districtMatchesAnyReference((m.region_gu ?? m.region_si ?? '').trim(), referenceDistricts),
-      )
+      .filter((m) => {
+        const label = (m.region_gu ?? m.region_si ?? '').trim();
+        const km = distForDistrict(label);
+        return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
+      })
       .filter((m) => {
         if (!q) return true;
         const blob = `${m.intro ?? ''} ${m.region_si ?? ''} ${m.region_gu ?? ''}`.toLowerCase();
@@ -320,10 +337,10 @@ export function DogSittersPage() {
       careFilter === 'sitter'
         ? []
         : mockDogSitters.filter((s) => {
-            if (locationBasedEnabled) {
-              const d = s.district?.trim();
-              if (!d || !districtMatchesAnyReference(d, referenceDistricts)) return false;
-            }
+            const d = s.district?.trim();
+            if (!d) return false;
+            const km = distForDistrict(d);
+            if (!passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km)) return false;
             if (q) {
               const blob = `${s.name} ${s.description} ${formatDistrictWithDong(s.district, s.dong)}`.toLowerCase();
               if (!blob.includes(q)) return false;
@@ -364,26 +381,11 @@ export function DogSittersPage() {
 
     const rows = [...sitterRows, ...guardRows];
 
-    const sortKey = careFilter === 'sitter' ? 'distance' : sortBy;
-    rows.sort((a, b) => {
-      if (sortKey === 'distance') return a.distance - b.distance;
-      if (sortKey === 'rating') {
-        if (a.kind !== b.kind) return a.kind === 'sitter' ? -1 : 1;
-        if (a.kind === 'sitter' && b.kind === 'sitter') return b.sitter.rating - a.sitter.rating;
-        return a.mom.per_day_fee_krw - b.mom.per_day_fee_krw;
-      }
-      if (sortKey === 'reviews') {
-        if (a.kind !== b.kind) return a.kind === 'sitter' ? -1 : 1;
-        if (a.kind === 'sitter' && b.kind === 'sitter') return b.sitter.reviewCount - a.sitter.reviewCount;
-        return a.mom.per_day_fee_krw - b.mom.per_day_fee_krw;
-      }
-      return 0;
-    });
+    rows.sort((a, b) => a.distance - b.distance);
 
     return rows;
   }, [
     careFilter,
-    sortBy,
     distForDistrict,
     guardMomsForList,
     dbDogSitters,
@@ -698,32 +700,35 @@ export function DogSittersPage() {
               {careFilter === 'guard' && guardMomUiDemoFill && (
                 <p className="mt-0.5 text-[11px] font-semibold text-sky-800">실제 DB 노출 0명 · 카드는 UI 데모</p>
               )}
-              {careFilter === 'guard' && guardRegionFallbackUsed && !guardMomUiDemoFill && (
+              {careFilter === 'guard' && certifiedGuardNobodyInRadius && (
                 <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
-                  내 동네와 일치하는 보호맘이 없어 전체 지역 순으로 보여줘요.
+                  저장된 동네 기준 {CERTIFIED_CARE_RADIUS_KM}km 안에 등록된 보호맘이 없어요.
                 </p>
               )}
+              {careFilter === 'sitter' &&
+                locationBasedEnabled &&
+                referenceDistricts.length > 0 &&
+                combinedRows.length === 0 &&
+                dbDogSitters.some((m) => careProviderTabVisible(m, promoFree)) && (
+                  <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
+                    저장된 동네 기준 {CERTIFIED_CARE_RADIUS_KM}km 안에 노출 중인 댕집사가 없어요.
+                  </p>
+                )}
             </div>
             {careFilter !== 'need' && (
-              <select
-                value={careFilter === 'sitter' ? 'distance' : sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'distance' | 'rating' | 'reviews')}
-                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+              <span
+                className="shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600"
                 style={{ fontWeight: 700 }}
               >
-                <option value="distance">🎯 거리 가까운 순</option>
-                {careFilter !== 'sitter' ? (
-                  <>
-                    <option value="rating">⭐ 평점 높은 순</option>
-                    <option value="reviews">💬 리뷰 많은 순</option>
-                  </>
-                ) : null}
-              </select>
+                🎯 거리 가까운 순
+              </span>
             )}
           </div>
           {careFilter !== 'need' && (
             <p className="-mt-1 mb-3 text-[11px] font-semibold text-slate-400">
-              표시 거리는 안양 만안구 기준 대략 거리예요.
+              {locationBasedEnabled && referenceDistricts.length > 0
+                ? `저장된 동네 기준 약 ${CERTIFIED_CARE_RADIUS_KM}km 안만 보여요.`
+                : '동네를 설정하면 그 기준으로 거리를 맞춰요. 설정 전에는 인증 돌보미를 모두 보여요.'}
             </p>
           )}
 
