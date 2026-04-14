@@ -7,6 +7,7 @@ import { getCertifiedGuardMomHeroImageUrl } from '../../data/mockCertifiedGuardM
 import { displayCertifiedGuardMomIntro } from '../../data/virtualDogPhotos';
 import { formatCertifiedGuardMomLocation } from '../../data/regions';
 import { formatDistance } from '../../utils/distance';
+import { displayCertifiedGuardMomBrandName } from '../../utils/guardMomDisplayName';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 export type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
@@ -106,13 +107,13 @@ export function GuardMomSitterList({
                 <div className="flex h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-inner">
                   <ImageWithFallback
                     src={getCertifiedGuardMomHeroImageUrl(row.mom)}
-                    alt="인증 보호맘"
+                    alt={displayCertifiedGuardMomBrandName(row.mom)}
                     className="h-full w-full object-cover"
                     loading="lazy"
                   />
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wide text-brand">인증 보호맘</p>
+                  <p className="text-sm font-extrabold leading-tight text-brand">{displayCertifiedGuardMomBrandName(row.mom)}</p>
                   <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-800">
                     {displayCertifiedGuardMomIntro(row.mom)}
                   </p>
@@ -131,20 +132,6 @@ export function GuardMomSitterList({
                 </div>
               </div>
             </Link>
-            <div className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1" aria-hidden>
-              <div
-                className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
-                  row.distance < 2
-                    ? 'bg-orange-500 text-white'
-                    : row.distance < 5
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-slate-300 text-slate-700'
-                }`}
-                style={{ fontWeight: 800 }}
-              >
-                {formatDistance(row.distance)}
-              </div>
-            </div>
           </div>
         ),
       )}

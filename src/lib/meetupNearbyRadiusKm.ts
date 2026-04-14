@@ -1,38 +1,41 @@
-/** 모이자·만나자 목록: 저장된 동네 기준 최대 거리(km). 0 = 제한 없음(구 단위만). */
+/** 모이자·만나자 목록: 저장된 동네 기준 최대 거리(km). 1~30 정수. */
 
 const STORAGE_KEY = 'daeng_moija_mannaja_radius_km_v1';
 
-export const MEETUP_NEARBY_RADIUS_OPTIONS = [3, 5, 10, 20, 30, 50, 100, 0] as const;
-export type MeetupNearbyRadiusKm = (typeof MEETUP_NEARBY_RADIUS_OPTIONS)[number];
+export const MEETUP_NEARBY_RADIUS_MIN = 1;
+export const MEETUP_NEARBY_RADIUS_MAX = 30;
 
-const DEFAULT_KM: MeetupNearbyRadiusKm = 30;
+const DEFAULT_KM = 30;
 
-function isAllowed(n: number): n is MeetupNearbyRadiusKm {
-  return (MEETUP_NEARBY_RADIUS_OPTIONS as readonly number[]).includes(n);
+function clampRadius(n: number): number {
+  if (!Number.isFinite(n)) return DEFAULT_KM;
+  const r = Math.round(n);
+  return Math.min(MEETUP_NEARBY_RADIUS_MAX, Math.max(MEETUP_NEARBY_RADIUS_MIN, r));
 }
 
-export function readMeetupNearbyRadiusKm(): MeetupNearbyRadiusKm {
+/** 예전 저장값(0·50·100 등) → 1~30으로 맞춤 */
+export function readMeetupNearbyRadiusKm(): number {
   if (typeof window === 'undefined') return DEFAULT_KM;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw == null) return DEFAULT_KM;
     const n = Number(raw);
-    return isAllowed(n) ? n : DEFAULT_KM;
+    if (n === 0) return DEFAULT_KM;
+    return clampRadius(n);
   } catch {
     return DEFAULT_KM;
   }
 }
 
-export function writeMeetupNearbyRadiusKm(km: MeetupNearbyRadiusKm): void {
+export function writeMeetupNearbyRadiusKm(km: number): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, String(km));
+    localStorage.setItem(STORAGE_KEY, String(clampRadius(km)));
   } catch {
     /* ignore */
   }
 }
 
-export function labelMeetupNearbyRadiusKm(km: MeetupNearbyRadiusKm): string {
-  if (km === 0) return '제한 없음';
-  return `${km}km`;
+export function labelMeetupNearbyRadiusKm(km: number): string {
+  return `${clampRadius(km)}km`;
 }

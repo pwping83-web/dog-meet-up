@@ -26,8 +26,8 @@ import {
   labelMeetupNearbyRadiusKm,
   readMeetupNearbyRadiusKm,
   writeMeetupNearbyRadiusKm,
-  MEETUP_NEARBY_RADIUS_OPTIONS,
-  type MeetupNearbyRadiusKm,
+  MEETUP_NEARBY_RADIUS_MAX,
+  MEETUP_NEARBY_RADIUS_MIN,
 } from '../../lib/meetupNearbyRadiusKm';
 import { useAuth } from '../../contexts/AuthContext';
 import { CareNeedList } from '../components/dogSitters/CareNeedList';
@@ -102,7 +102,7 @@ export function DogSittersPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
-  const [meetupRadiusKm, setMeetupRadiusKm] = useState<MeetupNearbyRadiusKm>(() =>
+  const [meetupRadiusKm, setMeetupRadiusKm] = useState<number>(() =>
     typeof window !== 'undefined' ? readMeetupNearbyRadiusKm() : 30,
   );
   const [extraLocations, setExtraLocations] = useState<ExtraCareRegion[]>(() => readExtraCareRegions());
@@ -536,26 +536,29 @@ export function DogSittersPage() {
 
       {(topTab === 'moija' || topTab === 'mannaja') && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
-          <div className="mb-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
-            <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-500">
-              내 동네에서 최대 거리
-            </p>
-            <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
-              {MEETUP_NEARBY_RADIUS_OPTIONS.map((km) => (
-                <button
-                  key={km}
-                  type="button"
-                  onClick={() => setMeetupRadiusKm(km)}
-                  className={`shrink-0 rounded-xl px-3 py-2 text-xs transition-all ${
-                    meetupRadiusKm === km
-                      ? 'bg-slate-900 font-extrabold text-white shadow-sm'
-                      : 'border border-slate-200 bg-slate-50 font-bold text-slate-600'
-                  }`}
-                >
-                  {labelMeetupNearbyRadiusKm(km)}
-                </button>
-              ))}
+          <div className="mb-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+            <div className="mb-2 flex items-end justify-between gap-2">
+              <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">내 동네에서 최대 거리</p>
+              <p className="text-sm font-black tabular-nums text-slate-900">{labelMeetupNearbyRadiusKm(meetupRadiusKm)}</p>
             </div>
+            <div className="flex items-center gap-3">
+              <span className="w-7 shrink-0 text-center text-[10px] font-extrabold text-slate-400">{MEETUP_NEARBY_RADIUS_MIN}</span>
+              <input
+                type="range"
+                min={MEETUP_NEARBY_RADIUS_MIN}
+                max={MEETUP_NEARBY_RADIUS_MAX}
+                step={1}
+                value={meetupRadiusKm}
+                onChange={(e) => setMeetupRadiusKm(Number(e.target.value))}
+                className="h-2 w-full flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 accent-orange-500 transition-[box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400/80 focus-visible:ring-offset-2"
+                aria-valuemin={MEETUP_NEARBY_RADIUS_MIN}
+                aria-valuemax={MEETUP_NEARBY_RADIUS_MAX}
+                aria-valuenow={meetupRadiusKm}
+                aria-label="최대 거리 킬로미터"
+              />
+              <span className="w-7 shrink-0 text-center text-[10px] font-extrabold text-slate-400">{MEETUP_NEARBY_RADIUS_MAX}</span>
+            </div>
+            <p className="mt-1.5 text-center text-[10px] font-medium text-slate-400">1km ~ {MEETUP_NEARBY_RADIUS_MAX}km · 드래그로 조절</p>
             {!locationBasedEnabled ? (
               <p className="mt-2 text-[11px] font-semibold text-amber-800">위치 기반을 켜면 거리 필터가 적용돼요.</p>
             ) : referenceDistricts.length === 0 ? (
@@ -570,8 +573,8 @@ export function DogSittersPage() {
             filteredMeetups={filteredMeetups}
             getJoinCount={getJoinCount}
             emptyExtraHint={
-              meetupRadiusKm > 0 && locationBasedEnabled && referenceDistricts.length > 0
-                ? '거리를 넓히거나 「제한 없음」으로 바꿔 보세요.'
+              meetupRadiusKm < MEETUP_NEARBY_RADIUS_MAX && locationBasedEnabled && referenceDistricts.length > 0
+                ? '슬라이더로 거리를 넓혀 보세요.'
                 : undefined
             }
           />

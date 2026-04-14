@@ -101,7 +101,14 @@ export function CareIntroPhotoPicker({ userId, urls, onUrlsChange, disabled, hin
                 <span className="mt-0.5 text-[10px] font-extrabold">추가</span>
               </>
             )}
-            <input type="file" accept="image/*" multiple className="sr-only" onChange={(ev) => void onPick(ev)} disabled={disabled || busy} />
+            <input
+              type="file"
+              accept="image/*"
+              multiple={CARE_INTRO_PHOTO_MAX > 1}
+              className="sr-only"
+              onChange={(ev) => void onPick(ev)}
+              disabled={disabled || busy}
+            />
           </label>
         )}
       </div>

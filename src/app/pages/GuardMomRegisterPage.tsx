@@ -488,7 +488,7 @@ export function GuardMomRegisterPage() {
                     urls={introPhotoUrls}
                     onUrlsChange={setIntroPhotoUrls}
                     disabled={saving}
-                    hint="집·산책 환경 등, 맡기는 분이 볼 수 있어요. 최대 3장."
+                    hint="집·산책 환경 등, 맡기는 분이 볼 수 있어요. 대표 1장만."
                   />
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <label className="block text-xs font-extrabold text-slate-700">
@@ -644,7 +644,7 @@ export function GuardMomRegisterPage() {
                     urls={introPhotoUrls}
                     onUrlsChange={setIntroPhotoUrls}
                     disabled={sitterSaving}
-                    hint="방문 돌봄 경험·환경 사진이 있으면 맡기는 분에게 도움이 돼요."
+                    hint="방문 돌봄 경험·환경 사진이 있으면 맡기는 분에게 도움이 돼요. 대표 1장만."
                   />
                   {saveErr && careRole === 'sitter' && (
                     <p className="mt-2 text-xs font-semibold text-red-600">{saveErr}</p>

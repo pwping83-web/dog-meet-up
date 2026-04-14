@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 
-export const CARE_INTRO_PHOTO_MAX = 3;
+export const CARE_INTRO_PHOTO_MAX = 1;
 
 export function normalizeIntroPhotoUrls(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
