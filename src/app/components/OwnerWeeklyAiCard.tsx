@@ -130,7 +130,7 @@ export function OwnerWeeklyAiCard() {
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-extrabold text-slate-900">이번 주, 뭐 할까?</h3>
             <p className="mt-1 text-[11px] font-semibold leading-snug text-slate-600">
-              동네 모임·댕친 후보로 AI가 <strong className="text-violet-800">짧은 코스</strong>만 골라 드려요.
+              동네 모임·댕친 후보로 AI가 추천해줘요.
             </p>
             <button
               type="button"
