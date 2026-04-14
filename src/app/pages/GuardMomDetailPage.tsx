@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
+import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import { ArrowLeft, Loader2, MapPin, Home, CarFront, PawPrint, MessageCircle, CalendarDays } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Database } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { startGuardMomCareCheckout } from '../../lib/billing';
 import {
-  getCertifiedGuardMomPhotoUrl,
+  getCertifiedGuardMomHeroImageUrl,
   getMockCertifiedGuardMomById,
   isMockGuardMomId,
 } from '../data/mockCertifiedGuardMoms';
@@ -14,6 +15,8 @@ import { displayCertifiedGuardMomIntro } from '../data/virtualDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatCertifiedGuardMomLocation } from '../data/regions';
 import { GUARD_MOM_REQUEST_LEGAL_FOOTNOTE } from '../../lib/platformLegalCopy';
+import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
+import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -44,8 +47,11 @@ export function GuardMomDetailPage() {
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(1);
   const [message, setMessage] = useState('');
+  const [wantPickup, setWantPickup] = useState(false);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
   const [payBusy, setPayBusy] = useState(false);
+  const [chatBusy, setChatBusy] = useState(false);
+  const [requestPhotoUrls, setRequestPhotoUrls] = useState<string[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -79,6 +85,55 @@ export function GuardMomDetailPage() {
   const isOwn = user && mom && user.id === mom.user_id;
   const total = mom ? days * mom.per_day_fee_krw : 0;
 
+  function buildCareRequestChatBody(): string {
+    if (!mom) return '';
+    const { start_date, end_date } = seoulCareDateRange(days);
+    const pickupLine =
+      mom.offers_daeng_pickup === true
+        ? wantPickup
+          ? '댕댕 픽업: 희망함'
+          : '댕댕 픽업: 필요 없음'
+        : '댕댕 픽업: 보호맘 프로필 기준 픽업 미제공';
+    const note = message.trim() ? `남길 말: ${message.trim()}` : '남길 말: (없음)';
+    const feeLine = `참고 요금(1일 ${mom.per_day_fee_krw.toLocaleString('ko-KR')}원 × ${days}일): ${total.toLocaleString('ko-KR')}원 — 확정·결제는 채팅으로 맞춰 주세요.`;
+    const photoLines =
+      requestPhotoUrls.length > 0 ? ['참고 사진(맡길 아이·환경 등):', ...requestPhotoUrls] : [];
+    return ['🍼 인증 보호맘 돌봄 요청', `맡길 일수: ${days}일`, `희망 기간: ${start_date} ~ ${end_date}`, pickupLine, note, ...photoLines, feeLine].join('\n');
+  }
+
+  const handleSendChatRequest = async () => {
+    if (!user || !mom || isOwn) return;
+    if (isMockGuardMomId(mom.id)) {
+      setSubmitErr('가상 프로필에는 채팅 요청을 보낼 수 없어요.');
+      return;
+    }
+    if (days < 1 || days > 30) {
+      setSubmitErr('일수는 1~30일로 입력해 주세요.');
+      return;
+    }
+    setSubmitErr(null);
+    setChatBusy(true);
+    try {
+      const body = buildCareRequestChatBody().slice(0, 8000);
+      const { error } = await supabase.from('messages').insert({
+        sender_id: user.id,
+        receiver_id: mom.user_id,
+        content: body,
+        read: false,
+      });
+      if (error) throw new Error(error.message);
+      const params = new URLSearchParams({
+        name: '보호맘',
+        meetup: '돌봄 요청',
+      });
+      navigate(`/chat/${encodeURIComponent(mom.user_id)}?${params.toString()}`);
+    } catch (e) {
+      setSubmitErr((e as Error).message);
+    } finally {
+      setChatBusy(false);
+    }
+  };
+
   const handleRequestPay = async () => {
     if (!user || !mom || isOwn) return;
     if (isMockGuardMomId(mom.id)) {
@@ -101,7 +156,14 @@ export function GuardMomDetailPage() {
           days,
           start_date,
           end_date,
-          message: message.trim(),
+          message: (() => {
+            const base = message.trim();
+            const extra =
+              requestPhotoUrls.length > 0
+                ? `${base ? '\n\n' : ''}참고 사진:\n${requestPhotoUrls.join('\n')}`
+                : '';
+            return (base + extra).slice(0, 8000);
+          })(),
           per_day_fee_snapshot: mom.per_day_fee_krw,
           total_krw: days * mom.per_day_fee_krw,
           status: 'pending_payment',
@@ -150,7 +212,7 @@ export function GuardMomDetailPage() {
           <>
             <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
               <ImageWithFallback
-                src={getCertifiedGuardMomPhotoUrl(mom.id)}
+                src={getCertifiedGuardMomHeroImageUrl(mom)}
                 alt="인증 보호맘 프로필"
                 className="aspect-[16/9] w-full object-cover sm:aspect-[21/9]"
                 loading="lazy"
@@ -161,6 +223,21 @@ export function GuardMomDetailPage() {
               <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-800">
                 {displayCertifiedGuardMomIntro(mom)}
               </p>
+              {normalizeIntroPhotoUrls(mom.intro_photo_urls).length > 0 && (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-0.5">
+                  {normalizeIntroPhotoUrls(mom.intro_photo_urls).map((url) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block shrink-0 overflow-hidden rounded-xl border border-slate-100 shadow-sm"
+                    >
+                      <ImageWithFallback src={url} alt="" className="h-24 w-24 object-cover" loading="lazy" />
+                    </a>
+                  ))}
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-2 text-xs font-bold text-slate-500">
                 <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1">
                   <MapPin className="h-3.5 w-3.5" />
@@ -192,6 +269,7 @@ export function GuardMomDetailPage() {
                 <p className="text-sm font-semibold text-slate-600">돌봄 신청은 로그인 후 가능해요.</p>
                 <Link
                   to="/login"
+                  onClick={() => setAuthReturnPath(`/guard-mom/${id ?? ''}`)}
                   className="mt-3 inline-block rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-extrabold text-white shadow-md"
                 >
                   로그인하기
@@ -247,6 +325,29 @@ export function GuardMomDetailPage() {
                     className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
                   />
                 </label>
+                <CareIntroPhotoPicker
+                  userId={user.id}
+                  urls={requestPhotoUrls}
+                  onUrlsChange={setRequestPhotoUrls}
+                  disabled={chatBusy || payBusy}
+                  hint="맡길 아이·환경 사진이 있으면 보호맘이 더 안심해요. 최대 3장."
+                />
+                {mom.offers_daeng_pickup === true ? (
+                  <label className="mt-3 flex cursor-pointer items-start gap-2.5 rounded-xl border border-sky-200 bg-white/90 px-3 py-2.5">
+                    <input
+                      type="checkbox"
+                      checked={wantPickup}
+                      onChange={(e) => setWantPickup(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600"
+                    />
+                    <span className="text-xs font-bold leading-snug text-slate-800">
+                      댕댕 픽업 희망
+                      <span className="mt-0.5 block font-medium text-slate-500">보호맘이 우리 집까지 와 주길 바랄 때</span>
+                    </span>
+                  </label>
+                ) : (
+                  <p className="mt-3 text-[11px] font-semibold text-slate-500">이 보호맘은 픽업 없이 맡기기만 안내해요.</p>
+                )}
                 <p className="mt-3 text-sm font-black text-brand">
                   합계 {total.toLocaleString('ko-KR')}원
                 </p>
@@ -258,12 +359,23 @@ export function GuardMomDetailPage() {
                 </p>
                 <button
                   type="button"
-                  disabled={payBusy}
-                  onClick={() => void handleRequestPay()}
+                  disabled={chatBusy || payBusy}
+                  onClick={() => void handleSendChatRequest()}
                   className="mt-4 w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-extrabold text-white shadow-md disabled:opacity-60"
                 >
-                  {payBusy ? '처리 중…' : '예약 만들고 다음 단계로'}
+                  {chatBusy ? '보내는 중…' : '채팅으로 보내기'}
                 </button>
+                <button
+                  type="button"
+                  disabled={payBusy || chatBusy}
+                  onClick={() => void handleRequestPay()}
+                  className="mt-2 w-full rounded-2xl border-2 border-orange-300 bg-white py-3 text-sm font-extrabold text-orange-800 shadow-sm disabled:opacity-60"
+                >
+                  {payBusy ? '처리 중…' : '결제로 예약하기'}
+                </button>
+                <p className="mt-2 text-center text-[10px] font-medium text-slate-500">
+                  먼저 채팅으로 일정을 맞춘 뒤, 필요하면 결제 예약을 이어가면 돼요.
+                </p>
               </div>
             )}
           </>

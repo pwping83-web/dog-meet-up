@@ -3,7 +3,7 @@ import { Loader2, MapPin } from 'lucide-react';
 import { DogSitterCard } from '../DogSitterCard';
 import type { Database } from '../../../lib/supabase';
 import type { DogSitter } from '../../types';
-import { getCertifiedGuardMomPhotoUrl } from '../../data/mockCertifiedGuardMoms';
+import { getCertifiedGuardMomHeroImageUrl } from '../../data/mockCertifiedGuardMoms';
 import { displayCertifiedGuardMomIntro } from '../../data/virtualDogPhotos';
 import { formatCertifiedGuardMomLocation } from '../../data/regions';
 import { formatDistance } from '../../utils/distance';
@@ -105,7 +105,7 @@ export function GuardMomSitterList({
               <div className="flex gap-4">
                 <div className="flex h-14 w-14 shrink-0 overflow-hidden rounded-2xl bg-gradient-to-br from-orange-100 to-amber-100 shadow-inner">
                   <ImageWithFallback
-                    src={getCertifiedGuardMomPhotoUrl(row.mom.id)}
+                    src={getCertifiedGuardMomHeroImageUrl(row.mom)}
                     alt="인증 보호맘"
                     className="h-full w-full object-cover"
                     loading="lazy"

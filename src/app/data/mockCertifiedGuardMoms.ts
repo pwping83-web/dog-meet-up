@@ -23,6 +23,7 @@ export const mockCertifiedGuardMoms = [
     offers_daeng_pickup: true,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,
+    intro_photo_urls: [],
   },
   {
     id: 'a1000000-0000-4000-8000-000000000002',
@@ -38,6 +39,7 @@ export const mockCertifiedGuardMoms = [
     offers_daeng_pickup: false,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,
+    intro_photo_urls: [],
   },
   {
     id: 'a1000000-0000-4000-8000-000000000003',
@@ -53,6 +55,7 @@ export const mockCertifiedGuardMoms = [
     offers_daeng_pickup: false,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,
+    intro_photo_urls: [],
   },
   {
     id: 'a1000000-0000-4000-8000-000000000004',
@@ -68,6 +71,7 @@ export const mockCertifiedGuardMoms = [
     offers_daeng_pickup: true,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,
+    intro_photo_urls: [],
   },
   {
     id: 'a1000000-0000-4000-8000-000000000005',
@@ -83,6 +87,7 @@ export const mockCertifiedGuardMoms = [
     offers_daeng_pickup: true,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,
+    intro_photo_urls: [],
   },
   {
     id: 'a1000000-0000-4000-8000-000000000006',
@@ -98,6 +103,7 @@ export const mockCertifiedGuardMoms = [
     offers_daeng_pickup: false,
     certified_at: ISO_PAST,
     listing_visible_until: ISO_FUTURE,
+    intro_photo_urls: [],
   },
 ] as const;
 
@@ -118,4 +124,17 @@ export function getCertifiedGuardMomPhotoUrl(id: string | undefined | null): str
   const seed = key ? `certified-guard-mom-${key}` : 'guard-mom-unknown';
   const idx = hashSeed(seed) % BREED_STOCK_UNSPLASH_LIST.length;
   return BREED_STOCK_UNSPLASH_LIST[idx]!;
+}
+
+/** 신청서에 올린 소개 사진이 있으면 그 URL, 없으면 데모용 고정 풀 */
+export function getCertifiedGuardMomHeroImageUrl(
+  mom: { id: string; intro_photo_urls?: string[] | null } | null | undefined,
+): string {
+  if (!mom) return '';
+  const urls = Array.isArray(mom.intro_photo_urls)
+    ? mom.intro_photo_urls.filter((u) => typeof u === 'string' && /^https?:\/\//i.test(u.trim()))
+    : [];
+  const first = urls[0]?.trim();
+  if (first) return first;
+  return getCertifiedGuardMomPhotoUrl(mom.id);
 }

@@ -7,7 +7,7 @@ import { useUserLocation } from '../../contexts/UserLocationContext';
 import { supabase } from '../../lib/supabase';
 import type { DogSitter } from '../types';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
-import { mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
+import { getCertifiedGuardMomHeroImageUrl, mockCertifiedGuardMoms } from '../data/mockCertifiedGuardMoms';
 import { displayPublicDolbomMeetupDescription, displayPublicDolbomMeetupTitle } from '../data/virtualDogPhotos';
 import {
   MANNAJA_CATEGORY_SET,
@@ -56,7 +56,7 @@ function dogSitterFromCertifiedCareRow(m: GuardMomRow): DogSitter {
   return {
     id: m.user_id,
     name: `댕집사·${gu}`,
-    profileImage: '',
+    profileImage: getCertifiedGuardMomHeroImageUrl(m),
     location: [m.region_si, m.region_gu].filter(Boolean).join(' ').trim() || gu,
     district: gu,
     specialties: ['방문 돌봄'],

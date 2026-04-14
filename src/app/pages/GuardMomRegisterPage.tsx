@@ -22,6 +22,8 @@ import { PROMO_FREE_LAUNCH_TITLE, usePromoFreeListings } from '../../lib/promoFl
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { readCareProviderTrack, writeCareProviderTrack } from '../../lib/careProviderTrack';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
+import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
+import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -40,6 +42,9 @@ function friendlyCertifiedGuardMomsError(message: string): string {
   }
   if (m.includes('offers_daeng_pickup') || (m.includes('column') && m.includes('does not exist'))) {
     return '「댕댕 픽업」 저장을 위해 DB를 한 번 더 업데이트해야 해요. supabase/migrations/20260412120000_daeng_pickup.sql 을 SQL Editor에서 실행해 주세요.';
+  }
+  if (m.includes('intro_photo_urls') || (m.includes('column') && m.includes('intro_photo'))) {
+    return '소개 사진 저장을 위해 DB를 한 번 더 업데이트해야 해요. supabase/migrations/20260424160000_certified_guard_moms_intro_photo_urls.sql 을 SQL Editor에서 실행해 주세요.';
   }
   return message;
 }
@@ -88,6 +93,7 @@ export function GuardMomRegisterPage() {
   const [sitterIntro, setSitterIntro] = useState('');
   const [sitterSaving, setSitterSaving] = useState(false);
   const [sitterSaveOk, setSitterSaveOk] = useState(false);
+  const [introPhotoUrls, setIntroPhotoUrls] = useState<string[]>([]);
 
   const load = useCallback(async () => {
     if (!user) {
@@ -117,6 +123,7 @@ export function GuardMomRegisterPage() {
       setRegionGu(r.region_gu);
       setFee(r.per_day_fee_krw);
       setOffersDaengPickup(Boolean(r.offers_daeng_pickup));
+      setIntroPhotoUrls(normalizeIntroPhotoUrls(r.intro_photo_urls));
       if (r.provider_kind === 'dog_sitter') {
         setSitterIntro((r.intro ?? '').trim());
       }
@@ -127,6 +134,7 @@ export function GuardMomRegisterPage() {
       setRegionGu('');
       setFee(20000);
       setOffersDaengPickup(false);
+      setIntroPhotoUrls([]);
     }
     setLoading(false);
   }, [user]);
@@ -167,6 +175,7 @@ export function GuardMomRegisterPage() {
         per_day_fee_krw: Math.min(500000, Math.max(1000, Math.round(fee))),
         offers_daeng_pickup: offersDaengPickup,
         provider_kind: 'guard_mom' as const,
+        intro_photo_urls: normalizeIntroPhotoUrls(introPhotoUrls),
       };
       const { error } = await supabase.from('certified_guard_moms').upsert(payload, { onConflict: 'user_id' });
       if (error) throw new Error(friendlyCertifiedGuardMomsError(error.message));
@@ -223,6 +232,7 @@ export function GuardMomRegisterPage() {
           per_day_fee_krw: 20000,
           offers_daeng_pickup: false,
           provider_kind: 'dog_sitter',
+          intro_photo_urls: normalizeIntroPhotoUrls(introPhotoUrls),
         },
         { onConflict: 'user_id' },
       );
@@ -468,6 +478,13 @@ export function GuardMomRegisterPage() {
                       소개 AI 초안
                     </AiDoumiButton>
                   </div>
+                  <CareIntroPhotoPicker
+                    userId={user.id}
+                    urls={introPhotoUrls}
+                    onUrlsChange={setIntroPhotoUrls}
+                    disabled={saving}
+                    hint="집·산책 환경 등, 맡기는 분이 볼 수 있어요. 최대 3장."
+                  />
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <label className="block text-xs font-extrabold text-slate-700">
                       시·도
@@ -617,6 +634,13 @@ export function GuardMomRegisterPage() {
                       className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
                     />
                   </label>
+                  <CareIntroPhotoPicker
+                    userId={user.id}
+                    urls={introPhotoUrls}
+                    onUrlsChange={setIntroPhotoUrls}
+                    disabled={sitterSaving}
+                    hint="방문 돌봄 경험·환경 사진이 있으면 맡기는 분에게 도움이 돼요."
+                  />
                   {saveErr && careRole === 'sitter' && (
                     <p className="mt-2 text-xs font-semibold text-red-600">{saveErr}</p>
                   )}

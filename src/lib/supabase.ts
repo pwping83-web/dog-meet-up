@@ -399,6 +399,7 @@ export interface Database {
           listing_visible_until: string | null;
           /** guard_mom | dog_sitter */
           provider_kind: string;
+          intro_photo_urls: string[];
         };
         Insert: {
           id?: string;
@@ -413,6 +414,7 @@ export interface Database {
           certified_at?: string | null;
           listing_visible_until?: string | null;
           provider_kind?: string;
+          intro_photo_urls?: string[];
         };
         Update: {
           id?: string;
@@ -427,6 +429,7 @@ export interface Database {
           certified_at?: string | null;
           listing_visible_until?: string | null;
           provider_kind?: string;
+          intro_photo_urls?: string[];
         };
       };
       guard_mom_bookings: {
