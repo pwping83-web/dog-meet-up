@@ -21,6 +21,13 @@ import { districtMatchesAnyReference } from '../utils/districtRefMatch';
 import { isCareMeetupCategory } from '../utils/meetupCategory';
 import { showCertifiedGuardMomDemosWhenEmpty, usePromoFreeListings } from '../../lib/promoFlags';
 import { getMergedMeetups } from '../../lib/userMeetupsStore';
+import {
+  labelMeetupNearbyRadiusKm,
+  readMeetupNearbyRadiusKm,
+  writeMeetupNearbyRadiusKm,
+  MEETUP_NEARBY_RADIUS_OPTIONS,
+  type MeetupNearbyRadiusKm,
+} from '../../lib/meetupNearbyRadiusKm';
 import { useAuth } from '../../contexts/AuthContext';
 import { CareNeedList } from '../components/dogSitters/CareNeedList';
 import { GuardMomSitterList, type CombinedSitterGuardRow, type GuardMomRow } from '../components/dogSitters/GuardMomSitterList';
@@ -112,7 +119,14 @@ export function DogSittersPage() {
   const [sortBy, setSortBy] = useState<'distance' | 'rating' | 'reviews'>('distance');
   const [category, setCategory] = useState('전체');
   const [searchQuery, setSearchQuery] = useState('');
+  const [meetupRadiusKm, setMeetupRadiusKm] = useState<MeetupNearbyRadiusKm>(() =>
+    typeof window !== 'undefined' ? readMeetupNearbyRadiusKm() : 30,
+  );
   const [extraLocations, setExtraLocations] = useState<ExtraCareRegion[]>(() => readExtraCareRegions());
+
+  useEffect(() => {
+    writeMeetupNearbyRadiusKm(meetupRadiusKm);
+  }, [meetupRadiusKm]);
 
   const specialties = ['전체', '소형견', '중형견', '대형견', '퍼피', '시니어'];
   const meetupCategoryChips = useMemo(() => {
@@ -419,14 +433,36 @@ export function DogSittersPage() {
       return categoryMatch;
     });
 
-    // 하이퍼로컬 우선: 먼저 내 동네 글을 보여주고, 결과가 0이면 같은 탭 글 전체로 폴백
+    const canApplyRadius =
+      !authLoading &&
+      locationBasedEnabled &&
+      meetupRadiusKm > 0 &&
+      referenceDistricts.length > 0;
+
+    const passesRadius = (district: string) =>
+      !canApplyRadius || distForDistrict(district) <= meetupRadiusKm;
+
+    // 하이퍼로컬 우선: 동네 매칭 + (선택) 거리(km). 결과 0이면 거리만 적용한 폴백 → 그다음 탭 전체
     if (!authLoading && locationBasedEnabled && referenceDistricts.length > 0) {
       const regionRows = inTabRows.filter((req) => {
         const isMine = viewerId !== '' && req.userId === viewerId;
         if (isMine) return true;
-        return meetupMatchesRegion(req.district);
+        if (!meetupMatchesRegion(req.district)) return false;
+        return passesRadius(req.district);
       });
       if (regionRows.length > 0) return regionRows.slice(0, 20);
+
+      if (canApplyRadius) {
+        const byKm = inTabRows.filter((req) => {
+          const isMine = viewerId !== '' && req.userId === viewerId;
+          if (isMine) return true;
+          return passesRadius(req.district);
+        });
+        if (byKm.length > 0) return byKm.slice(0, 20);
+        return [];
+      }
+
+      return inTabRows.slice(0, 20);
     }
 
     return inTabRows.slice(0, 20);
@@ -440,6 +476,8 @@ export function DogSittersPage() {
     authLoading,
     locationBasedEnabled,
     referenceDistricts,
+    meetupRadiusKm,
+    distForDistrict,
   ]);
 
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */
@@ -511,6 +549,32 @@ export function DogSittersPage() {
 
       {(topTab === 'moija' || topTab === 'mannaja') && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
+          <div className="mb-3 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
+            <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-500">
+              내 동네에서 최대 거리
+            </p>
+            <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
+              {MEETUP_NEARBY_RADIUS_OPTIONS.map((km) => (
+                <button
+                  key={km}
+                  type="button"
+                  onClick={() => setMeetupRadiusKm(km)}
+                  className={`shrink-0 rounded-xl px-3 py-2 text-xs transition-all ${
+                    meetupRadiusKm === km
+                      ? 'bg-slate-900 font-extrabold text-white shadow-sm'
+                      : 'border border-slate-200 bg-slate-50 font-bold text-slate-600'
+                  }`}
+                >
+                  {labelMeetupNearbyRadiusKm(km)}
+                </button>
+              ))}
+            </div>
+            {!locationBasedEnabled ? (
+              <p className="mt-2 text-[11px] font-semibold text-amber-800">위치 기반을 켜면 거리 필터가 적용돼요.</p>
+            ) : referenceDistricts.length === 0 ? (
+              <p className="mt-2 text-[11px] font-semibold text-slate-500">동네를 먼저 설정하면 거리 필터를 쓸 수 있어요.</p>
+            ) : null}
+          </div>
           <MoijaMannajaList
             topTab={topTab}
             meetupCategoryChips={meetupCategoryChips}
@@ -518,6 +582,11 @@ export function DogSittersPage() {
             onCategoryChange={setCategory}
             filteredMeetups={filteredMeetups}
             getJoinCount={getJoinCount}
+            emptyExtraHint={
+              meetupRadiusKm > 0 && locationBasedEnabled && referenceDistricts.length > 0
+                ? '거리를 넓히거나 「제한 없음」으로 바꿔 보세요.'
+                : undefined
+            }
           />
         </div>
       )}

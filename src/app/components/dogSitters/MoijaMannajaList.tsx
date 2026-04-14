@@ -15,6 +15,8 @@ export type MoijaMannajaListProps = {
   onCategoryChange: (cat: string) => void;
   filteredMeetups: Meetup[];
   getJoinCount: (meetupId: string) => number;
+  /** 목록이 비었을 때 추가 안내(예: 거리 필터) */
+  emptyExtraHint?: string;
 };
 
 export function MoijaMannajaList({
@@ -24,6 +26,7 @@ export function MoijaMannajaList({
   onCategoryChange,
   filteredMeetups,
   getJoinCount,
+  emptyExtraHint,
 }: MoijaMannajaListProps) {
   return (
     <>
@@ -63,6 +66,9 @@ export function MoijaMannajaList({
             <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">
               글은 이 브라우저에만 저장돼요. 다른 기기·시크릿 창이면 목록에 안 보일 수 있어요.
             </p>
+            {emptyExtraHint ? (
+              <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-600">{emptyExtraHint}</p>
+            ) : null}
           </div>
         ) : null}
         {filteredMeetups.map((meetup) => {
