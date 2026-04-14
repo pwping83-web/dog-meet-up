@@ -20,6 +20,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { startStripeCheckout } from '../../lib/billing';
 import { usePromoFreeListings } from '../../lib/promoFlags';
 import { AiDoumiButton } from '../components/AiDoumiButton';
+import { readCareProviderTrack, writeCareProviderTrack } from '../../lib/careProviderTrack';
+import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -42,13 +44,35 @@ function friendlyCertifiedGuardMomsError(message: string): string {
   return message;
 }
 
+const SITTER_INTRO_STORAGE_PREFIX = 'daeng-sitter-apply-intro:';
+
+function readSitterIntro(uid: string): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return localStorage.getItem(`${SITTER_INTRO_STORAGE_PREFIX}${uid}`) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+function writeSitterIntro(uid: string, text: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`${SITTER_INTRO_STORAGE_PREFIX}${uid}`, text);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function GuardMomRegisterPage() {
   const [searchParams] = useSearchParams();
   const promoFree = usePromoFreeListings();
   const { user, loading: authLoading } = useAuth();
-  const [careRole, setCareRole] = useState<'guard_mom' | 'sitter'>(
-    searchParams.get('role') === 'sitter' ? 'sitter' : 'guard_mom',
-  );
+  const [careRole, setCareRole] = useState<'guard_mom' | 'sitter'>(() => {
+    if (searchParams.get('role') === 'sitter') return 'sitter';
+    if (readCareProviderTrack() === 'sitter_only') return 'sitter';
+    return 'guard_mom';
+  });
   const [row, setRow] = useState<GuardMomRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [intro, setIntro] = useState('');
@@ -61,6 +85,9 @@ export function GuardMomRegisterPage() {
   const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [listingBusy, setListingBusy] = useState(false);
+  const [sitterIntro, setSitterIntro] = useState('');
+  const [sitterSaving, setSitterSaving] = useState(false);
+  const [sitterSaveOk, setSitterSaveOk] = useState(false);
 
   const load = useCallback(async () => {
     if (!user) {
@@ -105,6 +132,24 @@ export function GuardMomRegisterPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (!user?.id || careRole !== 'sitter') return;
+    setSitterIntro(readSitterIntro(user.id));
+    setSitterSaveOk(false);
+  }, [user?.id, careRole]);
+
+  const selectCareRole = (next: 'guard_mom' | 'sitter') => {
+    setCareRole(next);
+    setSaveErr(null);
+    setSaveOk(false);
+    setSitterSaveOk(false);
+    if (next === 'sitter') {
+      writeCareProviderTrack('sitter_only');
+    } else {
+      writeCareProviderTrack('guard_mom');
+    }
+  };
+
   const handleSave = async () => {
     if (!user) return;
     setSaveErr(null);
@@ -127,6 +172,42 @@ export function GuardMomRegisterPage() {
       setSaveErr((e as Error).message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSitterApply = async () => {
+    if (!user) return;
+    const text = sitterIntro.trim();
+    if (!text) {
+      setSaveErr('방문 돌봄 소개를 짧게라도 적어 주세요.');
+      return;
+    }
+    setSaveErr(null);
+    setSitterSaveOk(false);
+    setSitterSaving(true);
+    try {
+      writeCareProviderTrack('sitter_only');
+      writeSitterIntro(user.id, text.slice(0, 800));
+      const { data: p } = await supabase.from('profiles').select('name, phone, avatar_url').eq('id', user.id).maybeSingle();
+      const name = (p?.name?.trim() || displayNameFromUser(user)).slice(0, 10);
+      const { error } = await supabase.from('profiles').upsert(
+        {
+          id: user.id,
+          name,
+          phone: p?.phone ?? null,
+          avatar_url: p?.avatar_url ?? null,
+          is_repairer: true,
+        },
+        { onConflict: 'id' },
+      );
+      if (error) {
+        throw new Error(error.message || '프로필 저장에 실패했습니다.');
+      }
+      setSitterSaveOk(true);
+    } catch (e) {
+      setSaveErr((e as Error).message);
+    } finally {
+      setSitterSaving(false);
     }
   };
 
@@ -190,7 +271,7 @@ export function GuardMomRegisterPage() {
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => setCareRole('sitter')}
+                  onClick={() => selectCareRole('sitter')}
                   className={`flex flex-1 items-center justify-center rounded-xl py-2.5 text-center text-[11px] font-extrabold transition-colors ${
                     careRole === 'sitter'
                       ? 'border-2 border-violet-300 bg-violet-50 text-violet-900'
@@ -201,7 +282,7 @@ export function GuardMomRegisterPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setCareRole('guard_mom')}
+                  onClick={() => selectCareRole('guard_mom')}
                   className={`flex flex-1 items-center justify-center rounded-xl py-2.5 text-center text-[11px] font-extrabold transition-colors ${
                     careRole === 'guard_mom'
                       ? 'border-2 border-violet-300 bg-violet-50 text-violet-900'
@@ -421,17 +502,41 @@ export function GuardMomRegisterPage() {
                 </div>
               </>
             ) : (
-              <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 className="text-sm font-extrabold text-slate-800">댕집사 신청</h2>
-                <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-600">
-                  댕집사는 프로필·계정 설정에서 돌봄 목표를 댕집사로 선택하면 신청이 완료돼요.
-                </p>
-                <Link
-                  to="/my"
-                  className="mt-4 flex w-full items-center justify-center rounded-2xl border border-violet-200 bg-violet-50 py-3 text-sm font-extrabold text-violet-900"
-                >
-                  마이페이지에서 이어서 신청
-                </Link>
+              <div className="space-y-3">
+                <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-3 py-2.5 text-center text-[11px] font-extrabold text-violet-950">
+                  돌봄 목표가 댕집사(방문)로 저장됐어요.
+                </div>
+                <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h2 className="text-sm font-extrabold text-slate-800">댕집사 신청서</h2>
+                  <p className="mt-1 text-[11px] font-semibold leading-snug text-slate-500">
+                    이웃 집 방문 돌봄·산책 가능 범위를 적어 주세요.
+                  </p>
+                  <label className="mt-3 block text-xs font-extrabold text-slate-700">
+                    방문 돌봄 소개
+                    <textarea
+                      value={sitterIntro}
+                      onChange={(e) => setSitterIntro(e.target.value)}
+                      rows={5}
+                      maxLength={800}
+                      placeholder="예) 주중 오전 방문, 산책 30분, 소형견 위주"
+                      className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
+                    />
+                  </label>
+                  {saveErr && careRole === 'sitter' && (
+                    <p className="mt-2 text-xs font-semibold text-red-600">{saveErr}</p>
+                  )}
+                  {sitterSaveOk && (
+                    <p className="mt-2 text-xs font-semibold text-emerald-700">신청 내용을 저장했어요.</p>
+                  )}
+                  <button
+                    type="button"
+                    disabled={sitterSaving}
+                    onClick={() => void handleSitterApply()}
+                    className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white disabled:opacity-60"
+                  >
+                    {sitterSaving ? '저장 중…' : '신청서 보내기'}
+                  </button>
+                </div>
               </div>
             )}
           </>

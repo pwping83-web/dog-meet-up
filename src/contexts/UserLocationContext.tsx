@@ -1,11 +1,15 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { formatDistrictWithDong, formatRegion } from '../app/data/regions';
 import { getCurrentBrowserPosition } from '../lib/browserGeolocation';
 import { coord2AddressParts, loadKakaoMapScript } from '../lib/kakaoMaps';
 import { matchKakaoAdministrative } from '../lib/matchKakaoToRegion';
 import { reverseGeocodeToRegion } from '../lib/reverseGeocodeClient';
 import { getKakaoMapAppKey } from '../lib/kakaoMaps';
+import { supabase } from '../lib/supabase';
+import { displayNameFromUser } from '../lib/ensurePublicProfile';
+import { useAuth } from './AuthContext';
 
 const STORAGE_KEY = 'daeng_user_location_v1';
 const STORAGE_LOCATION_BASED = 'daeng_location_based_v1';
@@ -92,9 +96,47 @@ function writeLocationBasedEnabled(on: boolean) {
   }
 }
 
+/** 로컬에 저장된 적 없거나, 앱 기본 동네(강남)만 있는 상태 */
+function isUnsetOrAppDefaultLocation(s: UserLocationSnapshot | null): boolean {
+  if (!s) return true;
+  return s.city === DEFAULT.city && s.district === DEFAULT.district && s.source === 'default';
+}
+
+async function upsertProfileRegionsForSnapshot(userId: string, snapshot: UserLocationSnapshot, authUser: User | null) {
+  const si = snapshot.city?.trim();
+  const gu = snapshot.district?.trim();
+  if (!si || !gu) return;
+  try {
+    const { data: p } = await supabase.from('profiles').select('name, phone, avatar_url').eq('id', userId).maybeSingle();
+    const name = (p?.name?.trim() || (authUser ? displayNameFromUser(authUser) : '') || '회원').slice(0, 10);
+    const { error } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        name: name || '회원',
+        phone: p?.phone ?? null,
+        avatar_url: p?.avatar_url ?? null,
+        region_si: si,
+        region_gu: gu,
+      },
+      { onConflict: 'id' },
+    );
+    if (error) {
+      console.warn('[UserLocation] profiles 동네 저장:', error.message);
+    }
+  } catch (e) {
+    console.warn('[UserLocation] profiles 동네 저장:', (e as Error).message);
+  }
+}
+
 const UserLocationContext = createContext<UserLocationContextValue | undefined>(undefined);
 
 export function UserLocationProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   const [location, setLocation] = useState<UserLocationSnapshot>(() => readStorage() ?? DEFAULT);
   const [locationBasedEnabled, setLocationBasedEnabledState] = useState(readLocationBasedEnabled);
 
@@ -106,7 +148,54 @@ export function UserLocationProvider({ children }: { children: ReactNode }) {
   const persist = useCallback((next: UserLocationSnapshot) => {
     writeStorage(next);
     setLocation(next);
+    const uid = userRef.current?.id;
+    const authUser = userRef.current;
+    if (uid) {
+      void upsertProfileRegionsForSnapshot(uid, next, authUser);
+    }
   }, []);
+
+  /** 로그아웃 후 재로그인: 기기 로컬 동네를 서버에 맞추고, 로컬이 비었으면 profiles 동네로 복원 */
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    void (async () => {
+      const uid = user.id;
+      const stored = readStorage();
+      const defaultLike = isUnsetOrAppDefaultLocation(stored);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('region_si, region_gu')
+        .eq('id', uid)
+        .maybeSingle();
+      if (cancelled) return;
+
+      const prsi = profile?.region_si?.trim();
+      const prgu = profile?.region_gu?.trim();
+
+      if (stored && stored.city?.trim() && stored.district?.trim() && !defaultLike) {
+        await upsertProfileRegionsForSnapshot(uid, stored, user);
+        return;
+      }
+
+      if (prsi && prgu && defaultLike) {
+        const next: UserLocationSnapshot = {
+          city: prsi,
+          district: prgu,
+          dong: '',
+          lat: null,
+          lng: null,
+          source: 'manual',
+        };
+        writeStorage(next);
+        setLocation(next);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
 
   const applyCoordinates = useCallback(
     async (lat: number, lng: number, source: 'gps' | 'map'): Promise<UserLocationSnapshot> => {
