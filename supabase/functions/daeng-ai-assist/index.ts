@@ -359,8 +359,10 @@ Deno.serve(async (req) => {
         const sys =
           `너는 댕댕마켓 반려견 앱의 "이번 주 할 일" 코치야. 입력은 JSON 한 덩어리이며, 후보 모임·댕친은 i가 인덱스야.\n` +
           `반드시 아래 스키마의 JSON만 출력해. 마크다운·코드펜스 금지.\n` +
-          `{"intro":"2~4문장 격려+상황 요약, 존댓말","steps":[{"type":"join_meetup","meetupIndex":0,"line":"한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"한 줄"},{"type":"free_tip","line":"한 줄"}]}\n` +
+          `{"intro":"1문장 우선, 최대 2문장. 문장마다 ~45자 이하, 전체 ~120자 이하. 격려+이번 주 한 줄 요약만, 존댓말","steps":[{"type":"join_meetup","meetupIndex":0,"line":"짧은 한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"짧은 한 줄"},{"type":"free_tip","line":"짧은 한 줄"}]}\n` +
           `규칙:\n` +
+          `- 긴 문단·나열 금지. 카드 UI용 초짧은 카피만.\n` +
+          `- steps의 line은 각 36자 이하, 행동 한 가지만.\n` +
           `- steps는 2~5개.\n` +
           `- type은 "join_meetup" | "say_hi" | "free_tip" 만.\n` +
           `- join_meetup은 candidateMeetups가 비어 있으면 쓰지 마. meetupIndex는 배열 길이 안의 정수만.\n` +
@@ -370,7 +372,7 @@ Deno.serve(async (req) => {
 
         const raw = await llmChat(sys, userJson, 1000);
         const obj = extractJsonObject(raw);
-        const intro = typeof obj?.intro === "string" ? obj.intro.trim().slice(0, 1200) : "";
+        const intro = typeof obj?.intro === "string" ? obj.intro.trim().slice(0, 200) : "";
         const stepsRaw = Array.isArray(obj?.steps) ? obj.steps : [];
 
         const weeklyItems: Array<
@@ -382,7 +384,7 @@ Deno.serve(async (req) => {
         for (const s of stepsRaw.slice(0, 6)) {
           if (!s || typeof s !== "object") continue;
           const st = s as Record<string, unknown>;
-          const line = String(st.line ?? "").trim().slice(0, 220);
+          const line = String(st.line ?? "").trim().slice(0, 80);
           if (!line) continue;
           const typ = String(st.type ?? "");
 

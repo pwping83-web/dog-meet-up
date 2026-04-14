@@ -9,6 +9,7 @@ import {
   MessageCircle,
   User,
   PlusCircle,
+  ChevronRight,
 } from 'lucide-react';
 import { mockRequests } from '../data/mockData';
 import { meetupVisibleInPublicFeed } from '../utils/meetupPublicVisibility';
@@ -359,24 +360,15 @@ export function SearchPage() {
                         </p>
                       </Link>
                       <Link
-                        to={
-                          user?.id && String(dog.owner_id || '') === user.id
-                            ? '/my'
-                            : `/chat/${encodeURIComponent(String((dog.owner_id as string) || dog.id))}?name=${encodeURIComponent(d.name)}`
-                        }
-                        onClick={(e) => {
-                          if (!(user?.id && String(dog.owner_id || '') === user.id)) {
-                            interceptGuestNav(e, Boolean(user), navigate);
-                          }
-                        }}
+                        to={user?.id && String(dog.owner_id || '') === user.id ? '/my' : `/dog/${dog.id}`}
                         className={`mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-extrabold ${
                           user?.id && String(dog.owner_id || '') === user.id
                             ? 'bg-slate-100 text-slate-500'
                             : 'bg-orange-100 text-orange-700'
                         }`}
                       >
-                        <MessageCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '바로 채팅'}
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '프로필 보기'}
                       </Link>
                     </div>
                   );

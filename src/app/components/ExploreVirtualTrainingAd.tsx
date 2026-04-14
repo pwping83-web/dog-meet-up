@@ -9,18 +9,17 @@ type ExploreVirtualTrainingAdProps = {
   variant?: 'default' | 'compact';
 };
 
-const AD_TITLE = '댕댕케어 직업훈련센터 — 돌봄·맡기기 직업 훈련';
+const AD_TITLE = '댕댕케어 직업훈련 · 돌봄·맡기기';
 
 /** 반려견 훈련·교감 느낌의 안정적인 Unsplash CDN */
 const AD_THUMB_SRC =
   'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=560&h=420&fit=crop&q=85';
 
-const AD_LEAD =
-  '반려견 방문 돌봄·맡기기를 직업으로 하고 싶은 분을 위한 기초·실무 훈련을 안내합니다. 산책·배변·안전·보호자 소통까지, ';
+const AD_LEAD = '방문 돌봄·맡기기 직업, 기초·실무 훈련이에요. ';
 
-const AD_HIGHLIGHT = '가르치는 직업(강사)과 돌보는 직업(돌봄 제공자)이 함께 늘어나 일자리 창출';
+const AD_HIGHLIGHT = '강사·돌봄 인력을 함께 키워 일자리를 늘립니다';
 
-const AD_TAIL = '을 목표로 합니다.';
+const AD_TAIL = '.';
 
 const GUARD_MOM_TITLE = '인증 보호맘이란?';
 
@@ -69,8 +68,8 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
             광고 · 모집
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-black leading-snug text-slate-900 max-md:text-[15px]">직업훈련·돌봄 안내 배너</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-500 max-md:text-[13px]">탭하면 상세 내용·신청 안내를 펼칠 수 있어요</p>
+            <p className="text-sm font-black leading-snug text-slate-900 max-md:text-[15px]">댕댕케어 직업훈련</p>
+            <p className="mt-0.5 text-xs font-semibold text-slate-500 max-md:text-[13px]">탭하면 요약·신청 안내</p>
           </div>
           <ChevronRight className="h-5 w-5 shrink-0 text-violet-600" aria-hidden />
         </button>

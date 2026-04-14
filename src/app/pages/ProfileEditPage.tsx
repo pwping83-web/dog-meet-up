@@ -184,10 +184,11 @@ export function ProfileEditPage() {
         avatar_url = committedAvatarUrl;
       }
 
+      const nick = formData.nickname.trim().slice(0, 10);
       const { error } = await supabase.from('profiles').upsert(
         {
           id: user.id,
-          name: formData.nickname.trim().slice(0, 10),
+          name: nick,
           phone: phoneOut,
           avatar_url,
         },
@@ -196,6 +197,13 @@ export function ProfileEditPage() {
       if (error) {
         alert(error.message || '저장에 실패했습니다.');
         return;
+      }
+      /** 목록·마이는 profiles 우선이나, 조회 실패·지연 시에도 카카오 메타 닉네임이 옛값으로 남지 않도록 동기화 */
+      const { error: metaErr } = await supabase.auth.updateUser({
+        data: { nickname: nick, name: nick, full_name: nick },
+      });
+      if (metaErr) {
+        console.warn('[프로필 수정] auth.user_metadata 동기화:', metaErr.message);
       }
       pendingFileRef.current = null;
       setLocalPreviewUrl((prev) => {

@@ -17,7 +17,7 @@ function WeeklyItemRow({ item }: { item: DaengAiWeeklyItem }) {
           모임
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-extrabold leading-snug text-slate-900">{item.label}</span>
+          <span className="block text-[13px] font-extrabold leading-snug text-slate-900 line-clamp-2">{item.label}</span>
           {item.detail ? (
             <span className="mt-0.5 block text-[11px] font-semibold text-slate-500 line-clamp-2">{item.detail}</span>
           ) : null}
@@ -36,9 +36,9 @@ function WeeklyItemRow({ item }: { item: DaengAiWeeklyItem }) {
           댕친
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-extrabold leading-snug text-slate-900">{item.label}</span>
+          <span className="block text-[13px] font-extrabold leading-snug text-slate-900 line-clamp-2">{item.label}</span>
           {item.detail ? (
-            <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">{item.detail}</span>
+            <span className="mt-0.5 block text-[11px] font-semibold text-slate-500 line-clamp-1">{item.detail}</span>
           ) : null}
         </span>
         <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-fuchsia-400" aria-hidden />
@@ -50,7 +50,7 @@ function WeeklyItemRow({ item }: { item: DaengAiWeeklyItem }) {
       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-[10px] font-black text-slate-700">
         팁
       </span>
-      <p className="min-w-0 flex-1 text-[13px] font-bold leading-snug text-slate-800">{item.label}</p>
+      <p className="min-w-0 flex-1 text-[13px] font-bold leading-snug text-slate-800 line-clamp-2">{item.label}</p>
     </div>
   );
 }
@@ -115,10 +115,9 @@ export function OwnerWeeklyAiCard() {
             <CalendarHeart className="h-6 w-6" aria-hidden />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-extrabold text-slate-900">우리 강아지, 이번 주 뭐 할까?</h3>
-            <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-600">
-              올린 글·동네 모임·비슷한 댕친 정보를 바탕으로 AI가 <strong className="text-violet-800">참여할 모임</strong>이랑{' '}
-              <strong className="text-fuchsia-800">인사해볼 친구</strong>를 골라 드려요.
+            <h3 className="text-sm font-extrabold text-slate-900">이번 주, 뭐 할까?</h3>
+            <p className="mt-1 text-[11px] font-semibold leading-snug text-slate-600">
+              동네 모임·댕친 후보로 AI가 <strong className="text-violet-800">짧은 코스</strong>만 골라 드려요.
             </p>
             <button
               type="button"
@@ -127,7 +126,7 @@ export function OwnerWeeklyAiCard() {
               className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-violet-400/30 transition hover:from-violet-700 hover:to-fuchsia-700 disabled:opacity-60"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin shrink-0" /> : <Sparkles className="h-4 w-4 shrink-0" />}
-              {busy ? '추천 코스 짜는 중…' : 'AI로 이번 주 할 일 추천받기'}
+              {busy ? '짧게 짜는 중…' : 'AI 추천 받기'}
             </button>
           </div>
         </div>
@@ -143,7 +142,7 @@ export function OwnerWeeklyAiCard() {
           <div className="max-h-[85vh] w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
               <h2 id="owner-weekly-ai-title" className="text-base font-black text-slate-900">
-                이번 주 추천 코스
+                이번 주 코스
               </h2>
               <button
                 type="button"
@@ -160,7 +159,9 @@ export function OwnerWeeklyAiCard() {
               ) : (
                 <>
                   {intro ? (
-                    <p className="text-[13px] font-semibold leading-relaxed text-slate-700 whitespace-pre-wrap">{intro}</p>
+                    <p className="text-[13px] font-semibold leading-snug text-slate-700 line-clamp-4 whitespace-pre-wrap">
+                      {intro}
+                    </p>
                   ) : null}
                   {items.length > 0 ? (
                     <div className="space-y-2.5">

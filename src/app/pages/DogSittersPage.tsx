@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, ClipboardList, Home, CarFront, PawPrint } from 'lucide-react';
-import { useLocation, useSearchParams } from 'react-router';
+import { Link, useLocation, useSearchParams } from 'react-router';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
 import { ANYANG_MANAN_DISTANCE_ORIGIN, calculateDistance, formatDistance } from '../utils/distance';
 import { useUserLocation } from '../../contexts/UserLocationContext';
@@ -510,6 +510,42 @@ export function DogSittersPage() {
               </button>
             ))}
           </div>
+
+          {careFilter === 'need' && filteredCareNeedMeetups.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-orange-200/80 bg-white px-3 py-2.5 shadow-sm">
+              <p className="text-[11px] font-bold leading-snug text-slate-700">
+                방문·맡기기 구인은 <span className="text-orange-700">돌봄 글</span>로 올려요
+              </p>
+              <Link
+                to="/create-meetup?kind=dolbom"
+                className="shrink-0 rounded-xl bg-orange-500 px-3 py-2 text-[11px] font-extrabold text-white shadow-sm active:scale-[0.98]"
+              >
+                돌봄 글 쓰기
+              </Link>
+            </div>
+          )}
+
+          {careFilter === 'sitter' && (
+            <div className="mb-3 space-y-2 rounded-2xl border border-amber-200/90 bg-white px-3 py-2.5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] font-bold leading-snug text-slate-700">
+                  댕집사 <span className="text-amber-800">구인</span>도 돌봄 글이에요
+                </p>
+                <Link
+                  to="/create-meetup?kind=dolbom"
+                  className="shrink-0 rounded-xl bg-amber-600 px-3 py-2 text-[11px] font-extrabold text-white shadow-sm active:scale-[0.98]"
+                >
+                  돌봄 글 쓰기
+                </Link>
+              </div>
+              <p className="text-[10px] font-semibold leading-snug text-slate-500">
+                댕집사로 <strong className="text-slate-700">소개·등록</strong> 글은 아직 여기서 못 써요.{' '}
+                <Link to="/customer-service" className="font-extrabold text-violet-700 underline underline-offset-2">
+                  고객센터
+                </Link>
+              </p>
+            </div>
+          )}
 
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />

@@ -363,24 +363,15 @@ export function LandingPage() {
                     </p>
                   </Link>
                   <Link
-                    to={
-                      user?.id && String(dog.owner_id || '') === user.id
-                        ? '/my'
-                        : `/chat/${encodeURIComponent(String((dog.owner_id as string) || dog.id))}?name=${encodeURIComponent(d.name)}`
-                    }
-                    onClick={(e) => {
-                      if (!(user?.id && String(dog.owner_id || '') === user.id)) {
-                        interceptGuestNav(e, Boolean(user), navigate);
-                      }
-                    }}
+                    to={user?.id && String(dog.owner_id || '') === user.id ? '/my' : `/dog/${dog.id}`}
                     className={`mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-extrabold ${
                       user?.id && String(dog.owner_id || '') === user.id
                         ? 'bg-slate-100 text-slate-500'
                         : 'bg-orange-100 text-orange-700'
                     }`}
                   >
-                    <MessageCircle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '바로 채팅'}
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '프로필 보기'}
                   </Link>
                 </div>
               </motion.div>
@@ -405,30 +396,85 @@ export function LandingPage() {
         </motion.p>
 
         <div className="space-y-3 max-md:space-y-3.5">
-          {[
-            { step: '01', icon: <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '위치 설정', desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요', color: 'from-orange-500 to-amber-400' },
-            { step: '02', icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: 'MBTI 매칭', desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요', color: 'from-orange-400 to-amber-500' },
-            { step: '03', icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />, title: '만나 친해지기', desc: '모이자·만나자로 친해지면 출장·여행 때 서로 잠시 맡기기도 해요', color: 'from-orange-500 to-amber-400' },
-          ].map((item, i) => (
-            <motion.div
-              key={item.step}
-              variants={fadeUp}
-              custom={i + 2}
-              className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 shadow-sm max-md:gap-4 max-md:p-5 md:gap-3 md:rounded-2xl md:p-4"
-            >
-              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-md max-md:h-14 max-md:w-14 md:h-11 md:w-11 md:rounded-xl`}>
-                {item.icon}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center gap-2 md:mb-0.5">
-                  <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] text-orange-500 max-md:text-[11px] md:px-1.5 md:text-[9px]" style={{ fontWeight: 900 }}>STEP {item.step}</span>
+          {(
+            [
+              {
+                step: '01',
+                icon: <MapPin className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />,
+                title: '위치 설정',
+                desc: '하단 「위치」에서 동네를 맞추면 가까운 댕친·모임이 보여요',
+                color: 'from-orange-500 to-amber-400',
+                action: 'location' as const,
+              },
+              {
+                step: '02',
+                icon: <Heart className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />,
+                title: 'MBTI 매칭',
+                desc: '강아지 성격 테스트로 잘 맞는 친구를 찾아요',
+                color: 'from-orange-400 to-amber-500',
+                action: 'mbti' as const,
+              },
+              {
+                step: '03',
+                icon: <Users className="h-6 w-6 max-md:h-6 max-md:w-6 md:h-5 md:w-5" />,
+                title: '만나 친해지기',
+                desc: '모이자·만나자로 친해지면 출장·여행 때 서로 잠시 맡기기도 해요',
+                color: 'from-orange-500 to-amber-400',
+                action: 'sitters' as const,
+              },
+            ] as const
+          ).map((item, i) => {
+            const cardClass =
+              'flex w-full items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5 text-left shadow-sm transition-colors hover:border-orange-100 hover:bg-orange-50/30 active:scale-[0.99] max-md:gap-4 max-md:p-5 md:gap-3 md:rounded-2xl md:p-4 touch-manipulation';
+            const inner = (
+              <>
+                <div
+                  className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-md max-md:h-14 max-md:w-14 md:h-11 md:w-11 md:rounded-xl`}
+                >
+                  {item.icon}
                 </div>
-                <h3 className="mb-1 text-base text-slate-800 max-md:text-base md:mb-0.5 md:text-sm" style={{ fontWeight: 900 }}>{item.title}</h3>
-                <p className="text-sm text-slate-400 max-md:leading-snug md:text-[11px]" style={{ fontWeight: 600 }}>{item.desc}</p>
-              </div>
-              <ChevronRight className="h-5 w-5 shrink-0 text-slate-300 max-md:h-5 max-md:w-5 md:h-4 md:w-4" />
-            </motion.div>
-          ))}
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-center gap-2 md:mb-0.5">
+                    <span
+                      className="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] text-orange-500 max-md:text-[11px] md:px-1.5 md:text-[9px]"
+                      style={{ fontWeight: 900 }}
+                    >
+                      STEP {item.step}
+                    </span>
+                  </div>
+                  <h3 className="mb-1 text-base text-slate-800 max-md:text-base md:mb-0.5 md:text-sm" style={{ fontWeight: 900 }}>
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-slate-400 max-md:leading-snug md:text-[11px]" style={{ fontWeight: 600 }}>
+                    {item.desc}
+                  </p>
+                </div>
+                <ChevronRight className="h-5 w-5 shrink-0 text-orange-300 max-md:h-5 max-md:w-5 md:h-4 md:w-4" aria-hidden />
+              </>
+            );
+            if (item.action === 'location') {
+              return (
+                <motion.button
+                  key={item.step}
+                  type="button"
+                  variants={fadeUp}
+                  custom={i + 2}
+                  onClick={() => setLocationPickerOpen(true)}
+                  className={cardClass}
+                >
+                  {inner}
+                </motion.button>
+              );
+            }
+            const to = item.action === 'mbti' ? '/dog-mbti-test' : '/sitters';
+            return (
+              <motion.div key={item.step} variants={fadeUp} custom={i + 2}>
+                <Link to={to} className={cardClass}>
+                  {inner}
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.section>
 
@@ -836,20 +882,15 @@ export function LandingPage() {
                 인증 돌봄 · 목록 노출
               </Link>
               <Link
-                to="/feedback"
-                onClick={closeExploreMenu}
-                className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
-              >
-                <Sparkles className="h-5 w-5 text-amber-500" />
-                개선해 주세요
-              </Link>
-              <Link
                 to="/customer-service"
                 onClick={closeExploreMenu}
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
               >
                 <MessageCircle className="h-5 w-5 text-slate-500" />
-                고객센터
+                <span className="flex min-w-0 flex-col gap-0.5 text-left leading-snug">
+                  <span>고객센터</span>
+                  <span className="text-[11px] font-semibold text-slate-500">FAQ · 문의 · 개선·의견</span>
+                </span>
               </Link>
               {isAppAdmin(user) && (
                 <Link

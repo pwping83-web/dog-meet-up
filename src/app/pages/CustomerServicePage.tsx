@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { ChevronRight } from 'lucide-react';
 import { PLATFORM_LEGAL_FULL_ARTICLE } from '../../lib/platformLegalCopy';
+import { UserFeedbackForm } from '../components/UserFeedbackForm';
+
+type CsTab = 'faq' | 'inquiry' | 'notice' | 'legal' | 'feedback';
 
 export function CustomerServicePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<'faq' | 'inquiry' | 'notice' | 'legal'>('faq');
+  const [activeTab, setActiveTab] = useState<CsTab>('faq');
 
   useEffect(() => {
     if (location.hash === '#legal') {
       setActiveTab('legal');
+    } else if (location.hash === '#feedback') {
+      setActiveTab('feedback');
     }
   }, [location.hash]);
 
@@ -126,14 +131,14 @@ export function CustomerServicePage() {
 
       {/* 탭 메뉴 */}
       <div className="sticky top-14 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
-        <div className="flex max-w-screen-md mx-auto">
+        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide">
           <button
             type="button"
             onClick={() => {
               clearHash();
               setActiveTab('faq');
             }}
-            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
+            className={`min-w-[4.75rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
               activeTab === 'faq'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
@@ -147,7 +152,7 @@ export function CustomerServicePage() {
               clearHash();
               setActiveTab('inquiry');
             }}
-            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
+            className={`min-w-[3.5rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
               activeTab === 'inquiry'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
@@ -161,7 +166,7 @@ export function CustomerServicePage() {
               clearHash();
               setActiveTab('notice');
             }}
-            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
+            className={`min-w-[3.5rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
               activeTab === 'notice'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
@@ -175,13 +180,27 @@ export function CustomerServicePage() {
               window.history.replaceState(null, '', `${location.pathname}${location.search}#legal`);
               setActiveTab('legal');
             }}
-            className={`flex-1 border-b-2 py-3 text-xs font-bold transition-colors sm:text-sm ${
+            className={`min-w-[3.25rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
               activeTab === 'legal'
                 ? 'border-brand text-brand'
                 : 'border-transparent text-slate-400'
             }`}
           >
             법적 고지
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              window.history.replaceState(null, '', `${location.pathname}${location.search}#feedback`);
+              setActiveTab('feedback');
+            }}
+            className={`min-w-[3.25rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
+              activeTab === 'feedback'
+                ? 'border-brand text-brand'
+                : 'border-transparent text-slate-400'
+            }`}
+          >
+            개선·의견
           </button>
         </div>
       </div>
@@ -237,18 +256,34 @@ export function CustomerServicePage() {
                 <div>
                   <div className="mb-1 font-bold text-slate-800">원하는 답변을 찾지 못하셨나요?</div>
                   <div className="mb-3 text-sm font-medium text-slate-600">
-                    1:1 문의로 자세히 상담받으세요
+                    1:1 문의 또는 「개선·의견」 탭으로도 보낼 수 있어요
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      clearHash();
-                      setActiveTab('inquiry');
-                    }}
-                    className="rounded-xl bg-market-cta px-5 py-2.5 text-sm font-bold text-white shadow-market transition-all hover:opacity-90"
-                  >
-                    1:1 문의하기
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clearHash();
+                        setActiveTab('inquiry');
+                      }}
+                      className="rounded-xl bg-market-cta px-5 py-2.5 text-sm font-bold text-white shadow-market transition-all hover:opacity-90"
+                    >
+                      1:1 문의하기
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        window.history.replaceState(
+                          null,
+                          '',
+                          `${location.pathname}${location.search}#feedback`,
+                        );
+                        setActiveTab('feedback');
+                      }}
+                      className="rounded-xl border border-brand/30 bg-white px-4 py-2.5 text-sm font-bold text-brand transition-colors hover:bg-brand/5"
+                    >
+                      개선·의견
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -424,6 +459,12 @@ export function CustomerServicePage() {
               {PLATFORM_LEGAL_FULL_ARTICLE}
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'feedback' && (
+        <div className="mx-auto max-w-md px-4 py-6">
+          <UserFeedbackForm embedded />
         </div>
       )}
     </div>

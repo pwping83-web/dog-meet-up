@@ -40,7 +40,7 @@ const pages: PageInfo[] = [
   { path: '/signup', name: '회원가입', emoji: '📝', category: '사용자' },
   { path: '/delete-account', name: '회원탈퇴', emoji: '🗑️', category: '사용자' },
   { path: '/customer-service', name: '고객센터', emoji: '❓', category: '사용자' },
-  { path: '/feedback', name: '개선해 주세요', emoji: '✨', category: '사용자' },
+  { path: '/customer-service#feedback', name: '고객센터 · 개선·의견', emoji: '✨', category: '사용자' },
   
   // 관리자
   { path: '/admin', name: '관리자 대시보드', emoji: '⚙️', category: '관리자' },

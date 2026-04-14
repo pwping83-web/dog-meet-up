@@ -174,7 +174,9 @@ export function ChatsPage() {
               <span className="text-5xl leading-none sm:text-6xl">💬</span>
             </div>
             <h2 className="max-w-md text-xl font-black tracking-tight text-slate-900 sm:text-2xl">아직 댕친과 나눈 대화가 없어요 🥺</h2>
-            <p className="mt-3 max-w-sm text-sm font-semibold leading-relaxed text-slate-500">새로운 댕친 카드에서 바로 채팅을 시작해 보세요.</p>
+            <p className="mt-3 max-w-sm text-sm font-semibold leading-relaxed text-slate-500">
+              댕친 프로필을 연 뒤 채팅을 시작해 보세요.
+            </p>
             <Link to="/explore" className="mt-10 w-full max-w-sm rounded-2xl bg-orange-500 px-8 py-4 text-center text-base font-extrabold text-white shadow-lg shadow-orange-500/30 transition hover:bg-orange-600 active:scale-[0.98]">
               우리 동네 모임 둘러보기
             </Link>

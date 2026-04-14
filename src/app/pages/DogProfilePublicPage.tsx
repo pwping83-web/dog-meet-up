@@ -156,8 +156,8 @@ export function DogProfilePublicPage() {
                   {locationLabel}
                 </p>
               )}
-              <p className="border-t border-slate-100 pt-4 text-xs font-medium leading-relaxed text-slate-500">
-                모이자·만나자에서 가까운 댕친을 찾아 산책·모임을 함께해 보세요. 채팅은 모임 글 상세에서 이어갈 수 있어요 🐾
+              <p className="border-t border-slate-100 pt-4 text-xs font-medium leading-snug text-slate-500">
+                아래에서 보호자와 채팅할 수 있어요. 모임·산책은 모이자·만나자 글에서 이어가요 🐾
               </p>
               <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                 <Link

@@ -458,8 +458,8 @@ export function CreateRequestPage() {
         }
         alert(
           promoFree
-            ? '교배 글이 올라갔어요. 지금은 한시 무료로 피드에도 보여요. 1:1·실종은 무료예요.'
-            : '교배 글이 올라갔어요. 결제한 7일 동안 피드에 보여요. 1:1·실종은 무료예요.',
+            ? '교배 글이 올라갔어요. 한시 무료 노출 중이에요. (1:1·실종은 항상 무료)'
+            : '교배 글이 올라갔어요. 7일간 노출돼요. (1:1·실종은 항상 무료)',
         );
       } else {
         alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
@@ -536,8 +536,9 @@ export function CreateRequestPage() {
               className="rounded-3xl border-2 border-sky-100 bg-gradient-to-br from-sky-50 to-white p-5 text-left shadow-sm transition-all active:scale-[0.99]"
             >
               <p className="text-lg font-extrabold text-slate-900">🍼 돌봄 · 맡기기</p>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
-                맡기기(돌봄 집)·방문 돌봄(주인 집) 등이 필요할 때 올리는 글이에요
+              <p className="mt-0.5 text-[11px] font-extrabold text-sky-800">맡기는 쪽 글 (구인)</p>
+              <p className="mt-1 text-xs font-semibold leading-snug text-slate-500">
+                댕집사 방문·보호맘 맡기기 등, 도움이 필요할 때
               </p>
             </button>
           </div>
@@ -696,22 +697,17 @@ export function CreateRequestPage() {
           )}
 
           {kind === 'mannaja' && formData.category === '교배' && (
-            <div className="rounded-2xl border border-pink-200 bg-pink-50/90 px-3 py-3 text-xs font-semibold leading-relaxed text-pink-950">
+            <div className="rounded-2xl border border-pink-200 bg-pink-50/90 px-3 py-3 text-xs font-semibold leading-snug text-pink-950">
               <p className="font-extrabold">
-                {promoFree
-                  ? '교배 글 · 한시 무료(목록·피드)'
-                  : '교배 글 · 유료 7일(목록·피드)'}
+                {promoFree ? '교배 · 한시 무료(목록·피드)' : '교배 · 7일 유료(목록·피드)'}
               </p>
-              <p className="mt-1.5">
-                견종·성별·나이, 상대 조건, 접종·건강, 연락 방법을 짧게 적어 주세요.
-              </p>
+              <p className="mt-1.5">견종·나이·건강·연락처를 짧게 적어 주세요.</p>
               <p className="mt-1.5">
                 {promoFree ? (
-                  <>지금은 무료예요. 나중엔 유료로 바뀔 수 있어요. 1:1·실종 글은 무료예요.</>
+                  <>지금 무료 · 정책은 바뀔 수 있어요. 1:1·실종은 항상 무료.</>
                 ) : (
                   <>
-                    <strong className="font-extrabold">결제(또는 남은 노출)</strong>이 있어야 올라가요. 1:1·실종 글은
-                    무료예요.
+                    <strong className="font-extrabold">결제 또는 남은 노출</strong>이 있어야 올라가요. 1:1·실종은 무료.
                   </>
                 )}
               </p>
@@ -724,7 +720,7 @@ export function CreateRequestPage() {
               {!breedingListingActive && (
                 <p className="mt-2">
                   <Link to="/billing" className="font-extrabold text-pink-700 underline underline-offset-2">
-                    인증 돌봄·결제
+                    결제 페이지
                   </Link>
                   에서 7일 노출을 살 수 있어요.
                 </p>

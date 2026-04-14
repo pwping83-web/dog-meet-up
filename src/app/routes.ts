@@ -77,7 +77,7 @@ export const router = createBrowserRouter([
       { path: 'signup', Component: SignupPage },                   // Sign up
       { path: 'delete-account', Component: DeleteAccountPage },   // Account deletion
       { path: 'customer-service', Component: CustomerServicePage }, // Help/FAQ
-      { path: 'feedback', Component: FeedbackPage }, // 개선·오류·불편 접수
+      { path: 'feedback', Component: FeedbackPage }, // → /customer-service#feedback 리다이렉트
       { path: 'chats', Component: ChatsPage },                    // Chat list
       { path: 'chat/:id', Component: ChatDetailPage },            // Chat conversation
       { path: 'search', Component: SearchPage },                   // Search meetups

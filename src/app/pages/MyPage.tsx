@@ -67,6 +67,7 @@ export function MyPage() {
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [profileNameFromProfile, setProfileNameFromProfile] = useState<string | null>(null);
 
+  /** 프로필 저장 후 auth.updateUser 시 user.updated_at이 바뀌므로 여기서 profiles를 다시 읽음 */
   useEffect(() => {
     if (!user?.id) {
       setProfileAvatarUrl(null);
@@ -88,7 +89,7 @@ export function MyPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, location.key]);
+  }, [user?.id, user?.updated_at, location.key]);
 
   const referenceDistrictsForExtras = useMemo(() => {
     const primary = userLoc.district?.trim();
@@ -160,9 +161,13 @@ export function MyPage() {
     { icon: Bell, label: '알림 설정', to: '/notifications', replace: true },
   ];
 
-  const supportItems = [
-    { icon: Sparkles, label: '개선해 주세요', to: '/feedback' },
-    { icon: MessageCircle, label: '고객센터', to: '/customer-service' },
+  const supportItems: Array<{
+    icon: ComponentType<{ className?: string }>;
+    label: string;
+    to: string;
+    sub?: string;
+  }> = [
+    { icon: MessageCircle, label: '고객센터', sub: 'FAQ · 문의 · 개선·의견', to: '/customer-service' },
     { icon: Power, label: '회원 탈퇴', to: '/delete-account' },
   ];
 
@@ -584,34 +589,29 @@ export function MyPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      item.label === '회원 탈퇴'
-                        ? 'bg-red-50'
-                        : item.label === '개선해 주세요'
-                          ? 'bg-amber-50 group-hover:bg-amber-100'
-                          : 'bg-slate-100 group-hover:bg-brand/10'
+                      item.label === '회원 탈퇴' ? 'bg-red-50' : 'bg-slate-100 group-hover:bg-brand/10'
                     }`}
                   >
                     <item.icon
                       className={`h-[18px] w-[18px] ${
                         item.label === '회원 탈퇴'
                           ? 'text-red-500'
-                          : item.label === '개선해 주세요'
-                            ? 'text-amber-600 group-hover:text-amber-700'
-                            : 'text-slate-600 group-hover:text-brand'
+                          : 'text-slate-600 group-hover:text-brand'
                       } transition-colors`}
                     />
                   </div>
-                  <span
-                    className={`text-sm font-bold ${
-                      item.label === '회원 탈퇴'
-                        ? 'text-red-500'
-                        : item.label === '개선해 주세요'
-                          ? 'text-slate-900'
-                          : 'text-slate-900'
-                    }`}
-                  >
-                    {item.label}
-                  </span>
+                  <div className="min-w-0 text-left">
+                    <span
+                      className={`block text-sm font-bold ${
+                        item.label === '회원 탈퇴' ? 'text-red-500' : 'text-slate-900'
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                    {item.sub ? (
+                      <span className="mt-0.5 block text-[11px] font-semibold text-slate-500">{item.sub}</span>
+                    ) : null}
+                  </div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-300" />
               </Link>
