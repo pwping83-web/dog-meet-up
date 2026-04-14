@@ -60,7 +60,7 @@ function persistUserMeetups(meetups: Meetup[]): void {
   }
 }
 
-/** 사용자 기기에만 저장된 글(모이자·만나자·돌봄). Supabase 연동 전 임시. */
+/** 기기 로컬에만 있는 글(예: DB 저장 후 캐시 갱신 실패 시 폴백). 신규 글은 `persistMeetupForCrossDevice` 사용. */
 export function readUserMeetups(): Meetup[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -159,13 +159,18 @@ export async function saveMeetupToDb(meetup: Meetup): Promise<void> {
   if (error) throw error;
 }
 
-export async function syncMeetupsFromDb(): Promise<void> {
+export type SyncMeetupsFromDbResult = { ok: true } | { ok: false; error: string };
+
+/** Supabase `meetups` → 로컬 DB 캐시. 앱 로드·주기적 갱신·글 작성 직후에 호출 */
+export async function syncMeetupsFromDb(): Promise<SyncMeetupsFromDbResult> {
   const { data, error } = await supabase
     .from('meetups')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(500);
-  if (error) return;
+  if (error) {
+    return { ok: false, error: error.message || 'meetups 동기화 실패' };
+  }
   const rows = (data ?? []) as DbMeetupRow[];
   const mapped = rows
     .map(fromDbRow)
@@ -173,6 +178,19 @@ export async function syncMeetupsFromDb(): Promise<void> {
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   writeDbMeetupsCache(mapped);
   window.dispatchEvent(new CustomEvent('daeng-user-meetups-changed'));
+  return { ok: true };
+}
+
+/**
+ * 글을 Supabase에 올린 뒤 목록 캐시를 바로 갱신해 다른 기기·브라우저와 맞춤.
+ * 캐시 갱신만 실패할 때(네트워크 등) 예전처럼 로컬 스토리지에 붙여 당장 화면에는 보이게 함.
+ */
+export async function persistMeetupForCrossDevice(meetup: Meetup): Promise<void> {
+  await saveMeetupToDb(meetup);
+  const sync = await syncMeetupsFromDb();
+  if (!sync.ok) {
+    appendUserMeetup(meetup);
+  }
 }
 
 /** 사용자 글 삭제(본인 또는 관리자 흐름에서 사용) */

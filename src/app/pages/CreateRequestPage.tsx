@@ -26,7 +26,7 @@ import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getBreedingLeakInNonBreedingPost } from '../utils/breedingContentGuard';
 import type { Meetup } from '../types';
 import type { User } from '@supabase/supabase-js';
-import { appendUserMeetup, saveMeetupToDb } from '../../lib/userMeetupsStore';
+import { persistMeetupForCrossDevice } from '../../lib/userMeetupsStore';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { MEETUP_POST_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
 
@@ -461,8 +461,7 @@ export function CreateRequestPage() {
 
     setSubmitBusy(true);
     try {
-      await saveMeetupToDb(newMeetup);
-      appendUserMeetup(newMeetup);
+      await persistMeetupForCrossDevice(newMeetup);
 
       if (kind === 'dolbom') {
         const pickupNote =
