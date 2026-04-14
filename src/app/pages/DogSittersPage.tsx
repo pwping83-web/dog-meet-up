@@ -355,6 +355,8 @@ export function DogSittersPage() {
     () =>
       allMeetups
         .filter((req) => {
+          const viewerId = user?.id ?? '';
+          const isMine = viewerId !== '' && req.userId === viewerId;
           const inTab =
             topTab === 'moija'
               ? MOIJA_CATEGORY_SET.has(req.category)
@@ -363,12 +365,12 @@ export function DogSittersPage() {
                 : false;
           if (!inTab) return false;
           if (!meetupVisibleInPublicFeed(req, promoFree)) return false;
-          if (!meetupMatchesRegion(req.district)) return false;
+          if (!isMine && !meetupMatchesRegion(req.district)) return false;
           const categoryMatch = category === '전체' || req.category === category;
           return categoryMatch;
         })
         .slice(0, 20),
-    [allMeetups, topTab, category, promoFree, meetupMatchesRegion],
+    [allMeetups, topTab, category, promoFree, meetupMatchesRegion, user?.id],
   );
 
   /** 인증 돌봄 · 맡기는 사람(돌봄 카테고리 글) */

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
-import { ArrowLeft, Loader2, MapPin, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, MapPin, MessageCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
@@ -27,6 +27,7 @@ export function DogProfilePublicPage() {
   const [dog, setDog] = useState<DogProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -70,6 +71,24 @@ export function DogProfilePublicPage() {
     () => (dog ? sanitizeDogProfileForPublicDisplay(dog) : null),
     [dog],
   );
+  const isOwner = Boolean(user?.id && dog?.owner_id && user.id === dog.owner_id);
+
+  const handleDelete = async () => {
+    if (!dog?.id || !isOwner || deleteBusy) return;
+    if (!window.confirm('내 댕친 프로필을 삭제할까요? 삭제 후 복구할 수 없어요.')) return;
+    setDeleteBusy(true);
+    try {
+      const { error } = await supabase.from('dog_profiles').delete().eq('id', dog.id);
+      if (error) throw error;
+      window.dispatchEvent(new CustomEvent('daeng-dogs-changed'));
+      alert('삭제되었습니다.');
+      navigate('/explore', { replace: true });
+    } catch (e) {
+      alert((e as Error)?.message || '삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -176,6 +195,17 @@ export function DogProfilePublicPage() {
                   글 올리기
                 </Link>
               </div>
+              {isOwner && (
+                <button
+                  type="button"
+                  onClick={() => void handleDelete()}
+                  disabled={deleteBusy}
+                  className="mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
+                >
+                  {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Trash2 className="h-4 w-4" aria-hidden />}
+                  프로필 삭제
+                </button>
+              )}
             </div>
           </div>
         ) : null}

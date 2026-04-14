@@ -197,5 +197,16 @@ export function useCachedDogs(options?: UseCachedDogsOptions): {
     }
   }, [enabled, slice]);
 
+  useEffect(() => {
+    if (!enabled) return;
+    const onDogsChanged = () => {
+      void refetch();
+    };
+    window.addEventListener('daeng-dogs-changed', onDogsChanged);
+    return () => {
+      window.removeEventListener('daeng-dogs-changed', onDogsChanged);
+    };
+  }, [enabled, refetch]);
+
   return { dogs, loading, error, refetch };
 }
