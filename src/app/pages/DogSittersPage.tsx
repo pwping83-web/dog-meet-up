@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, ClipboardList, Home, CarFront, PawPrint } from 'lucide-react';
+import { Search, ClipboardList, Home, CarFront, PawPrint, BadgeCheck } from 'lucide-react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { mockDogSitters, mockMeetups, mockJoinRequests } from '../data/mockData';
 import { ANYANG_MANAN_DISTANCE_ORIGIN, calculateDistance, formatDistance } from '../utils/distance';
@@ -608,23 +608,27 @@ export function DogSittersPage() {
               </p>
             </div>
           ) : (
-            <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-3 text-amber-950">
-              <p className="mb-2 text-center text-[11px] font-extrabold text-amber-900">보호맘은 보통 이렇게 맞춰요</p>
+            <div className="mb-3 rounded-2xl border border-violet-200/90 bg-gradient-to-br from-violet-50 via-fuchsia-50/70 to-white px-3 py-3 text-violet-950 shadow-sm ring-1 ring-violet-100/80">
+              <p className="mb-1.5 flex items-center justify-center gap-1 text-center text-[11px] font-extrabold text-violet-900">
+                <BadgeCheck className="h-4 w-4 shrink-0 text-fuchsia-600" aria-hidden />
+                인증 보호맘 — 맡기기 전용 케어
+              </p>
+              <p className="mb-2 text-center text-[10px] font-semibold text-violet-800/90">운영 인증을 거친 소중한 돌봄이에요</p>
               <div className="grid grid-cols-3 gap-1.5 text-center">
-                <div className="rounded-xl bg-white/85 px-1 py-2 shadow-sm">
-                  <Home className="mx-auto h-4 w-4 text-amber-600" aria-hidden />
-                  <p className="mt-1 text-[10px] font-bold leading-tight">돌봄 집에 맡기기</p>
+                <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
+                  <Home className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">돌봄 집에 맡기기</p>
                 </div>
-                <div className="rounded-xl bg-white/85 px-1 py-2 shadow-sm">
-                  <CarFront className="mx-auto h-4 w-4 text-amber-600" aria-hidden />
-                  <p className="mt-1 text-[10px] font-bold leading-tight">필요하면 픽업</p>
+                <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
+                  <CarFront className="mx-auto h-4 w-4 text-fuchsia-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">필요하면 픽업</p>
                 </div>
-                <div className="rounded-xl bg-white/85 px-1 py-2 shadow-sm">
-                  <PawPrint className="mx-auto h-4 w-4 text-amber-600" aria-hidden />
-                  <p className="mt-1 text-[10px] font-bold leading-tight">끝나면 집으로</p>
+                <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
+                  <PawPrint className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">끝나면 집으로</p>
                 </div>
               </div>
-              <p className="mt-2 text-center text-[11px] font-medium leading-snug text-amber-900/90">
+              <p className="mt-2 text-center text-[11px] font-medium leading-snug text-violet-900/85">
                 바래다주기·데리러 오기 등은 보호맘님이랑 채팅으로 천천히 정하면 돼요~
               </p>
             </div>
@@ -637,21 +641,29 @@ export function DogSittersPage() {
                 { id: 'sitter' as const, label: '댕집사' },
                 { id: 'guard' as const, label: '인증 보호맘' },
               ] as const
-            ).map(({ id, label }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => syncCareToUrl(id)}
-                className={`whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm transition-all max-sm:px-3 max-sm:text-[13px] ${
-                  careFilter === id
-                    ? 'bg-market-cta text-white shadow-market'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                }`}
-                style={{ fontWeight: 700 }}
-              >
-                {label}
-              </button>
-            ))}
+            ).map(({ id, label }) => {
+              const isGuard = id === 'guard';
+              const active = careFilter === id;
+              const tabClass = active
+                ? isGuard
+                  ? 'border-transparent bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 text-white shadow-lg shadow-violet-300/40 ring-1 ring-white/30'
+                  : 'border-transparent bg-market-cta text-white shadow-market'
+                : isGuard
+                  ? 'border-2 border-violet-200/95 bg-gradient-to-br from-violet-50 to-fuchsia-50/90 text-violet-900 hover:border-fuchsia-300 hover:from-violet-100/90 hover:to-fuchsia-50'
+                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => syncCareToUrl(id)}
+                  className={`inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm transition-all max-sm:px-3 max-sm:text-[13px] ${tabClass}`}
+                  style={{ fontWeight: 700 }}
+                >
+                  {isGuard ? <BadgeCheck className="h-4 w-4 shrink-0 opacity-95" aria-hidden /> : null}
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {careFilter === 'need' && filteredCareNeedMeetups.length > 0 && (
