@@ -3,6 +3,21 @@ import { Camera, X, Loader2 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { CARE_INTRO_PHOTO_MAX, uploadCareIntroPhoto } from '../../lib/careIntroPhotoUpload';
 
+function looksLikeImageFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true;
+  if (!file.name.includes('.')) return false;
+  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+  return ['jpg', 'jpeg', 'png', 'webp', 'gif', 'heic', 'heif', 'bmp'].includes(ext);
+}
+
+function storageErrorMessage(err: unknown): string {
+  if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as { message: unknown }).message === 'string') {
+    return (err as { message: string }).message;
+  }
+  if (err instanceof Error) return err.message;
+  return '사진 업로드에 실패했어요.';
+}
+
 type CareIntroPhotoPickerProps = {
   userId: string;
   urls: string[];
@@ -25,18 +40,23 @@ export function CareIntroPhotoPicker({ userId, urls, onUrlsChange, disabled, hin
     setBusy(true);
     try {
       const next: string[] = [...urls];
+      let uploaded = 0;
       for (const file of list) {
-        if (!file.type.startsWith('image/')) continue;
+        if (!looksLikeImageFile(file)) continue;
         if (file.size > 6 * 1024 * 1024) {
           alert('사진 한 장은 6MB 이하로 올려 주세요.');
           continue;
         }
         const url = await uploadCareIntroPhoto(userId, file);
         next.push(url);
+        uploaded += 1;
       }
       onUrlsChange(next.slice(0, CARE_INTRO_PHOTO_MAX));
+      if (uploaded === 0 && list.length > 0) {
+        alert('선택한 파일을 사진으로 인식하지 못했어요. JPG·PNG로 저장한 뒤 다시 선택하거나, 다른 앨범에서 골라 주세요.');
+      }
     } catch (err) {
-      alert(err instanceof Error ? err.message : '사진 업로드에 실패했어요.');
+      alert(storageErrorMessage(err));
     } finally {
       setBusy(false);
     }
