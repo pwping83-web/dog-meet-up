@@ -666,16 +666,14 @@ export function DogSittersPage() {
             })}
           </div>
 
-          {careFilter === 'need' && filteredCareNeedMeetups.length > 0 && (
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-orange-200/80 bg-white px-3 py-2.5 shadow-sm">
-              <p className="text-[11px] font-bold leading-snug text-slate-700">
-                방문·맡기기 구인은 <span className="text-orange-700">돌봄 글</span>로 올려요
-              </p>
+          {careFilter === 'need' && (
+            <div className="mb-3">
               <Link
                 to="/create-meetup?kind=dolbom"
-                className="shrink-0 rounded-xl bg-orange-500 px-3 py-2 text-[11px] font-extrabold text-white shadow-sm active:scale-[0.98]"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-extrabold text-white shadow-md active:scale-[0.99] sm:py-4"
               >
-                돌봄 글 쓰기
+                <ClipboardList className="h-5 w-5 shrink-0 opacity-95" aria-hidden />
+                돌봄·구인 글 쓰기
               </Link>
             </div>
           )}
