@@ -464,7 +464,13 @@ export function CreateRequestPage() {
       } else {
         alert('🐾 모이자·만나자 글이 올라갔어요!\n동네 댕친들이 함께할 거예요');
       }
-      navigate('/explore');
+      const afterSubmitPath =
+        kind === 'mannaja'
+          ? '/sitters?view=mannaja'
+          : kind === 'dolbom'
+            ? '/sitters?view=care&care=need'
+            : '/sitters';
+      navigate(afterSubmitPath);
     } finally {
       setSubmitBusy(false);
     }

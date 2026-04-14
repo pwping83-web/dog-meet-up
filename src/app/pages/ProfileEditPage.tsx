@@ -1,7 +1,7 @@
 // 파일 경로: src/app/pages/ProfileEditPage.tsx
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router';
-import { ArrowLeft, Camera, MapPin, CheckCircle2, ShieldCheck, ChevronDown, Loader2 } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router';
+import { ArrowLeft, Camera, MapPin, CheckCircle2, ShieldCheck, ChevronDown, Loader2, Home, BadgeCheck } from 'lucide-react';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useUserLocation } from '../../contexts/UserLocationContext';
@@ -15,6 +15,11 @@ import {
   parseProfileAvatarUrl,
 } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import {
+  readCareProviderTrack,
+  writeCareProviderTrack,
+  type CareProviderTrack,
+} from '../../lib/careProviderTrack';
 
 /** 숫자만 받아 010-0000-0000 형태로 (최대 11자리) */
 function formatKoreanMobileDigits(raw: string): string {
@@ -33,9 +38,11 @@ type AvatarDraft = 'theme' | 'custom';
 
 export function ProfileEditPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { fullLabel, location: userLoc, locationBasedEnabled } = useUserLocation();
   const [profileMode, setProfileMode] = useState<'general' | 'repairer'>('general');
+  const [careTrack, setCareTrack] = useState<CareProviderTrack>(() => readCareProviderTrack());
   const [locationOpen, setLocationOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saveBusy, setSaveBusy] = useState(false);
@@ -57,6 +64,28 @@ export function ProfileEditPage() {
       if (localPreviewUrl) URL.revokeObjectURL(localPreviewUrl);
     };
   }, [localPreviewUrl]);
+
+  const careQuery = searchParams.get('care');
+  /** 링크로 들어온 경우: ?care=sitter → 댕집사만 + 돌봄 탭 */
+  useEffect(() => {
+    if (careQuery !== 'sitter') return;
+    writeCareProviderTrack('sitter_only');
+    setCareTrack('sitter_only');
+    setProfileMode('repairer');
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.delete('care');
+        return p;
+      },
+      { replace: true },
+    );
+  }, [careQuery, setSearchParams]);
+
+  const pickCareTrack = (v: CareProviderTrack) => {
+    setCareTrack(v);
+    writeCareProviderTrack(v);
+  };
 
   const loadProfile = useCallback(async () => {
     if (!user) {
@@ -461,21 +490,83 @@ export function ProfileEditPage() {
           </p>
         </div>
 
-        {/* 돌봄회원: 맡김 돌봄 안내 */}
+        {/* 돌봄회원: 목표 선택 + 맡김 돌봄 안내 */}
         {profileMode === 'repairer' && (
-          <div className="animate-fadeIn rounded-3xl border-2 border-brand/20 bg-brand-soft p-5">
-            <h3 className="mb-2 text-sm font-extrabold text-slate-900">🐕 도와드릴 수 있는 돌봄</h3>
-            <p className="mb-3 text-xs font-medium leading-relaxed text-slate-700">
-              모임 글과는 달리, <strong className="font-bold text-slate-900">주인 집에 찾아가 방문 돌봄·산책</strong>을 도와주시는
-              활동이에요. 제공 가능한 일정·서비스를 적어 주세요.
-            </p>
-            <input
-              type="text"
-              value={formData.specialty}
-              onChange={(e) => setFormData({...formData, specialty: e.target.value})}
-              placeholder="예: 주간 방문 산책·배식, 당일 방문 돌봄"
-              className="w-full rounded-2xl border border-brand/25 bg-white px-4 py-3.5 font-bold text-slate-800 transition-all focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
-            />
+          <div className="animate-fadeIn space-y-4">
+            <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="mb-3 text-center text-xs font-extrabold text-slate-800">돌봄 목표를 골라 주세요</p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => pickCareTrack('sitter_only')}
+                  className={`rounded-2xl border-2 px-3 py-3 text-left transition-all active:scale-[0.99] ${
+                    careTrack === 'sitter_only'
+                      ? 'border-orange-400 bg-orange-50 shadow-sm'
+                      : 'border-slate-100 bg-slate-50/80 hover:border-orange-100'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-black text-slate-900">
+                    <Home className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
+                    댕집사(방문)까지
+                  </span>
+                  <span className="mt-1 block text-[10px] font-semibold leading-snug text-slate-600">
+                    이웃 집 방문 돌봄·산책
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => pickCareTrack('guard_mom')}
+                  className={`rounded-2xl border-2 px-3 py-3 text-left transition-all active:scale-[0.99] ${
+                    careTrack === 'guard_mom'
+                      ? 'border-violet-400 bg-violet-50 shadow-sm'
+                      : 'border-slate-100 bg-slate-50/80 hover:border-violet-100'
+                  }`}
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-black text-slate-900">
+                    <BadgeCheck className="h-4 w-4 shrink-0 text-violet-600" aria-hidden />
+                    인증 보호맘
+                  </span>
+                  <span className="mt-1 block text-[10px] font-semibold leading-snug text-slate-600">
+                    교육·인증 후 맡기기
+                  </span>
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => pickCareTrack('unset')}
+                className="mt-2 w-full py-1.5 text-[10px] font-bold text-slate-400 underline-offset-2 hover:text-slate-600"
+              >
+                아직 안 정했어요
+              </button>
+              {careTrack === 'guard_mom' && (
+                <Link
+                  to="/guard-mom/register"
+                  className="mt-3 flex min-h-11 items-center justify-center rounded-2xl bg-violet-600 px-4 py-2.5 text-center text-xs font-extrabold text-white shadow-md active:scale-[0.99]"
+                >
+                  보호맘 프로필 등록·이어하기
+                </Link>
+              )}
+              {careTrack === 'sitter_only' && (
+                <p className="mt-3 text-center text-[10px] font-semibold leading-snug text-slate-500">
+                  인증·목록은 정책에 따라 달라질 수 있어요. 예시는 인증 돌봄 탭의 댕집사에서 볼 수 있어요.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-3xl border-2 border-brand/20 bg-brand-soft p-5">
+              <h3 className="mb-2 text-sm font-extrabold text-slate-900">🐕 도와드릴 수 있는 돌봄</h3>
+              <p className="mb-3 text-xs font-medium leading-relaxed text-slate-700">
+                모임 글과는 달리, <strong className="font-bold text-slate-900">주인 집에 찾아가 방문 돌봄·산책</strong>을 도와주시는
+                활동이에요. 제공 가능한 일정·서비스를 적어 주세요.
+              </p>
+              <input
+                type="text"
+                value={formData.specialty}
+                onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                placeholder="예: 주간 방문 산책·배식, 당일 방문 돌봄"
+                className="w-full rounded-2xl border border-brand/25 bg-white px-4 py-3.5 font-bold text-slate-800 transition-all focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
+              />
+            </div>
           </div>
         )}
 

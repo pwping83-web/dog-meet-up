@@ -181,6 +181,21 @@ export function GuardMomRegisterPage() {
               </div>
             )}
 
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="mb-2 text-center text-[11px] font-extrabold text-slate-800">돌봄 목표가 달라요?</p>
+              <div className="flex gap-2">
+                <Link
+                  to="/profile/edit?care=sitter"
+                  className="flex flex-1 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 py-2.5 text-center text-[11px] font-extrabold text-slate-700 transition-colors hover:bg-slate-100"
+                >
+                  댕집사(방문)만
+                </Link>
+                <span className="flex flex-1 items-center justify-center rounded-xl border-2 border-violet-300 bg-violet-50 py-2.5 text-center text-[11px] font-extrabold text-violet-900">
+                  보호맘 이어서
+                </span>
+              </div>
+            </div>
+
             {promoFree && (
               <div className="rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-3 text-center text-sm font-extrabold leading-snug text-emerald-950">
                 🎉 현재 런칭 기념 무료 노출 프로모션 중입니다!

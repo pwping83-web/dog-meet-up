@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { supabase } from '../../lib/supabase';
+import { isAuthUserUuid } from '../../lib/profileIds';
 
 interface Chat {
   id: string;
@@ -233,12 +234,25 @@ export function ChatDetailPage() {
       setLoading(false);
       return;
     }
+    const peerId = id.trim();
+    if (!isAuthUserUuid(peerId)) {
+      setErr('채팅 주소가 올바르지 않아요. 프로필·글에서 다시 열어 주세요.');
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+    if (user.id === peerId) {
+      setErr('자기 자신과는 채팅할 수 없어요.');
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setErr(null);
     const { data, error } = await supabase
       .from('messages')
       .select('id, created_at, sender_id, receiver_id, content, read')
-      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${id}),and(sender_id.eq.${id},receiver_id.eq.${user.id})`)
+      .or(`and(sender_id.eq.${user.id},receiver_id.eq.${peerId}),and(sender_id.eq.${peerId},receiver_id.eq.${user.id})`)
       .order('created_at', { ascending: true })
       .limit(1000);
     if (error) {
@@ -259,17 +273,17 @@ export function ChatDetailPage() {
     await supabase
       .from('messages')
       .update({ read: true })
-      .eq('sender_id', id)
+      .eq('sender_id', peerId)
       .eq('receiver_id', user.id)
       .eq('read', false);
     setLoading(false);
   }, [user?.id, id]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isAuthUserUuid(id.trim())) return;
     let cancelled = false;
     void (async () => {
-      const { data } = await supabase.from('profiles').select('name').eq('id', id).maybeSingle();
+      const { data } = await supabase.from('profiles').select('name').eq('id', id.trim()).maybeSingle();
       if (!cancelled) {
         const n = typeof data?.name === 'string' ? data.name.trim() : '';
         if (n) setPeerName(n);
@@ -286,17 +300,18 @@ export function ChatDetailPage() {
   }, [loadMessages]);
 
   useEffect(() => {
-    if (!user?.id || !id) return;
+    if (!user?.id || !id || !isAuthUserUuid(id.trim())) return;
+    const peerId = id.trim();
     const channel = supabase
-      .channel(`chat-room-${user.id}-${id}`)
+      .channel(`chat-room-${user.id}-${peerId}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'messages' },
         (payload) => {
           const row = payload.new as DbMessage;
           const isThisRoom =
-            (row.sender_id === user.id && row.receiver_id === id) ||
-            (row.sender_id === id && row.receiver_id === user.id);
+            (row.sender_id === user.id && row.receiver_id === peerId) ||
+            (row.sender_id === peerId && row.receiver_id === user.id);
           if (!isThisRoom) return;
           setMessages((prev) => {
             if (prev.some((m) => m.id === row.id)) return prev;
@@ -310,7 +325,7 @@ export function ChatDetailPage() {
               },
             ];
           });
-          if (row.sender_id === id) {
+          if (row.sender_id === peerId) {
             void supabase.from('messages').update({ read: true }).eq('id', row.id);
           }
         },
@@ -323,17 +338,47 @@ export function ChatDetailPage() {
 
   const handleSend = async () => {
     if (!user?.id || !id || !inputText.trim()) return;
+    const peerId = id.trim();
+    if (!isAuthUserUuid(peerId)) {
+      alert('보낼 수 없는 채팅 주소예요.');
+      return;
+    }
+    if (user.id === peerId) {
+      alert('자기 자신에게는 메시지를 보낼 수 없어요.');
+      return;
+    }
     const text = inputText.trim();
     setInputText('');
-    const { error } = await supabase.from('messages').insert({
-      sender_id: user.id,
-      receiver_id: id,
-      content: text,
-      read: false,
-    });
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        sender_id: user.id,
+        receiver_id: peerId,
+        content: text,
+        read: false,
+      })
+      .select('id, created_at, sender_id, receiver_id, content, read')
+      .maybeSingle();
     if (error) {
       setErr(error.message);
+      alert(`메시지를 보내지 못했어요.\n${error.message}`);
       setInputText(text);
+      return;
+    }
+    if (data) {
+      setErr(null);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [
+          ...prev,
+          {
+            id: data.id,
+            text: data.content,
+            isMine: true,
+            timestamp: formatTime(data.created_at),
+          },
+        ];
+      });
     }
   };
 
@@ -441,7 +486,7 @@ export function ChatDetailPage() {
           />
           <button
             onClick={() => void handleSend()}
-            disabled={!inputText.trim() || !user || !id}
+            disabled={!inputText.trim() || !user || !id || !isAuthUserUuid(id.trim()) || user.id === id.trim()}
             className="absolute right-1.5 w-9 h-9 bg-orange-500 disabled:bg-slate-300 rounded-full flex items-center justify-center flex-shrink-0 transition-colors shadow-sm"
           >
             <Send className="w-4 h-4 text-white ml-0.5" />

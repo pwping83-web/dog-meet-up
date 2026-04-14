@@ -6,6 +6,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 import { interceptGuestNav } from '../../lib/guestNavGuard';
+import { isAuthUserUuid } from '../../lib/profileIds';
 
 type DogProfileRow = {
   id: string;
@@ -160,28 +161,32 @@ export function DogProfilePublicPage() {
                 아래에서 보호자와 채팅할 수 있어요. 모임·산책은 모이자·만나자 글에서 이어가요 🐾
               </p>
               <div className="flex flex-col gap-2 pt-2 sm:flex-row">
-                <Link
-                  to={
-                    user?.id && dog.owner_id === user.id
-                      ? '/my'
-                      : `/chat/${encodeURIComponent(String(dog.owner_id || dog.id))}?name=${encodeURIComponent(display.name)}`
-                  }
-                  onClick={(e) => {
-                    if (!(user?.id && dog.owner_id === user.id)) {
-                      interceptGuestNav(e, Boolean(user), navigate);
-                    }
-                  }}
-                  className={`flex-1 rounded-2xl py-3.5 text-center text-sm font-extrabold active:scale-[0.99] ${
-                    user?.id && dog.owner_id === user.id
-                      ? 'border-2 border-slate-200 bg-white text-slate-600'
-                      : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
-                    {user?.id && dog.owner_id === user.id ? '내 프로필' : `${display.name}에게 채팅`}
+                {user?.id && dog.owner_id === user.id ? (
+                  <Link
+                    to="/my"
+                    className="flex-1 rounded-2xl border-2 border-slate-200 bg-white py-3.5 text-center text-sm font-extrabold text-slate-600 active:scale-[0.99]"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+                      내 프로필
+                    </span>
+                  </Link>
+                ) : isAuthUserUuid(dog.owner_id) ? (
+                  <Link
+                    to={`/chat/${encodeURIComponent(String(dog.owner_id))}?name=${encodeURIComponent(display.name)}`}
+                    onClick={(e) => interceptGuestNav(e, Boolean(user), navigate)}
+                    className="flex-1 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-center text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.99]"
+                  >
+                    <span className="inline-flex items-center gap-1.5">
+                      <MessageCircle className="h-4 w-4 shrink-0" aria-hidden />
+                      {`${display.name}에게 채팅`}
+                    </span>
+                  </Link>
+                ) : (
+                  <span className="flex-1 cursor-not-allowed rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-3.5 text-center text-sm font-extrabold text-slate-400">
+                    채팅은 보호자 연결 후 가능해요
                   </span>
-                </Link>
+                )}
                 <Link
                   to="/sitters"
                   className="flex-1 rounded-2xl border-2 border-orange-200 bg-white py-3.5 text-center text-sm font-extrabold text-orange-700 active:scale-[0.99]"

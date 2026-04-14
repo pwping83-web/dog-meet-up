@@ -25,6 +25,7 @@ import {
 } from '../data/virtualDogPhotos';
 import { isCareMeetupCategory } from '../utils/meetupCategory';
 import type { Meetup } from '../types';
+import { isAuthUserUuid } from '../../lib/profileIds';
 
 const ADMIN_MEETUP_CATEGORIES = [
   '공원·장소 모임',
@@ -131,14 +132,23 @@ export function MeetupDetailPage() {
     }, 500);
   };
 
-  const handleInvite = (sitter: { id: string; name: string }) => {
+  const handleInvite = (_sitter: { id: string; name: string }) => {
     if (!requireLoginForAction()) return;
+    const authorId = meetup.userId?.trim() ?? '';
+    if (!isAuthUserUuid(authorId)) {
+      alert('이 글은 데모라 채팅을 열 수 없어요. 회원이 올린 글에서 다시 시도해 주세요.');
+      return;
+    }
+    if (user?.id === authorId) {
+      alert('내가 올린 글이에요.');
+      return;
+    }
     const params = new URLSearchParams({
-      name: sitter.name,
+      name: meetup.userName || '작성자',
       meetup: meetup.title,
       mid: meetup.id,
     });
-    navigate(`/chat/${encodeURIComponent(sitter.id)}?${params.toString()}`);
+    navigate(`/chat/${encodeURIComponent(authorId)}?${params.toString()}`);
   };
 
   const openReport = () => {
@@ -531,7 +541,7 @@ export function MeetupDetailPage() {
                           className={`flex-1 rounded-2xl py-3 text-sm text-white transition-all active:scale-[0.98] disabled:opacity-50 ${isVeryClose ? 'bg-orange-500 shadow-md shadow-orange-500/20' : 'bg-slate-800'}`}
                           style={{ fontWeight: 700 }}
                         >
-                          채팅하기
+                          작성자와 채팅
                         </button>
                       </div>
                     )}
