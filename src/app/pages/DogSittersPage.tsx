@@ -640,17 +640,6 @@ export function DogSittersPage() {
             })}
           </div>
 
-          {careFilter === 'need' && (
-            <div className="mb-3">
-              <Link
-                to="/create-meetup?kind=dolbom"
-                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-extrabold text-white shadow-md active:scale-[0.99] sm:py-4"
-              >
-                <ClipboardList className="h-5 w-5 shrink-0 opacity-95" aria-hidden />
-                돌봄·구인 글 쓰기
-              </Link>
-            </div>
-          )}
 
           <div className="relative mb-4">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
