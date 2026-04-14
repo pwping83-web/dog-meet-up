@@ -159,8 +159,13 @@ export function GuardMomSitterList({
               <p className="mt-2 text-xs font-medium text-slate-500">
                 {searchQuery.trim()
                   ? '검색어를 바꿔 보세요.'
-                  : 'DB에 certified_at이 채워진 행이 없거나, 목록용 RLS·161200 트리거·관리자 인증을 확인해 보세요. 등록 후 운영에서 인증하면 여기에 올라와요.'}
+                  : '이 동네·거리 안에 아직 없어요. 위에서 거리를 넓혀 보거나, 신청 후 운영 인증이 나면 여기에 올라와요.'}
               </p>
+              {import.meta.env.DEV && !searchQuery.trim() ? (
+                <p className="mt-2 font-mono text-[10px] font-normal leading-snug text-slate-400">
+                  dev: certified_at·목록 RLS·161200 마이그레이션·관리자 인증 점검
+                </p>
+              ) : null}
               <Link
                 to="/guard-mom/register"
                 className="mt-4 inline-block rounded-2xl bg-orange-500 px-5 py-3 text-sm font-extrabold text-white shadow-md shadow-orange-500/20 active:scale-[0.98]"
