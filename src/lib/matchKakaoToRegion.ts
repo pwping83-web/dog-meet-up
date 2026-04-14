@@ -89,6 +89,10 @@ function deriveDong(district: string, depth3: string): string {
   return d3;
 }
 
+function normalizeDistrictCandidate(raw: string): string {
+  return (raw || '').replace(/\s+/g, ' ').trim();
+}
+
 export function matchKakaoAdministrative(depth1: string, depth2: string, depth3: string) {
   const city = normalizeCity(depth1);
   if (!city) {
@@ -102,7 +106,13 @@ export function matchKakaoAdministrative(depth1: string, depth2: string, depth3:
 
   const district = pickDistrict(city, depth2, depth3);
   if (district) {
-    return { city, district, dong: deriveDong(district, depth3), matched: true as const };
+    const d2 = normalizeDistrictCandidate(depth2);
+    // 경기/강원 등에서 depth2가 "안양시 동안구"처럼 더 상세하면 그대로 보존
+    const detailedDistrict =
+      d2 && d2.includes(district) && d2 !== district && /(구|군)$/.test(d2.split(' ').at(-1) || '')
+        ? d2
+        : district;
+    return { city, district: detailedDistrict, dong: deriveDong(detailedDistrict, depth3), matched: true as const };
   }
 
   const d2 = (depth2 || '').trim();

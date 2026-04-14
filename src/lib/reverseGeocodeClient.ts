@@ -53,6 +53,16 @@ function pickDongFromAdminNames(adminNames: string[]): string {
   return best;
 }
 
+function pickGuFromAdminNames(adminNames: string[]): string {
+  let best = '';
+  for (const raw of adminNames) {
+    const n = String(raw ?? '').trim();
+    if (!/(구|군)$/.test(n)) continue;
+    if (!best || n.length > best.length) best = n;
+  }
+  return best;
+}
+
 /**
  * 위·경도로 행정 단서 문자열을 만든 뒤 앱 regions 와 맞춤.
  */
@@ -77,6 +87,7 @@ export async function reverseGeocodeToKoreaAdmin(
 
   const fromStack = matchAdministrativeNames(adminNames);
   const inferredDong = pickDongFromAdminNames(adminNames);
+  const inferredGu = pickGuFromAdminNames(adminNames);
   if (fromStack.matched) {
     const depth1Ko =
       Object.entries({
@@ -99,7 +110,11 @@ export async function reverseGeocodeToKoreaAdmin(
         제주: '제주특별자치도',
       }).find(([key]) => key === fromStack.city)?.[1] ?? fromStack.city;
 
-    return { depth1: depth1Ko, depth2: fromStack.district, depth3: inferredDong };
+    const depth2 =
+      inferredGu && fromStack.district && !fromStack.district.includes(inferredGu)
+        ? `${fromStack.district} ${inferredGu}`.trim()
+        : fromStack.district;
+    return { depth1: depth1Ko, depth2, depth3: inferredDong };
   }
 
   const principal = String(j.principalSubdivision ?? '');
