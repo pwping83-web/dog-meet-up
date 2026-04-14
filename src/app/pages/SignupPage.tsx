@@ -1,17 +1,31 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
+import { Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { SIGNUP_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 export function SignupPage() {
   const navigate = useNavigate();
-  const { signInWithKakao } = useAuth();
+  const { signInWithKakao, signInWithPhoneDemo, user } = useAuth();
   const [step, setStep] = useState<'terms' | 'phone' | 'code' | 'profile'>('terms');
   
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
   const [nickname, setNickname] = useState('');
   const [loading, setLoading] = useState(false);
+  const [profileBusy, setProfileBusy] = useState(false);
+  const [phoneAuthBusy, setPhoneAuthBusy] = useState(false);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
+  const pendingAvatarFileRef = useRef<File | null>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    };
+  }, [avatarPreviewUrl]);
   
   const [allAgree, setAllAgree] = useState(false);
   const [termsAgree, setTermsAgree] = useState(false);
@@ -54,18 +68,122 @@ export function SignupPage() {
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const digits = phone.replace(/\D/g, '');
+    if (digits.length < 10) {
+      alert('휴대폰 번호를 확인해 주세요.');
+      return;
+    }
     setStep('code');
   };
 
-  const handleCodeSubmit = (e: React.FormEvent) => {
+  const handleCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStep('profile');
+    try {
+      setPhoneAuthBusy(true);
+      await signInWithPhoneDemo(phone, code);
+      setStep('profile');
+    } catch (err) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : '전화 인증에 실패했습니다. Supabase에서 익명 로그인을 켜거나 카카오 가입을 이용해 주세요.';
+      alert(msg);
+    } finally {
+      setPhoneAuthBusy(false);
+    }
   };
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleAvatarPick = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 선택할 수 있어요.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('사진은 5MB 이하로 올려 주세요.');
+      return;
+    }
+    pendingAvatarFileRef.current = file;
+    setAvatarPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  const clearAvatarPick = () => {
+    pendingAvatarFileRef.current = null;
+    setAvatarPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    if (avatarFileInputRef.current) avatarFileInputRef.current.value = '';
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 회원가입 완료
-    navigate('/explore');
+    const name = nickname.trim().slice(0, 10);
+    if (name.length < 2) {
+      alert('닉네임은 2~10자로 입력해 주세요.');
+      return;
+    }
+    const { data: got } = await supabase.auth.getUser();
+    const authUser = user ?? got.user;
+    if (!authUser?.id) {
+      alert(
+        '프로필·사진을 서버에 저장하려면 로그인이 필요해요.\n휴대폰 인증(다음)을 다시 진행하거나 카카오 가입을 완료해 주세요.',
+      );
+      navigate('/login');
+      return;
+    }
+    setProfileBusy(true);
+    try {
+      let avatar_url: string | null = null;
+      const pending = pendingAvatarFileRef.current;
+      if (pending) {
+        const ext = (pending.name.split('.').pop() || 'jpg').toLowerCase();
+        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+        const path = `user-avatars/${authUser.id}/${Date.now()}.${safeExt}`;
+        const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, pending, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+        if (upErr) {
+          alert(upErr.message || '프로필 사진 업로드에 실패했어요. dog-photos 버킷·정책을 확인해 주세요.');
+          return;
+        }
+        const { data: pub } = supabase.storage.from('dog-photos').getPublicUrl(path);
+        avatar_url = pub.publicUrl;
+      }
+      const { data: existing } = await supabase.from('profiles').select('phone, avatar_url').eq('id', authUser.id).maybeSingle();
+      const nextAvatar = avatar_url ?? (existing?.avatar_url?.trim() || null);
+      const metaPhone =
+        typeof authUser.user_metadata?.phone === 'string' ? authUser.user_metadata.phone.trim() : '';
+      const digits = phone.replace(/\D/g, '');
+      const phoneFromSignup = digits.length >= 10 ? digits : phone.trim();
+      const nextPhone = existing?.phone?.trim() || metaPhone || phoneFromSignup || null;
+      const { error } = await supabase.from('profiles').upsert(
+        {
+          id: authUser.id,
+          name,
+          phone: nextPhone,
+          avatar_url: nextAvatar,
+        },
+        { onConflict: 'id' },
+      );
+      if (error) {
+        alert(error.message || '프로필 저장에 실패했어요.');
+        return;
+      }
+      await supabase.auth.updateUser({
+        data: { nickname: name, name: name, full_name: name },
+      });
+      clearAvatarPick();
+      navigate('/explore');
+    } finally {
+      setProfileBusy(false);
+    }
   };
 
   return (
@@ -277,7 +395,8 @@ export function SignupPage() {
                 className="w-full px-4 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 text-center text-2xl tracking-widest font-bold placeholder:text-slate-300"
                 required
               />
-              
+              <p className="mt-2 text-center text-xs text-slate-500">데모: 인증번호 000000</p>
+
               <div className="flex justify-between items-center mt-2">
                 <button
                   type="button"
@@ -297,9 +416,17 @@ export function SignupPage() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+              disabled={phoneAuthBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-60"
             >
-              다음
+              {phoneAuthBusy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+                  확인 중…
+                </>
+              ) : (
+                '다음'
+              )}
             </button>
           </form>
         )}
@@ -318,17 +445,50 @@ export function SignupPage() {
 
             {/* 프로필 사진 */}
             <div className="mb-6">
-              <div className="flex justify-center mb-6">
+              <input
+                ref={avatarFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="sr-only"
+                onChange={handleAvatarPick}
+              />
+              <div className="mb-4 flex justify-center">
                 <button
                   type="button"
-                  className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-4xl border-2 border-dashed border-gray-300 hover:border-orange-500 transition-colors"
+                  onClick={() => avatarFileInputRef.current?.click()}
+                  className="relative flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-dashed border-gray-300 bg-gray-100 text-4xl transition-colors hover:border-orange-500"
+                  aria-label="프로필 사진 선택"
                 >
-                  📷
+                  {avatarPreviewUrl ? (
+                    <ImageWithFallback
+                      src={avatarPreviewUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <Camera className="h-10 w-10 text-slate-400" aria-hidden />
+                  )}
                 </button>
               </div>
-              <div className="text-center text-sm text-gray-500 mb-6">
-                프로필 사진 추가 (선택)
+              <div className="mb-2 flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => avatarFileInputRef.current?.click()}
+                  className="rounded-full bg-slate-900 px-4 py-2 text-xs font-extrabold text-white active:scale-[0.98]"
+                >
+                  사진 선택
+                </button>
+                {avatarPreviewUrl ? (
+                  <button
+                    type="button"
+                    onClick={clearAvatarPick}
+                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600"
+                  >
+                    삭제
+                  </button>
+                ) : null}
               </div>
+              <p className="text-center text-xs text-gray-500">선택 · JPG·PNG 등 5MB 이하 (가입 완료 시 저장)</p>
             </div>
 
             {/* 닉네임 입력 */}
@@ -352,9 +512,17 @@ export function SignupPage() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-orange-500 to-yellow-500 text-white py-4 rounded-2xl font-bold shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all active:scale-[0.98]"
+              disabled={profileBusy}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-yellow-500 py-4 font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:shadow-orange-500/30 active:scale-[0.98] disabled:opacity-60"
             >
-              가입 완료
+              {profileBusy ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin shrink-0" aria-hidden />
+                  저장 중…
+                </>
+              ) : (
+                '가입 완료'
+              )}
             </button>
           </form>
         )}
