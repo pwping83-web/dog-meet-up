@@ -14,8 +14,30 @@ export interface EmailParams {
   to_name: string;
   subject: string;
   message: string;
+  html_message?: string;
   from_name?: string;
   reply_to?: string;
+}
+
+function escapeHtml(input: string): string {
+  return input
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function formatPhoneForDisplay(phone: string): string {
+  const d = phone.replace(/\D/g, '');
+  if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
+  if (d.length === 10) return `${d.slice(0, 3)}-${d.slice(3, 6)}-${d.slice(6)}`;
+  return phone;
+}
+
+function readViteEnv(key: string): string | undefined {
+  const env = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  return env?.[key];
 }
 
 /**
@@ -31,6 +53,9 @@ export async function sendEmail(params: EmailParams): Promise<void> {
         to_name: params.to_name,
         subject: params.subject,
         message: params.message,
+        // 템플릿에서 html_message 또는 message_html 변수를 쓰면 HTML 메일로 표시됩니다.
+        html_message: params.html_message || '',
+        message_html: params.html_message || '',
         from_name: params.from_name || '댕댕마켓',
         reply_to: params.reply_to || 'noreply@daengdaengmarket.com',
       }
@@ -281,13 +306,13 @@ const DEFAULT_FEEDBACK_INBOX = '091234kim@naver.com';
 
 /** 운영 수신함 — `.env`에 `VITE_FEEDBACK_INBOX_EMAIL` 이 있으면 우선 */
 export function getFeedbackInboxEmail(): string {
-  const v = import.meta.env.VITE_FEEDBACK_INBOX_EMAIL?.trim();
+  const v = readViteEnv('VITE_FEEDBACK_INBOX_EMAIL')?.trim();
   return v && v.includes('@') ? v : DEFAULT_FEEDBACK_INBOX;
 }
 
 /** 직업훈련 신청(제휴 교육소) 수신 — `VITE_TRAINING_PARTNER_INBOX_EMAIL` 없으면 피드백함으로 폴백 */
 export function getTrainingPartnerInboxEmail(): string {
-  const v = import.meta.env.VITE_TRAINING_PARTNER_INBOX_EMAIL?.trim();
+  const v = readViteEnv('VITE_TRAINING_PARTNER_INBOX_EMAIL')?.trim();
   return v && v.includes('@') ? v : getFeedbackInboxEmail();
 }
 
@@ -301,6 +326,14 @@ export async function sendTrainingCourseApplicationEmail(params: {
   pageUrl: string;
 }): Promise<void> {
   const to_email = getTrainingPartnerInboxEmail();
+  const submittedAt = new Date().toLocaleString('ko-KR');
+  const nameSafe = escapeHtml(params.applicantName);
+  const phoneSafe = escapeHtml(formatPhoneForDisplay(params.applicantPhone));
+  const emailSafe = escapeHtml(params.applicantEmail.trim() || '(미입력)');
+  const noteSafe = escapeHtml(params.applicantNote.trim() || '(미입력)');
+  const accountSafe = escapeHtml(params.accountHint);
+  const pageSafe = escapeHtml(params.pageUrl || '(미기록)');
+
   const lines = [
     '[댕댕케어 직업훈련 · 신청]',
     '신청자에게 연락(전화) 부탁드립니다.',
@@ -316,6 +349,29 @@ export async function sendTrainingCourseApplicationEmail(params: {
   }
   lines.push('', '---', `앱 계정 참고: ${params.accountHint}`, `접수 URL: ${params.pageUrl}`);
 
+  const html_message = `
+<div style="font-family:Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#f6f3ff;padding:20px;">
+  <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e8dbff;border-radius:16px;overflow:hidden;">
+    <div style="background:linear-gradient(90deg,#6d28d9,#9333ea);padding:16px 20px;color:#fff;">
+      <div style="font-size:12px;font-weight:700;opacity:.9;">댕댕마켓</div>
+      <div style="margin-top:4px;font-size:18px;font-weight:800;">직업훈련 신청서</div>
+    </div>
+    <div style="padding:18px 20px;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr><td style="width:130px;padding:8px 0;color:#6b7280;font-weight:700;">접수 시각</td><td style="padding:8px 0;color:#111827;">${escapeHtml(submittedAt)}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">이름</td><td style="padding:8px 0;color:#111827;font-weight:700;">${nameSafe}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">휴대폰</td><td style="padding:8px 0;color:#111827;">${phoneSafe}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">이메일</td><td style="padding:8px 0;color:#111827;">${emailSafe}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;vertical-align:top;">문의/희망 일정</td><td style="padding:8px 0;color:#111827;white-space:pre-wrap;">${noteSafe}</td></tr>
+      </table>
+      <div style="margin-top:14px;border-top:1px solid #ede9fe;padding-top:12px;font-size:12px;color:#6b7280;line-height:1.6;">
+        앱 계정: ${accountSafe}<br/>
+        접수 URL: ${pageSafe}
+      </div>
+    </div>
+  </div>
+</div>`.trim();
+
   const reply =
     params.applicantEmail.trim() && params.applicantEmail.includes('@')
       ? params.applicantEmail.trim()
@@ -326,6 +382,7 @@ export async function sendTrainingCourseApplicationEmail(params: {
     to_name: '제휴 교육',
     subject: `[직업훈련 신청] ${params.applicantName} · ${params.applicantPhone}`,
     message: lines.join('\n'),
+    html_message,
     from_name: '댕댕마켓 직업훈련',
     reply_to: reply,
   });
@@ -366,5 +423,107 @@ export async function sendUserFeedbackEmail(params: {
     message,
     from_name: '댕댕마켓 피드백',
     reply_to: params.replyEmail && params.replyEmail.includes('@') ? params.replyEmail : 'noreply@daengdaengmarket.com',
+  });
+}
+
+export type TodoDigestMailParams = {
+  toEmail: string;
+  toName: string;
+  time: string;
+  name: string;
+  message: string;
+  /** 내부에서 생성한 카드 HTML 문자열(신뢰 가능한 값만 전달) */
+  contentHtml: string;
+  totalCount: number;
+  subject?: string;
+  replyTo?: string;
+};
+
+/** 요청하신 샘플 스타일 그대로 구성한 HTML 메일 */
+export function buildTodoDigestHtmlEmail(input: {
+  time: string;
+  name: string;
+  message: string;
+  contentHtml: string;
+  totalCount: number;
+}): string {
+  const timeSafe = escapeHtml(input.time);
+  const nameSafe = escapeHtml(input.name);
+  const messageSafe = escapeHtml(input.message);
+  const totalSafe = escapeHtml(String(Math.max(0, Math.floor(input.totalCount || 0))));
+
+  return `
+<div style="font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px; max-width: 560px; margin: 0 auto">
+  <div style="background: linear-gradient(135deg, #7c3aed, #6366f1, #3b82f6); padding: 24px; border-radius: 14px 14px 0 0; text-align: center">
+    <div style="font-size: 36px; margin-bottom: 8px">💕</div>
+    <div style="color: white; font-size: 22px; font-weight: 700; letter-spacing: -0.5px">우리의 할일</div>
+    <div style="color: #c7d2fe; font-size: 13px; margin-top: 6px">${timeSafe}</div>
+  </div>
+
+  <div style="background: #ffffff; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; padding: 16px 20px">
+    <table role="presentation" style="width: 100%">
+      <tr>
+        <td style="vertical-align: top; width: 48px">
+          <div style="padding: 8px 10px; background-color: #f5f3ff; border-radius: 10px; font-size: 26px; text-align: center; line-height: 1">
+            📬
+          </div>
+        </td>
+        <td style="vertical-align: top; padding-left: 12px">
+          <div style="color: #4c1d95; font-size: 16px; font-weight: 700">${nameSafe}</div>
+          <p style="font-size: 14px; color: #374151; margin: 6px 0 0; line-height: 1.6">${messageSafe}</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <div style="background: #ffffff; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; padding: 0 20px">
+    <div style="border-top: 2px dashed #ddd6fe; margin: 0"></div>
+  </div>
+
+  <div style="background: #ffffff; border-left: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; padding: 16px 20px">
+    ${input.contentHtml}
+  </div>
+
+  <div style="background: #f5f3ff; border: 1px solid #e5e7eb; border-top: none; padding: 16px 20px; text-align: center">
+    <div style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #6366f1); color: white; padding: 8px 20px; border-radius: 10px; font-size: 14px; font-weight: 700">
+      📌 총 ${totalSafe}건 — 잊지 마세요!
+    </div>
+    <div style="color: #6b7280; font-size: 12px; margin-top: 10px; line-height: 1.6">
+      세무 알리미 완료 체크 / 할일 완료 체크를 하면<br>다음부터 해당 항목은 알림이 오지 않습니다.
+    </div>
+  </div>
+
+  <div style="background: #faf5ff; padding: 14px 20px; border-radius: 0 0 14px 14px; border: 1px solid #e5e7eb; border-top: none; text-align: center">
+    <p style="margin: 0; color: #a78bfa; font-size: 12px; font-weight: 500">우리 장부 💕</p>
+  </div>
+</div>`.trim();
+}
+
+/** 샘플 템플릿 기반 HTML 메일 발송 */
+export async function sendTodoDigestEmail(params: TodoDigestMailParams): Promise<void> {
+  const html = buildTodoDigestHtmlEmail({
+    time: params.time,
+    name: params.name,
+    message: params.message,
+    contentHtml: params.contentHtml,
+    totalCount: params.totalCount,
+  });
+
+  const textFallback = [
+    '[우리의 할일]',
+    `시간: ${params.time}`,
+    `이름: ${params.name}`,
+    `메시지: ${params.message}`,
+    `총 건수: ${params.totalCount}`,
+  ].join('\n');
+
+  await sendEmail({
+    to_email: params.toEmail,
+    to_name: params.toName,
+    subject: params.subject ?? `[우리의 할일] ${params.time}`,
+    message: textFallback,
+    html_message: html,
+    from_name: '우리 장부',
+    reply_to: params.replyTo && params.replyTo.includes('@') ? params.replyTo : 'noreply@daengdaengmarket.com',
   });
 }
