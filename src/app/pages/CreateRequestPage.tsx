@@ -60,6 +60,7 @@ function meetupAuthorDisplayName(u: User): string {
 }
 
 type WriteKind = 'moija' | 'mannaja' | 'dolbom';
+type CareNeedTarget = 'both' | 'dog_sitter' | 'guard_mom';
 
 function parseKind(raw: string | null): WriteKind | null {
   if (raw === 'moija' || raw === 'mannaja' || raw === 'dolbom') return raw;
@@ -85,6 +86,7 @@ export function CreateRequestPage() {
   const [previewImages, setPreviewImages] = useState<string[]>([]);
   /** 맡기기 글: 보호맘이 주인 집까지 픽업해 주길 희망 */
   const [wantDaengPickup, setWantDaengPickup] = useState(false);
+  const [careNeedTarget, setCareNeedTarget] = useState<CareNeedTarget>('both');
   const [breedingListingUntil, setBreedingListingUntil] = useState<string | null>(null);
   const [breedingEntLoadFailed, setBreedingEntLoadFailed] = useState(false);
   const [submitBusy, setSubmitBusy] = useState(false);
@@ -96,8 +98,17 @@ export function CreateRequestPage() {
   const breedingPaidHandledRef = useRef(false);
 
   useEffect(() => {
-    if (kind !== 'dolbom') setWantDaengPickup(false);
+    if (kind !== 'dolbom') {
+      setWantDaengPickup(false);
+      setCareNeedTarget('both');
+    }
   }, [kind]);
+
+  useEffect(() => {
+    if (careNeedTarget === 'dog_sitter' && wantDaengPickup) {
+      setWantDaengPickup(false);
+    }
+  }, [careNeedTarget, wantDaengPickup]);
 
   useEffect(() => {
     if (kind !== 'mannaja') breedingPaidHandledRef.current = false;
@@ -409,11 +420,17 @@ export function CreateRequestPage() {
     }
 
     const locationLabel = `${formData.city.trim()} ${formData.district.trim()}`;
+    const careNeedLabel =
+      careNeedTarget === 'dog_sitter'
+        ? '댕집사 희망'
+        : careNeedTarget === 'guard_mom'
+          ? '보호맘 희망'
+          : '댕집사·보호맘 모두 가능';
     const estimatedCostLabel =
       kind === 'dolbom'
-        ? wantDaengPickup
-          ? '돌봄·맡기기 · 댕댕 픽업 희망'
-          : '돌봄·맡기기'
+        ? `돌봄·맡기기 · ${careNeedLabel}${
+            wantDaengPickup && careNeedTarget !== 'dog_sitter' ? ' · 댕댕 픽업 희망' : ''
+          }`
         : kind === 'moija'
           ? `모이자 · ${formData.category}`
           : `만나자 · ${formData.category}`;
@@ -448,9 +465,12 @@ export function CreateRequestPage() {
       appendUserMeetup(newMeetup);
 
       if (kind === 'dolbom') {
-        const pickupNote = wantDaengPickup ? '\n댕댕 픽업 희망으로 함께 표시돼요.' : '';
+        const pickupNote =
+          wantDaengPickup && careNeedTarget !== 'dog_sitter'
+            ? '\n댕댕 픽업 희망으로 함께 표시돼요.'
+            : '';
         alert(
-          `🍼 돌봄·맡기기 글이 올라갔어요!\n동네 댕친·인증 돌봄(방문·맡기기)에게도 보여요.${pickupNote}`,
+          `🍼 돌봄·맡기기 글이 올라갔어요!\n${careNeedLabel}로 함께 표시돼요.${pickupNote}`,
         );
       } else if (isBreedingPost) {
         try {
@@ -745,6 +765,31 @@ export function CreateRequestPage() {
 
           {kind === 'dolbom' && (
             <>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: 'dog_sitter', label: '댕집사', desc: '우리 집 방문' },
+                  { id: 'guard_mom', label: '보호맘', desc: '맡기기 중심' },
+                  { id: 'both', label: '둘 다', desc: '모두 가능' },
+                ] as const).map((opt) => {
+                  const active = careNeedTarget === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setCareNeedTarget(opt.id)}
+                      className={`rounded-2xl border px-3 py-3 text-left transition ${
+                        active
+                          ? 'border-sky-500 bg-sky-50 text-sky-900 shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-700'
+                      }`}
+                      aria-pressed={active}
+                    >
+                      <p className="text-sm font-extrabold">{opt.label}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold opacity-80">{opt.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
               <div className="overflow-hidden rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-white to-sky-50/40 p-4 shadow-sm ring-1 ring-sky-100/90">
                 <div className="flex gap-3.5">
                   <div
@@ -795,20 +840,26 @@ export function CreateRequestPage() {
               </div>
               {meetupRegionSection}
               {nearbyNeighborsTip}
-              <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-                <input
-                  type="checkbox"
-                  checked={wantDaengPickup}
-                  onChange={(e) => setWantDaengPickup(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
-                />
-                <span>
-                  <span className="block text-sm font-extrabold text-slate-900">댕댕 픽업 희망</span>
-                  <span className="mt-0.5 block text-xs font-medium leading-relaxed text-slate-600">
-                    보호맘이 우리 집까지 와서 아이 모셔 가 주길 바랄 때 체크~~ 일정은 채팅으로 맞춰요.
+              {careNeedTarget !== 'dog_sitter' ? (
+                <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={wantDaengPickup}
+                    onChange={(e) => setWantDaengPickup(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                  />
+                  <span>
+                    <span className="block text-sm font-extrabold text-slate-900">댕댕 픽업 희망</span>
+                    <span className="mt-0.5 block text-xs font-medium leading-relaxed text-slate-600">
+                      보호맘이 우리 집까지 와서 아이 모셔 가 주길 바랄 때 체크해 주세요.
+                    </span>
                   </span>
-                </span>
-              </label>
+                </label>
+              ) : (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs font-semibold text-slate-600">
+                  댕집사 선택 시에는 픽업 옵션이 자동으로 꺼져요.
+                </div>
+              )}
             </>
           )}
 
