@@ -14,6 +14,22 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+function fixWeeklyParticleSpacingKo(input: string): string {
+  return input
+    .replace(/에해/g, "에 해")
+    .replace(/와해/g, "와 해")
+    .replace(/을해/g, "을 해")
+    .replace(/를해/g, "를 해")
+    .replace(/에서해/g, "에서 해")
+    .replace(/으로해/g, "으로 해")
+    .replace(/로해/g, "로 해")
+    .replace(/은해/g, "은 해")
+    .replace(/는해/g, "는 해")
+    .replace(/(?<!이)가해/g, "가 해")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 function extractJsonObject(raw: string): Record<string, unknown> | null {
   const t = raw.trim();
   const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
@@ -88,12 +104,17 @@ async function groqChat(system: string, user: string, maxTokens: number, apiKey:
   throw new Error(lastErr || "Groq 호출 실패");
 }
 
+/** 모든 AI 도우미·해석 공통: 짧고 함축 */
+const AI_BREVITY_PREFIX =
+  "【공통】답은 항상 짧고 함축하게. 장황한 인사·반복·나열·긴 설명 금지. 핵심만.\n\n";
+
 async function llmChat(system: string, user: string, maxTokens: number): Promise<string> {
+  const systemWithStyle = AI_BREVITY_PREFIX + system;
   const groqKey = Deno.env.get("GROQ_API_KEY")?.trim();
   if (groqKey) {
-    return groqChat(system, user, maxTokens, groqKey);
+    return groqChat(systemWithStyle, user, maxTokens, groqKey);
   }
-  return geminiChat(system, user, maxTokens);
+  return geminiChat(systemWithStyle, user, maxTokens);
 }
 
 async function geminiChatOnce(
@@ -223,10 +244,10 @@ Deno.serve(async (req) => {
         const allowed = kind === "mannaja" ? mannaja : kind === "dolbom" ? "돌봄" : moija;
         const sys =
           `너는 한국 반려견 커뮤니티 '댕댕마켓' 글 작성 도우미야. 반드시 JSON만 출력해. 키: title, category, description (문자열). category는 다음 중 정확히 하나: ${allowed}. ` +
-          `말투는 친근한 존댓말. description은 2~5문장. 제목은 28자 이내 권장.`;
+          `말투는 친근한 존댓말. description은 1~3문장·문장 짧게(전체 약 200자 이내). 제목은 24자 이내.`;
         const user = `글 유형: ${kind}. 사용자 메모/키워드:\n${hints || "(비어 있음)"}\n` +
           (currentCategory ? `선호 주제(가능하면 맞출 것): ${currentCategory}\n` : "");
-        const raw = await llmChat(sys, user, 700);
+        const raw = await llmChat(sys, user, 480);
         const obj = extractJsonObject(raw);
         if (!obj?.title || !obj?.description) {
           return jsonResponse({ ok: true, text: raw, fields: {} });
@@ -235,9 +256,9 @@ Deno.serve(async (req) => {
           ok: true,
           text: raw,
           fields: {
-            title: String(obj.title).slice(0, 120),
+            title: String(obj.title).trim().slice(0, 32),
             category: String(obj.category ?? "").slice(0, 80),
-            description: String(obj.description).slice(0, 4000),
+            description: String(obj.description).slice(0, 900),
           },
         });
       }
@@ -247,26 +268,28 @@ Deno.serve(async (req) => {
         const regionSi = String(payload.regionSi ?? "").trim();
         const regionGu = String(payload.regionGu ?? "").trim();
         const sys =
-          "너는 인증 보호맘 프로필 소개글 작성 도우미야. 한국어 존댓말. 과장·의료·법적 확약은 피하고, 돌봄 경력·환경·견종 크기·산책·예방접종 확인 등을 담은 4~8문단. 출력은 본문만.";
+          "너는 인증 보호맘 프로필 소개글 작성 도우미야. 한국어 존댓말. 과장·의료·법적 확약 금지. 돌봄 경력·환경·견종·산책·접종 확인 등 핵심만 2~4짧은 문단(문단마다 2~3문장 이하). 출력은 본문만.";
         const user = `지역: ${regionSi} ${regionGu}\n키워드/메모:\n${keywords || "(없음)"}`;
-        const text = await llmChat(sys, user, 900);
+        const text = (await llmChat(sys, user, 520)).slice(0, 900);
         return jsonResponse({ ok: true, text });
       }
 
       case "search_parse": {
         const q = String(payload.query ?? "").slice(0, 200);
         const sys =
-          '반드시 JSON만: {"suggestedSearch":"검색창에 넣을 한 줄","chips":["칩1","칩2"]} chips는 0~4개 한국어.';
-        const raw = await llmChat(sys, `사용자 입력: ${q}`, 300);
+          '반드시 JSON만: {"suggestedSearch":"검색창 한 줄(짧게, 40자 이내)","chips":["칩1"]} chips는 0~4개·각 12자 이내 한국어.';
+        const raw = await llmChat(sys, `사용자 입력: ${q}`, 220);
         const obj = extractJsonObject(raw);
         const suggestedSearch = typeof obj?.suggestedSearch === "string" ? obj.suggestedSearch : q;
         const chips = Array.isArray(obj?.chips)
-          ? (obj.chips as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 4)
+          ? (obj.chips as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 4).map((c) =>
+            c.trim().slice(0, 14)
+          )
           : [];
         return jsonResponse({
           ok: true,
           text: raw,
-          fields: { suggestedSearch: suggestedSearch.slice(0, 120), chips },
+          fields: { suggestedSearch: suggestedSearch.trim().slice(0, 44), chips },
         });
       }
 
@@ -274,9 +297,9 @@ Deno.serve(async (req) => {
         const transcript = String(payload.transcript ?? "").slice(0, 2000);
         const peerName = String(payload.peerName ?? "상대").slice(0, 40);
         const sys =
-          "너는 반려견 산책·모임 채팅 도우미야. 한 줄~세 줄 짧은 답장 초안만. 존댓말. 연락처·주소 과다 요구 금지.";
+          "너는 반려견 산책·모임 채팅 도우미야. 한 줄 우선, 길어도 두 줄 이하. 한 줄당 약 45자 이내. 존댓말. 연락처·주소 과다 요구 금지.";
         const user = `상대 닉네임: ${peerName}\n최근 대화:\n${transcript}`;
-        const text = await llmChat(sys, user, 350);
+        const text = (await llmChat(sys, user, 200)).slice(0, 220);
         return jsonResponse({ ok: true, text });
       }
 
@@ -285,9 +308,9 @@ Deno.serve(async (req) => {
         const typeKey = String(payload.typeKey ?? "").slice(0, 40);
         const desc = String(payload.description ?? "").slice(0, 500);
         const sys =
-          "강아지 성향(MBTI 유사) 결과에 대한 부드러운 해설을 한국어로 5~10문장. 과학적 단정 금지, '참고로' 톤.";
+          "강아지 성향(MBTI 유사) 해설. 한국어 2~5짧은 문장, 전체 360자 이하. 과학적 단정 금지, 부드러운 '참고로' 톤.";
         const user = `유형 키: ${typeKey}\n이름: ${name}\n기본 설명: ${desc}`;
-        const text = await llmChat(sys, user, 600);
+        const text = (await llmChat(sys, user, 360)).slice(0, 420);
         return jsonResponse({ ok: true, text });
       }
 
@@ -302,17 +325,17 @@ Deno.serve(async (req) => {
           return `${i + 1}. ${n} — ${c}\n   메시지: ${m}`;
         });
         const sys =
-          "모임 주최자용 참여 신청 요약. 한국어 불릿 4~10줄. 민감정보 반복·외부 유출 조언 금지.";
+          "모임 주최자용 참여 신청 요약. 한국어 불릿 3~7줄, 한 줄 55자 이내. 민감정보 반복·외부 유출 조언 금지.";
         const user = lines.join("\n\n") || "(신청 없음)";
-        const text = await llmChat(sys, user, 700);
+        const text = (await llmChat(sys, user, 420)).slice(0, 1100);
         return jsonResponse({ ok: true, text });
       }
 
       case "admin_ops_hint": {
         const sys =
-          "반려견 돌봄 플랫폼 운영자에게 짧은 체크리스트(한국어). 인증·RLS·결제·CS. 6~12줄 불릿, 기술명은 짧게.";
+          "반려견 돌봄 플랫폼 운영자용 체크리스트(한국어). 인증·RLS·결제·CS. 4~8줄 불릿, 한 줄 짧게, 기술명 최소화.";
         const user = String(payload.topic ?? "guard_mom_certify_listing").slice(0, 200);
-        const text = await llmChat(sys, `주제 키: ${user}`, 500);
+        const text = (await llmChat(sys, `주제 키: ${user}`, 320)).slice(0, 900);
         return jsonResponse({ ok: true, text });
       }
 
@@ -359,20 +382,25 @@ Deno.serve(async (req) => {
         const sys =
           `너는 댕댕마켓 반려견 앱의 "이번 주 할 일" 코치야. 입력은 JSON 한 덩어리이며, 후보 모임·댕친은 i가 인덱스야.\n` +
           `반드시 아래 스키마의 JSON만 출력해. 마크다운·코드펜스 금지.\n` +
-          `{"intro":"1문장 우선, 최대 2문장. 문장마다 ~45자 이하, 전체 ~120자 이하. 격려+이번 주 한 줄 요약만, 존댓말","steps":[{"type":"join_meetup","meetupIndex":0,"line":"짧은 한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"짧은 한 줄"},{"type":"free_tip","line":"짧은 한 줄"}]}\n` +
+          `{"intro":"최대 2문장, 전체 90자 이하. 장황한 인사·날짜 읽기·견종 설명 금지. 견주에게 격려 한 번 + 이번 주 핵심 한 줄만. 존댓말.","steps":[{"type":"join_meetup","meetupIndex":0,"line":"짧은 한 줄 권유"},{"type":"say_hi","dogIndex":0,"line":"짧은 한 줄"},{"type":"free_tip","line":"짧은 한 줄"}]}\n` +
           `규칙:\n` +
-          `- 긴 문단·나열 금지. 카드 UI용 초짧은 카피만.\n` +
-          `- steps의 line은 각 36자 이하, 행동 한 가지만.\n` +
+          `- 긴 문단·나열·목차 금지. 카드 UI용 초짧은 카피만.\n` +
+          `- steps의 line은 각 32자 이하, 행동 한 가지만.\n` +
           `- steps는 2~5개.\n` +
           `- type은 "join_meetup" | "say_hi" | "free_tip" 만.\n` +
+          `- join_meetup의 line: 모임 제목·지역을 베끼거나 괄호로 반복하지 마. "○○ 모임에 참여해 보세요"처럼 행동만.\n` +
+          `- 한국어 띄어쓰기: 조사 뒤 동사는 반드시 공백. (금지 예: "에해" "와가요" → "에 해" "와 가요")\n` +
           `- join_meetup은 candidateMeetups가 비어 있으면 쓰지 마. meetupIndex는 배열 길이 안의 정수만.\n` +
           `- say_hi는 candidateDogs가 비어 있으면 쓰지 마. dogIndex는 배열 길이 안의 정수만.\n` +
           `- 내가 올린 글이 있으면 비슷한 글만 또 쓰라고 하지 말고, 모임 참여·댕친 인사·산책/사회화 등 다음 행동을 제안해.\n` +
           `- 환각 금지: 인덱스·id를 새로 만들지 마.`;
 
-        const raw = await llmChat(sys, userJson, 1000);
+        const raw = await llmChat(sys, userJson, 520);
         const obj = extractJsonObject(raw);
-        const intro = typeof obj?.intro === "string" ? obj.intro.trim().slice(0, 200) : "";
+        const intro =
+          typeof obj?.intro === "string"
+            ? fixWeeklyParticleSpacingKo(obj.intro).replace(/\s+/g, " ").trim().slice(0, 100)
+            : "";
         const stepsRaw = Array.isArray(obj?.steps) ? obj.steps : [];
 
         const weeklyItems: Array<
@@ -384,7 +412,7 @@ Deno.serve(async (req) => {
         for (const s of stepsRaw.slice(0, 6)) {
           if (!s || typeof s !== "object") continue;
           const st = s as Record<string, unknown>;
-          const line = String(st.line ?? "").trim().slice(0, 80);
+          const line = fixWeeklyParticleSpacingKo(String(st.line ?? "").replace(/\s+/g, " ").trim()).slice(0, 52);
           if (!line) continue;
           const typ = String(st.type ?? "");
 

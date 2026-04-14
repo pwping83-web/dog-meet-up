@@ -159,7 +159,7 @@ export function OwnerWeeklyAiCard() {
               ) : (
                 <>
                   {intro ? (
-                    <p className="text-[13px] font-semibold leading-snug text-slate-700 line-clamp-4 whitespace-pre-wrap">
+                    <p className="text-[13px] font-semibold leading-snug text-slate-700 whitespace-pre-wrap">
                       {intro}
                     </p>
                   ) : null}

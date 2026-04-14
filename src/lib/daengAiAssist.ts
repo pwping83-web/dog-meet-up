@@ -45,6 +45,22 @@ function stripHanChars(input: string): string {
     .trim();
 }
 
+/** AI가 자주 내는 조사+「해」 붙여쓰기 보정. '이해' 등 단어는 건드리지 않음. */
+function fixWeeklyParticleSpacing(input: string): string {
+  const s = input
+    .replace(/에해/g, '에 해')
+    .replace(/와해/g, '와 해')
+    .replace(/을해/g, '을 해')
+    .replace(/를해/g, '를 해')
+    .replace(/에서해/g, '에서 해')
+    .replace(/으로해/g, '으로 해')
+    .replace(/로해/g, '로 해')
+    .replace(/은해/g, '은 해')
+    .replace(/는해/g, '는 해')
+    .replace(/(?<!이)가해/g, '가 해');
+  return s.replace(/[ \t]{2,}/g, ' ').trim();
+}
+
 function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
   if (!fields) return fields;
   const next: DaengAiFields = { ...fields };
@@ -55,12 +71,15 @@ function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
   if (Array.isArray(next.chips)) {
     next.chips = next.chips.map((c) => stripHanChars(String(c)));
   }
-  if (typeof next.weeklyIntro === 'string') next.weeklyIntro = stripHanChars(next.weeklyIntro);
+  if (typeof next.weeklyIntro === 'string') {
+    next.weeklyIntro = fixWeeklyParticleSpacing(stripHanChars(next.weeklyIntro));
+  }
   if (Array.isArray(next.weeklyItems)) {
     next.weeklyItems = next.weeklyItems.map((item) => ({
       ...item,
-      label: stripHanChars(item.label),
-      detail: typeof item.detail === 'string' ? stripHanChars(item.detail) : item.detail,
+      label: fixWeeklyParticleSpacing(stripHanChars(item.label)),
+      detail:
+        typeof item.detail === 'string' ? fixWeeklyParticleSpacing(stripHanChars(item.detail)) : item.detail,
     }));
   }
   return next;
