@@ -10,6 +10,7 @@ import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { DevPageNavigator } from '../components/DevPageNavigator';
 import { PlayStoreInstallBar } from '../components/PlayStoreInstallBar';
 import { InstallPwaFab } from '../components/InstallPwaFab';
+import { syncMeetupsFromDb } from '../../lib/userMeetupsStore';
 
 /** 나중에 스토어/PWA 출시 시 .env 에 VITE_SHOW_APP_INSTALL=true 설정 */
 const showAppInstallPromo =
@@ -55,6 +56,22 @@ export function Root() {
   // 페이지 타이틀 (파비콘은 public/favicon.svg + index.html 링크로 통일)
   useEffect(() => {
     document.title = '댕댕마켓 - 우리 동네 댕친 · 여행·출장 때 맡기기';
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const runSync = async () => {
+      if (cancelled) return;
+      await syncMeetupsFromDb();
+    };
+    void runSync();
+    const timer = window.setInterval(() => {
+      void runSync();
+    }, 8000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
   }, []);
 
   // 하단 네비게이션이 필요없는 페이지들 (LandingPage가 자체 네비게이션 포함)

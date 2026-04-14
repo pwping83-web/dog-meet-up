@@ -192,6 +192,56 @@ export interface Database {
           status?: 'pending' | 'accepted' | 'rejected';
         };
       };
+      meetups: {
+        Row: {
+          id: string;
+          created_at: string;
+          updated_at: string;
+          user_id: string;
+          user_name: string;
+          title: string;
+          category: string;
+          description: string;
+          location: string;
+          district: string;
+          images: string[];
+          estimated_cost: string | null;
+          listing_visible_until: string | null;
+          status: 'pending' | 'in-progress' | 'completed';
+        };
+        Insert: {
+          id: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id: string;
+          user_name?: string;
+          title: string;
+          category: string;
+          description?: string;
+          location?: string;
+          district?: string;
+          images?: string[];
+          estimated_cost?: string | null;
+          listing_visible_until?: string | null;
+          status?: 'pending' | 'in-progress' | 'completed';
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          updated_at?: string;
+          user_id?: string;
+          user_name?: string;
+          title?: string;
+          category?: string;
+          description?: string;
+          location?: string;
+          district?: string;
+          images?: string[];
+          estimated_cost?: string | null;
+          listing_visible_until?: string | null;
+          status?: 'pending' | 'in-progress' | 'completed';
+        };
+      };
       messages: {
         Row: {
           id: string;

@@ -26,7 +26,7 @@ import { usePromoFreeListings } from '../../lib/promoFlags';
 import { getBreedingLeakInNonBreedingPost } from '../utils/breedingContentGuard';
 import type { Meetup } from '../types';
 import type { User } from '@supabase/supabase-js';
-import { appendUserMeetup } from '../../lib/userMeetupsStore';
+import { appendUserMeetup, saveMeetupToDb } from '../../lib/userMeetupsStore';
 import { AiDoumiButton } from '../components/AiDoumiButton';
 import { MEETUP_POST_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
 
@@ -418,7 +418,7 @@ export function CreateRequestPage() {
           : `만나자 · ${formData.category}`;
 
     const newMeetup: Meetup = {
-      id: `local-${crypto.randomUUID()}`,
+      id: crypto.randomUUID(),
       title: formData.title.trim(),
       description: formData.description.trim(),
       category: formData.category,
@@ -443,6 +443,7 @@ export function CreateRequestPage() {
 
     setSubmitBusy(true);
     try {
+      await saveMeetupToDb(newMeetup);
       appendUserMeetup(newMeetup);
 
       if (kind === 'dolbom') {
@@ -471,6 +472,8 @@ export function CreateRequestPage() {
             ? '/sitters?view=care&care=need'
             : '/sitters';
       navigate(afterSubmitPath);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'DB 저장에 실패했어요. 잠시 후 다시 시도해 주세요.');
     } finally {
       setSubmitBusy(false);
     }

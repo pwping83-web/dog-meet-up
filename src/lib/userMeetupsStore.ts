@@ -1,12 +1,16 @@
 import type { Meetup } from '../app/types';
 import { enrichMeetupWithVirtualDogCover } from '../app/data/virtualDogPhotos';
+import { supabase } from './supabase';
+import type { Database } from './supabase';
 
 const STORAGE_KEY = 'daeng-user-meetups-v1';
 const MAX_STORED = 50;
 const ADMIN_DELETED_IDS_KEY = 'daeng-admin-deleted-meetup-ids-v1';
 const ADMIN_OVERRIDE_KEY = 'daeng-admin-meetup-overrides-v1';
+const DB_CACHE_KEY = 'daeng-db-meetups-v1';
 const TEMP_FIXED_MEETUP_LOCATION = '경기 안양시 동안구 관양동';
 const TEMP_FIXED_MEETUP_DISTRICT = '안양시 동안구 관양동';
+type DbMeetupRow = Database['public']['Tables']['meetups']['Row'];
 
 function reviveMeetup(row: Record<string, unknown>): Meetup | null {
   if (typeof row.id !== 'string' || typeof row.title !== 'string' || typeof row.category !== 'string') return null;
@@ -85,6 +89,92 @@ export function appendUserMeetup(meetup: Meetup): void {
   } catch {
     /* ignore quota / private mode */
   }
+}
+
+function fromDbRow(row: DbMeetupRow): Meetup {
+  return {
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    description: row.description ?? '',
+    location: row.location ?? '',
+    district: row.district ?? '',
+    images: Array.isArray(row.images) ? row.images : [],
+    estimatedCost: row.estimated_cost ?? undefined,
+    listingVisibleUntil: row.listing_visible_until ?? undefined,
+    status: row.status,
+    createdAt: new Date(row.created_at),
+    userId: row.user_id,
+    userName: row.user_name ?? '댕댕이 집사',
+  };
+}
+
+function toDbInsertRow(meetup: Meetup): Database['public']['Tables']['meetups']['Insert'] {
+  return {
+    id: meetup.id,
+    user_id: meetup.userId,
+    user_name: meetup.userName || '댕댕이 집사',
+    title: meetup.title,
+    category: meetup.category,
+    description: meetup.description,
+    location: meetup.location,
+    district: meetup.district,
+    images: meetup.images ?? [],
+    estimated_cost: meetup.estimatedCost ?? null,
+    listing_visible_until:
+      meetup.listingVisibleUntil != null && meetup.listingVisibleUntil !== ''
+        ? String(meetup.listingVisibleUntil)
+        : null,
+    status: meetup.status,
+  };
+}
+
+function readDbMeetupsCache(): Meetup[] {
+  try {
+    const raw = localStorage.getItem(DB_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const out: Meetup[] = [];
+    for (const row of parsed) {
+      if (!row || typeof row !== 'object') continue;
+      const m = reviveMeetup(row as Record<string, unknown>);
+      if (m) out.push(m);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function writeDbMeetupsCache(meetups: Meetup[]): void {
+  try {
+    localStorage.setItem(DB_CACHE_KEY, JSON.stringify(serializeMeetupsForStorage(meetups)));
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function saveMeetupToDb(meetup: Meetup): Promise<void> {
+  const payload = toDbInsertRow(meetup);
+  const { error } = await supabase.from('meetups').upsert(payload, { onConflict: 'id' });
+  if (error) throw error;
+}
+
+export async function syncMeetupsFromDb(): Promise<void> {
+  const { data, error } = await supabase
+    .from('meetups')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(500);
+  if (error) return;
+  const rows = (data ?? []) as DbMeetupRow[];
+  const mapped = rows
+    .map(fromDbRow)
+    .filter((m) => m.id && m.title && m.category)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  writeDbMeetupsCache(mapped);
+  window.dispatchEvent(new CustomEvent('daeng-user-meetups-changed'));
 }
 
 /** 사용자 글 삭제(본인 또는 관리자 흐름에서 사용) */
@@ -212,6 +302,7 @@ function mergeMeetupWithOverride(base: Meetup, id: string): Meetup {
 /** 관리자: 목업 글·사용자 글 모두 피드에서 제거 */
 export function adminDeleteMeetupById(id: string): void {
   removeUserMeetupById(id);
+  void supabase.from('meetups').delete().eq('id', id);
   const del = readAdminDeletedIds();
   del.add(id);
   writeAdminDeletedIds(del);
@@ -228,6 +319,36 @@ export function adminSaveMeetupPatch(id: string, patch: Partial<Meetup>): void {
   if (updateUserMeetupInStore(id, patch)) {
     return;
   }
+  if (
+    patch.title !== undefined ||
+    patch.description !== undefined ||
+    patch.category !== undefined ||
+    patch.location !== undefined ||
+    patch.district !== undefined ||
+    patch.status !== undefined ||
+    patch.estimatedCost !== undefined ||
+    patch.userName !== undefined ||
+    patch.images !== undefined ||
+    patch.listingVisibleUntil !== undefined
+  ) {
+    const dbPatch: Database['public']['Tables']['meetups']['Update'] = {};
+    if (patch.title !== undefined) dbPatch.title = patch.title;
+    if (patch.description !== undefined) dbPatch.description = patch.description;
+    if (patch.category !== undefined) dbPatch.category = patch.category;
+    if (patch.location !== undefined) dbPatch.location = patch.location;
+    if (patch.district !== undefined) dbPatch.district = patch.district;
+    if (patch.status !== undefined) dbPatch.status = patch.status;
+    if (patch.estimatedCost !== undefined) dbPatch.estimated_cost = patch.estimatedCost ?? null;
+    if (patch.userName !== undefined) dbPatch.user_name = patch.userName;
+    if (patch.images !== undefined) dbPatch.images = patch.images;
+    if (patch.listingVisibleUntil !== undefined) {
+      dbPatch.listing_visible_until =
+        patch.listingVisibleUntil != null && patch.listingVisibleUntil !== ''
+          ? String(patch.listingVisibleUntil)
+          : null;
+    }
+    void supabase.from('meetups').update(dbPatch).eq('id', id);
+  }
   const ovs = { ...readAdminOverrides() };
   const prev = ovs[id] ?? {};
   ovs[id] = { ...prev, ...patchToStorable(patch) };
@@ -239,12 +360,16 @@ export function adminSaveMeetupPatch(id: string, patch: Partial<Meetup>): void {
 export function getMergedMeetups(mock: Meetup[]): Meetup[] {
   const deleted = readAdminDeletedIds();
   const user = readUserMeetups().filter((m) => !deleted.has(m.id));
-  const seen = new Set(user.map((u) => u.id));
+  const db = readDbMeetupsCache().filter((m) => !deleted.has(m.id));
+  const userIds = new Set(user.map((u) => u.id));
+  const dbOnly = db.filter((m) => !userIds.has(m.id));
+  const seen = new Set([...user.map((u) => u.id), ...dbOnly.map((d) => d.id)]);
   const rest = mock
     .filter((m) => !seen.has(m.id) && !deleted.has(m.id))
     .map((m) => mergeMeetupWithOverride(m, m.id));
   const userMapped = user.map((m) => mergeMeetupWithOverride(m, m.id));
-  return [...userMapped, ...rest]
+  const dbMapped = dbOnly.map((m) => mergeMeetupWithOverride(m, m.id));
+  return [...userMapped, ...dbMapped, ...rest]
     .map((m) => ({
       ...m,
       // 요청: 모이자·만나자·돌봄 포함 모든 글 위치를 관양동 기준으로 통일(임시)
