@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 const ERROR_IMG_SRC =
   'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODgiIGhlaWdodD0iODgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIuMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIzLjciPjxyZWN0IHg9IjE2IiB5PSIxNiIgd2lkdGg9IjU2IiBoZWlnaHQ9IjU2IiByeD0iNiIvPjxwYXRoIGQ9Im0xNiA1OCAxNi0xOCAzMiAzMiIvPjxjaXJjbGUgY3g9IjUzIiBjeT0iMzUiIHI9IjciLz48L3N2Zz4KCg==';
@@ -18,6 +18,14 @@ export function ImageWithFallback({
   ...rest
 }: ImageWithFallbackProps) {
   const [phase, setPhase] = useState<'primary' | 'fallback' | 'broken'>('primary');
+
+  /**
+   * 모바일에서 새 파일(object URL) 선택 후에도 이전 에러 phase가 남아
+   * 미리보기가 갱신되지 않는 문제를 막기 위해 src 변경 시 초기화.
+   */
+  useEffect(() => {
+    setPhase('primary');
+  }, [src, fallbackSrc]);
 
   if (phase === 'broken') {
     return (
