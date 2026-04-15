@@ -609,10 +609,28 @@ export function DogSittersPage() {
               </p>
             </div>
           ) : careFilter === 'sitter' ? (
-            <div className="mb-3 flex items-center gap-2.5 rounded-2xl border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-amber-950">
-              <Home className="h-5 w-5 shrink-0 text-amber-600" aria-hidden />
-              <p className="text-xs font-medium leading-snug">
-                <span className="font-extrabold">댕집사</span> — 이웃이 우리 집에 와서 돌봐 줘요.
+            <div className="mb-3 rounded-2xl border border-violet-200/90 bg-gradient-to-br from-violet-50 via-fuchsia-50/70 to-white px-3 py-3 text-violet-950 shadow-sm ring-1 ring-violet-100/80">
+              <p className="mb-1.5 flex items-center justify-center gap-1 text-center text-[11px] font-extrabold text-violet-900">
+                <BadgeCheck className="h-4 w-4 shrink-0 text-fuchsia-600" aria-hidden />
+                인증 댕집사 — 방문 전용 케어
+              </p>
+              <p className="mb-2 text-center text-[10px] font-semibold text-violet-800/90">운영 인증을 거친 믿을 수 있는 방문 돌봄이에요</p>
+              <div className="grid grid-cols-3 gap-1.5 text-center">
+                <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
+                  <Home className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">우리 집 방문</p>
+                </div>
+                <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
+                  <PawPrint className="mx-auto h-4 w-4 text-fuchsia-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">산책·놀이 케어</p>
+                </div>
+                <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
+                  <BadgeCheck className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">돌봄 후기 공유</p>
+                </div>
+              </div>
+              <p className="mt-2 text-center text-[11px] font-medium leading-snug text-violet-900/85">
+                돌봄 방식은 댕집사님과 채팅으로 맞춰서 편하게 정하면 돼요~
               </p>
             </div>
           ) : (
