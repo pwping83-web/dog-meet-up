@@ -279,11 +279,17 @@ export function DogSittersPage() {
         const km = distForDistrict(m.region_gu ?? '');
         return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
       });
-    if (guardMomUiDemoFill && guardMoms.length === 0) {
-      return filterKm([...mockCertifiedGuardMoms] as unknown as GuardMomRow[]);
+    const listedRows =
+      guardMomUiDemoFill && guardMoms.length === 0
+        ? ([...mockCertifiedGuardMoms] as unknown as GuardMomRow[])
+        : guardMoms;
+    if (listedRows.length === 0) return [];
+    const nearbyRows = filterKm(listedRows);
+    // 모바일에서 근거리 0명으로 완전히 비는 케이스 방지: 전체 지역으로 폴백
+    if (locationBasedEnabled && referenceDistricts.length > 0 && nearbyRows.length === 0) {
+      return listedRows;
     }
-    if (guardMoms.length === 0) return [];
-    return filterKm(guardMoms);
+    return nearbyRows;
   }, [
     guardMomsLoadError,
     guardMomUiDemoFill,
@@ -292,6 +298,17 @@ export function DogSittersPage() {
     referenceDistricts,
     distForDistrict,
   ]);
+
+  const guardFallbackToAllRegion =
+    careFilter === 'guard' &&
+    locationBasedEnabled &&
+    referenceDistricts.length > 0 &&
+    !guardMomsLoadError &&
+    guardMoms.length > 0 &&
+    guardMoms.filter((m) => {
+      const km = distForDistrict(m.region_gu ?? '');
+      return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
+    }).length === 0;
 
   /** DB에는 있는데 반경 안에 0명일 때 안내 */
   const certifiedGuardNobodyInRadius =
@@ -712,6 +729,11 @@ export function DogSittersPage() {
               {careFilter === 'guard' && certifiedGuardNobodyInRadius && (
                 <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
                   저장된 동네 기준 {CERTIFIED_CARE_RADIUS_KM}km 안에 등록된 보호맘이 없어요.
+                </p>
+              )}
+              {guardFallbackToAllRegion && (
+                <p className="mt-0.5 text-[11px] font-semibold text-sky-700">
+                  근처 보호맘이 없어 전체 지역 결과를 함께 보여줘요.
                 </p>
               )}
               {careFilter === 'sitter' &&
