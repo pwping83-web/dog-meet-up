@@ -39,6 +39,7 @@ import { DeleteAccountPage } from './pages/DeleteAccountPage';
 import { CustomerServicePage } from './pages/CustomerServicePage';
 import { FeedbackPage } from './pages/FeedbackPage';
 import { ChatsPage, ChatDetailPage } from './pages/ChatsPage';
+import { MeetupGroupChatPage } from './pages/MeetupGroupChatPage';
 import { SearchPage } from './pages/SearchPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { NotFound } from './pages/NotFound';
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
       { path: 'sitters', Component: DogSittersPage },             // Browse dog sitters & meetups
       { path: 'create-meetup', Component: CreateRequestPage },    // Create new meetup
       { path: 'sitter/:id', Component: DogSitterProfilePage },   // Dog sitter profile
+      { path: 'meetup/:id/group-chat', Component: MeetupGroupChatPage }, // 모임 단체 채팅 (meetup/:id 보다 먼저 매칭)
       { path: 'meetup/:id', Component: MeetupDetailPage },        // Meetup detail + join requests
       { path: 'member/:id', Component: MemberProfilePage },         // 공개 회원 프로필 → 채팅
       { path: 'my', Component: MyPage },                          // User profile (내댕댕)

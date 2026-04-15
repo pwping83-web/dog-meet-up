@@ -6,8 +6,9 @@ import { AiDoumiButton } from '../components/AiDoumiButton';
 import { supabase } from '../../lib/supabase';
 import { isAuthUserUuid } from '../../lib/profileIds';
 import { getHiddenChatPeerIds, hideChatPeerId, unhideChatPeerId } from '../../lib/chatHiddenPeers';
+import { fetchLatestDogPhotoUrlByOwnerIds } from '../../lib/chatDogPhotos';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { resolveDogProfilePhotoUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 interface Chat {
   id: string;
@@ -16,6 +17,14 @@ interface Chat {
   timestamp: string;
   unreadCount: number;
   peerDogPhotoUrl: string;
+}
+
+interface GroupChatRow {
+  meetupId: string;
+  roomId: string;
+  title: string;
+  lastMessage: string;
+  timestamp: string;
 }
 
 interface Message {
@@ -34,34 +43,6 @@ type DbMessage = {
   read: boolean;
 };
 
-type DogProfilePhotoRow = {
-  id: string;
-  owner_id: string | null;
-  photo_url: string | null;
-  created_at: string;
-};
-
-/** owner_id당 가장 최근 등록된 강아지 1마리 사진 URL */
-async function fetchLatestDogPhotoUrlByOwnerIds(ownerIds: string[]): Promise<Record<string, string>> {
-  const unique = [...new Set(ownerIds.map((x) => x.trim()).filter(Boolean))];
-  if (unique.length === 0) return {};
-  const { data, error } = await supabase
-    .from('dog_profiles')
-    .select('id, owner_id, photo_url, created_at')
-    .in('owner_id', unique);
-  if (error || !data?.length) return {};
-  const sorted = [...(data as DogProfilePhotoRow[])].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-  const out: Record<string, string> = {};
-  for (const row of sorted) {
-    const oid = typeof row.owner_id === 'string' ? row.owner_id.trim() : '';
-    if (!oid || out[oid]) continue;
-    out[oid] = resolveDogProfilePhotoUrl({ id: row.id, photo_url: row.photo_url });
-  }
-  return out;
-}
-
 function formatTime(ts: string): string {
   const d = new Date(ts);
   if (Number.isNaN(d.getTime())) return '방금';
@@ -71,7 +52,9 @@ function formatTime(ts: string): string {
 export function ChatsPage() {
   const { user, loading: authLoading } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
+  const [groupChats, setGroupChats] = useState<GroupChatRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [groupLoading, setGroupLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {

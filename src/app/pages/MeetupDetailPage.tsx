@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation, Link } from 'react-router';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag, PencilLine, Trash2, Shield, UserPlus } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Star, ShieldCheck, Flag, PencilLine, Trash2, Shield, UserPlus, MessagesSquare } from 'lucide-react';
 import { mockMeetups, mockJoinRequests, mockDogSitters } from '../data/mockData';
 import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -497,6 +497,18 @@ export function MeetupDetailPage() {
             <p className="mt-2 text-center text-[11px] font-semibold text-slate-400">
               {isBreedingMeetup ? '신청 후 채팅으로 조건을 맞춰요' : '작성자와 채팅으로 일정을 맞춰요'}
             </p>
+          </div>
+        )}
+
+        {user && (
+          <div className="mb-4">
+            <Link
+              to={`/meetup/${meetup.id}/group-chat`}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-orange-200/90 bg-gradient-to-r from-orange-50 to-amber-50 py-3.5 text-sm font-extrabold text-orange-800 shadow-sm transition-all active:scale-[0.98]"
+            >
+              <MessagesSquare className="h-5 w-5 shrink-0" aria-hidden />
+              모임 단톡
+            </Link>
           </div>
         )}
 

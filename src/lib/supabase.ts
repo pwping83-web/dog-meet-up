@@ -280,6 +280,63 @@ export interface Database {
           read?: boolean;
         };
       };
+      meetup_chat_members: {
+        Row: {
+          room_id: string;
+          user_id: string;
+          joined_at: string;
+        };
+        Insert: {
+          room_id: string;
+          user_id: string;
+          joined_at?: string;
+        };
+        Update: {
+          room_id?: string;
+          user_id?: string;
+          joined_at?: string;
+        };
+      };
+      meetup_chat_messages: {
+        Row: {
+          id: string;
+          created_at: string;
+          room_id: string;
+          sender_id: string;
+          content: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          room_id: string;
+          sender_id: string;
+          content: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          room_id?: string;
+          sender_id?: string;
+          content?: string;
+        };
+      };
+      meetup_chat_rooms: {
+        Row: {
+          id: string;
+          created_at: string;
+          meetup_id: string;
+        };
+        Insert: {
+          id?: string;
+          created_at?: string;
+          meetup_id: string;
+        };
+        Update: {
+          id?: string;
+          created_at?: string;
+          meetup_id?: string;
+        };
+      };
       notifications: {
         Row: {
           id: string;

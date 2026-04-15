@@ -26,6 +26,8 @@ export function Root() {
   const isAdminPage = location.pathname === '/admin';
   const isExplorePage = location.pathname === '/explore';
   const isMeetupDetailPage = location.pathname.startsWith('/meetup/');
+  /** /meetup/:id/group-chat — 전체 화면 채팅(모임 상세 하단 탭 숨김) */
+  const isMeetupGroupChatPage = /^\/meetup\/[^/]+\/group-chat\/?$/.test(location.pathname);
   const isMemberProfilePage = location.pathname.startsWith('/member/');
   const isCreateMeetupPage = location.pathname === '/create-meetup';
   /** 1:1 채팅방 — 하단 탭이 입력창을 가리지 않도록 숨김 (/chats 목록은 제외) */
@@ -44,7 +46,7 @@ export function Root() {
 
   const showCommunityBottom =
     isExplorePage ||
-    isMeetupDetailPage ||
+    (isMeetupDetailPage && !isMeetupGroupChatPage) ||
     isMemberProfilePage ||
     isCreateMeetupPage ||
     isSittersCareFlow ||
