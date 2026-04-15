@@ -21,6 +21,8 @@ const districtCoordinates: { [key: string]: { lat: number; lng: number } } = {
   노원구: { lat: 37.6542, lng: 127.0568 },
   '안양시 만안구': { lat: 37.3896, lng: 126.9278 },
   '안양시 동안구': { lat: 37.3942, lng: 126.9569 },
+  만안구: { lat: 37.3896, lng: 126.9278 },
+  동안구: { lat: 37.3942, lng: 126.9569 },
   해운대구: { lat: 35.1631, lng: 129.1636 },
   수성구: { lat: 35.8581, lng: 128.6311 },
   남동구: { lat: 37.4486, lng: 126.7317 },
@@ -35,14 +37,21 @@ function normalizeDistrictLabel(raw: string): string {
   return raw.trim().replace(PREFIX_STRIP, '').trim();
 }
 
+function compactDistrictLabel(raw: string): string {
+  return raw
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function getCoord(raw: string): { lat: number; lng: number } | null {
   const t = raw.trim();
   if (!t) return null;
   if (districtCoordinates[t]) return districtCoordinates[t];
-  const n = normalizeDistrictLabel(t);
+  const n = compactDistrictLabel(normalizeDistrictLabel(t));
   if (districtCoordinates[n]) return districtCoordinates[n];
   for (const key of SORTED_KEYS) {
-    if (n === key || n.endsWith(key)) return districtCoordinates[key];
+    if (n === key || n.endsWith(key) || n.includes(key)) return districtCoordinates[key];
   }
   return null;
 }
