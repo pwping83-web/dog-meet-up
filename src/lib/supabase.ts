@@ -41,6 +41,9 @@ export interface Database {
           region_gu: string | null;
           avatar_url: string | null;
           is_repairer: boolean;
+          care_display_name: string | null;
+          care_avatar_url: string | null;
+          care_specialty: string | null;
         };
         Insert: {
           id: string;
@@ -51,6 +54,9 @@ export interface Database {
           region_gu?: string | null;
           avatar_url?: string | null;
           is_repairer?: boolean;
+          care_display_name?: string | null;
+          care_avatar_url?: string | null;
+          care_specialty?: string | null;
         };
         Update: {
           id?: string;
@@ -61,6 +67,9 @@ export interface Database {
           region_gu?: string | null;
           avatar_url?: string | null;
           is_repairer?: boolean;
+          care_display_name?: string | null;
+          care_avatar_url?: string | null;
+          care_specialty?: string | null;
         };
       };
       repairers: {

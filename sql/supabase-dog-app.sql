@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   is_repairer BOOLEAN DEFAULT FALSE
 );
 
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS care_display_name TEXT,
+  ADD COLUMN IF NOT EXISTS care_avatar_url TEXT,
+  ADD COLUMN IF NOT EXISTS care_specialty TEXT;
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
