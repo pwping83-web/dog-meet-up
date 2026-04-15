@@ -961,7 +961,7 @@ export function GuardMomRegisterPage() {
                       value={careDisplayName}
                       onChange={(e) => setCareDisplayName(e.target.value)}
                       maxLength={20}
-                      placeholder="예) 하양이네 방문집사"
+                      placeholder="예) 하양이 방문집사"
                       className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-900"
                     />
                     <span className="mt-1 block text-[11px] font-medium text-slate-500">
