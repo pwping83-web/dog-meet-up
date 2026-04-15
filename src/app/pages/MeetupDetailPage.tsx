@@ -96,6 +96,7 @@ export function MeetupDetailPage() {
     if (!meetup || !isCareMeetupCategory(meetup.category)) return null;
     return parseCareNeedTargetFromEstimatedCost(meetup.estimatedCost);
   }, [meetup]);
+  const isBreedingMeetup = meetup?.category === '교배';
   const joinRequests = mockJoinRequests.filter((q) => q.meetupId === id);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -458,9 +459,11 @@ export function MeetupDetailPage() {
                 className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-base font-extrabold text-white shadow-lg shadow-orange-500/25 transition-all active:scale-[0.98] disabled:opacity-50"
               >
                 <UserPlus className="h-5 w-5 shrink-0" aria-hidden />
-                참여하기
+                {isBreedingMeetup ? '교배 신청하기' : '참여하기'}
               </button>
-              <p className="mt-2 text-center text-[11px] font-semibold text-slate-400">작성자와 채팅으로 일정을 맞춰요</p>
+              <p className="mt-2 text-center text-[11px] font-semibold text-slate-400">
+                {isBreedingMeetup ? '신청 후 채팅으로 조건을 맞춰요' : '작성자와 채팅으로 일정을 맞춰요'}
+              </p>
             </div>
           )}
 
@@ -563,7 +566,9 @@ export function MeetupDetailPage() {
         {joinRequests.length > 0 && (
           <div className="mb-12">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-xl text-slate-900" style={{ fontWeight: 800 }}>🐾 참여 신청</h2>
+              <h2 className="text-xl text-slate-900" style={{ fontWeight: 800 }}>
+                🐾 {isBreedingMeetup ? '교배 신청' : '참여 신청'}
+              </h2>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="bg-orange-50 text-orange-600 px-3 py-1 rounded-xl text-sm" style={{ fontWeight: 700 }}>
                   총 {joinRequests.length}명
@@ -672,14 +677,14 @@ export function MeetupDetailPage() {
                             className={`flex-[2] py-3.5 rounded-2xl text-white transition-all active:scale-[0.98] disabled:opacity-50 ${isFirst ? 'bg-gradient-to-r from-orange-500 to-yellow-500 shadow-md shadow-orange-500/20' : 'bg-slate-800 hover:bg-slate-900'}`}
                             style={{ fontWeight: 700 }}
                           >
-                            함께하기 🐾
+                            {isBreedingMeetup ? '신청 수락하기' : '함께하기 🐾'}
                           </button>
                         </div>
                       )}
 
                       {isSelected && (
                         <div className="bg-orange-500 text-white py-3.5 rounded-2xl text-center flex items-center justify-center gap-2" style={{ fontWeight: 800 }}>
-                          ✓ 수락 완료되었습니다
+                          ✓ {isBreedingMeetup ? '교배 신청을 수락했어요' : '수락 완료되었습니다'}
                         </div>
                       )}
                   </div>

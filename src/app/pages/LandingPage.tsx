@@ -895,7 +895,7 @@ export function LandingPage() {
                 className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 hover:bg-orange-50"
               >
                 <CreditCard className="h-5 w-5 text-brand" />
-                인증 돌봄 · 목록 노출
+                인증 돌봄/교배글 노출
               </Link>
               <Link
                 to="/customer-service"
