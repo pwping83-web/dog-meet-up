@@ -1,13 +1,14 @@
 // src/app/pages/ProfileEditPage.tsx
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
   ArrowLeft,
+  Camera,
   MapPin,
   CheckCircle2,
-  ShieldCheck,
   ChevronDown,
   Loader2,
+  X,
   Bell,
 } from 'lucide-react';
 import { LocationPickerModal } from '../components/LocationPickerModal';
@@ -92,9 +93,11 @@ export function ProfileEditPage() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saveBusy, setSaveBusy] = useState(false);
-  const [dogPhotoBusy, setDogPhotoBusy] = useState(false);
   const [phone, setPhone] = useState('');
   const [general, setGeneral] = useState<ProfileModeFace>(() => emptyFace());
+  const [dogImageFile, setDogImageFile] = useState<File | null>(null);
+  const [dogPreviewUrl, setDogPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [dogDraft, setDogDraft] = useState<DogProfileDraft>({
     id: null,
     name: '',
@@ -116,6 +119,8 @@ export function ProfileEditPage() {
         gender: '남아',
         photoUrl: null,
       });
+      setDogImageFile(null);
+      setDogPreviewUrl(null);
       setProfileLoading(false);
       return;
     }
@@ -161,9 +166,17 @@ export function ProfileEditPage() {
         gender: row?.gender === '여아' ? '여아' : '남아',
         photoUrl: typeof row?.photo_url === 'string' ? row.photo_url : null,
       });
+      setDogPreviewUrl(typeof row?.photo_url === 'string' ? row.photo_url : null);
+      setDogImageFile(null);
     }
     setProfileLoading(false);
   }, [user]);
+
+  useEffect(() => {
+    return () => {
+      if (dogPreviewUrl?.startsWith('blob:')) URL.revokeObjectURL(dogPreviewUrl);
+    };
+  }, [dogPreviewUrl]);
 
   useEffect(() => {
     void loadProfile();
@@ -173,20 +186,8 @@ export function ProfileEditPage() {
   const setActiveFace = setGeneral;
 
   const locationVerified = userLoc.source === 'gps' || userLoc.source === 'map';
-  const hasRegion = Boolean(userLoc.city && userLoc.district);
   const phoneDigits = phone.replace(/\D/g, '');
   const phoneOk = phoneDigitsOk(phoneDigits);
-
-  const completionRate =
-    activeFace.nickname && phoneOk && phoneDigits.length > 0 && hasRegion
-      ? locationVerified
-        ? 100
-        : 80
-      : activeFace.nickname && phoneOk && phoneDigits.length > 0
-        ? 60
-        : activeFace.nickname
-          ? 45
-          : 35;
 
   const buildAvatarUrlForSave = async (face: ProfileModeFace): Promise<string | null> => {
     if (face.avatarDraft === 'theme') {
@@ -195,15 +196,34 @@ export function ProfileEditPage() {
     return face.committedAvatarUrl;
   };
 
+  const handleDogImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('이미지 파일만 선택할 수 있어요.');
+      return;
+    }
+    setDogImageFile(file);
+    setDogPreviewUrl((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+  };
+
+  const clearDogImage = () => {
+    setDogImageFile(null);
+    setDogDraft((prev) => ({ ...prev, photoUrl: null }));
+    setDogPreviewUrl((prev) => {
+      if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
+      return null;
+    });
+  };
+
   const handleSave = async () => {
     if (!user) {
       alert('로그인 후 저장할 수 있어요.');
       navigate('/login');
-      return;
-    }
-    const nick = activeFace.nickname.trim();
-    if (!nick) {
-      alert('닉네임을 입력해 주세요.');
       return;
     }
     if (!phoneOk) {
@@ -218,6 +238,23 @@ export function ProfileEditPage() {
     setSaveBusy(true);
     try {
       const phoneOut = formatKoreanMobileDigits(phoneDigits);
+      let dogPhotoUrl = dogDraft.photoUrl?.trim() ?? '';
+      if (dogImageFile) {
+        const safeExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(
+          (dogImageFile.name.split('.').pop() || '').toLowerCase(),
+        )
+          ? (dogImageFile.name.split('.').pop() || 'jpg').toLowerCase()
+          : 'jpg';
+        const path = `profiles/${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${safeExt}`;
+        const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, dogImageFile);
+        if (upErr) {
+          alert(upErr.message || '강아지 사진 업로드에 실패했어요.');
+          return;
+        }
+        const { data: pub } = supabase.storage.from('dog-photos').getPublicUrl(path);
+        dogPhotoUrl = pub.publicUrl;
+      }
+
       let avatar_url: string | null;
       try {
         avatar_url = await buildAvatarUrlForSave(activeFace);
@@ -226,8 +263,11 @@ export function ProfileEditPage() {
         alert(msg);
         return;
       }
+      if (dogPhotoUrl) {
+        avatar_url = dogPhotoUrl;
+      }
 
-      const nickOut = nick.slice(0, 10);
+      const nickOut = (activeFace.nickname.trim() || displayNameFromUser(user)).slice(0, 10);
 
       const { data: updated, error } = await supabase
         .from('profiles')
@@ -284,7 +324,7 @@ export function ProfileEditPage() {
           breed: dogBreed ? dogBreed.slice(0, 30) : null,
           age: dogAgeNum,
           gender: dogDraft.gender,
-          photo_url: dogDraft.photoUrl ?? null,
+          photo_url: dogPhotoUrl || null,
           city: userLoc.city?.trim() || null,
           district: userLoc.district?.trim() || null,
         };
@@ -323,83 +363,16 @@ export function ProfileEditPage() {
           avatarTheme: parsed.kind === 'theme' ? parsed.themeId : prev.avatarTheme,
         };
       });
+      setDogDraft((prev) => ({ ...prev, photoUrl: dogPhotoUrl || prev.photoUrl }));
+      setDogImageFile(null);
+      setDogPreviewUrl(dogPhotoUrl || dogPreviewUrl);
 
-      alert('프로필이 저장되었어요! 💾');
+      alert('강아지 프로필과 보호자 정보를 함께 저장했어요! 💾');
       navigate('/my');
     } finally {
       setSaveBusy(false);
     }
   };
-
-  const applyLatestDogPhoto = useCallback(async () => {
-    if (!user?.id) {
-      alert('로그인 후 사용할 수 있어요.');
-      return;
-    }
-    setDogPhotoBusy(true);
-    try {
-      const { data, error } = await supabase
-        .from('dog_profiles')
-        .select('id,name,breed,age,gender,photo_url')
-        .eq('owner_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (error) {
-        alert(error.message || '강아지 사진을 불러오지 못했어요.');
-        return;
-      }
-      const photo = (data?.[0]?.photo_url ?? '').trim();
-      if (!photo || !/^https?:\/\//i.test(photo)) {
-        alert('등록된 강아지 사진이 없어요. 먼저 우리 댕댕이 등록에서 사진을 올려 주세요.');
-        return;
-      }
-      setActiveFace((prev) => ({
-        ...prev,
-        avatarDraft: 'custom',
-        committedAvatarUrl: photo,
-        localPreviewUrl: null,
-      }));
-      setDogDraft((prev) => ({
-        ...prev,
-        photoUrl: photo,
-        id: data?.[0]?.id ?? prev.id,
-        name: (data?.[0]?.name as string | undefined) ?? prev.name,
-        breed: (data?.[0]?.breed as string | undefined) ?? prev.breed,
-        age:
-          typeof data?.[0]?.age === 'number' && Number.isFinite(data?.[0]?.age)
-            ? String(data?.[0]?.age)
-            : prev.age,
-        gender: data?.[0]?.gender === '여아' ? '여아' : prev.gender,
-      }));
-    } finally {
-      setDogPhotoBusy(false);
-    }
-  }, [setActiveFace, user?.id]);
-
-  const selectThemeAvatar = (themeId: string) => {
-    setActiveFace((prev) => {
-      return {
-        ...prev,
-        localPreviewUrl: null,
-        avatarDraft: 'theme',
-        avatarTheme: themeId,
-      };
-    });
-  };
-
-  const avatarMain = useMemo(() => {
-    if (activeFace.avatarDraft === 'theme') {
-      const th =
-        PROFILE_THEME_AVATARS.find((t) => t.id === activeFace.avatarTheme) ?? PROFILE_THEME_AVATARS[0];
-      return { kind: 'emoji' as const, ...th };
-    }
-    const parsed = parseProfileAvatarUrl(activeFace.committedAvatarUrl);
-    const src = activeFace.localPreviewUrl ?? (parsed.kind === 'image' ? parsed.url : '');
-    if (src) return { kind: 'image' as const, src };
-    const th =
-      PROFILE_THEME_AVATARS.find((t) => t.id === activeFace.avatarTheme) ?? PROFILE_THEME_AVATARS[0];
-    return { kind: 'emoji' as const, ...th };
-  }, [activeFace.avatarDraft, activeFace.avatarTheme, activeFace.localPreviewUrl, activeFace.committedAvatarUrl]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -442,100 +415,55 @@ export function ProfileEditPage() {
               </div>
             ) : null}
 
-            {/* 돌봄회원 프로필 버튼 제거(중복): 일반 프로필만 수정 */} 
-
-            {/* 프로필 완성도 게이지 */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <div className="flex justify-between items-end mb-3">
-                <div>
-                  <span className="font-extrabold text-slate-800 flex items-center gap-1.5">
-                    내 프로필 신뢰도{' '}
-                    {completionRate === 100 && <ShieldCheck className="h-4 w-4 text-brand" aria-hidden />}
-                  </span>
-                  <p className="text-xs text-slate-500 mt-1 font-medium">
-                    {completionRate === 100
-                      ? '완벽해요! 이웃들이 신뢰할 수 있어요.'
-                      : hasRegion
-                        ? '아래에서 지도·GPS로 위치를 맞추면 신뢰도가 올라가요.'
-                        : '동네·위치를 맞추면 신뢰도가 올라가요.'}
-                  </p>
-                </div>
-                <span className="text-xl font-black text-brand">{completionRate}%</span>
-              </div>
-              <div className="h-3.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ${completionRate === 100 ? 'bg-gradient-to-r from-brand to-brand-bright' : 'bg-gradient-to-r from-brand-bright to-amber-300'}`}
-                  style={{ width: `${completionRate}%` }}
-                />
-              </div>
-            </div>
-
-            {/* 프로필 사진 & 테마 선택 */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <h3 className="text-sm font-extrabold text-slate-800 mb-4">프로필 이미지</h3>
-              <div className="flex flex-col items-center">
-                <div className="relative mx-auto mb-3 flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center rounded-3xl">
-                  <div className="relative z-10">
-                    {avatarMain.kind === 'image' ? (
-                      <div className="relative h-24 w-24 overflow-hidden rounded-3xl border-4 border-orange-200 shadow-inner">
-                        <ImageWithFallback
-                          src={avatarMain.src}
-                          fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
-                          alt="프로필 사진"
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div
-                        className={`flex h-24 w-24 items-center justify-center rounded-3xl border-4 text-4xl shadow-inner transition-colors ${avatarMain.bg} ${avatarMain.border}`}
-                      >
-                        {avatarMain.emoji}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void applyLatestDogPhoto()}
-                  disabled={dogPhotoBusy}
-                  className="mb-2 flex min-h-12 w-full max-w-[19rem] items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-3 text-sm font-black text-white shadow-[0_10px_24px_rgba(249,115,22,0.35)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
-                >
-                  {dogPhotoBusy ? '강아지 사진 불러오는 중…' : '내 강아지 사진으로 설정'}
-                </button>
-                <p className="mb-3 text-center text-[11px] font-bold text-orange-600">
-                  우리 댕댕이 등록 사진을 바로 프로필에 적용해요
-                </p>
-
-                <div className="flex gap-3 justify-center rounded-2xl bg-slate-50 p-2.5">
-                  {PROFILE_THEME_AVATARS.map((theme) => (
-                    <button
-                      key={theme.id}
-                      type="button"
-                      onClick={() => selectThemeAvatar(theme.id)}
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl transition-all ${theme.bg} ${
-                        activeFace.avatarDraft === 'theme' && activeFace.avatarTheme === theme.id
-                          ? 'scale-110 ring-2 ring-brand ring-offset-2'
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
-                      aria-label={`캐릭터 ${theme.id}`}
-                    >
-                      {theme.emoji}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-3 px-2 text-center text-[11px] font-bold text-slate-400">
-                  사람 사진 업로드는 빼고, 내 강아지 사진 또는 캐릭터만 사용해요.
-                </p>
-              </div>
-            </div>
-
-            {/* 강아지 정보 (프로필과 함께 저장) */}
+            {/* 강아지 정보 (사진+정보) */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <div className="mb-3">
                 <h3 className="text-sm font-extrabold text-slate-800">우리 댕댕이 정보</h3>
                 <p className="mt-1 text-[11px] font-semibold text-slate-500">
-                  이 페이지에서 프로필과 강아지 정보를 같이 저장해요.
+                  강아지 사진·정보와 보호자 연락처·위치를 한 번에 저장해요.
                 </p>
+              </div>
+              <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleDogImageChange} />
+              <div className="mb-4 flex justify-center">
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      fileInputRef.current?.click();
+                    }
+                  }}
+                  className="relative flex h-32 w-32 cursor-pointer items-center justify-center overflow-hidden rounded-[2rem] border-4 border-dashed border-orange-200 bg-orange-50"
+                >
+                  {dogPreviewUrl ? (
+                    <>
+                      <ImageWithFallback
+                        src={dogPreviewUrl}
+                        fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
+                        alt="강아지 사진 미리보기"
+                        className="h-full w-full object-cover"
+                      />
+                      <button
+                        type="button"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          clearDogImage();
+                        }}
+                        className="absolute right-1.5 top-1.5 rounded-full bg-black/55 p-1 text-white"
+                        aria-label="사진 삭제"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center text-orange-500">
+                      <Camera className="mx-auto h-6 w-6" aria-hidden />
+                      <p className="mt-1 text-[11px] font-extrabold">사진 선택</p>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-3">
                 <input
@@ -585,48 +513,6 @@ export function ProfileEditPage() {
               </div>
             </div>
 
-            {/* 닉네임 수정 */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <label className="flex justify-between text-sm font-extrabold text-slate-800 mb-2">
-                닉네임
-                <span className="text-xs text-slate-400 font-medium">{activeFace.nickname.length}/10자</span>
-              </label>
-              <input
-                type="text"
-                value={activeFace.nickname}
-                maxLength={10}
-                onChange={(e) => setGeneral((p) => ({ ...p, nickname: e.target.value }))}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-bold text-slate-800 transition-all focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
-              />
-            </div>
-
-            {/* 동네·위치 */}
-            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-extrabold text-slate-800">동네·위치</label>
-                {locationVerified ? (
-                  <span className="flex items-center gap-1 rounded-lg border border-brand/20 bg-brand/10 px-2 py-1 text-[11px] font-extrabold text-brand">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 위치 맞춤
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-bold text-slate-400">지도·GPS는 아래에서</span>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500 font-medium mb-3">
-                내댕댕과 같아요. 위치 기반을 켜면 우리 동네·내 주변 글, 끄면 전국이에요.
-              </p>
-              <button
-                type="button"
-                title={fullLabel}
-                onClick={() => setLocationOpen(true)}
-                className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-left transition-colors hover:bg-slate-100"
-              >
-                <MapPin className={`h-5 w-5 shrink-0 ${locationBasedEnabled ? 'text-brand' : 'text-slate-400'}`} />
-                <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">{fullLabel}</span>
-                <ChevronDown className="w-5 h-5 shrink-0 text-slate-400" />
-              </button>
-            </div>
-
             {/* 전화번호 */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <label className="block text-sm font-extrabold text-slate-800 mb-2">전화번호</label>
@@ -643,6 +529,30 @@ export function ProfileEditPage() {
               <p className="mt-2 text-[11px] font-medium leading-relaxed text-slate-500">
                 카카오 로그인만으로는 전화번호가 넘어오지 않을 수 있어요. 연락 가능한 번호를 직접 입력한 뒤 저장해 주세요.
               </p>
+            </div>
+
+            {/* 현재 위치 */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-extrabold text-slate-800">현재 위치</label>
+                {locationVerified ? (
+                  <span className="flex items-center gap-1 rounded-lg border border-brand/20 bg-brand/10 px-2 py-1 text-[11px] font-extrabold text-brand">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> 위치 맞춤
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-slate-400">지도·GPS는 아래에서</span>
+                )}
+              </div>
+              <button
+                type="button"
+                title={fullLabel}
+                onClick={() => setLocationOpen(true)}
+                className="flex w-full items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-left transition-colors hover:bg-slate-100"
+              >
+                <MapPin className={`h-5 w-5 shrink-0 ${locationBasedEnabled ? 'text-brand' : 'text-slate-400'}`} />
+                <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">{fullLabel}</span>
+                <ChevronDown className="w-5 h-5 shrink-0 text-slate-400" />
+              </button>
             </div>
 
             {/* 돌봄회원 프로필은 별도 페이지에서 설정 */} 

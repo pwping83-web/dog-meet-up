@@ -202,6 +202,28 @@ export function removeUserMeetupById(id: string): boolean {
   return true;
 }
 
+/** 특정 사용자가 올린 글을 로컬 스토어/DB 캐시에서 즉시 제거 */
+export function removeUserMeetupsByUserId(userId: string): number {
+  const uid = userId.trim();
+  if (!uid) return 0;
+  const prevUser = readUserMeetups();
+  const nextUser = prevUser.filter((m) => (m.userId ?? '').trim() !== uid);
+  let removed = prevUser.length - nextUser.length;
+  if (removed > 0) {
+    persistUserMeetups(nextUser);
+  }
+
+  const prevDb = readDbMeetupsCache();
+  const nextDb = prevDb.filter((m) => (m.userId ?? '').trim() !== uid);
+  const removedDb = prevDb.length - nextDb.length;
+  if (removedDb > 0) {
+    writeDbMeetupsCache(nextDb);
+    window.dispatchEvent(new CustomEvent('daeng-user-meetups-changed'));
+  }
+  removed += removedDb;
+  return removed;
+}
+
 /** 사용자 글 일부 수정 */
 export function updateUserMeetupInStore(id: string, patch: Partial<Meetup>): boolean {
   const prev = readUserMeetups();

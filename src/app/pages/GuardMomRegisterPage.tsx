@@ -27,6 +27,7 @@ import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
 import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 import { broadcastCertifiedCareDataChanged } from '../../lib/certifiedCareSync';
+import { removeUserMeetupsByUserId, syncMeetupsFromDb } from '../../lib/userMeetupsStore';
 import { toast } from 'sonner';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
@@ -337,6 +338,27 @@ export function GuardMomRegisterPage() {
         throw new Error(friendlyCertifiedGuardMomsError(delErr.message));
       }
 
+      // 안전 확인: 삭제 직후에도 행이 남아 있으면 실패로 간주
+      const { data: still } = await supabase
+        .from('certified_guard_moms')
+        .select('user_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (still?.user_id) {
+        throw new Error('취소가 완료되지 않았어요. 잠시 후 다시 시도해 주세요.');
+      }
+
+      // 취소 시 고객이 올린 글도 즉시 정리
+      const { error: meetupDeleteErr } = await supabase
+        .from('meetups')
+        .delete()
+        .eq('user_id', user.id);
+      if (meetupDeleteErr) {
+        throw new Error(meetupDeleteErr.message || '작성 글 삭제에 실패했어요.');
+      }
+      removeUserMeetupsByUserId(user.id);
+      await syncMeetupsFromDb();
+
       // 취소 시 돌봄 흐름 완전 초기화
       writeCareProviderTrack('unset');
       clearSitterIntro(user.id);
@@ -355,7 +377,7 @@ export function GuardMomRegisterPage() {
 
       broadcastCertifiedCareDataChanged();
       toast.success('신청이 취소되었어요.', {
-        description: '인증 보호맘/댕집사 상태를 초기화했어요.',
+        description: '인증 상태와 작성 글을 모두 초기화했어요.',
         position: 'bottom-center',
       });
     } catch (e) {
@@ -675,7 +697,7 @@ export function GuardMomRegisterPage() {
                       onClick={() => void handleCancelApplication()}
                       className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
                     >
-                      {cancelBusy ? '취소 처리 중…' : '인증보호맘 취소하기'}
+                      {cancelBusy ? '취소 처리 중…' : '신청 취소하기'}
                     </button>
                   )}
                 </div>
@@ -814,7 +836,7 @@ export function GuardMomRegisterPage() {
                       onClick={() => void handleCancelApplication()}
                       className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
                     >
-                      {cancelBusy ? '취소 처리 중…' : '인증보호맘 취소하기'}
+                      {cancelBusy ? '취소 처리 중…' : '신청 취소하기'}
                     </button>
                   )}
                 </div>

@@ -84,6 +84,7 @@ export function MyPage() {
     certified: boolean;
     introPhotoUrls: string[];
   } | null>(null);
+  const [certifiedCareTick, setCertifiedCareTick] = useState(0);
 
   /** 프로필 저장 후 auth.updateUser 시 user.updated_at이 바뀌므로 여기서 profiles를 다시 읽음 */
   useEffect(() => {
@@ -189,6 +190,12 @@ export function MyPage() {
 
   // 인증 보호맘·댕집사 미리보기 로드
   useEffect(() => {
+    const onCareChanged = () => setCertifiedCareTick((t) => t + 1);
+    window.addEventListener('daeng-certified-guard-moms-changed', onCareChanged);
+    return () => window.removeEventListener('daeng-certified-guard-moms-changed', onCareChanged);
+  }, []);
+
+  useEffect(() => {
     if (!user?.id) {
       setCarePreview(null);
       return;
@@ -223,7 +230,7 @@ export function MyPage() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, location.key]);
+  }, [user?.id, location.key, certifiedCareTick]);
 
   // MBTI 로드
   useEffect(() => {
