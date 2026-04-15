@@ -107,16 +107,6 @@ Deno.serve(async (req) => {
     return jsonResponse({ ok: false, error: "Supabase 시크릿 구성이 부족합니다." }, 500);
   }
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const clientApikey = req.headers.get("apikey")?.trim() || supabaseAnon;
-  const authClient = createClient(supabaseUrl, supabaseAnon, {
-    global: { headers: { Authorization: authHeader, apikey: clientApikey } },
-  });
-  const { data: authData, error: authErr } = await authClient.auth.getUser();
-  if (authErr || !authData.user) {
-    return jsonResponse({ ok: false, error: "로그인이 필요합니다." }, 401);
-  }
-
   let phoneRaw = "";
   try {
     const body = (await req.json()) as { phone?: unknown };
