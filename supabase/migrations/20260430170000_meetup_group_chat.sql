@@ -72,18 +72,12 @@ CREATE POLICY "meetup_chat_rooms_insert_auth"
   TO authenticated
   WITH CHECK (EXISTS (SELECT 1 FROM public.meetups m WHERE m.id = meetup_id));
 
--- 멤버: 본인만 추가, 해당 방 존재
+-- 멤버: SELECT는 본인 행만(같은 테이블 EXISTS는 RLS 무한 재귀 42P17 유발)
 DROP POLICY IF EXISTS "meetup_chat_members_select_same_room" ON public.meetup_chat_members;
 CREATE POLICY "meetup_chat_members_select_same_room"
   ON public.meetup_chat_members FOR SELECT
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.meetup_chat_members self
-      WHERE self.room_id = meetup_chat_members.room_id
-        AND self.user_id = (SELECT auth.uid())
-    )
-  );
+  USING (user_id = (SELECT auth.uid()));
 
 DROP POLICY IF EXISTS "meetup_chat_members_insert_self" ON public.meetup_chat_members;
 CREATE POLICY "meetup_chat_members_insert_self"
