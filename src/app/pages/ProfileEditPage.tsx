@@ -302,6 +302,10 @@ export function ProfileEditPage() {
     });
   };
 
+  const openAvatarPicker = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
   const selectThemeAvatar = (themeId: string) => {
     pendingFileRef.current = null;
     setActiveFace((prev) => {
@@ -401,21 +405,22 @@ export function ProfileEditPage() {
             {/* 프로필 사진 & 테마 선택 */}
             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <h3 className="text-sm font-extrabold text-slate-800 mb-4">프로필 이미지</h3>
-              {/*
-                모바일(iOS·인앱브라우저): `sr-only` 1px 파일 입력 + label 연결은 파일 피커가 안 뜨는 경우가 많음.
-                프리뷰 위에 실제 크기의 투명 input을 올려 터치 타깃을 확보함.
-              */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.heic,.heif"
+                className="hidden"
+                aria-label="프로필 사진 올리기"
+                onChange={handleAvatarFile}
+              />
               <div className="flex flex-col items-center">
-                <div className="relative mx-auto mb-5 flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.heic,.heif"
-                    className="absolute inset-0 z-20 block h-full w-full cursor-pointer opacity-0"
-                    aria-label="프로필 사진 올리기"
-                    onChange={handleAvatarFile}
-                  />
-                  <div className="pointer-events-none relative z-10">
+                <button
+                  type="button"
+                  onClick={openAvatarPicker}
+                  className="relative mx-auto mb-2 flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center rounded-3xl focus:outline-none focus:ring-4 focus:ring-brand/20"
+                  aria-label="프로필 사진 선택"
+                >
+                  <div className="relative z-10">
                     {avatarMain.kind === 'image' ? (
                       <div className="relative h-24 w-24 overflow-hidden rounded-3xl border-4 border-orange-200 shadow-inner">
                         <ImageWithFallback
@@ -436,7 +441,14 @@ export function ProfileEditPage() {
                       <Camera className="h-4 w-4" aria-hidden />
                     </div>
                   </div>
-                </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={openAvatarPicker}
+                  className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-extrabold text-slate-700 active:scale-[0.98]"
+                >
+                  사진 선택
+                </button>
 
                 <div className="flex gap-3 justify-center rounded-2xl bg-slate-50 p-2.5">
                   {PROFILE_THEME_AVATARS.map((theme) => (
