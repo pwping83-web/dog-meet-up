@@ -586,7 +586,7 @@ export function GuardMomRegisterPage() {
                   </label>
 
                   {saveErr && <p className="mt-3 text-xs font-semibold text-red-600">{saveErr}</p>}
-                  {saveOk && <p className="mt-3 text-xs font-semibold text-orange-600">저장했어요.</p>}
+                  {saveOk && <p className="mt-3 text-xs font-semibold text-orange-600">신청서를 보냈어요.</p>}
 
                   <button
                     type="button"
