@@ -67,6 +67,20 @@ function parseKind(raw: string | null): WriteKind | null {
   return null;
 }
 
+/** 돌봄 맡기기 AI 문구가 '맡아주는 사람' 관점으로 나올 때 요청형으로 보정 */
+function normalizeDolbomOwnerTone(input: string): string {
+  return input
+    .replace(/돌봄 서비스를 제공하고 싶습니다/g, '돌봄 맡길 분을 찾고 있습니다')
+    .replace(/돌봄 서비스를 제공해드릴게요/g, '돌봄을 맡길 수 있으면 좋겠습니다')
+    .replace(/도와드릴게요/g, '도움 받을 수 있으면 좋겠습니다')
+    .replace(/최선을 다하겠습니다/g, '잘 부탁드립니다')
+    .replace(/맡아드릴/g, '맡아주실')
+    .replace(/돌봐드릴/g, '돌봐주실')
+    .replace(/제공하겠습니다/g, '부탁드리고 싶습니다')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -878,11 +892,19 @@ export function CreateRequestPage() {
                   return;
                 }
                 if (r.fields?.title || r.fields?.description) {
+                  const titleFromAi = r.fields?.title?.trim() || '';
+                  const descFromAi = r.fields?.description?.trim() || '';
                   setFormData((prev) => ({
                     ...prev,
-                    title: r.fields?.title?.trim() || prev.title,
+                    title:
+                      kind === 'dolbom'
+                        ? normalizeDolbomOwnerTone(titleFromAi) || prev.title
+                        : titleFromAi || prev.title,
                     category: r.fields?.category?.trim() || prev.category,
-                    description: r.fields?.description?.trim() || prev.description,
+                    description:
+                      kind === 'dolbom'
+                        ? normalizeDolbomOwnerTone(descFromAi) || prev.description
+                        : descFromAi || prev.description,
                   }));
                 } else {
                   alert('제목·본문을 파싱하지 못했어요. 한 번 더 시도하거나 직접 입력해 주세요.');

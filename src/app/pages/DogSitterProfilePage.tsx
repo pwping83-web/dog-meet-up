@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { dogSitterFromCertifiedCareRow } from '../../lib/dogSitterFromCertifiedCareRow';
 import { isCertifiedGuardMomPublicRow } from '../../lib/certifiedGuardCareVisibility';
 import type { DogSitter } from '../types';
+import { AiDoumiButton } from '../components/AiDoumiButton';
 
 export function DogSitterProfilePage() {
   const { id } = useParams();
@@ -317,6 +318,29 @@ export function DogSitterProfilePage() {
                   <label className="block text-sm text-slate-700 mb-2" style={{ fontWeight: 800 }}>
                     💬 한마디 메시지 <span className="text-red-500">*</span>
                   </label>
+                  <div className="mb-2 flex justify-end">
+                    <AiDoumiButton
+                      task="chat_reply"
+                      payload={{
+                        peerName: dogSitter.name,
+                        transcript: `댕집사 ${dogSitter.name}에게 첫 방문 돌봄 문의를 보내려 해요. 날짜/시간만 바꿔도 되게 아주 짧은 문의 문구를 한국어로 작성해 주세요. 내용에는 인사, 우리 아이 성향 한 줄, 주의사항 한 줄, 답장 요청을 포함해 주세요.`,
+                      }}
+                      onDone={(r) => {
+                        if (!r.ok) {
+                          alert(r.error);
+                          return;
+                        }
+                        const nextMessage = r.text.trim() || '안녕하세요. 첫 방문 돌봄 문의드려요. 우리 아이는 낯가림이 조금 있고 산책은 30분 정도 좋아해요. 주의사항은 낯선 강아지와 마주치면 거리를 두는 점이에요. 가능하신 시간 알려주시면 감사해요.';
+                        setJoinData((prev) => ({
+                          estimatedCost: prev.estimatedCost.trim() || '내일 오전 10시, 우리 집 현관',
+                          estimatedDuration: prev.estimatedDuration.trim() || '반나절',
+                          message: nextMessage,
+                        }));
+                      }}
+                    >
+                      AI 간단 도우미
+                    </AiDoumiButton>
+                  </div>
                   <textarea
                     required
                     value={joinData.message}

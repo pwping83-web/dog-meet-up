@@ -17,6 +17,20 @@ function normalizeKoreanOnlyCommon(input: string): string {
     .trim();
 }
 
+/** 돌봄 맡기기 글은 '맡기는 사람' 관점(요청형)으로 보정 */
+function normalizeCareNeedOwnerTone(input: string): string {
+  return input
+    .replace(/돌봄 서비스를 제공하고 싶습니다/g, "돌봄 맡길 분을 찾고 있습니다")
+    .replace(/돌봄 서비스를 제공해드릴게요/g, "돌봄을 맡길 수 있으면 좋겠습니다")
+    .replace(/도와드릴게요/g, "도움 받을 수 있으면 좋겠습니다")
+    .replace(/최선을 다하겠습니다/g, "잘 부탁드립니다")
+    .replace(/맡아드릴/g, "맡아주실")
+    .replace(/돌봐드릴/g, "돌봐주실")
+    .replace(/제공하겠습니다/g, "부탁드리고 싶습니다")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -262,23 +276,36 @@ Deno.serve(async (req) => {
         const moija = "공원·장소 모임, 산책·놀이, 카페·체험, 훈련·사회화";
         const mannaja = "1:1 만남, 교배, 실종";
         const allowed = kind === "mannaja" ? mannaja : kind === "dolbom" ? "돌봄" : moija;
-        const sys =
+        const sysCommon =
           `너는 한국 반려견 커뮤니티 '댕댕마켓' 글 작성 도우미야. 반드시 JSON만 출력해. 키: title, category, description (문자열). category는 다음 중 정확히 하나: ${allowed}. ` +
           `말투는 친근한 존댓말. description은 1~3문장·문장 짧게(전체 약 200자 이내). 제목은 24자 이내.`;
+        const sysDolbomOwner =
+          "중요: '돌봄'은 반드시 맡기는 사람(보호자) 관점으로 써. " +
+          "문장에 '맡아주실 분 찾고 있어요/부탁드려요/가능하실까요' 같은 요청형을 사용하고, " +
+          "'제가 제공해요/도와드려요/맡아드려요' 같은 제공자 관점 표현은 절대 쓰지 마.";
+        const sys = kind === "dolbom" ? `${sysCommon} ${sysDolbomOwner}` : sysCommon;
         const user = `글 유형: ${kind}. 사용자 메모/키워드:\n${hints || "(비어 있음)"}\n` +
           (currentCategory ? `선호 주제(가능하면 맞출 것): ${currentCategory}\n` : "");
         const raw = await llmChat(sys, user, 480);
         const obj = extractJsonObject(raw);
         if (!obj?.title || !obj?.description) {
-          return jsonResponse({ ok: true, text: normalizeKoreanOnlyCommon(raw), fields: {} });
+          const plain = normalizeKoreanOnlyCommon(raw);
+          return jsonResponse({
+            ok: true,
+            text: kind === "dolbom" ? normalizeCareNeedOwnerTone(plain) : plain,
+            fields: {},
+          });
         }
+        const titleOut = normalizeKoreanOnlyCommon(String(obj.title)).slice(0, 32);
+        const categoryOut = normalizeKoreanOnlyCommon(String(obj.category ?? "")).slice(0, 80);
+        const descriptionOut = normalizeKoreanOnlyCommon(String(obj.description)).slice(0, 900);
         return jsonResponse({
           ok: true,
-          text: normalizeKoreanOnlyCommon(raw),
+          text: kind === "dolbom" ? normalizeCareNeedOwnerTone(normalizeKoreanOnlyCommon(raw)) : normalizeKoreanOnlyCommon(raw),
           fields: {
-            title: normalizeKoreanOnlyCommon(String(obj.title)).slice(0, 32),
-            category: normalizeKoreanOnlyCommon(String(obj.category ?? "")).slice(0, 80),
-            description: normalizeKoreanOnlyCommon(String(obj.description)).slice(0, 900),
+            title: kind === "dolbom" ? normalizeCareNeedOwnerTone(titleOut) : titleOut,
+            category: categoryOut,
+            description: kind === "dolbom" ? normalizeCareNeedOwnerTone(descriptionOut) : descriptionOut,
           },
         });
       }
