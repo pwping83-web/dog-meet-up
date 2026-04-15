@@ -567,36 +567,38 @@ export function DogSittersPage() {
 
       {topTab === 'certified' && (
         <div className="mx-auto max-w-screen-md px-4 py-4">
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {(
-              [
-                { id: 'need' as const, label: '맡기는 사람' },
-                { id: 'sitter' as const, label: '댕집사' },
-                { id: 'guard' as const, label: '인증 보호맘' },
-              ] as const
-            ).map(({ id, label }) => {
-              const isGuard = id === 'guard';
-              const active = careFilter === id;
-              const tabClass = active
-                ? isGuard
-                  ? 'border-transparent bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 text-white shadow-lg shadow-violet-300/40 ring-1 ring-white/30'
-                  : 'border-transparent bg-market-cta text-white shadow-market'
-                : isGuard
-                  ? 'border-2 border-violet-200/95 bg-gradient-to-br from-violet-50 to-fuchsia-50/90 text-violet-900 hover:border-fuchsia-300 hover:from-violet-100/90 hover:to-fuchsia-50'
-                  : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => syncCareToUrl(id)}
-                  className={`inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm transition-all max-sm:px-3 max-sm:text-[13px] ${tabClass}`}
-                  style={{ fontWeight: 700 }}
-                >
-                  {isGuard ? <BadgeCheck className="h-4 w-4 shrink-0 opacity-95" aria-hidden /> : null}
-                  {label}
-                </button>
-              );
-            })}
+          <div className="-mx-4 sticky top-0 z-30 mb-3 border-b border-slate-100 bg-slate-50/95 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-slate-50/85">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {(
+                [
+                  { id: 'need' as const, label: '맡기는 사람' },
+                  { id: 'sitter' as const, label: '댕집사' },
+                  { id: 'guard' as const, label: '인증 보호맘' },
+                ] as const
+              ).map(({ id, label }) => {
+                const isGuard = id === 'guard';
+                const active = careFilter === id;
+                const tabClass = active
+                  ? isGuard
+                    ? 'border-transparent bg-gradient-to-r from-violet-600 via-fuchsia-600 to-violet-600 text-white shadow-lg shadow-violet-300/40 ring-1 ring-white/30'
+                    : 'border-transparent bg-market-cta text-white shadow-market'
+                  : isGuard
+                    ? 'border-2 border-violet-200/95 bg-gradient-to-br from-violet-50 to-fuchsia-50/90 text-violet-900 hover:border-fuchsia-300 hover:from-violet-100/90 hover:to-fuchsia-50'
+                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50';
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => syncCareToUrl(id)}
+                    className={`inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm transition-all max-sm:px-3 max-sm:text-[13px] ${tabClass}`}
+                    style={{ fontWeight: 700 }}
+                  >
+                    {isGuard ? <BadgeCheck className="h-4 w-4 shrink-0 opacity-95" aria-hidden /> : null}
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {careFilter === 'need' ? (
