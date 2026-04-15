@@ -23,6 +23,7 @@ export const landingHeroDogImgChains = {
   ],
   /** 코기+소형 달리기 → 코기 쌍 → 산책(호수) → 단독 달리기 → 웰시 Unsplash 폴백 */
   choco: [
+    'https://images.unsplash.com/photo-1589965716319-4a041b58fa8a?auto=format&fit=crop&w=1200&q=80',
     MOCK_IMG_HERO_CORGI_TERRIER_DUO,
     LOCAL_WELSH_CORGI_SCENE.twoCorgisSmiling,
     MEETUP_LIST_COVER_PHOTOS.walkOutdoor,
