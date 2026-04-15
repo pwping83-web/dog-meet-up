@@ -160,15 +160,21 @@ export function ProfileEditPage() {
       });
     } else {
       const row = dogRows?.[0];
+      const profileAvatarParsed = parseProfileAvatarUrl(data?.avatar_url?.trim() ?? null);
+      const profileImageUrl =
+        profileAvatarParsed.kind === 'image' ? (data?.avatar_url?.trim() ?? null) : null;
+      const fallbackDogName = (data?.name?.trim() ?? '').slice(0, 20);
+      const nextDogPhoto = typeof row?.photo_url === 'string' ? row.photo_url : profileImageUrl;
       setDogDraft({
         id: row?.id ?? null,
-        name: typeof row?.name === 'string' ? row.name : '',
+        // dog_profiles가 아직 없으면 가입 시 저장한 이름/사진을 기본값으로 보여줘 2중 입력을 줄임
+        name: typeof row?.name === 'string' ? row.name : fallbackDogName,
         breed: typeof row?.breed === 'string' ? row.breed : '',
         age: typeof row?.age === 'number' && Number.isFinite(row.age) ? String(row.age) : '',
         gender: row?.gender === '여아' ? '여아' : '남아',
-        photoUrl: typeof row?.photo_url === 'string' ? row.photo_url : null,
+        photoUrl: nextDogPhoto,
       });
-      setDogPreviewUrl(typeof row?.photo_url === 'string' ? row.photo_url : null);
+      setDogPreviewUrl(nextDogPhoto);
       setDogImageFile(null);
     }
     setProfileLoading(false);

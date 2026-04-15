@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabase';
 import { formatKoreanMobileDigits, isSupabaseSmsPhoneAuth } from '../../lib/phoneAuth';
 import { imageContentTypeForDogPhotosUpload, safeImageExtForDogPhotos } from '../../lib/storageImageMime';
 import { SIGNUP_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
+import { setAuthReturnPath } from '../components/AuthReturnRedirect';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 
 /** 모바일에서 `input.click()` 대신 label 연결이 더 안정적 */
@@ -55,6 +56,8 @@ export function SignupPage() {
     }
     try {
       setLoading(true);
+      // 가입 플로우에서는 로그인 직후 프로필 수정 화면으로 유도
+      setAuthReturnPath('/profile/edit');
       await signInWithKakao();
     } catch (error) {
       console.error('Kakao signup error:', error);
@@ -201,7 +204,7 @@ export function SignupPage() {
         data: { nickname: name, name: name, full_name: name },
       });
       clearAvatarPick();
-      navigate('/explore');
+      navigate('/profile/edit', { replace: true });
     } finally {
       setProfileBusy(false);
     }
