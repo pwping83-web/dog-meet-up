@@ -1,13 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { MapPin, Shield, ChevronDown, Bell } from 'lucide-react';
+import { MapPin, ChevronDown, Bell } from 'lucide-react';
 import { useUserLocation } from '../../contexts/UserLocationContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { isAppAdmin } from '../../lib/appAdmin';
 import { LocationPickerModal } from './LocationPickerModal';
 
 export function Header() {
-  const { user } = useAuth();
   const { shortLabel, fullLabel, locationBasedEnabled } = useUserLocation();
   const [locationOpen, setLocationOpen] = useState(false);
 
@@ -56,16 +53,6 @@ export function Header() {
               <Bell className="h-5 w-5" aria-hidden />
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500" aria-hidden />
             </Link>
-
-            {user && isAppAdmin(user) && (
-              <Link
-                to="/admin"
-                className="shrink-0 rounded-full p-2 text-slate-400 transition-all hover:bg-orange-50 hover:text-brand"
-                aria-label="관리자"
-              >
-                <Shield className="h-5 w-5" />
-              </Link>
-            )}
           </div>
         </div>
       </div>
