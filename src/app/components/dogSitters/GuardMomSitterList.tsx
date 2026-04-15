@@ -72,50 +72,19 @@ export function GuardMomSitterList({
         )}
       {combinedRows.map((row) =>
         row.kind === 'sitter' ? (
-          <div key={`s-${row.sitter.id}`} className="relative">
-            <DogSitterCard dogSitter={row.sitter} />
-            <div className="pointer-events-none absolute right-4 top-4 hidden flex-col items-end gap-1 sm:flex" aria-hidden>
-              <div
-                className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
-                  row.distance < 2
-                    ? 'bg-orange-500 text-white'
-                    : row.distance < 5
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-slate-300 text-slate-700'
-                }`}
-                style={{ fontWeight: 800 }}
-              >
-                {formatDistance(row.distance)}
-              </div>
-              {row.distance < 2 && (
-                <span
-                  className="rounded-lg bg-orange-50 px-2 py-0.5 text-xs text-orange-600"
-                  style={{ fontWeight: 800 }}
-                >
-                  초근거리!
-                </span>
-              )}
-            </div>
-            <div className="mt-2 flex justify-end gap-1 sm:hidden" aria-hidden>
-              {row.distance < 2 && (
-                <span className="rounded-lg bg-orange-50 px-2 py-0.5 text-xs font-extrabold text-orange-600">
-                  초근거리!
-                </span>
-              )}
-              <div
-                className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
-                  row.distance < 2
-                    ? 'bg-orange-500 text-white'
-                    : row.distance < 5
-                      ? 'bg-orange-500 text-white'
-                      : 'bg-slate-300 text-slate-700'
-                }`}
-                style={{ fontWeight: 800 }}
-              >
-                {formatDistance(row.distance)}
-              </div>
-            </div>
-          </div>
+          <DogSitterCard
+            key={`s-${row.sitter.id}`}
+            dogSitter={row.sitter}
+            distanceLabel={formatDistance(row.distance)}
+            distanceBadgeClassName={
+              row.distance < 2
+                ? 'bg-orange-500 text-white'
+                : row.distance < 5
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-slate-300 text-slate-700'
+            }
+            showUltraNear={row.distance < 2}
+          />
         ) : (
           <div key={`g-${row.mom.id}`} className="relative">
             <Link

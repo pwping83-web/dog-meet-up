@@ -361,7 +361,10 @@ export function DogSittersPage() {
     const guardRows: CombinedRow[] = moms.map((mom) => ({
       kind: 'guard',
       mom,
-      distance: distForDistrict(mom.region_gu ?? ''),
+      distance: distForDistrict(
+        [String(mom.region_si ?? '').trim(), String(mom.region_gu ?? '').trim()].filter(Boolean).join(' ') ||
+          String(mom.region_gu ?? '').trim(),
+      ),
     }));
 
     const rows = [...sitterRows, ...guardRows];

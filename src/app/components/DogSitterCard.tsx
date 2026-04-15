@@ -7,9 +7,17 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface DogSitterCardProps {
   dogSitter: DogSitter;
+  distanceLabel?: string;
+  distanceBadgeClassName?: string;
+  showUltraNear?: boolean;
 }
 
-export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
+export function DogSitterCard({
+  dogSitter,
+  distanceLabel,
+  distanceBadgeClassName,
+  showUltraNear,
+}: DogSitterCardProps) {
   const profilePhoto = resolveDogSitterPortraitUrl(dogSitter);
 
   return (
@@ -30,14 +38,32 @@ export function DogSitterCard({ dogSitter }: DogSitterCardProps) {
         </div>
         
         <div className="flex-1 min-w-0 pt-0.5">
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-            <h3 className="text-slate-800 break-words text-base group-hover:text-orange-600 transition-colors" style={{ fontWeight: 800 }}>
-              {dogSitter.name}
-            </h3>
-            <span className="text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md flex items-center gap-0.5 whitespace-nowrap" style={{ fontWeight: 700 }}>
-              <ShieldCheck className="w-3 h-3" />
-              경력 {dogSitter.experience}
-            </span>
+          <div className="mb-1.5 flex flex-wrap items-start justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <h3 className="break-words text-base text-slate-800 transition-colors group-hover:text-orange-600" style={{ fontWeight: 800 }}>
+                {dogSitter.name}
+              </h3>
+              <span className="flex items-center gap-0.5 whitespace-nowrap rounded-md bg-orange-50 px-1.5 py-0.5 text-[10px] text-orange-600" style={{ fontWeight: 700 }}>
+                <ShieldCheck className="h-3 w-3" />
+                경력 {dogSitter.experience}
+              </span>
+            </div>
+            {distanceLabel ? (
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <span
+                  className={`rounded-xl px-2.5 py-1 text-[11px] font-extrabold shadow-sm ${
+                    distanceBadgeClassName ?? 'bg-slate-300 text-slate-700'
+                  }`}
+                >
+                  {distanceLabel}
+                </span>
+                {showUltraNear ? (
+                  <span className="rounded-lg bg-orange-50 px-2 py-0.5 text-[10px] font-extrabold text-orange-600">
+                    초근거리!
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           
           <div className="flex items-center gap-3 text-sm">
