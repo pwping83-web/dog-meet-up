@@ -35,6 +35,7 @@ export function MyPage() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [profileAvatarUrl, setProfileAvatarUrl] = useState<string | null>(null);
   const [profileNameFromProfile, setProfileNameFromProfile] = useState<string | null>(null);
+  const [dogNameFromProfile, setDogNameFromProfile] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState('');
   /** 인증 보호맘·댕집사 프로필 */
   const [carePreview, setCarePreview] = useState<{
@@ -52,19 +53,27 @@ export function MyPage() {
     if (!user?.id) {
       setProfileAvatarUrl(null);
       setProfileNameFromProfile(null);
+      setDogNameFromProfile(null);
       setProfilePhone('');
       return;
     }
     let cancelled = false;
     void (async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('avatar_url, name, phone')
-        .eq('id', user.id)
-        .maybeSingle();
+      const [profileRes, dogRes] = await Promise.all([
+        supabase.from('profiles').select('avatar_url, name, phone').eq('id', user.id).maybeSingle(),
+        supabase
+          .from('dog_profiles')
+          .select('name')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1),
+      ]);
+      const data = profileRes.data;
+      const dogName = dogRes.data?.[0]?.name;
       if (!cancelled) {
         setProfileAvatarUrl(data?.avatar_url?.trim() ?? null);
         setProfileNameFromProfile(data?.name?.trim() ?? null);
+        setDogNameFromProfile(typeof dogName === 'string' ? dogName.trim() : null);
         if (data?.phone?.trim()) {
           const d = data.phone.replace(/\D/g, '').slice(0, 11);
           const fmt = d.length <= 3 ? d : d.length <= 7 ? `${d.slice(0,3)}-${d.slice(3)}` : `${d.slice(0,3)}-${d.slice(3,7)}-${d.slice(7)}`;
@@ -152,7 +161,7 @@ export function MyPage() {
   };
 
   const profileName = user
-    ? (profileNameFromProfile?.trim() || displayNameFromUser(user))
+    ? (dogNameFromProfile?.trim() || profileNameFromProfile?.trim() || displayNameFromUser(user))
     : '로그인 후 이용';
   const headerAvatar = profileAvatarVisual(profileAvatarUrl);
 
