@@ -31,8 +31,9 @@
     "supabase:link": "npx --yes supabase@latest link --project-ref silbyvmcuymjewurkrfn"
   },
   "dependencies": {
-    "@capacitor/android": "^7.6.1",
-    "@capacitor/core": "^7.6.1",
+    "@capacitor/android": "7.6.1",
+    "@capacitor/core": "7.6.1",
+    "@capacitor/ios": "7.6.1",
     "@emailjs/browser": "^4.4.1",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
@@ -91,7 +92,7 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.6.1",
+    "@capacitor/cli": "7.6.1",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "playwright": "^1.51.0",
