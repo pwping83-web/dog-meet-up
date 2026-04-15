@@ -594,7 +594,7 @@ export function GuardMomRegisterPage() {
                     onClick={() => void handleSave()}
                     className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white disabled:opacity-60"
                   >
-                    {saving ? '저장 중…' : '신청서 저장'}
+                    {saving ? '보내는 중…' : '신청서 보내기'}
                   </button>
                 </div>
               </>
