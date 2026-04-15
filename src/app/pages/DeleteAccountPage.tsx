@@ -33,7 +33,7 @@ export function DeleteAccountPage() {
       {/* 헤더 */}
       <header className="sticky top-0 bg-white border-b z-50">
         <div className="px-4 h-14 flex items-center">
-          <button onClick={() => navigate('/explore')} className="p-2 -ml-2">
+          <button onClick={() => navigate('/my')} className="p-2 -ml-2">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -165,7 +165,7 @@ export function DeleteAccountPage() {
           <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => navigate('/explore')}
+              onClick={() => navigate('/my')}
               className="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-lg font-bold hover:bg-gray-200 transition-colors"
             >
               취소

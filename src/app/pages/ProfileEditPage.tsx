@@ -297,7 +297,7 @@ export function ProfileEditPage() {
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
           <button
             type="button"
-            onClick={() => navigate('/explore')}
+            onClick={() => navigate('/my')}
             className="-ml-2 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
             aria-label="뒤로"
           >

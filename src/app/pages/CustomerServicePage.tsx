@@ -117,7 +117,7 @@ export function CustomerServicePage() {
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center px-0">
           <button
-            onClick={() => navigate('/explore')}
+            onClick={() => navigate('/my')}
             className="-ml-2 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
             type="button"
           >

@@ -17,6 +17,7 @@ import {
   PlusCircle,
   PawPrint,
   BadgeCheck,
+  PencilLine,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
@@ -300,26 +301,64 @@ export function MyPage() {
         {/* 프로필 섹션 · 동네 = UserLocation (헤더와 동일 저장소) */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner">
-              {headerAvatar.kind === 'image' ? (
-                <ImageWithFallback
-                  src={headerAvatar.src}
-                  fallbackSrc={virtualDogPhotoForSeed(`my-page-avatar-${user?.id ?? 'x'}`)}
-                  alt={profileAvatarAlt(profileAvatarUrl, profileName)}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span
-                  className={`flex h-full w-full items-center justify-center text-2xl ${headerAvatar.bg} ${headerAvatar.border} border-2`}
-                  aria-hidden
-                >
-                  {headerAvatar.emoji}
+            {user?.id ? (
+              <Link
+                to="/profile/edit"
+                aria-label="프로필 사진·이름 수정"
+                className="group relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner ring-brand/0 transition-[box-shadow,transform] active:scale-[0.98] hover:ring-2 hover:ring-brand/30"
+              >
+                {headerAvatar.kind === 'image' ? (
+                  <ImageWithFallback
+                    src={headerAvatar.src}
+                    fallbackSrc={virtualDogPhotoForSeed(`my-page-avatar-${user?.id ?? 'x'}`)}
+                    alt={profileAvatarAlt(profileAvatarUrl, profileName)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className={`flex h-full w-full items-center justify-center text-2xl ${headerAvatar.bg} ${headerAvatar.border} border-2`}
+                    aria-hidden
+                  >
+                    {headerAvatar.emoji}
+                  </span>
+                )}
+                <span className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/45 via-transparent to-transparent pb-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <PencilLine className="h-3.5 w-3.5 text-white drop-shadow" aria-hidden />
                 </span>
-              )}
-            </div>
+              </Link>
+            ) : (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner">
+                {headerAvatar.kind === 'image' ? (
+                  <ImageWithFallback
+                    src={headerAvatar.src}
+                    fallbackSrc={virtualDogPhotoForSeed(`my-page-avatar-${user?.id ?? 'x'}`)}
+                    alt={profileAvatarAlt(profileAvatarUrl, profileName)}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span
+                    className={`flex h-full w-full items-center justify-center text-2xl ${headerAvatar.bg} ${headerAvatar.border} border-2`}
+                    aria-hidden
+                  >
+                    {headerAvatar.emoji}
+                  </span>
+                )}
+              </div>
+            )}
             <div className="flex-1 min-w-0 space-y-3">
               <div>
-                <h2 className="font-extrabold text-xl text-slate-800 mb-1 truncate">{profileName}</h2>
+                <div className="mb-1 flex items-center gap-2">
+                  <h2 className="min-w-0 flex-1 truncate font-extrabold text-xl text-slate-800">{profileName}</h2>
+                  {user?.id ? (
+                    <Link
+                      to="/profile/edit"
+                      className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-extrabold text-slate-700 shadow-sm transition-colors hover:border-brand/35 hover:bg-brand-soft hover:text-brand"
+                    >
+                      <PencilLine className="h-3.5 w-3.5" aria-hidden />
+                      수정
+                    </Link>
+                  ) : null}
+                </div>
                 <button
                   type="button"
                   title={fullLabel}

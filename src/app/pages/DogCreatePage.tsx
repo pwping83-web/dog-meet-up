@@ -332,7 +332,7 @@ export function DogCreatePage() {
 
       clearDraft();
       alert('🐶 우리 댕댕이가 성공적으로 등록되었습니다!');
-      navigate('/explore');
+      navigate('/my');
     } catch (error: unknown) {
       const msg =
         error instanceof Error
@@ -352,7 +352,7 @@ export function DogCreatePage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="sticky top-0 z-50 flex h-16 items-center border-b border-orange-50 bg-white px-4">
-        <button type="button" onClick={() => navigate('/explore')} className="-ml-2 p-2 text-slate-400">
+        <button type="button" onClick={() => navigate('/my')} className="-ml-2 p-2 text-slate-400">
           <ChevronLeft className="w-6 h-6" />
         </button>
         <h1 className="mr-8 flex-1 text-center font-black text-slate-800">우리 댕댕이 등록하기 🐶</h1>

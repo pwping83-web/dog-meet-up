@@ -523,7 +523,7 @@ export function CreateRequestPage() {
           <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between px-4">
             <button
               type="button"
-              onClick={() => navigate('/explore')}
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/my'))}
               className="-ml-2 rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-100"
               aria-label="닫기"
             >

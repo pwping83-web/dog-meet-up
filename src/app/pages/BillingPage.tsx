@@ -156,9 +156,9 @@ export function BillingPage() {
       <header className="sticky top-0 z-40 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-3">
           <Link
-            to="/explore"
+            to="/my"
             className="rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
-            aria-label="홈으로"
+            aria-label="내 댕댕으로"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>

@@ -99,7 +99,7 @@ export function MemberProfilePage() {
         <div className="mx-auto flex h-14 max-w-screen-md items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/explore'))}
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/my'))}
             className="rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-100"
             aria-label="뒤로"
           >
