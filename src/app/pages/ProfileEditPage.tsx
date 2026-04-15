@@ -40,6 +40,15 @@ type ProfileModeFace = {
   localPreviewUrl: string | null;
 };
 
+type DogProfileDraft = {
+  id: string | null;
+  name: string;
+  breed: string;
+  age: string;
+  gender: '남아' | '여아';
+  photoUrl: string | null;
+};
+
 function emptyFace(): ProfileModeFace {
   return {
     nickname: '',
@@ -86,11 +95,27 @@ export function ProfileEditPage() {
   const [dogPhotoBusy, setDogPhotoBusy] = useState(false);
   const [phone, setPhone] = useState('');
   const [general, setGeneral] = useState<ProfileModeFace>(() => emptyFace());
+  const [dogDraft, setDogDraft] = useState<DogProfileDraft>({
+    id: null,
+    name: '',
+    breed: '',
+    age: '',
+    gender: '남아',
+    photoUrl: null,
+  });
 
   const loadProfile = useCallback(async () => {
     if (!user) {
       setGeneral(emptyFace());
       setPhone('');
+      setDogDraft({
+        id: null,
+        name: '',
+        breed: '',
+        age: '',
+        gender: '남아',
+        photoUrl: null,
+      });
       setProfileLoading(false);
       return;
     }
@@ -109,6 +134,34 @@ export function ProfileEditPage() {
 
     const g = faceFromProfileRow(data?.name, data?.avatar_url, fallback);
     setGeneral(g);
+
+    const { data: dogRows, error: dogErr } = await supabase
+      .from('dog_profiles')
+      .select('id,name,breed,age,gender,photo_url')
+      .eq('owner_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (dogErr) {
+      console.warn('[프로필 수정] dog_profiles 조회:', dogErr.message);
+      setDogDraft({
+        id: null,
+        name: '',
+        breed: '',
+        age: '',
+        gender: '남아',
+        photoUrl: null,
+      });
+    } else {
+      const row = dogRows?.[0];
+      setDogDraft({
+        id: row?.id ?? null,
+        name: typeof row?.name === 'string' ? row.name : '',
+        breed: typeof row?.breed === 'string' ? row.breed : '',
+        age: typeof row?.age === 'number' && Number.isFinite(row.age) ? String(row.age) : '',
+        gender: row?.gender === '여아' ? '여아' : '남아',
+        photoUrl: typeof row?.photo_url === 'string' ? row.photo_url : null,
+      });
+    }
     setProfileLoading(false);
   }, [user]);
 
@@ -210,6 +263,49 @@ export function ProfileEditPage() {
       if (metaErr) {
         console.warn('[프로필 수정] auth.user_metadata 동기화:', metaErr.message);
       }
+
+      const dogName = dogDraft.name.trim();
+      const dogBreed = dogDraft.breed.trim();
+      const dogAgeStr = dogDraft.age.trim();
+      const hasAnyDogField = Boolean(dogName || dogBreed || dogAgeStr || dogDraft.photoUrl || dogDraft.id);
+      if (hasAnyDogField) {
+        if (!dogName) {
+          alert('강아지 이름을 입력해 주세요.');
+          return;
+        }
+        const dogAgeNum = dogAgeStr ? Number.parseInt(dogAgeStr, 10) : null;
+        if (dogAgeStr && (!Number.isFinite(dogAgeNum as number) || (dogAgeNum as number) <= 0 || (dogAgeNum as number) > 35)) {
+          alert('강아지 나이는 1~35 사이 숫자로 입력해 주세요.');
+          return;
+        }
+        const payload = {
+          owner_id: user.id,
+          name: dogName.slice(0, 20),
+          breed: dogBreed ? dogBreed.slice(0, 30) : null,
+          age: dogAgeNum,
+          gender: dogDraft.gender,
+          photo_url: dogDraft.photoUrl ?? null,
+          city: userLoc.city?.trim() || null,
+          district: userLoc.district?.trim() || null,
+        };
+        const dogError = dogDraft.id
+          ? (
+              await supabase
+                .from('dog_profiles')
+                .update(payload)
+                .eq('id', dogDraft.id)
+            ).error
+          : (
+              await supabase
+                .from('dog_profiles')
+                .insert([payload])
+            ).error;
+        if (dogError) {
+          alert(dogError.message || '강아지 정보를 저장하지 못했어요.');
+          return;
+        }
+      }
+
       setGeneral((prev) => {
         const parsed = parseProfileAvatarUrl(avatar_url);
         const nextDraft: AvatarDraft =
@@ -244,7 +340,7 @@ export function ProfileEditPage() {
     try {
       const { data, error } = await supabase
         .from('dog_profiles')
-        .select('photo_url')
+        .select('id,name,breed,age,gender,photo_url')
         .eq('owner_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1);
@@ -262,6 +358,18 @@ export function ProfileEditPage() {
         avatarDraft: 'custom',
         committedAvatarUrl: photo,
         localPreviewUrl: null,
+      }));
+      setDogDraft((prev) => ({
+        ...prev,
+        photoUrl: photo,
+        id: data?.[0]?.id ?? prev.id,
+        name: (data?.[0]?.name as string | undefined) ?? prev.name,
+        breed: (data?.[0]?.breed as string | undefined) ?? prev.breed,
+        age:
+          typeof data?.[0]?.age === 'number' && Number.isFinite(data?.[0]?.age)
+            ? String(data?.[0]?.age)
+            : prev.age,
+        gender: data?.[0]?.gender === '여아' ? '여아' : prev.gender,
       }));
     } finally {
       setDogPhotoBusy(false);
@@ -421,6 +529,62 @@ export function ProfileEditPage() {
               </div>
             </div>
 
+            {/* 강아지 정보 (프로필과 함께 저장) */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+              <div className="mb-3">
+                <h3 className="text-sm font-extrabold text-slate-800">우리 댕댕이 정보</h3>
+                <p className="mt-1 text-[11px] font-semibold text-slate-500">
+                  이 페이지에서 프로필과 강아지 정보를 같이 저장해요.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-3">
+                <input
+                  type="text"
+                  value={dogDraft.name}
+                  maxLength={20}
+                  onChange={(e) => setDogDraft((prev) => ({ ...prev, name: e.target.value }))}
+                  placeholder="강아지 이름"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-bold text-slate-800 transition-all placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
+                />
+                <input
+                  type="text"
+                  value={dogDraft.breed}
+                  maxLength={30}
+                  onChange={(e) => setDogDraft((prev) => ({ ...prev, breed: e.target.value }))}
+                  placeholder="견종 (예: 말티즈)"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-bold text-slate-800 transition-all placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={35}
+                    value={dogDraft.age}
+                    onChange={(e) => setDogDraft((prev) => ({ ...prev, age: e.target.value.replace(/\D/g, '').slice(0, 2) }))}
+                    placeholder="나이"
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-bold text-slate-800 transition-all placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
+                  />
+                  <div className="grid grid-cols-2 rounded-2xl bg-slate-100 p-1">
+                    <button
+                      type="button"
+                      onClick={() => setDogDraft((prev) => ({ ...prev, gender: '남아' }))}
+                      className={`rounded-xl py-2 text-xs font-extrabold transition-all ${dogDraft.gender === '남아' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}
+                    >
+                      남아
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDogDraft((prev) => ({ ...prev, gender: '여아' }))}
+                      className={`rounded-xl py-2 text-xs font-extrabold transition-all ${dogDraft.gender === '여아' ? 'bg-white text-brand shadow-sm' : 'text-slate-500'}`}
+                    >
+                      여아
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* 닉네임 수정 */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <label className="flex justify-between text-sm font-extrabold text-slate-800 mb-2">
@@ -495,7 +659,7 @@ export function ProfileEditPage() {
             className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-market-cta text-lg font-bold text-white shadow-market transition-all hover:opacity-[0.92] active:scale-[0.98] disabled:opacity-50"
           >
             {saveBusy ? <Loader2 className="h-6 w-6 animate-spin" aria-hidden /> : null}
-            저장하기
+            프로필·강아지 함께 저장
           </button>
         </div>
       </div>
