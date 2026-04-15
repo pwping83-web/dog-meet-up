@@ -526,9 +526,6 @@ export function ProfileEditPage() {
                 disabled={!user}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-bold text-slate-800 transition-all placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15 disabled:opacity-60"
               />
-              <p className="mt-2 text-[11px] font-medium leading-relaxed text-slate-500">
-                카카오 로그인만으로는 전화번호가 넘어오지 않을 수 있어요. 연락 가능한 번호를 직접 입력한 뒤 저장해 주세요.
-              </p>
             </div>
 
             {/* 현재 위치 */}
@@ -569,7 +566,7 @@ export function ProfileEditPage() {
             className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-market-cta text-lg font-bold text-white shadow-market transition-all hover:opacity-[0.92] active:scale-[0.98] disabled:opacity-50"
           >
             {saveBusy ? <Loader2 className="h-6 w-6 animate-spin" aria-hidden /> : null}
-            프로필·강아지 함께 저장
+          프로필 저장
           </button>
         </div>
       </div>
