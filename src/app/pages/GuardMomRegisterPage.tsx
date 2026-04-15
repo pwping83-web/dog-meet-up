@@ -78,6 +78,15 @@ function writeSitterIntro(uid: string, text: string) {
   }
 }
 
+function clearSitterIntro(uid: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(`${SITTER_INTRO_STORAGE_PREFIX}${uid}`);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function GuardMomRegisterPage() {
   const [searchParams] = useSearchParams();
   const promoFree = usePromoFreeListings();
@@ -98,6 +107,7 @@ export function GuardMomRegisterPage() {
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const [listingBusy, setListingBusy] = useState(false);
   const [sitterIntro, setSitterIntro] = useState('');
   const [sitterSaving, setSitterSaving] = useState(false);
@@ -306,6 +316,52 @@ export function GuardMomRegisterPage() {
       setSaveErr((e as Error).message);
     } finally {
       setListingBusy(false);
+    }
+  };
+
+  const handleCancelApplication = async () => {
+    if (!user) return;
+    const ok = window.confirm(
+      '정말 인증 돌봄 신청을 취소할까요?\n취소하면 현재 신청/프로필이 즉시 삭제되고 상태가 초기화됩니다.',
+    );
+    if (!ok) return;
+
+    setSaveErr(null);
+    setCancelBusy(true);
+    try {
+      const { error: delErr } = await supabase
+        .from('certified_guard_moms')
+        .delete()
+        .eq('user_id', user.id);
+      if (delErr) {
+        throw new Error(friendlyCertifiedGuardMomsError(delErr.message));
+      }
+
+      // 취소 시 돌봄 흐름 완전 초기화
+      writeCareProviderTrack('unset');
+      clearSitterIntro(user.id);
+      setCareRole('guard_mom');
+      setRow(null);
+      setIntro('');
+      setRegionSi('');
+      setRegionGu('');
+      setFee(20000);
+      setOffersDaengPickup(false);
+      setIntroPhotoUrls([]);
+      setSitterIntro('');
+
+      // "인증 보호맘 · 댕집사" 카드 안내 상태도 기본으로 돌림
+      await supabase.from('profiles').update({ is_repairer: false }).eq('id', user.id);
+
+      broadcastCertifiedCareDataChanged();
+      toast.success('신청이 취소되었어요.', {
+        description: '인증 보호맘/댕집사 상태를 초기화했어요.',
+        position: 'bottom-center',
+      });
+    } catch (e) {
+      setSaveErr((e as Error).message);
+    } finally {
+      setCancelBusy(false);
     }
   };
 
@@ -612,6 +668,16 @@ export function GuardMomRegisterPage() {
                   >
                     {saving ? '보내는 중…' : '신청서 보내기'}
                   </button>
+                  {row && (
+                    <button
+                      type="button"
+                      disabled={cancelBusy || saving}
+                      onClick={() => void handleCancelApplication()}
+                      className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
+                    >
+                      {cancelBusy ? '취소 처리 중…' : '인증보호맘 취소하기'}
+                    </button>
+                  )}
                 </div>
               </>
             ) : (
@@ -741,6 +807,16 @@ export function GuardMomRegisterPage() {
                   >
                     {sitterSaving ? '보내는 중…' : '신청서 보내기'}
                   </button>
+                  {row && (
+                    <button
+                      type="button"
+                      disabled={cancelBusy || sitterSaving}
+                      onClick={() => void handleCancelApplication()}
+                      className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
+                    >
+                      {cancelBusy ? '취소 처리 중…' : '인증보호맘 취소하기'}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
