@@ -23,7 +23,7 @@ import { useUserLocation } from '../../contexts/UserLocationContext';
 import { readExtraCareRegions, type ExtraCareRegion } from '../../lib/extraCareRegions';
 import { filterCareNeedMeetupsForDistrictTab } from '../../lib/careNeedMeetupFilters';
 import type { User as AuthUser } from '@supabase/supabase-js';
-import { PartnerAdBanner } from '../components/PartnerAdBanner';
+import { ExploreVirtualTrainingAd } from '../components/ExploreVirtualTrainingAd';
 import { meetupCoverImageUrl, sanitizeDogProfileForPublicDisplay, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { ExploreDogCardImage } from '../components/ExploreDogCardImage';
 import { MOCK_IMG_HANGANG_HERO } from '../data/mockPromoImages';
@@ -635,7 +635,7 @@ export function LandingPage() {
         className="px-4 mt-10"
       >
         <motion.div variants={fadeUp} custom={0} className="mb-2 max-md:mb-2.5">
-          <PartnerAdBanner />
+          <ExploreVirtualTrainingAd variant="compact" />
         </motion.div>
 
         <motion.div variants={fadeUp} custom={1} className="mb-5 flex items-center justify-between max-md:mb-5 md:mb-4">
