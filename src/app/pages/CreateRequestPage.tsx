@@ -69,7 +69,9 @@ function parseKind(raw: string | null): WriteKind | null {
 
 /** 돌봄 맡기기 AI 문구가 '맡아주는 사람' 관점으로 나올 때 요청형으로 보정 */
 function normalizeDolbomOwnerTone(input: string): string {
-  return input
+  let out = input
+    .replace(/반려견\s*돌봄\s*서비스/g, '반려견 돌봄 맡기기')
+    .replace(/저는?\s*반려견\s*돌봄(?:\s*서비스)?를?\s*제공(?:하고\s*있습니다|하겠습니다|해요|합니다)/g, '저는 반려견 돌봄을 맡길 분을 찾고 있습니다')
     .replace(/돌봄 서비스를 제공하고 싶습니다/g, '돌봄 맡길 분을 찾고 있습니다')
     .replace(/돌봄 서비스를 제공해드릴게요/g, '돌봄을 맡길 수 있으면 좋겠습니다')
     .replace(/도와드릴게요/g, '도움 받을 수 있으면 좋겠습니다')
@@ -77,8 +79,21 @@ function normalizeDolbomOwnerTone(input: string): string {
     .replace(/맡아드릴/g, '맡아주실')
     .replace(/돌봐드릴/g, '돌봐주실')
     .replace(/제공하겠습니다/g, '부탁드리고 싶습니다')
+    .replace(/필요한\s*모든\s*것을\s*준비하겠습니다/g, '아이 성향과 준비물은 제가 미리 정리해 전달드리겠습니다')
+    .replace(/저에게\s*연락해\s*주세요/g, '가능하시면 채팅으로 연락 부탁드립니다')
     .replace(/[ \t]{2,}/g, ' ')
     .trim();
+
+  // 제공자 말투가 남아 있으면 해당 문장만 요청형으로 강제 치환
+  if (/(제공하|도와드|맡아드|돌봐드)/.test(out)) {
+    out = out
+      .replace(/[^.!?\n]*(제공하|도와드|맡아드|돌봐드)[^.!?\n]*[.!?]?/g, '돌봄 맡길 분을 찾고 있습니다. ')
+      .replace(/(돌봄 맡길 분을 찾고 있습니다\.\s*){2,}/g, '돌봄 맡길 분을 찾고 있습니다. ')
+      .replace(/[ \t]{2,}/g, ' ')
+      .trim();
+  }
+
+  return out;
 }
 
 /** AI 결과를 폼에 반영하기 직전에 한글/숫자/기본 문장부호만 허용 */
