@@ -232,15 +232,6 @@ export function ProfileEditPage() {
     });
   };
 
-  const selectMbtiType = (next: DogMbtiType) => {
-    setDogMbtiType(next);
-    try {
-      localStorage.setItem('dogMbtiType', next);
-    } catch {
-      /* ignore */
-    }
-  };
-
   const handleSave = async () => {
     if (!user) {
       alert('로그인 후 저장할 수 있어요.');
@@ -536,50 +527,58 @@ export function ProfileEditPage() {
 
             {/* 강아지 MBTI */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-800">강아지 MBTI</h3>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-500">
-                    여기서 바로 고르거나 테스트로 정확히 찾아요.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => navigate('/dog-mbti-test', { state: { mbtiReturn: '/profile/edit' } })}
-                  className="shrink-0 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-extrabold text-orange-700 active:scale-[0.98]"
-                >
-                  테스트하기
-                </button>
-              </div>
               {dogMbtiType ? (
-                <div className="mb-3 rounded-2xl border border-brand/20 bg-brand/10 px-3 py-2.5">
-                  <p className="text-xs font-extrabold text-slate-800">
-                    {dogMbtiResults[dogMbtiType].emoji} {dogMbtiResults[dogMbtiType].name}
-                  </p>
-                  <p className="mt-1 text-[11px] font-semibold text-slate-600">{dogMbtiResults[dogMbtiType].description}</p>
+                <div className="rounded-3xl border-2 border-orange-200 bg-gradient-to-br from-orange-50 to-yellow-50 p-6">
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="text-4xl">{dogMbtiResults[dogMbtiType].emoji}</div>
+                    <div>
+                      <h3 className="text-lg font-black text-slate-900">{dogMbtiResults[dogMbtiType].name}</h3>
+                      <p className="text-sm font-bold text-orange-600">{dogMbtiType.toUpperCase()} 타입</p>
+                    </div>
+                  </div>
+                  <p className="mb-3 text-sm leading-relaxed text-slate-600">{dogMbtiResults[dogMbtiType].description}</p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/dog-mbti-test', { state: { mbtiReturn: '/profile/edit' } })}
+                    className="text-sm font-bold text-orange-600 hover:underline"
+                  >
+                    다시 테스트하기 →
+                  </button>
                 </div>
               ) : (
-                <p className="mb-3 text-xs font-bold text-slate-500">아직 MBTI가 없어요. 아래에서 선택하거나 테스트해 주세요.</p>
-              )}
-              <div className="grid grid-cols-2 gap-2">
-                {(Object.keys(dogMbtiResults) as DogMbtiType[]).map((type) => (
+                <div className="rounded-3xl border-2 border-dashed border-orange-200 bg-orange-50 p-6 text-center">
+                  <div className="mb-3 text-4xl">🐕</div>
+                  <h3 className="mb-2 text-lg font-black text-slate-900">강아지 성격 테스트</h3>
+                  <p className="mb-4 text-sm text-slate-600">
+                    우리 강아지에게 맞는 친구를 찾으려면
+                    <br />
+                    먼저 성격 테스트를 해보세요!
+                  </p>
                   <button
-                    key={type}
                     type="button"
-                    onClick={() => selectMbtiType(type)}
-                    className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
-                      dogMbtiType === type
-                        ? 'border-brand bg-brand/10'
-                        : 'border-slate-200 bg-slate-50 hover:border-orange-200 hover:bg-orange-50'
-                    }`}
+                    onClick={() => navigate('/dog-mbti-test', { state: { mbtiReturn: '/profile/edit' } })}
+                    className="rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all active:scale-95"
                   >
-                    <p className="text-xs font-extrabold text-slate-800">
-                      {dogMbtiResults[type].emoji} {dogMbtiResults[type].name}
-                    </p>
-                    <p className="mt-1 text-[10px] font-semibold text-slate-500">{type.toUpperCase()}</p>
+                    성격 테스트 하러가기 🎯
                   </button>
-                ))}
-              </div>
+                </div>
+              )}
+              {dogMbtiType ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDogMbtiType(null);
+                    try {
+                      localStorage.removeItem('dogMbtiType');
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="mt-3 text-xs font-bold text-slate-500 underline underline-offset-2"
+                >
+                  MBTI 초기화
+                </button>
+              ) : null}
             </div>
 
             {/* 전화번호 */}
