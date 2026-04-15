@@ -55,6 +55,7 @@ export function GuardMomDetailPage() {
   const [payBusy, setPayBusy] = useState(false);
   const [chatBusy, setChatBusy] = useState(false);
   const [requestPhotoUrls, setRequestPhotoUrls] = useState<string[]>([]);
+  const [careDisplayName, setCareDisplayName] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -73,23 +74,33 @@ export function GuardMomDetailPage() {
       const mockRow = getMockCertifiedGuardMomById(id);
       if (data && !error) {
         const row = data as GuardMomRow;
+        const { data: p } = await supabase
+          .from('profiles')
+          .select('care_display_name')
+          .eq('id', row.user_id)
+          .maybeSingle();
         const viewerOwns = Boolean(user?.id && user.id === row.user_id);
         if (!isCertifiedGuardMomPublicRow(row) && !viewerOwns) {
           setMom(null);
+          setCareDisplayName(null);
           setLoadErr('운영 인증이 해제되어 이 프로필은 비공개예요.');
         } else {
           setMom(row);
+          setCareDisplayName((p?.care_display_name ?? '').trim() || null);
           setLoadErr(null);
         }
       } else if (mockRow) {
         setMom(mockRow as GuardMomRow);
+        setCareDisplayName(null);
         setLoadErr(null);
       } else if (error) {
         setLoadErr('프로필을 불러오지 못했습니다.');
         setMom(null);
+        setCareDisplayName(null);
       } else {
         setLoadErr(null);
         setMom(null);
+        setCareDisplayName(null);
       }
       setLoading(false);
     })();
@@ -214,7 +225,11 @@ export function GuardMomDetailPage() {
             <ArrowLeft className="h-6 w-6" />
           </button>
           <h1 className="line-clamp-2 min-w-0 flex-1 text-base font-extrabold leading-snug text-white sm:text-lg">
-            {loading ? '불러오는 중…' : mom ? displayCertifiedGuardMomBrandName(mom) : '보호맘 프로필'}
+            {loading
+              ? '불러오는 중…'
+              : mom
+                ? displayCertifiedGuardMomBrandName({ ...mom, care_display_name: careDisplayName })
+                : '보호맘 프로필'}
           </h1>
         </div>
       </header>
@@ -231,13 +246,15 @@ export function GuardMomDetailPage() {
             <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
               <ImageWithFallback
                 src={getCertifiedGuardMomHeroImageUrl(mom)}
-                alt={`${displayCertifiedGuardMomBrandName(mom)} 프로필`}
+                alt={`${displayCertifiedGuardMomBrandName({ ...mom, care_display_name: careDisplayName })} 프로필`}
                 className="aspect-[16/9] w-full object-cover sm:aspect-[21/9]"
                 loading="lazy"
               />
             </div>
             <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
-              <p className="text-lg font-black leading-snug text-slate-900">{displayCertifiedGuardMomBrandName(mom)}</p>
+              <p className="text-lg font-black leading-snug text-slate-900">
+                {displayCertifiedGuardMomBrandName({ ...mom, care_display_name: careDisplayName })}
+              </p>
               <p className="mt-1 text-[11px] font-extrabold text-orange-600">인증 · 맡기기 돌봄</p>
               <p className="mt-3 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-800">
                 {displayCertifiedGuardMomIntro(mom)}

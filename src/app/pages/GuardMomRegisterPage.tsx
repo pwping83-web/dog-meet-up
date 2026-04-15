@@ -118,6 +118,7 @@ export function GuardMomRegisterPage() {
   const [intro, setIntro] = useState('');
   const [regionSi, setRegionSi] = useState('');
   const [regionGu, setRegionGu] = useState('');
+  const [careDisplayName, setCareDisplayName] = useState('');
   const [fee, setFee] = useState(20000);
   const [offersDaengPickup, setOffersDaengPickup] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
@@ -215,6 +216,7 @@ export function GuardMomRegisterPage() {
     if (!user) {
       setRow(null);
       setLoadErr(null);
+      setCareDisplayName('');
       setLoading(false);
       return;
     }
@@ -252,6 +254,12 @@ export function GuardMomRegisterPage() {
       setOffersDaengPickup(false);
       setIntroPhotoUrls([]);
     }
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('care_display_name')
+      .eq('id', user.id)
+      .maybeSingle();
+    setCareDisplayName((profileData?.care_display_name ?? '').trim());
     setLoading(false);
   }, [user]);
 
@@ -279,6 +287,12 @@ export function GuardMomRegisterPage() {
     setSaveErr(null);
     setSaving(true);
     try {
+      const nickOut = careDisplayName.trim().slice(0, 20);
+      const { error: profileNickErr } = await supabase
+        .from('profiles')
+        .update({ care_display_name: nickOut || null })
+        .eq('id', user.id);
+      if (profileNickErr) throw new Error(profileNickErr.message || '닉네임 저장에 실패했습니다.');
       const payload = {
         user_id: user.id,
         intro: intro.trim(),
@@ -315,16 +329,18 @@ export function GuardMomRegisterPage() {
       writeSitterIntro(user.id, text.slice(0, 800));
       const { data: p } = await supabase
         .from('profiles')
-        .select('name, phone, avatar_url, region_si, region_gu')
+        .select('name, phone, avatar_url, region_si, region_gu, care_display_name')
         .eq('id', user.id)
         .maybeSingle();
       const name = (p?.name?.trim() || displayNameFromUser(user)).slice(0, 10);
+      const nickOut = careDisplayName.trim().slice(0, 20);
       const { error } = await supabase.from('profiles').upsert(
         {
           id: user.id,
           name,
           phone: p?.phone ?? null,
           avatar_url: p?.avatar_url ?? null,
+          care_display_name: nickOut || null,
           is_repairer: true,
         },
         { onConflict: 'id' },
@@ -628,6 +644,19 @@ export function GuardMomRegisterPage() {
                 <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                   <h2 className="text-sm font-extrabold text-slate-800">프로필</h2>
                   <label className="mt-4 block text-xs font-extrabold text-slate-700">
+                    노출 닉네임
+                    <input
+                      value={careDisplayName}
+                      onChange={(e) => setCareDisplayName(e.target.value)}
+                      maxLength={20}
+                      placeholder="예) 하양이 돌봄맘"
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-900"
+                    />
+                    <span className="mt-1 block text-[11px] font-medium text-slate-500">
+                      목록에 보일 이름이에요. 비워두면 기본 이름으로 보여요.
+                    </span>
+                  </label>
+                  <label className="mt-4 block text-xs font-extrabold text-slate-700">
                     소개
                     <textarea
                       value={intro}
@@ -926,6 +955,19 @@ export function GuardMomRegisterPage() {
                   <p className="mt-1 text-[11px] font-semibold leading-snug text-slate-500">
                     이웃 집 방문 돌봄·산책 가능 범위를 적어 주세요.
                   </p>
+                  <label className="mt-3 block text-xs font-extrabold text-slate-700">
+                    노출 닉네임
+                    <input
+                      value={careDisplayName}
+                      onChange={(e) => setCareDisplayName(e.target.value)}
+                      maxLength={20}
+                      placeholder="예) 하양이네 방문집사"
+                      className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-900"
+                    />
+                    <span className="mt-1 block text-[11px] font-medium text-slate-500">
+                      목록에 보일 이름이에요. 비워두면 기본 이름으로 보여요.
+                    </span>
+                  </label>
                   <label className="mt-3 block text-xs font-extrabold text-slate-700">
                     방문 돌봄 소개
                     <textarea

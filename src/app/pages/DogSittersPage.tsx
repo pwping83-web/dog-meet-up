@@ -55,6 +55,7 @@ type CareFilter = 'need' | 'sitter' | 'guard';
 type TopTab = 'moija' | 'mannaja' | 'certified';
 
 type CombinedRow = CombinedSitterGuardRow;
+type GuardMomRowWithNick = GuardMomRow & { care_display_name?: string | null };
 
 function readInitialSittersUrl(): { topTab: TopTab; care: CareFilter } {
   if (typeof window === 'undefined') return { topTab: 'moija', care: 'sitter' };
@@ -98,9 +99,9 @@ export function DogSittersPage() {
   );
   const [topTab, setTopTab] = useState<TopTab>(() => readInitialSittersUrl().topTab);
   const [careFilter, setCareFilter] = useState<CareFilter>(() => readInitialSittersUrl().care);
-  const [guardMoms, setGuardMoms] = useState<GuardMomRow[]>([]);
+  const [guardMoms, setGuardMoms] = useState<GuardMomRowWithNick[]>([]);
   /** 인증된 댕집사(provider_kind=dog_sitter) — 목록·노출 규칙은 보호맘과 동일 */
-  const [dbDogSitters, setDbDogSitters] = useState<GuardMomRow[]>([]);
+  const [dbDogSitters, setDbDogSitters] = useState<GuardMomRowWithNick[]>([]);
   const [guardLoading, setGuardLoading] = useState(true);
   const [guardMomsLoadError, setGuardMomsLoadError] = useState<string | null>(null);
   const [category, setCategory] = useState('전체');
@@ -201,11 +202,28 @@ export function DogSittersPage() {
       setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
     } else {
       const all = (data ?? []) as GuardMomRow[];
-      const certifiedRows = all.filter((r) => {
+      const userIds = Array.from(new Set(all.map((r) => String(r.user_id ?? '').trim()).filter(Boolean)));
+      let nickByUserId = new Map<string, string>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, care_display_name')
+          .in('id', userIds);
+        nickByUserId = new Map(
+          (profiles ?? [])
+            .map((p) => [String(p.id ?? ''), String(p.care_display_name ?? '').trim()] as const)
+            .filter(([, nick]) => nick.length > 0),
+        );
+      }
+      const withNick: GuardMomRowWithNick[] = all.map((r) => ({
+        ...r,
+        care_display_name: nickByUserId.get(String(r.user_id)) ?? null,
+      }));
+      const certifiedRows = withNick.filter((r) => {
         if (r.certified_at == null || String(r.certified_at).trim() === '') return false;
         return !Number.isNaN(new Date(r.certified_at as string).getTime());
       });
-      const kind = (r: GuardMomRow) => (r as { provider_kind?: string }).provider_kind ?? 'guard_mom';
+      const kind = (r: GuardMomRowWithNick) => (r as { provider_kind?: string }).provider_kind ?? 'guard_mom';
       setGuardMoms(certifiedRows.filter((r) => kind(r) !== 'dog_sitter'));
       setDbDogSitters(certifiedRows.filter((r) => kind(r) === 'dog_sitter'));
     }
@@ -305,7 +323,7 @@ export function DogSittersPage() {
         const blob = `${m.intro ?? ''} ${m.region_si ?? ''} ${m.region_gu ?? ''}`.toLowerCase();
         return blob.includes(q);
       })
-      .map(dogSitterFromCertifiedCareRow);
+      .map((m) => dogSitterFromCertifiedCareRow(m, m.care_display_name ?? null));
 
     const nearbySittersFromDb: DogSitter[] = listedSittersFromDb.filter((sitter) => {
       const km = distForDistrict(sitter.district);

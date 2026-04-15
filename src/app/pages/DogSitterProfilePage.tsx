@@ -67,7 +67,12 @@ export function DogSitterProfilePage() {
         setProfileLoading(false);
         return;
       }
-      setDogSitter(dogSitterFromCertifiedCareRow(data));
+      const { data: p } = await supabase
+        .from('profiles')
+        .select('care_display_name')
+        .eq('id', id)
+        .maybeSingle();
+      setDogSitter(dogSitterFromCertifiedCareRow(data, p?.care_display_name ?? null));
       setProfileLoading(false);
     })();
     return () => {

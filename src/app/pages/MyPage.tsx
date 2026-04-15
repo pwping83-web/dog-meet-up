@@ -314,7 +314,11 @@ export function MyPage() {
                   </Link>
                   {carePreview.certified && (
                     <Link
-                      to="/sitters"
+                      to={
+                        carePreview.providerKind === 'dog_sitter'
+                          ? '/sitters?view=care&care=sitter'
+                          : '/sitters?view=care&care=guard'
+                      }
                       className="inline-flex items-center gap-1 rounded-xl bg-market-cta px-3 py-2 text-xs font-extrabold text-white shadow-sm"
                     >
                       <BadgeCheck className="h-3.5 w-3.5 shrink-0" aria-hidden />

@@ -5,11 +5,15 @@ import { getCertifiedGuardMomHeroImageUrl } from '../app/data/mockCertifiedGuard
 export type CertifiedGuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
 /** 인증 돌봄 행(provider_kind=dog_sitter) → 돌집사 카드/프로필용 모델 */
-export function dogSitterFromCertifiedCareRow(m: CertifiedGuardMomRow): DogSitter {
+export function dogSitterFromCertifiedCareRow(
+  m: CertifiedGuardMomRow,
+  careDisplayName?: string | null,
+): DogSitter {
   const gu = (m.region_gu ?? '').trim() || (m.region_si ?? '').trim() || '동네';
+  const nick = (careDisplayName ?? '').trim();
   return {
     id: m.user_id,
-    name: `댕집사·${gu}`,
+    name: nick || `댕집사·${gu}`,
     profileImage: getCertifiedGuardMomHeroImageUrl(m),
     location: [m.region_si, m.region_gu].filter(Boolean).join(' ').trim() || gu,
     district: gu,
