@@ -70,7 +70,7 @@ function parseKind(raw: string | null): WriteKind | null {
 function meetupCostBadgeLabel(category: string): string {
   if (category === '공원·장소 모임' || category === '산책·놀이') return '부담 없이 만나요';
   if (category === '카페·체험' || category === '훈련·사회화' || category === '1:1 만남')
-    return '비용은 각자 부담해요';
+    return '편하게 함께해요';
   if (category === '교배') return '대화로 맞춰가요';
   if (category === '실종') return '함께 찾아주세요';
   return '부담 없이 만나요';
@@ -476,7 +476,7 @@ export function CreateRequestPage() {
           : '댕집사·보호맘 모두 가능';
     const estimatedCostLabel =
       kind === 'dolbom'
-        ? `돌봄 책임비 · ${careNeedLabel}${
+        ? `돌봄 함께 상의해요 · ${careNeedLabel}${
             wantDaengPickup && careNeedTarget !== 'dog_sitter' ? ' · 댕댕 픽업 희망' : ''
           }`
         : meetupCostBadgeLabel(formData.category);
