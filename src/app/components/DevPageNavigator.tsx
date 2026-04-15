@@ -110,8 +110,7 @@ export function DevPageNavigator() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
               className="fixed bottom-32 z-[9999] bg-white rounded-3xl shadow-2xl overflow-hidden max-w-sm w-80"
-              style={{ right: 'max(1.5rem, calc(50vw - 240px + 1.5rem))' }}
-              style={{ maxHeight: '70vh' }}
+              style={{ right: 'max(1.5rem, calc(50vw - 240px + 1.5rem))', maxHeight: '70vh' }}
             >
               {/* 헤더 */}
               <div className="bg-gradient-to-br from-orange-500 to-yellow-500 text-white p-4">
