@@ -979,6 +979,25 @@ export function GuardMomRegisterPage() {
                       className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-800"
                     />
                   </label>
+                  <div className="mt-2 flex justify-end">
+                    <AiDoumiButton
+                      task="guard_intro"
+                      payload={{
+                        keywords: sitterIntro.trim() || '방문 돌봄, 산책 30분, 식사 챙김',
+                        regionSi: regionSi.trim(),
+                        regionGu: regionGu.trim(),
+                      }}
+                      onDone={(r) => {
+                        if (!r.ok) {
+                          alert(r.error);
+                          return;
+                        }
+                        if (r.text.trim()) setSitterIntro(r.text.trim().slice(0, 800));
+                      }}
+                    >
+                      소개 AI 초안
+                    </AiDoumiButton>
+                  </div>
                   <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/90 px-3 py-2.5">
                     <p className="text-[11px] font-bold text-slate-600">방문 지역 · 현재 위치</p>
                     <button
