@@ -67,6 +67,15 @@ function parseKind(raw: string | null): WriteKind | null {
   return null;
 }
 
+function meetupCostBadgeLabel(category: string): string {
+  if (category === '공원·장소 모임' || category === '산책·놀이') return '부담 없이 만나요';
+  if (category === '카페·체험' || category === '훈련·사회화' || category === '1:1 만남')
+    return '비용은 각자 부담해요';
+  if (category === '교배') return '대화로 맞춰가요';
+  if (category === '실종') return '함께 찾아주세요';
+  return '부담 없이 만나요';
+}
+
 /** 돌봄 맡기기 AI 문구가 '맡아주는 사람' 관점으로 나올 때 요청형으로 보정 */
 function normalizeDolbomOwnerTone(input: string): string {
   let out = input
@@ -467,12 +476,10 @@ export function CreateRequestPage() {
           : '댕집사·보호맘 모두 가능';
     const estimatedCostLabel =
       kind === 'dolbom'
-        ? `돌봄·맡기기 · ${careNeedLabel}${
+        ? `돌봄 책임비 · ${careNeedLabel}${
             wantDaengPickup && careNeedTarget !== 'dog_sitter' ? ' · 댕댕 픽업 희망' : ''
           }`
-        : kind === 'moija'
-          ? `모이자 · ${formData.category}`
-          : `만나자 · ${formData.category}`;
+        : meetupCostBadgeLabel(formData.category);
 
     const newMeetup: Meetup = {
       id: crypto.randomUUID(),
