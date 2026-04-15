@@ -632,7 +632,7 @@ export function DogSittersPage() {
               <div className="grid grid-cols-3 gap-1.5 text-center">
                 <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
                   <Home className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
-                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">우리 집 방문</p>
+                  <p className="mt-1 text-[10px] font-bold leading-tight text-violet-950">댕댕이네집에 방문</p>
                 </div>
                 <div className="rounded-xl border border-violet-100/80 bg-white/90 px-1 py-2 shadow-sm">
                   <PawPrint className="mx-auto h-4 w-4 text-fuchsia-600" aria-hidden />

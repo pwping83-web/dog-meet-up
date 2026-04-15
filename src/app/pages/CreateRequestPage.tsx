@@ -766,7 +766,7 @@ export function CreateRequestPage() {
             <>
               <div className="grid grid-cols-3 gap-2">
                 {([
-                  { id: 'dog_sitter', label: '댕집사', desc: '우리 집 방문' },
+                  { id: 'dog_sitter', label: '댕집사', desc: '댕댕이네집에 방문' },
                   { id: 'guard_mom', label: '보호맘', desc: '맡기기 중심' },
                   { id: 'both', label: '둘 다', desc: '모두 가능' },
                 ] as const).map((opt) => {
