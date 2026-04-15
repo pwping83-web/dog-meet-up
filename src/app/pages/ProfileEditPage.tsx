@@ -25,6 +25,7 @@ import {
 } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { formatKoreanMobileDigits } from '../../lib/phoneAuth';
+import { dogMbtiResults, type DogMbtiType } from '../data/dogMbtiData';
 
 function phoneDigitsOk(digits: string): boolean {
   if (digits.length === 0) return true;
@@ -95,6 +96,7 @@ export function ProfileEditPage() {
   const [saveBusy, setSaveBusy] = useState(false);
   const [phone, setPhone] = useState('');
   const [general, setGeneral] = useState<ProfileModeFace>(() => emptyFace());
+  const [dogMbtiType, setDogMbtiType] = useState<DogMbtiType | null>(null);
   const [dogImageFile, setDogImageFile] = useState<File | null>(null);
   const [dogPreviewUrl, setDogPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -182,6 +184,16 @@ export function ProfileEditPage() {
     void loadProfile();
   }, [loadProfile]);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('dogMbtiType') as DogMbtiType | null;
+      if (saved && dogMbtiResults[saved]) setDogMbtiType(saved);
+      else setDogMbtiType(null);
+    } catch {
+      setDogMbtiType(null);
+    }
+  }, []);
+
   const activeFace = general;
   const setActiveFace = setGeneral;
 
@@ -218,6 +230,15 @@ export function ProfileEditPage() {
       if (prev?.startsWith('blob:')) URL.revokeObjectURL(prev);
       return null;
     });
+  };
+
+  const selectMbtiType = (next: DogMbtiType) => {
+    setDogMbtiType(next);
+    try {
+      localStorage.setItem('dogMbtiType', next);
+    } catch {
+      /* ignore */
+    }
   };
 
   const handleSave = async () => {
@@ -513,6 +534,54 @@ export function ProfileEditPage() {
               </div>
             </div>
 
+            {/* 강아지 MBTI */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-800">강아지 MBTI</h3>
+                  <p className="mt-1 text-[11px] font-semibold text-slate-500">
+                    여기서 바로 고르거나 테스트로 정확히 찾아요.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/dog-mbti-test', { state: { mbtiReturn: '/profile/edit' } })}
+                  className="shrink-0 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-extrabold text-orange-700 active:scale-[0.98]"
+                >
+                  테스트하기
+                </button>
+              </div>
+              {dogMbtiType ? (
+                <div className="mb-3 rounded-2xl border border-brand/20 bg-brand/10 px-3 py-2.5">
+                  <p className="text-xs font-extrabold text-slate-800">
+                    {dogMbtiResults[dogMbtiType].emoji} {dogMbtiResults[dogMbtiType].name}
+                  </p>
+                  <p className="mt-1 text-[11px] font-semibold text-slate-600">{dogMbtiResults[dogMbtiType].description}</p>
+                </div>
+              ) : (
+                <p className="mb-3 text-xs font-bold text-slate-500">아직 MBTI가 없어요. 아래에서 선택하거나 테스트해 주세요.</p>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                {(Object.keys(dogMbtiResults) as DogMbtiType[]).map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => selectMbtiType(type)}
+                    className={`rounded-xl border px-3 py-2.5 text-left transition-all ${
+                      dogMbtiType === type
+                        ? 'border-brand bg-brand/10'
+                        : 'border-slate-200 bg-slate-50 hover:border-orange-200 hover:bg-orange-50'
+                    }`}
+                  >
+                    <p className="text-xs font-extrabold text-slate-800">
+                      {dogMbtiResults[type].emoji} {dogMbtiResults[type].name}
+                    </p>
+                    <p className="mt-1 text-[10px] font-semibold text-slate-500">{type.toUpperCase()}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* 전화번호 */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <label className="block text-sm font-extrabold text-slate-800 mb-2">전화번호</label>
@@ -566,7 +635,7 @@ export function ProfileEditPage() {
             className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-market-cta text-lg font-bold text-white shadow-market transition-all hover:opacity-[0.92] active:scale-[0.98] disabled:opacity-50"
           >
             {saveBusy ? <Loader2 className="h-6 w-6 animate-spin" aria-hidden /> : null}
-          프로필 저장
+          우리 아이 등록하기
           </button>
         </div>
       </div>
