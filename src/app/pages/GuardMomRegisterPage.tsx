@@ -682,7 +682,7 @@ export function GuardMomRegisterPage() {
                         if (r.text.trim()) setIntro(r.text.trim());
                       }}
                     >
-                      소개 AI 초안
+                      댕집사 소개 AI 초안
                     </AiDoumiButton>
                   </div>
                   <CareIntroPhotoPicker
