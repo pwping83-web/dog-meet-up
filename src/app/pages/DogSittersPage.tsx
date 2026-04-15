@@ -305,19 +305,25 @@ export function DogSittersPage() {
   const combinedRows: CombinedRow[] = useMemo(() => {
     if (careFilter === 'need') return [];
 
-    const sittersFromDb: DogSitter[] = dbDogSitters
+    const listedSittersFromDb: DogSitter[] = dbDogSitters
       .filter((m) => careProviderListedInFeed(m, promoFree))
-      .filter((m) => {
-        const label = (m.region_gu ?? m.region_si ?? '').trim();
-        const km = distForDistrict(label);
-        return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
-      })
       .filter((m) => {
         if (!q) return true;
         const blob = `${m.intro ?? ''} ${m.region_si ?? ''} ${m.region_gu ?? ''}`.toLowerCase();
         return blob.includes(q);
       })
       .map(dogSitterFromCertifiedCareRow);
+
+    const nearbySittersFromDb: DogSitter[] = listedSittersFromDb.filter((sitter) => {
+      const km = distForDistrict(sitter.district);
+      return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
+    });
+
+    // 근거리 우선: 근처가 0명이면 목록 자체가 비지 않도록 전체 노출로 폴백
+    const sittersFromDb: DogSitter[] =
+      locationBasedEnabled && referenceDistricts.length > 0 && nearbySittersFromDb.length === 0
+        ? listedSittersFromDb
+        : nearbySittersFromDb;
 
     const mockSittersForCare =
       careFilter === 'sitter'
@@ -380,6 +386,18 @@ export function DogSittersPage() {
     locationBasedEnabled,
     referenceDistricts,
   ]);
+
+  const sitterFallbackToAllRegion =
+    careFilter === 'sitter' &&
+    locationBasedEnabled &&
+    referenceDistricts.length > 0 &&
+    dbDogSitters.filter((m) => careProviderListedInFeed(m, promoFree)).length > 0 &&
+    dbDogSitters.filter((m) => {
+      if (!careProviderListedInFeed(m, promoFree)) return false;
+      const label = (m.region_gu ?? m.region_si ?? '').trim();
+      const km = distForDistrict(label);
+      return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
+    }).length === 0;
 
   const meetupMatchesRegion = useCallback(
     (district: string) => {
@@ -705,6 +723,11 @@ export function DogSittersPage() {
                     저장된 동네 기준 {CERTIFIED_CARE_RADIUS_KM}km 안에 노출 중인 댕집사가 없어요.
                   </p>
                 )}
+              {sitterFallbackToAllRegion && (
+                <p className="mt-0.5 text-[11px] font-semibold text-sky-700">
+                  근처 댕집사가 없어 전체 지역 결과를 함께 보여줘요.
+                </p>
+              )}
             </div>
             {careFilter !== 'need' && (
               <span
