@@ -7,6 +7,16 @@ const corsHeaders: Record<string, string> = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+/** 전 task 공통: 영문 토큰 제거 후 한글/숫자 중심으로 정리 */
+function normalizeKoreanOnlyCommon(input: string): string {
+  return input
+    .replace(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g, " ")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/\s+([,.!?])/g, "$1")
+    .trim();
+}
+
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -115,7 +125,8 @@ async function groqChat(system: string, user: string, maxTokens: number, apiKey:
 
 /** 모든 AI 도우미·해석 공통: 짧고 함축 */
 const AI_BREVITY_PREFIX =
-  "【공통】답은 항상 짧고 함축하게. 장황한 인사·반복·나열·긴 설명 금지. 핵심만.\n\n";
+  "【공통】답은 항상 짧고 함축하게. 장황한 인사·반복·나열·긴 설명 금지. 핵심만.\n" +
+  "【언어】출력은 반드시 한국어만. 영어/외국어 단어·약어·로마자 표기 금지.\n\n";
 
 async function llmChat(system: string, user: string, maxTokens: number): Promise<string> {
   const systemWithStyle = AI_BREVITY_PREFIX + system;
@@ -259,15 +270,15 @@ Deno.serve(async (req) => {
         const raw = await llmChat(sys, user, 480);
         const obj = extractJsonObject(raw);
         if (!obj?.title || !obj?.description) {
-          return jsonResponse({ ok: true, text: raw, fields: {} });
+          return jsonResponse({ ok: true, text: normalizeKoreanOnlyCommon(raw), fields: {} });
         }
         return jsonResponse({
           ok: true,
-          text: raw,
+          text: normalizeKoreanOnlyCommon(raw),
           fields: {
-            title: String(obj.title).trim().slice(0, 32),
-            category: String(obj.category ?? "").slice(0, 80),
-            description: String(obj.description).slice(0, 900),
+            title: normalizeKoreanOnlyCommon(String(obj.title)).slice(0, 32),
+            category: normalizeKoreanOnlyCommon(String(obj.category ?? "")).slice(0, 80),
+            description: normalizeKoreanOnlyCommon(String(obj.description)).slice(0, 900),
           },
         });
       }
@@ -279,7 +290,7 @@ Deno.serve(async (req) => {
         const sys =
           "너는 인증 보호맘 프로필 소개글 작성 도우미야. 한국어 존댓말. 과장·의료·법적 확약 금지. 돌봄 경력·환경·견종·산책·접종 확인 등 핵심만 2~4짧은 문단(문단마다 2~3문장 이하). 출력은 본문만.";
         const user = `지역: ${regionSi} ${regionGu}\n키워드/메모:\n${keywords || "(없음)"}`;
-        const text = (await llmChat(sys, user, 520)).slice(0, 900);
+        const text = normalizeKoreanOnlyCommon((await llmChat(sys, user, 520))).slice(0, 900);
         return jsonResponse({ ok: true, text });
       }
 
@@ -292,13 +303,13 @@ Deno.serve(async (req) => {
         const suggestedSearch = typeof obj?.suggestedSearch === "string" ? obj.suggestedSearch : q;
         const chips = Array.isArray(obj?.chips)
           ? (obj.chips as unknown[]).filter((x): x is string => typeof x === "string").slice(0, 4).map((c) =>
-            c.trim().slice(0, 14)
+            normalizeKoreanOnlyCommon(c).slice(0, 14)
           )
           : [];
         return jsonResponse({
           ok: true,
-          text: raw,
-          fields: { suggestedSearch: suggestedSearch.trim().slice(0, 44), chips },
+          text: normalizeKoreanOnlyCommon(raw),
+          fields: { suggestedSearch: normalizeKoreanOnlyCommon(suggestedSearch).slice(0, 44), chips },
         });
       }
 
@@ -308,7 +319,7 @@ Deno.serve(async (req) => {
         const sys =
           "너는 반려견 산책·모임 채팅 도우미야. 한 줄 우선, 길어도 두 줄 이하. 한 줄당 약 45자 이내. 존댓말. 연락처·주소 과다 요구 금지.";
         const user = `상대 닉네임: ${peerName}\n최근 대화:\n${transcript}`;
-        const text = (await llmChat(sys, user, 200)).slice(0, 220);
+        const text = normalizeKoreanOnlyCommon((await llmChat(sys, user, 200))).slice(0, 220);
         return jsonResponse({ ok: true, text });
       }
 
@@ -319,7 +330,7 @@ Deno.serve(async (req) => {
         const sys =
           "강아지 성향(MBTI 유사) 해설. 한국어 2~5짧은 문장, 전체 360자 이하. 과학적 단정 금지, 부드러운 '참고로' 톤.";
         const user = `유형 키: ${typeKey}\n이름: ${name}\n기본 설명: ${desc}`;
-        const text = (await llmChat(sys, user, 360)).slice(0, 420);
+        const text = normalizeKoreanOnlyCommon((await llmChat(sys, user, 360))).slice(0, 420);
         return jsonResponse({ ok: true, text });
       }
 
@@ -336,7 +347,7 @@ Deno.serve(async (req) => {
         const sys =
           "모임 주최자용 참여 신청 요약. 한국어 불릿 3~7줄, 한 줄 55자 이내. 민감정보 반복·외부 유출 조언 금지.";
         const user = lines.join("\n\n") || "(신청 없음)";
-        const text = (await llmChat(sys, user, 420)).slice(0, 1100);
+        const text = normalizeKoreanOnlyCommon((await llmChat(sys, user, 420))).slice(0, 1100);
         return jsonResponse({ ok: true, text });
       }
 
@@ -344,7 +355,7 @@ Deno.serve(async (req) => {
         const sys =
           "반려견 돌봄 플랫폼 운영자용 체크리스트(한국어). 인증·RLS·결제·CS. 4~8줄 불릿, 한 줄 짧게, 기술명 최소화.";
         const user = String(payload.topic ?? "guard_mom_certify_listing").slice(0, 200);
-        const text = (await llmChat(sys, `주제 키: ${user}`, 320)).slice(0, 900);
+        const text = normalizeKoreanOnlyCommon((await llmChat(sys, `주제 키: ${user}`, 320))).slice(0, 900);
         return jsonResponse({ ok: true, text });
       }
 
@@ -407,7 +418,7 @@ Deno.serve(async (req) => {
         const obj = extractJsonObject(raw);
         const introRaw =
           typeof obj?.intro === "string"
-            ? fixWeeklyParticleSpacingKo(obj.intro).replace(/\s+/g, " ").trim().slice(0, 100)
+            ? normalizeKoreanOnlyCommon(fixWeeklyParticleSpacingKo(obj.intro)).slice(0, 100)
             : "";
         const intro = scrubOwnerWeeklyIntroKo(introRaw);
         const stepsRaw = Array.isArray(obj?.steps) ? obj.steps : [];
@@ -421,7 +432,9 @@ Deno.serve(async (req) => {
         for (const s of stepsRaw.slice(0, 6)) {
           if (!s || typeof s !== "object") continue;
           const st = s as Record<string, unknown>;
-          const line = fixWeeklyParticleSpacingKo(String(st.line ?? "").replace(/\s+/g, " ").trim()).slice(0, 52);
+          const line = normalizeKoreanOnlyCommon(
+            fixWeeklyParticleSpacingKo(String(st.line ?? "").replace(/\s+/g, " ").trim()),
+          ).slice(0, 52);
           if (!line) continue;
           const typ = String(st.type ?? "");
 
