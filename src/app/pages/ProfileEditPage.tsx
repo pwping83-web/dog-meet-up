@@ -79,6 +79,48 @@ function faceFromProfileRow(
   };
 }
 
+/** 모바일 원본 사진(대용량) 대비: 업로드 전 JPEG로 축소 */
+function resizeAvatarForUpload(file: File, maxW = 1280, quality = 0.86): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const src = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(src);
+      let { width, height } = img;
+      if (width > maxW) {
+        height = (height * maxW) / width;
+        width = maxW;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(width));
+      canvas.height = Math.max(1, Math.round(height));
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('canvas'));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('blob'));
+            return;
+          }
+          const out = new File([blob], `avatar-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          resolve(out);
+        },
+        'image/jpeg',
+        quality,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(src);
+      reject(new Error('image-load'));
+    };
+    img.src = src;
+  });
+}
+
 export function ProfileEditPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -156,15 +198,21 @@ export function ProfileEditPage() {
   ): Promise<string | null> => {
     const pending = pendingRef.current;
     if (pending) {
+      let uploadFile = pending;
       if (pending.size > 5 * 1024 * 1024) {
-        throw new Error('SIZE');
+        try {
+          uploadFile = await resizeAvatarForUpload(pending);
+        } catch {
+          // 리사이즈 실패 시 원본으로 계속 진행
+          uploadFile = pending;
+        }
       }
-      const safeExt = safeImageExtForDogPhotos(pending);
+      const safeExt = safeImageExtForDogPhotos(uploadFile);
       const path = `user-avatars/${uid}/${Date.now()}.${safeExt}`;
-      const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, pending, {
+      const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, uploadFile, {
         cacheControl: '3600',
         upsert: false,
-        contentType: imageContentTypeForDogPhotosUpload(pending, safeExt),
+        contentType: imageContentTypeForDogPhotosUpload(uploadFile, safeExt),
       });
       if (upErr) {
         throw new Error(upErr.message || 'upload');
@@ -210,10 +258,6 @@ export function ProfileEditPage() {
         );
       } catch (e) {
         const msg = (e as Error).message;
-        if (msg === 'SIZE') {
-          alert('사진은 5MB 이하로 올려 주세요.');
-          return;
-        }
         alert(msg.includes('upload') ? '프로필 사진 업로드에 실패했습니다.' : msg);
         return;
       }
