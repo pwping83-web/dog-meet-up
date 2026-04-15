@@ -497,14 +497,6 @@ export function MeetupDetailPage() {
             </button>
           </div>
 
-          {isCareMeetupCategory(meetup.category) && (
-            <Link
-              to="/sitters?view=care&care=sitter"
-              className="mt-4 flex items-center justify-center gap-2 rounded-2xl border border-orange-200/80 bg-gradient-to-r from-orange-50 via-amber-50 to-yellow-50 px-4 py-3 text-sm font-extrabold text-orange-600 transition-colors hover:from-orange-100 hover:via-amber-100 hover:to-yellow-100"
-            >
-              인증 댕집사(방문)·인증 보호맘(맡기기) 보기 →
-            </Link>
-          )}
         </div>
 
         {/* 댓글 — 돌봄·맡기기 글은 댓글 없음(채팅만) */}
@@ -694,42 +686,32 @@ export function MeetupDetailPage() {
           </div>
         )}
 
-        {/* 3. 돌봄 글: 인증 댕집사/보호맘만 작성자에게 채팅(신청) / 그 외 모임: 근처 댕친(데모) */}
+        {/* 3. 돌봄 글: 작성자와 채팅 버튼 */}
         {isCareMeetupCategory(meetup.category) && meetup.status === 'pending' && (
           <div className="mb-10">
-            <h2 className="mb-3 text-xl text-slate-900" style={{ fontWeight: 800 }}>
-              작성자와 연락
-            </h2>
-            <div className="rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm">
-              <p className="text-xs font-semibold leading-relaxed text-slate-600">
-                {careNeedTarget === 'dog_sitter' && '방문 돌봄 문의는 채팅으로 주세요.'}
-                {careNeedTarget === 'guard_mom' && '맡기기 문의는 채팅으로 주세요.'}
-                {careNeedTarget === 'both' && '돌봄·맡기기 문의는 채팅으로 주세요.'}
-              </p>
-              {user && meetup.userId === user.id ? (
-                <p className="mt-3 text-sm font-bold text-slate-700">내가 올린 글이에요.</p>
-              ) : !user ? (
-                <p className="mt-3 text-sm font-bold text-amber-800">
-                  로그인 후 채팅할 수 있어요.{' '}
-                  <Link
-                    to="/login"
-                    onClick={() => setAuthReturnPath(`${location.pathname}${location.search}`)}
-                    className="font-extrabold text-sky-700 underline underline-offset-2"
-                  >
-                    로그인
-                  </Link>
-                </p>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => handleInvite({ id: '', name: '' })}
-                  disabled={authLoading}
-                  className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+            {user && meetup.userId === user.id ? (
+              <p className="text-sm font-bold text-slate-500">내가 올린 글이에요.</p>
+            ) : !user ? (
+              <p className="text-sm font-bold text-amber-800">
+                로그인 후 채팅할 수 있어요.{' '}
+                <Link
+                  to="/login"
+                  onClick={() => setAuthReturnPath(`${location.pathname}${location.search}`)}
+                  className="font-extrabold text-sky-700 underline underline-offset-2"
                 >
-                  작성자와 채팅
-                </button>
-              )}
-            </div>
+                  로그인
+                </Link>
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => handleInvite({ id: '', name: '' })}
+                disabled={authLoading}
+                className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                작성자와 채팅
+              </button>
+            )}
           </div>
         )}
         {!isCareMeetupCategory(meetup.category) && recommendedSitters.length > 0 && meetup.status === 'pending' && (
