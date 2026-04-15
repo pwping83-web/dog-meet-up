@@ -110,10 +110,19 @@ export function GuardMomRegisterPage() {
         role === 'guard_mom'
           ? '관리 확인 후 인증 돌봄 목록에 노출돼요.'
           : '작성자와 채팅에서 일정·조건을 맞춰 보세요.',
-      duration: 4200,
+      position: 'bottom-center',
+      duration: 5200,
+      important: true,
       style: {
-        fontSize: '15px',
-        padding: '14px 16px',
+        fontSize: '16px',
+        fontWeight: 800,
+        lineHeight: 1.35,
+        padding: '16px 18px',
+        background: 'linear-gradient(135deg, #6d28d9 0%, #9333ea 100%)',
+        color: '#ffffff',
+        border: '2px solid #c4b5fd',
+        borderRadius: '16px',
+        boxShadow: '0 14px 34px rgba(109, 40, 217, 0.45)',
       },
     });
   }, []);
