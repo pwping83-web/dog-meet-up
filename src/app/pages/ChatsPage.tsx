@@ -146,9 +146,73 @@ export function ChatsPage() {
     if (!silent) setLoading(false);
   }, [user?.id]);
 
+  const loadGroupChats = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const silent = Boolean(opts?.silent);
+      if (!user?.id) {
+        setGroupChats([]);
+        if (!silent) setGroupLoading(false);
+        return;
+      }
+      if (!silent) setGroupLoading(true);
+      const { data: mems, error: e1 } = await supabase.from('meetup_chat_members').select('room_id').eq('user_id', user.id);
+      if (e1 || !mems?.length) {
+        setGroupChats([]);
+        if (!silent) setGroupLoading(false);
+        return;
+      }
+      const roomIds = [...new Set(mems.map((m) => String(m.room_id)))];
+      const { data: rooms, error: e2 } = await supabase.from('meetup_chat_rooms').select('id, meetup_id').in('id', roomIds);
+      if (e2 || !rooms?.length) {
+        setGroupChats([]);
+        if (!silent) setGroupLoading(false);
+        return;
+      }
+      const meetupIds = [...new Set(rooms.map((r) => String(r.meetup_id)))];
+      const { data: meets } = await supabase.from('meetups').select('id, title').in('id', meetupIds);
+      const titleById = Object.fromEntries(
+        (meets ?? []).map((m) => [String(m.id), String(m.title ?? '').trim() || '모임']),
+      );
+      const { data: msgRows } = await supabase
+        .from('meetup_chat_messages')
+        .select('room_id, content, created_at')
+        .in('room_id', roomIds)
+        .order('created_at', { ascending: false });
+      const lastByRoom: Record<string, { content: string; created_at: string }> = {};
+      for (const row of msgRows ?? []) {
+        const rid = String(row.room_id);
+        if (!lastByRoom[rid]) lastByRoom[rid] = { content: String(row.content ?? ''), created_at: String(row.created_at) };
+      }
+      const next: GroupChatRow[] = rooms.map((r) => {
+        const rid = String(r.id);
+        const mid = String(r.meetup_id);
+        const last = lastByRoom[rid];
+        return {
+          meetupId: mid,
+          roomId: rid,
+          title: titleById[mid] ?? '모임',
+          lastMessage: last?.content?.trim() || '메시지를 보내 보세요',
+          timestamp: last ? formatTime(last.created_at) : '',
+        };
+      });
+      next.sort((a, b) => {
+        const ta = lastByRoom[a.roomId]?.created_at ?? '';
+        const tb = lastByRoom[b.roomId]?.created_at ?? '';
+        return new Date(tb).getTime() - new Date(ta).getTime();
+      });
+      setGroupChats(next);
+      if (!silent) setGroupLoading(false);
+    },
+    [user?.id],
+  );
+
   useEffect(() => {
     void loadChats();
   }, [loadChats]);
+
+  useEffect(() => {
+    void loadGroupChats();
+  }, [loadGroupChats]);
 
   useEffect(() => {
     const onHidden = () => {
@@ -193,9 +257,36 @@ export function ChatsPage() {
     if (!user?.id) return;
     const timer = window.setInterval(() => {
       void loadChats({ silent: true });
+      void loadGroupChats({ silent: true });
     }, 4000);
     return () => window.clearInterval(timer);
-  }, [user?.id, loadChats]);
+  }, [user?.id, loadChats, loadGroupChats]);
+
+  const roomIdsRef = useRef<string[]>([]);
+  useEffect(() => {
+    roomIdsRef.current = groupChats.map((g) => g.roomId);
+  }, [groupChats]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const ch = supabase
+      .channel(`meetup-grp-list-${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'meetup_chat_messages' },
+        (payload) => {
+          const rid = (payload.new as { room_id?: string })?.room_id;
+          if (rid && roomIdsRef.current.includes(rid)) void loadGroupChats({ silent: true });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [user?.id, loadGroupChats]);
+
+  const listBusy = authLoading || loading || groupLoading;
+  const hasAnyList = groupChats.length > 0 || chats.length > 0;
 
   return (
     <div className="min-h-screen bg-slate-50/50">
@@ -214,7 +305,7 @@ export function ChatsPage() {
       </header>
 
       <div className="mx-auto max-w-screen-md space-y-3 p-4">
-        {authLoading || loading ? (
+        {listBusy ? (
           <div className="flex justify-center py-20 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin" aria-label="불러오는 중" />
           </div>
@@ -225,11 +316,11 @@ export function ChatsPage() {
               로그인하기
             </Link>
           </div>
-        ) : err ? (
+        ) : err && !hasAnyList ? (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-800">
             채팅 목록을 불러오지 못했어요: {err}
           </div>
-        ) : chats.length === 0 ? (
+        ) : !hasAnyList ? (
           <div className="flex flex-col items-center justify-center px-5 py-16 text-center sm:py-24">
             <div className="mb-6 flex size-[5.75rem] items-center justify-center rounded-[2rem] bg-orange-50 shadow-inner ring-1 ring-orange-100/80" aria-hidden>
               <span className="text-5xl leading-none sm:text-6xl">💬</span>
@@ -243,34 +334,74 @@ export function ChatsPage() {
             </Link>
           </div>
         ) : (
-          chats.map((chat) => (
-            <Link
-              key={chat.id}
-              to={`/chat/${chat.id}?name=${encodeURIComponent(chat.name)}`}
-              className="flex items-center gap-4 p-4 bg-white rounded-3xl border border-slate-100 hover:shadow-md hover:border-orange-100 active:scale-[0.98] transition-all group"
-            >
-              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 shadow-inner ring-1 ring-slate-100/80 transition-[box-shadow] group-hover:ring-orange-100">
-                <ImageWithFallback
-                  src={chat.peerDogPhotoUrl}
-                  fallbackSrc={virtualDogPhotoForSeed(`chat-list-fb-${chat.id}`)}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+          <>
+            {err && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2 text-[11px] font-semibold text-amber-900">
+                1:1 목록 오류: {err}
               </div>
-              <div className="flex-1 min-w-0 py-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-extrabold text-base text-slate-800 group-hover:text-orange-600 transition-colors">{chat.name}</h3>
-                  <span className="text-xs font-bold text-slate-400">{chat.timestamp}</span>
-                </div>
-                <p className="text-sm font-medium text-slate-500 truncate">{chat.lastMessage}</p>
-              </div>
-              {chat.unreadCount > 0 && (
-                <div className="min-w-[1.5rem] h-6 px-2 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm shadow-orange-500/30">
-                  <span className="text-white text-[11px] font-black tracking-tighter">{chat.unreadCount}</span>
-                </div>
-              )}
-            </Link>
-          ))
+            )}
+            {groupChats.length > 0 && (
+              <>
+                <p className="px-1 text-[11px] font-extrabold uppercase tracking-wide text-slate-400">모임 단톡</p>
+                {groupChats.map((g) => (
+                  <Link
+                    key={g.roomId}
+                    to={`/meetup/${g.meetupId}/group-chat`}
+                    className="group flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-4 transition-all hover:border-violet-200 hover:shadow-md active:scale-[0.98]"
+                  >
+                    <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-indigo-50 shadow-inner ring-1 ring-violet-100/80">
+                      <span className="text-2xl" aria-hidden>
+                        👥
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1 py-1">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <h3 className="truncate text-base font-extrabold text-slate-800 group-hover:text-violet-700">{g.title}</h3>
+                        <span className="shrink-0 text-xs font-bold text-slate-400">{g.timestamp}</span>
+                      </div>
+                      <p className="truncate text-sm font-medium text-slate-500">{g.lastMessage}</p>
+                    </div>
+                  </Link>
+                ))}
+              </>
+            )}
+            {groupChats.length > 0 && chats.length > 0 && <div className="my-1 h-px bg-slate-100" />}
+            {chats.length > 0 && (
+              <>
+                {groupChats.length > 0 && (
+                  <p className="px-1 text-[11px] font-extrabold uppercase tracking-wide text-slate-400">1:1</p>
+                )}
+                {chats.map((chat) => (
+                  <Link
+                    key={chat.id}
+                    to={`/chat/${chat.id}?name=${encodeURIComponent(chat.name)}`}
+                    className="group flex items-center gap-4 rounded-3xl border border-slate-100 bg-white p-4 transition-all hover:border-orange-100 hover:shadow-md active:scale-[0.98]"
+                  >
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 shadow-inner ring-1 ring-slate-100/80 transition-[box-shadow] group-hover:ring-orange-100">
+                      <ImageWithFallback
+                        src={chat.peerDogPhotoUrl}
+                        fallbackSrc={virtualDogPhotoForSeed(`chat-list-fb-${chat.id}`)}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 py-1">
+                      <div className="mb-1 flex items-center justify-between">
+                        <h3 className="font-extrabold text-base text-slate-800 transition-colors group-hover:text-orange-600">{chat.name}</h3>
+                        <span className="text-xs font-bold text-slate-400">{chat.timestamp}</span>
+                      </div>
+                      <p className="truncate text-sm font-medium text-slate-500">{chat.lastMessage}</p>
+                    </div>
+                    {chat.unreadCount > 0 && (
+                      <div className="flex h-6 min-w-[1.5rem] shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-orange-500 to-yellow-500 px-2 shadow-sm shadow-orange-500/30">
+                        <span className="text-[11px] font-black tracking-tighter text-white">{chat.unreadCount}</span>
+                      </div>
+                    )}
+                  </Link>
+                ))}
+              </>
+            )}
+          </>
         )}
       </div>
     </div>
