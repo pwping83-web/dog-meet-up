@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { fetchLatestDogPhotoUrlByOwnerIds } from '../../lib/chatDogPhotos';
+import { isGroupChatMeetupCategory } from '../utils/meetupCategory';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
@@ -86,9 +87,17 @@ export function MeetupGroupChatPage() {
   const ensureRoomAndJoin = useCallback(async (): Promise<string | null> => {
     const mid = meetupId.trim();
     if (!mid || !user?.id) return null;
-    const { data: meetup, error: mErr } = await supabase.from('meetups').select('id, title').eq('id', mid).maybeSingle();
+    const { data: meetup, error: mErr } = await supabase
+      .from('meetups')
+      .select('id, title, category')
+      .eq('id', mid)
+      .maybeSingle();
     if (mErr || !meetup) {
       setErr(mErr?.message ?? '모임을 찾을 수 없어요.');
+      return null;
+    }
+    if (!isGroupChatMeetupCategory(String(meetup.category ?? ''))) {
+      setErr('모이자·만나자 글에서만 단톡을 사용할 수 있어요.');
       return null;
     }
     setMeetupTitle(String(meetup.title ?? '').trim() || '모임');

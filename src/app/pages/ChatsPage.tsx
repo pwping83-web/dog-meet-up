@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { isAuthUserUuid } from '../../lib/profileIds';
 import { getHiddenChatPeerIds, hideChatPeerId, unhideChatPeerId } from '../../lib/chatHiddenPeers';
 import { fetchLatestDogPhotoUrlByOwnerIds } from '../../lib/chatDogPhotos';
+import { isGroupChatMeetupCategory } from '../utils/meetupCategory';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
@@ -169,21 +170,32 @@ export function ChatsPage() {
         return;
       }
       const meetupIds = [...new Set(rooms.map((r) => String(r.meetup_id)))];
-      const { data: meets } = await supabase.from('meetups').select('id, title').in('id', meetupIds);
+      const { data: meets } = await supabase.from('meetups').select('id, title, category').in('id', meetupIds);
+      const allowedMeetupIds = new Set(
+        (meets ?? [])
+          .filter((m) => isGroupChatMeetupCategory(String(m.category ?? '')))
+          .map((m) => String(m.id)),
+      );
+      const allowedRooms = rooms.filter((r) => allowedMeetupIds.has(String(r.meetup_id)));
+      if (allowedRooms.length === 0) {
+        setGroupChats([]);
+        if (!silent) setGroupLoading(false);
+        return;
+      }
       const titleById = Object.fromEntries(
         (meets ?? []).map((m) => [String(m.id), String(m.title ?? '').trim() || '모임']),
       );
       const { data: msgRows } = await supabase
         .from('meetup_chat_messages')
         .select('room_id, content, created_at')
-        .in('room_id', roomIds)
+        .in('room_id', allowedRooms.map((r) => String(r.id)))
         .order('created_at', { ascending: false });
       const lastByRoom: Record<string, { content: string; created_at: string }> = {};
       for (const row of msgRows ?? []) {
         const rid = String(row.room_id);
         if (!lastByRoom[rid]) lastByRoom[rid] = { content: String(row.content ?? ''), created_at: String(row.created_at) };
       }
-      const next: GroupChatRow[] = rooms.map((r) => {
+      const next: GroupChatRow[] = allowedRooms.map((r) => {
         const rid = String(r.id);
         const mid = String(r.meetup_id);
         const last = lastByRoom[rid];

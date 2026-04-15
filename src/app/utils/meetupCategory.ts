@@ -23,6 +23,14 @@ export const MANNAJA_MEETUP_CATEGORIES = ['1:1 만남', '교배', '실종'] as c
 
 export const MOIJA_CATEGORY_SET = new Set<string>(MOIJA_MEETUP_CATEGORIES);
 export const MANNAJA_CATEGORY_SET = new Set<string>(MANNAJA_MEETUP_CATEGORIES);
+const GROUP_CHAT_CATEGORY_SET = new Set<string>([...MOIJA_MEETUP_CATEGORIES, ...MANNAJA_MEETUP_CATEGORIES]);
+const GROUP_CHAT_CATEGORY_NORMALIZED_SET = new Set<string>(
+  [...GROUP_CHAT_CATEGORY_SET].map((category) => normalizeCategory(category)),
+);
+
+export function isGroupChatMeetupCategory(category: string): boolean {
+  return GROUP_CHAT_CATEGORY_NORMALIZED_SET.has(normalizeCategory(category));
+}
 
 export function meetupCategoryEmoji(category: string): string {
   switch (category) {

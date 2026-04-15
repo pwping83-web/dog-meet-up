@@ -59,18 +59,48 @@ ALTER TABLE public.meetup_chat_rooms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.meetup_chat_members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.meetup_chat_messages ENABLE ROW LEVEL SECURITY;
 
--- 방: 모임이 있으면 로그인 사용자 조회·생성 가능
+-- 방: 모이자·만나자 카테고리에서만 조회·생성 가능
 DROP POLICY IF EXISTS "meetup_chat_rooms_select_auth" ON public.meetup_chat_rooms;
 CREATE POLICY "meetup_chat_rooms_select_auth"
   ON public.meetup_chat_rooms FOR SELECT
   TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.meetups m WHERE m.id = meetup_chat_rooms.meetup_id));
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.meetups m
+      WHERE m.id = meetup_chat_rooms.meetup_id
+        AND btrim(coalesce(m.category, '')) IN (
+          '공원·장소 모임',
+          '산책·놀이',
+          '카페·체험',
+          '훈련·사회화',
+          '1:1 만남',
+          '교배',
+          '실종'
+        )
+    )
+  );
 
 DROP POLICY IF EXISTS "meetup_chat_rooms_insert_auth" ON public.meetup_chat_rooms;
 CREATE POLICY "meetup_chat_rooms_insert_auth"
   ON public.meetup_chat_rooms FOR INSERT
   TO authenticated
-  WITH CHECK (EXISTS (SELECT 1 FROM public.meetups m WHERE m.id = meetup_id));
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.meetups m
+      WHERE m.id = meetup_id
+        AND btrim(coalesce(m.category, '')) IN (
+          '공원·장소 모임',
+          '산책·놀이',
+          '카페·체험',
+          '훈련·사회화',
+          '1:1 만남',
+          '교배',
+          '실종'
+        )
+    )
+  );
 
 -- 멤버: SELECT는 본인 행만(같은 테이블 EXISTS는 RLS 무한 재귀 42P17 유발)
 DROP POLICY IF EXISTS "meetup_chat_members_select_same_room" ON public.meetup_chat_members;

@@ -23,7 +23,7 @@ import {
   resolveDogSitterPortraitUrl,
   virtualDogPhotoForSeed,
 } from '../data/virtualDogPhotos';
-import { isCareMeetupCategory } from '../utils/meetupCategory';
+import { isCareMeetupCategory, isGroupChatMeetupCategory } from '../utils/meetupCategory';
 import type { Meetup } from '../types';
 import { isAuthUserUuid } from '../../lib/profileIds';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
@@ -500,7 +500,7 @@ export function MeetupDetailPage() {
           </div>
         )}
 
-        {user && (
+        {user && isGroupChatMeetupCategory(meetup.category) && (
           <div className="mb-4">
             <Link
               to={`/meetup/${meetup.id}/group-chat`}
