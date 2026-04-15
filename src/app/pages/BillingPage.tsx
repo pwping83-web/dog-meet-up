@@ -256,7 +256,7 @@ export function BillingPage() {
                 </p>
                 {promoFree ? (
                   <div className="rounded-2xl border-2 border-pink-200 bg-pink-50 px-3 py-3 text-center text-sm font-bold leading-snug text-pink-800">
-                    🎁 지금은 무료 — 만나자에서 「교배」로 글을 올리세요
+                    🎁 지금은 무료 — 만나자에서 「교배」로 글을 등록
                   </div>
                 ) : (
                   <button
