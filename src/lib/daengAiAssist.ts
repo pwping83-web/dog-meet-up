@@ -85,7 +85,7 @@ function normalizeWeeklyKoreanOnly(input: string): string {
 /** MBTI 확장 해석은 한국어만 노출 (영문/기타 외국어 토큰 제거) */
 function normalizeMbtiKoreanOnly(input: string): string {
   return input
-    .replace(/[^\p{Script=Hangul}\p{Number}\s.,!?~"'“”‘’()\-:·]/gu, ' ')
+    .replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣0-9\s.,!?~"'“”‘’()\-:·]/g, ' ')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/\s+([,.!?])/g, '$1')
@@ -95,7 +95,7 @@ function normalizeMbtiKoreanOnly(input: string): string {
 /** 전 task 공통: 영문 토큰 제거 후 한글/숫자 중심으로 정리 */
 function normalizeKoreanOnlyCommon(input: string): string {
   return input
-    .replace(/[^\p{Script=Hangul}\p{Number}\s.,!?~"'“”‘’()\-:·]/gu, ' ')
+    .replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣0-9\s.,!?~"'“”‘’()\-:·]/g, ' ')
     .replace(/[ \t]{2,}/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .replace(/\s+([,.!?])/g, '$1')

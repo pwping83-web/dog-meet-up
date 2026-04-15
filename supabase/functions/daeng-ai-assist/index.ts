@@ -10,7 +10,7 @@ const corsHeaders: Record<string, string> = {
 /** 전 task 공통: 영문 토큰 제거 후 한글/숫자 중심으로 정리 */
 function normalizeKoreanOnlyCommon(input: string): string {
   return input
-    .replace(/[^\p{Script=Hangul}\p{Number}\s.,!?~"'“”‘’()\-:·]/gu, " ")
+    .replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣0-9\s.,!?~"'“”‘’()\-:·]/g, " ")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/\s+([,.!?])/g, "$1")
@@ -273,6 +273,8 @@ Deno.serve(async (req) => {
         const kind = String(payload.kind ?? "moija");
         const hints = String(payload.hints ?? "").slice(0, 800);
         const currentCategory = String(payload.currentCategory ?? "").trim();
+        const careNeedTarget = String(payload.careNeedTarget ?? "both").trim(); // both | dog_sitter | guard_mom
+        const wantDaengPickup = Boolean(payload.wantDaengPickup);
         const moija = "공원·장소 모임, 산책·놀이, 카페·체험, 훈련·사회화";
         const mannaja = "1:1 만남, 교배, 실종";
         const allowed = kind === "mannaja" ? mannaja : kind === "dolbom" ? "돌봄" : moija;
@@ -282,10 +284,15 @@ Deno.serve(async (req) => {
         const sysDolbomOwner =
           "중요: '돌봄'은 반드시 맡기는 사람(보호자) 관점으로 써. " +
           "문장에 '맡아주실 분 찾고 있어요/부탁드려요/가능하실까요' 같은 요청형을 사용하고, " +
-          "'제가 제공해요/도와드려요/맡아드려요' 같은 제공자 관점 표현은 절대 쓰지 마.";
+          "'제가 제공해요/도와드려요/맡아드려요' 같은 제공자 관점 표현은 절대 쓰지 마. " +
+          "또한 희망 대상을 반드시 반영해: dog_sitter=댕집사 희망, guard_mom=보호맘 희망, both=둘 다 가능. " +
+          "wantDaengPickup=true 이고 guard_mom 또는 both 일 때만 '보호맘 픽업 희망'을 자연스럽게 포함해.";
         const sys = kind === "dolbom" ? `${sysCommon} ${sysDolbomOwner}` : sysCommon;
         const user = `글 유형: ${kind}. 사용자 메모/키워드:\n${hints || "(비어 있음)"}\n` +
-          (currentCategory ? `선호 주제(가능하면 맞출 것): ${currentCategory}\n` : "");
+          (currentCategory ? `선호 주제(가능하면 맞출 것): ${currentCategory}\n` : "") +
+          (kind === "dolbom"
+            ? `돌봄 희망 대상: ${careNeedTarget}\n보호맘 픽업 희망 체크: ${wantDaengPickup ? "예" : "아니오"}\n`
+            : "");
         const raw = await llmChat(sys, user, 480);
         const obj = extractJsonObject(raw);
         if (!obj?.title || !obj?.description) {

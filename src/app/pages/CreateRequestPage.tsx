@@ -81,6 +81,16 @@ function normalizeDolbomOwnerTone(input: string): string {
     .trim();
 }
 
+/** AI 결과를 폼에 반영하기 직전에 한글/숫자/기본 문장부호만 허용 */
+function normalizeAiKoreanOnly(input: string): string {
+  return input
+    .replace(/[^ㄱ-ㅎㅏ-ㅣ가-힣0-9\s.,!?~"'“”‘’()\-:·]/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
 export function CreateRequestPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -881,6 +891,8 @@ export function CreateRequestPage() {
               task="meetup_draft"
               payload={{
                 kind,
+                careNeedTarget,
+                wantDaengPickup,
                 hints:
                   [formData.title, formData.description].filter((s) => s.trim()).join('\n') ||
                   '반려견 모임·산책·돌봄 글을 쓰고 싶어요.',
@@ -892,15 +904,16 @@ export function CreateRequestPage() {
                   return;
                 }
                 if (r.fields?.title || r.fields?.description) {
-                  const titleFromAi = r.fields?.title?.trim() || '';
-                  const descFromAi = r.fields?.description?.trim() || '';
+                  const titleFromAi = normalizeAiKoreanOnly(r.fields?.title?.trim() || '');
+                  const descFromAi = normalizeAiKoreanOnly(r.fields?.description?.trim() || '');
                   setFormData((prev) => ({
                     ...prev,
                     title:
                       kind === 'dolbom'
                         ? normalizeDolbomOwnerTone(titleFromAi) || prev.title
                         : titleFromAi || prev.title,
-                    category: r.fields?.category?.trim() || prev.category,
+                    // 사용자가 고른 주제(예: 교배)는 AI가 바꾸지 않음
+                    category: prev.category,
                     description:
                       kind === 'dolbom'
                         ? normalizeDolbomOwnerTone(descFromAi) || prev.description
