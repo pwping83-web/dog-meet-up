@@ -104,6 +104,20 @@ export function GuardMomRegisterPage() {
   const [introPhotoUrls, setIntroPhotoUrls] = useState<string[]>([]);
   const [regionGpsBusy, setRegionGpsBusy] = useState(false);
 
+  const showApplySuccessToast = useCallback((role: 'guard_mom' | 'sitter') => {
+    toast.success('신청서를 보냈어요! 🎉', {
+      description:
+        role === 'guard_mom'
+          ? '관리 확인 후 인증 돌봄 목록에 노출돼요.'
+          : '작성자와 채팅에서 일정·조건을 맞춰 보세요.',
+      duration: 4200,
+      style: {
+        fontSize: '15px',
+        padding: '14px 16px',
+      },
+    });
+  }, []);
+
   const handleFindCurrentLocation = async () => {
     if (!locationBasedEnabled) {
       alert('하단 「위치」탭에서 위치 기반을 켠 뒤, 다시 「현재 위치 찾기」를 눌러 주세요.');
@@ -205,7 +219,7 @@ export function GuardMomRegisterPage() {
       };
       const { error } = await supabase.from('certified_guard_moms').upsert(payload, { onConflict: 'user_id' });
       if (error) throw new Error(friendlyCertifiedGuardMomsError(error.message));
-      toast.success('신청서를 보냈어요.');
+      showApplySuccessToast('guard_mom');
       await load();
       broadcastCertifiedCareDataChanged();
     } catch (e) {
@@ -266,7 +280,7 @@ export function GuardMomRegisterPage() {
       }
       await load();
       broadcastCertifiedCareDataChanged();
-      toast.success('신청서를 보냈어요.');
+      showApplySuccessToast('sitter');
     } catch (e) {
       setSaveErr((e as Error).message);
     } finally {
