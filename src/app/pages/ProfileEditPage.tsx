@@ -132,12 +132,17 @@ export function ProfileEditPage() {
   const [general, setGeneral] = useState<ProfileModeFace>(() => emptyFace());
   const pendingGeneralRef = useRef<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const latestPreviewUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    latestPreviewUrlRef.current = general.localPreviewUrl;
+  }, [general.localPreviewUrl]);
 
   useEffect(() => {
     return () => {
-      if (general.localPreviewUrl) URL.revokeObjectURL(general.localPreviewUrl);
+      if (latestPreviewUrlRef.current) URL.revokeObjectURL(latestPreviewUrlRef.current);
     };
-  }, [general.localPreviewUrl]);
+  }, []);
 
   const loadProfile = useCallback(async () => {
     if (!user) {
@@ -198,14 +203,18 @@ export function ProfileEditPage() {
   ): Promise<string | null> => {
     const pending = pendingRef.current;
     if (pending) {
+      const { data: sess } = await supabase.auth.getSession();
+      if (!sess.session) {
+        throw new Error('로그인 세션이 만료되었어요. 다시 로그인 후 저장해 주세요.');
+      }
+
       let uploadFile = pending;
-      if (pending.size > 5 * 1024 * 1024) {
-        try {
-          uploadFile = await resizeAvatarForUpload(pending);
-        } catch {
-          // 리사이즈 실패 시 원본으로 계속 진행
-          uploadFile = pending;
-        }
+      try {
+        // 프로필 이미지도 강아지 등록처럼 모바일 원본을 JPG로 정규화해 업로드 안정성 확보
+        uploadFile = await resizeAvatarForUpload(pending);
+      } catch {
+        // 리사이즈 실패 시 원본으로 계속 진행 (최후 fallback)
+        uploadFile = pending;
       }
       const safeExt = safeImageExtForDogPhotos(uploadFile);
       const path = `user-avatars/${uid}/${Date.now()}.${safeExt}`;
@@ -258,7 +267,7 @@ export function ProfileEditPage() {
         );
       } catch (e) {
         const msg = (e as Error).message;
-        alert(msg.includes('upload') ? '프로필 사진 업로드에 실패했습니다.' : msg);
+        alert(msg.includes('upload') ? `프로필 사진 업로드에 실패했습니다.\n(${msg})` : msg);
         return;
       }
 
@@ -467,12 +476,16 @@ export function ProfileEditPage() {
                   <div className="relative z-10">
                     {avatarMain.kind === 'image' ? (
                       <div className="relative h-24 w-24 overflow-hidden rounded-3xl border-4 border-orange-200 shadow-inner">
-                        <ImageWithFallback
-                          src={avatarMain.src}
-                          fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
-                          alt="프로필 사진"
-                          className="h-full w-full object-cover"
-                        />
+                        {avatarMain.src.startsWith('blob:') || avatarMain.src.startsWith('data:') ? (
+                          <img src={avatarMain.src} alt="프로필 사진 미리보기" className="h-full w-full object-cover" />
+                        ) : (
+                          <ImageWithFallback
+                            src={avatarMain.src}
+                            fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
+                            alt="프로필 사진"
+                            className="h-full w-full object-cover"
+                          />
+                        )}
                       </div>
                     ) : (
                       <div
