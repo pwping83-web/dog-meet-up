@@ -10,7 +10,7 @@ const corsHeaders: Record<string, string> = {
 /** 전 task 공통: 영문 토큰 제거 후 한글/숫자 중심으로 정리 */
 function normalizeKoreanOnlyCommon(input: string): string {
   return input
-    .replace(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g, " ")
+    .replace(/[^\p{Script=Hangul}\p{Number}\s.,!?~"'“”‘’()\-:·]/gu, " ")
     .replace(/[ \t]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/\s+([,.!?])/g, "$1")
