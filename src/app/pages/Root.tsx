@@ -38,6 +38,10 @@ export function Root() {
     location.pathname.startsWith('/sitter/') ||
     location.pathname.startsWith('/guard-mom');
 
+  /** 마이·프로필 수정 — 페이지 자체 헤더만 쓰고 전역(댕댕마켓) 헤더는 숨김 */
+  const isMyProfileShell =
+    location.pathname === '/my' || location.pathname === '/profile/edit';
+
   const showCommunityBottom =
     isExplorePage ||
     isMeetupDetailPage ||
@@ -93,7 +97,7 @@ export function Root() {
       <AuthReturnRedirect />
       <div className="relative flex min-h-[100dvh] w-full max-w-[min(100%,480px)] flex-col overflow-hidden bg-white shadow-2xl">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          {!hasOwnNav && !isAdminPage && <Header />}
+          {!hasOwnNav && !isAdminPage && !isMyProfileShell && <Header />}
           <main
             className="relative min-h-0 flex-1 overflow-x-hidden"
             style={

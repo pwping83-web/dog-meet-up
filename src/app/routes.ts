@@ -15,7 +15,8 @@ import { RouteErrorPage } from './pages/RouteErrorPage';
  * - /meetup/:id : Meetup detail + join requests
  * - /sitter/:id : Dog sitter profile (목업)
  * - /chats : 채팅(데모 대화)
- * - /my : User profile and settings
+ * - /my : User profile (내댕댕)
+ * - /profile/edit : ProfileEditPage (닉네임·아바타·전화)
  * - /login, /signup : Authentication
  * 
  * All routes use Root component as wrapper for consistent layout
@@ -30,6 +31,7 @@ import { CreateRequestPage } from './pages/CreateRequestPage';
 import { DogSitterProfilePage } from './pages/DogSitterProfilePage';
 import { MeetupDetailPage } from './pages/MeetupDetailPage';
 import { MyPage } from './pages/MyPage';
+import { ProfileEditPage } from './pages/ProfileEditPage';
 import { AdminGatePage } from './pages/AdminGatePage';
 import { LoginPage } from './pages/LoginPage';
 import { SignupPage } from './pages/SignupPage';
@@ -64,8 +66,8 @@ export const router = createBrowserRouter([
       { path: 'sitter/:id', Component: DogSitterProfilePage },   // Dog sitter profile
       { path: 'meetup/:id', Component: MeetupDetailPage },        // Meetup detail + join requests
       { path: 'member/:id', Component: MemberProfilePage },         // 공개 회원 프로필 → 채팅
-      { path: 'my', Component: MyPage },                          // User profile
-      { path: 'profile/edit', Component: MyPage },                // Legacy path -> MyPage
+      { path: 'my', Component: MyPage },                          // User profile (내댕댕)
+      { path: 'profile/edit', Component: ProfileEditPage },       // 닉네임·사진·전화 등 수정
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration
       { path: 'dog/:id', Component: DogProfilePublicPage },       // Public dog profile from dog_profiles
       { path: 'dog-mbti-test', Component: DogMbtiTestPage },      // Dog MBTI test

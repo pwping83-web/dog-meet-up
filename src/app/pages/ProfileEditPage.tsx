@@ -1,7 +1,18 @@
 // 파일 경로: src/app/pages/ProfileEditPage.tsx
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { ArrowLeft, Camera, MapPin, CheckCircle2, ShieldCheck, ChevronDown, Loader2, Home, BadgeCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  Camera,
+  MapPin,
+  CheckCircle2,
+  ShieldCheck,
+  ChevronDown,
+  Loader2,
+  Home,
+  BadgeCheck,
+  Bell,
+} from 'lucide-react';
 import { LocationPickerModal } from '../components/LocationPickerModal';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { useUserLocation } from '../../contexts/UserLocationContext';
@@ -304,7 +315,14 @@ export function ProfileEditPage() {
             <ArrowLeft className="h-6 w-6" />
           </button>
           <h1 className="text-lg font-extrabold text-white">프로필 수정</h1>
-          <div className="w-8" aria-hidden />
+          <Link
+            to="/notifications"
+            className="relative shrink-0 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
+            aria-label="알림 설정"
+          >
+            <Bell className="h-5 w-5" aria-hidden />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500" aria-hidden />
+          </Link>
         </div>
       </header>
 

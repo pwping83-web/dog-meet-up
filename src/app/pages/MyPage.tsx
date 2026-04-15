@@ -18,6 +18,7 @@ import {
   PawPrint,
   BadgeCheck,
   PencilLine,
+  Bell,
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
@@ -291,8 +292,16 @@ export function MyPage() {
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
-        <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between gap-3 px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
+          <Link
+            to="/notifications"
+            className="relative shrink-0 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
+            aria-label="알림 설정"
+          >
+            <Bell className="h-5 w-5" aria-hidden />
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full border-2 border-white bg-red-500" aria-hidden />
+          </Link>
         </div>
       </header>
 
