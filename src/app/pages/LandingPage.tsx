@@ -398,17 +398,6 @@ export function LandingPage() {
                       {d.breed ?? ''}{d.age != null ? ` · ${d.age}살` : ''}
                     </p>
                   </Link>
-                  <Link
-                    to={user?.id && String(dog.owner_id || '') === user.id ? '/my' : `/dog/${dog.id}`}
-                    className={`mt-2 inline-flex w-full items-center justify-center gap-1 rounded-xl px-2 py-2 text-[11px] font-extrabold ${
-                      user?.id && String(dog.owner_id || '') === user.id
-                        ? 'bg-slate-100 text-slate-500'
-                        : 'bg-orange-100 text-orange-700'
-                    }`}
-                  >
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    {user?.id && String(dog.owner_id || '') === user.id ? '내 프로필' : '프로필 보기'}
-                  </Link>
                 </div>
               </motion.div>
             );
