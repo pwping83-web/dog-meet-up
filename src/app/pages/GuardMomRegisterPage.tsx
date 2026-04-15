@@ -27,6 +27,7 @@ import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 import { normalizeIntroPhotoUrls } from '../../lib/careIntroPhotoUpload';
 import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 import { broadcastCertifiedCareDataChanged } from '../../lib/certifiedCareSync';
+import { toast } from 'sonner';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -96,12 +97,10 @@ export function GuardMomRegisterPage() {
   const [offersDaengPickup, setOffersDaengPickup] = useState(false);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
-  const [saveOk, setSaveOk] = useState(false);
   const [saving, setSaving] = useState(false);
   const [listingBusy, setListingBusy] = useState(false);
   const [sitterIntro, setSitterIntro] = useState('');
   const [sitterSaving, setSitterSaving] = useState(false);
-  const [sitterSaveOk, setSitterSaveOk] = useState(false);
   const [introPhotoUrls, setIntroPhotoUrls] = useState<string[]>([]);
   const [regionGpsBusy, setRegionGpsBusy] = useState(false);
 
@@ -177,14 +176,11 @@ export function GuardMomRegisterPage() {
   useEffect(() => {
     if (!user?.id || careRole !== 'sitter') return;
     setSitterIntro(readSitterIntro(user.id));
-    setSitterSaveOk(false);
   }, [user?.id, careRole]);
 
   const selectCareRole = (next: 'guard_mom' | 'sitter') => {
     setCareRole(next);
     setSaveErr(null);
-    setSaveOk(false);
-    setSitterSaveOk(false);
     if (next === 'sitter') {
       writeCareProviderTrack('sitter_only');
     } else {
@@ -195,7 +191,6 @@ export function GuardMomRegisterPage() {
   const handleSave = async () => {
     if (!user) return;
     setSaveErr(null);
-    setSaveOk(false);
     setSaving(true);
     try {
       const payload = {
@@ -210,7 +205,7 @@ export function GuardMomRegisterPage() {
       };
       const { error } = await supabase.from('certified_guard_moms').upsert(payload, { onConflict: 'user_id' });
       if (error) throw new Error(friendlyCertifiedGuardMomsError(error.message));
-      setSaveOk(true);
+      toast.success('신청서를 보냈어요.');
       await load();
       broadcastCertifiedCareDataChanged();
     } catch (e) {
@@ -228,7 +223,6 @@ export function GuardMomRegisterPage() {
       return;
     }
     setSaveErr(null);
-    setSitterSaveOk(false);
     setSitterSaving(true);
     try {
       writeCareProviderTrack('sitter_only');
@@ -272,7 +266,7 @@ export function GuardMomRegisterPage() {
       }
       await load();
       broadcastCertifiedCareDataChanged();
-      setSitterSaveOk(true);
+      toast.success('신청서를 보냈어요.');
     } catch (e) {
       setSaveErr((e as Error).message);
     } finally {
@@ -586,7 +580,6 @@ export function GuardMomRegisterPage() {
                   </label>
 
                   {saveErr && <p className="mt-3 text-xs font-semibold text-red-600">{saveErr}</p>}
-                  {saveOk && <p className="mt-3 text-xs font-semibold text-orange-600">신청서를 보냈어요.</p>}
 
                   <button
                     type="button"
@@ -717,16 +710,13 @@ export function GuardMomRegisterPage() {
                   {saveErr && careRole === 'sitter' && (
                     <p className="mt-2 text-xs font-semibold text-red-600">{saveErr}</p>
                   )}
-                  {sitterSaveOk && (
-                    <p className="mt-2 text-xs font-semibold text-emerald-700">신청 내용을 저장했어요.</p>
-                  )}
                   <button
                     type="button"
                     disabled={sitterSaving}
                     onClick={() => void handleSitterApply()}
                     className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white disabled:opacity-60"
                   >
-                    {sitterSaving ? '저장 중…' : '신청서 보내기'}
+                    {sitterSaving ? '보내는 중…' : '신청서 보내기'}
                   </button>
                 </div>
               </div>

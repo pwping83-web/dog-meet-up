@@ -169,6 +169,8 @@ export function LandingPage() {
     return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
   }, [userLocation.district, extraCareRegions]);
 
+  const dogMbtiNavState = useMemo(() => ({ mbtiReturn: location.pathname }), [location.pathname]);
+
   const getQuoteCount = (id: string) => mockQuotes.filter((q) => q.meetupId === id).length;
   const meetupFeedItems = mergedRequests
     .filter((r) => !isCareMeetupCategory(r.category) && meetupVisibleInPublicFeed(r, promoFree))
@@ -501,7 +503,7 @@ export function LandingPage() {
             const to = item.action === 'mbti' ? '/dog-mbti-test' : '/sitters';
             return (
               <motion.div key={item.step} variants={fadeUp} custom={i + 2}>
-                <Link to={to} className={cardClass}>
+                <Link to={to} state={item.action === 'mbti' ? dogMbtiNavState : undefined} className={cardClass}>
                   {inner}
                 </Link>
               </motion.div>
@@ -522,7 +524,7 @@ export function LandingPage() {
             <h2 className="text-xl text-slate-900 max-md:text-[1.25rem] md:text-lg" style={{ fontWeight: 900 }}>강아지 MBTI</h2>
             <p className="mt-1 text-sm text-slate-400 max-md:text-[13px] md:mt-0.5 md:text-[11px]" style={{ fontWeight: 600 }}>성격에 맞는 댕친을 찾아요</p>
           </div>
-          <Link to="/dog-mbti-test" className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
+          <Link to="/dog-mbti-test" state={dogMbtiNavState} className="flex items-center gap-1 text-sm text-orange-600 active:scale-95 transition-all max-md:text-sm md:text-xs" style={{ fontWeight: 800 }}>
             테스트하기 <ArrowRight className="h-4 w-4 max-md:h-4 md:h-3.5 md:w-3.5" />
           </Link>
         </motion.div>
@@ -536,6 +538,7 @@ export function LandingPage() {
             >
               <Link
                 to="/dog-mbti-test"
+                state={dogMbtiNavState}
                 className="block rounded-3xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:shadow-md active:scale-[0.97] max-md:p-4 md:rounded-2xl md:p-3.5"
               >
                 <div className={`mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${m.color} text-2xl shadow-md max-md:mb-3 max-md:h-12 max-md:w-12 max-md:text-[1.35rem] md:mb-2.5 md:h-10 md:w-10 md:rounded-xl md:text-xl`}>

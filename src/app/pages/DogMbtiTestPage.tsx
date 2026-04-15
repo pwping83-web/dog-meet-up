@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { mbtiQuestions, dogMbtiResults, calculateMbti, DogMbtiType } from '../data/dogMbtiData';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,6 +8,22 @@ import { AiDoumiButton } from '../components/AiDoumiButton';
 export function DogMbtiTestPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  /** 탐색·마이 등에서 넘어올 때 `state.mbtiReturn` 으로 복귀 경로 지정 */
+  const exitMbti = useCallback(() => {
+    const raw = (location.state as { mbtiReturn?: unknown } | null)?.mbtiReturn;
+    const path = typeof raw === 'string' ? raw.trim() : '';
+    if (path.startsWith('/') && path.length < 256 && !path.includes('//')) {
+      navigate(path);
+      return;
+    }
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate('/explore');
+  }, [location.state, navigate]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [scores, setScores] = useState<Record<DogMbtiType, number>>({
     shy: 0,
@@ -81,7 +97,7 @@ export function DogMbtiTestPage() {
         {/* 헤더 */}
         <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-orange-100 z-50">
           <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">
-            <button onClick={() => navigate('/my')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+            <button onClick={() => exitMbti()} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
               <ArrowLeft className="w-6 h-6" />
             </button>
             <span className="ml-2 font-bold text-slate-800 text-lg">강아지 MBTI 결과 🐾</span>
@@ -200,7 +216,7 @@ export function DogMbtiTestPage() {
       {/* 헤더 */}
       <header className="sticky top-0 bg-white/80 backdrop-blur-xl border-b border-orange-100 z-50">
         <div className="flex items-center h-14 px-4 max-w-screen-md mx-auto">
-          <button onClick={() => navigate('/my')} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <button onClick={() => exitMbti()} className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
             <ArrowLeft className="w-6 h-6" />
           </button>
           <span className="ml-2 font-bold text-slate-800 text-lg">강아지 MBTI 테스트 🐾</span>

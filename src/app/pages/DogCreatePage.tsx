@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import { ChevronLeft, Camera, Loader2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -120,6 +120,7 @@ function clearDraft() {
 
 export function DogCreatePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user: sessionUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -407,7 +408,7 @@ export function DogCreatePage() {
               <p className="mb-3 text-sm leading-relaxed text-slate-600">{dogMbtiResults[mbtiType].description}</p>
               <button
                 type="button"
-                onClick={() => navigate('/dog-mbti-test')}
+                onClick={() => navigate('/dog-mbti-test', { state: { mbtiReturn: location.pathname } })}
                 className="text-sm font-bold text-orange-600 hover:underline"
               >
                 다시 테스트하기 →
@@ -426,7 +427,7 @@ export function DogCreatePage() {
               </p>
               <button
                 type="button"
-                onClick={() => navigate('/dog-mbti-test')}
+                onClick={() => navigate('/dog-mbti-test', { state: { mbtiReturn: location.pathname } })}
                 className="rounded-xl bg-gradient-to-r from-orange-500 to-yellow-500 px-6 py-3 text-sm font-bold text-white shadow-lg transition-all active:scale-95"
               >
                 성격 테스트 하러가기 🎯
