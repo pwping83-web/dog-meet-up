@@ -663,7 +663,7 @@ export function GuardMomRegisterPage() {
                     hint="집·산책 환경 등, 맡기는 분이 볼 수 있어요. 대표 1장만."
                   />
                   <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/90 px-3 py-2.5">
-                    <p className="text-[11px] font-bold text-slate-600">돌봄 지역</p>
+                    <p className="text-[11px] font-bold text-slate-600">돌봄 지역 · 현재 위치</p>
                     <button
                       type="button"
                       disabled={saving || regionGpsBusy}
@@ -682,6 +682,51 @@ export function GuardMomRegisterPage() {
                         <span className="text-amber-800">위치 기반이 꺼져 있으면 GPS로 찾을 수 없어요.</span>
                       )}
                     </p>
+                    <div className="mt-3 border-t border-slate-200/80 pt-3">
+                      <div className="mb-2 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+                        <p className="text-[11px] font-extrabold text-slate-700">추가 동네</p>
+                        <span className="text-[10px] font-semibold text-slate-400">기준 외 활동 가능</span>
+                      </div>
+                      <RegionSelector
+                        selectedCity={extraCity}
+                        selectedDistrict={extraDistrict}
+                        onCityChange={setExtraCity}
+                        onDistrictChange={setExtraDistrict}
+                        placeholder="추가할 시·구 선택"
+                      />
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={addExtraCareRegion}
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99] disabled:opacity-50"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                        이 동네 추가
+                      </button>
+                      {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
+                      {extraCareRegions.length > 0 && (
+                        <ul className="mt-2 flex flex-wrap gap-2">
+                          {extraCareRegions.map((ex) => (
+                            <li
+                              key={ex.id}
+                              className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
+                            >
+                              {formatRegion(ex.city, ex.district)}
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() => removeExtraCareRegion(ex.id)}
+                                className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
+                                aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+                              >
+                                ×
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <label className="block text-xs font-extrabold text-slate-700">
@@ -738,28 +783,28 @@ export function GuardMomRegisterPage() {
                       </span>
                     </span>
                   </label>
+                </div>
 
-                  {saveErr && <p className="mt-3 text-xs font-semibold text-red-600">{saveErr}</p>}
+                {saveErr && <p className="text-xs font-semibold text-red-600">{saveErr}</p>}
 
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void handleSave()}
+                  className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60"
+                >
+                  {saving ? '보내는 중…' : '신청서 보내기'}
+                </button>
+                {row && (
                   <button
                     type="button"
-                    disabled={saving}
-                    onClick={() => void handleSave()}
-                    className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white disabled:opacity-60"
+                    disabled={cancelBusy || saving}
+                    onClick={() => void handleCancelApplication()}
+                    className="w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
                   >
-                    {saving ? '보내는 중…' : '신청서 보내기'}
+                    {cancelBusy ? '취소 처리 중…' : '신청 취소하기'}
                   </button>
-                  {row && (
-                    <button
-                      type="button"
-                      disabled={cancelBusy || saving}
-                      onClick={() => void handleCancelApplication()}
-                      className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
-                    >
-                      {cancelBusy ? '취소 처리 중…' : '신청 취소하기'}
-                    </button>
-                  )}
-                </div>
+                )}
               </>
             ) : (
               <div className="space-y-3">
@@ -850,7 +895,7 @@ export function GuardMomRegisterPage() {
                     />
                   </label>
                   <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50/90 px-3 py-2.5">
-                    <p className="text-[11px] font-bold text-slate-600">방문 지역은 프로필 동네를 써요</p>
+                    <p className="text-[11px] font-bold text-slate-600">방문 지역 · 현재 위치</p>
                     <button
                       type="button"
                       disabled={sitterSaving || regionGpsBusy}
@@ -869,6 +914,51 @@ export function GuardMomRegisterPage() {
                         <span className="text-amber-800">위치 기반이 꺼져 있으면 GPS로 찾을 수 없어요.</span>
                       )}
                     </p>
+                    <div className="mt-3 border-t border-slate-200/80 pt-3">
+                      <div className="mb-2 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-600" aria-hidden />
+                        <p className="text-[11px] font-extrabold text-slate-700">추가 동네</p>
+                        <span className="text-[10px] font-semibold text-slate-400">기준 외 활동 가능</span>
+                      </div>
+                      <RegionSelector
+                        selectedCity={extraCity}
+                        selectedDistrict={extraDistrict}
+                        onCityChange={setExtraCity}
+                        onDistrictChange={setExtraDistrict}
+                        placeholder="추가할 시·구 선택"
+                      />
+                      <button
+                        type="button"
+                        disabled={sitterSaving}
+                        onClick={addExtraCareRegion}
+                        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99] disabled:opacity-50"
+                      >
+                        <Plus className="h-4 w-4 shrink-0" aria-hidden />
+                        이 동네 추가
+                      </button>
+                      {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
+                      {extraCareRegions.length > 0 && (
+                        <ul className="mt-2 flex flex-wrap gap-2">
+                          {extraCareRegions.map((ex) => (
+                            <li
+                              key={ex.id}
+                              className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
+                            >
+                              {formatRegion(ex.city, ex.district)}
+                              <button
+                                type="button"
+                                disabled={sitterSaving}
+                                onClick={() => removeExtraCareRegion(ex.id)}
+                                className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
+                                aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+                              >
+                                ×
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                   <CareIntroPhotoPicker
                     userId={user.id}
@@ -877,77 +967,32 @@ export function GuardMomRegisterPage() {
                     disabled={sitterSaving}
                     hint="방문 돌봄 경험·환경 사진이 있으면 맡기는 분에게 도움이 돼요. 대표 1장만."
                   />
-                  {saveErr && careRole === 'sitter' && (
-                    <p className="mt-2 text-xs font-semibold text-red-600">{saveErr}</p>
-                  )}
+                </div>
+
+                {saveErr && <p className="text-xs font-semibold text-red-600">{saveErr}</p>}
+
+                <button
+                  type="button"
+                  disabled={sitterSaving}
+                  onClick={() => void handleSitterApply()}
+                  className="w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white shadow-sm disabled:opacity-60"
+                >
+                  {sitterSaving ? '보내는 중…' : '신청서 보내기'}
+                </button>
+                {row && (
                   <button
                     type="button"
-                    disabled={sitterSaving}
-                    onClick={() => void handleSitterApply()}
-                    className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white disabled:opacity-60"
+                    disabled={cancelBusy || sitterSaving}
+                    onClick={() => void handleCancelApplication()}
+                    className="w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
                   >
-                    {sitterSaving ? '보내는 중…' : '신청서 보내기'}
+                    {cancelBusy ? '취소 처리 중…' : '신청 취소하기'}
                   </button>
-                  {row && (
-                    <button
-                      type="button"
-                      disabled={cancelBusy || sitterSaving}
-                      onClick={() => void handleCancelApplication()}
-                      className="mt-2 w-full rounded-2xl border border-red-200 bg-red-50 py-3 text-sm font-extrabold text-red-700 disabled:opacity-60"
-                    >
-                      {cancelBusy ? '취소 처리 중…' : '신청 취소하기'}
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
             )}
           </>
         )}
-
-        {/* 추가 동네 — 기본 지역 외 활동 가능한 동네 */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="mb-3 flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
-            <p className="text-sm font-extrabold text-slate-800">추가 동네</p>
-            <span className="ml-auto text-[11px] font-semibold text-slate-400">기본 지역 외 활동 가능한 곳</span>
-          </div>
-          <RegionSelector
-            selectedCity={extraCity}
-            selectedDistrict={extraDistrict}
-            onCityChange={setExtraCity}
-            onDistrictChange={setExtraDistrict}
-            placeholder="추가할 시·구 선택"
-          />
-          <button
-            type="button"
-            onClick={addExtraCareRegion}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
-          >
-            <Plus className="h-4 w-4 shrink-0" aria-hidden />
-            이 동네 추가
-          </button>
-          {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
-          {extraCareRegions.length > 0 && (
-            <ul className="mt-3 flex flex-wrap gap-2">
-              {extraCareRegions.map((ex) => (
-                <li
-                  key={ex.id}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
-                >
-                  {formatRegion(ex.city, ex.district)}
-                  <button
-                    type="button"
-                    onClick={() => removeExtraCareRegion(ex.id)}
-                    className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
-                    aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
-                  >
-                    ×
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
     </div>
   );
