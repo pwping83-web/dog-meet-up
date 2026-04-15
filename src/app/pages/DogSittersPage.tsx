@@ -215,13 +215,16 @@ export function DogSittersPage() {
       setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
     } else {
       let all = (data ?? []) as GuardMomRow[];
-      if (regionGuFilters.length > 0 && all.length === 0) {
-        // 우선 지역에 데이터가 없으면 전체 목록으로 폴백
+      if (regionGuFilters.length > 0 && all.length < 300) {
+        // 지역 우선을 유지하되, 결과가 적으면 전체 목록으로 뒤를 채움
         const { data: fallback } = await supabase
           .from('certified_guard_moms')
           .select('*')
           .order('listing_visible_until', { ascending: false, nullsFirst: false });
-        all = (fallback ?? []) as GuardMomRow[];
+        const localFirst = all;
+        const localIds = new Set(localFirst.map((r) => String(r.id)));
+        const extras = ((fallback ?? []) as GuardMomRow[]).filter((r) => !localIds.has(String(r.id)));
+        all = [...localFirst, ...extras];
       }
       const userIds = Array.from(new Set(all.map((r) => String(r.user_id ?? '').trim()).filter(Boolean)));
       let nickByUserId = new Map<string, string>();

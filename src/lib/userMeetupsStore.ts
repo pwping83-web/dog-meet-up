@@ -180,14 +180,19 @@ export async function syncMeetupsFromDb(): Promise<SyncMeetupsFromDbResult> {
     return { ok: false, error: error.message || 'meetups 동기화 실패' };
   }
   let rows = (data ?? []) as DbMeetupRow[];
-  if (preferredRegion && rows.length === 0) {
-    // 지역 데이터가 아직 적은 초기 단계 폴백
+  if (preferredRegion && rows.length < 500) {
+    // 지역 우선을 유지하되, 목록이 너무 적으면 전체 목록으로 뒤를 채움
     const { data: fallback, error: fallbackError } = await supabase
       .from('meetups')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(500);
-    if (!fallbackError) rows = (fallback ?? []) as DbMeetupRow[];
+    if (!fallbackError) {
+      const localFirst = rows;
+      const localIds = new Set(localFirst.map((r) => r.id));
+      const extras = ((fallback ?? []) as DbMeetupRow[]).filter((r) => !localIds.has(r.id));
+      rows = [...localFirst, ...extras].slice(0, 500);
+    }
   }
   const mapped = rows
     .map(fromDbRow)
