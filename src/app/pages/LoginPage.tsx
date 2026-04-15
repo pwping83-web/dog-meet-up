@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { DAENG_AUTH_RETURN_KEY, DAENG_AUTH_RETURN_TS } from "../components/AuthReturnRedirect";
-import { isSupabaseSmsPhoneAuth } from "../../lib/phoneAuth";
+import { isPhoneAuthLiveMode, isSupabaseSmsPhoneAuth } from "../../lib/phoneAuth";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -138,7 +138,7 @@ export function LoginPage() {
                 className="w-full px-4 py-3.5 border-2 border-slate-200 rounded-2xl focus:outline-none focus:ring-4 focus:ring-orange-500/10 focus:border-orange-500 font-medium placeholder:text-slate-400"
                 required
               />
-              {!isSupabaseSmsPhoneAuth() ? (
+              {!isPhoneAuthLiveMode() ? (
                 <p className="mt-2 text-xs text-slate-500">연습 모드: 문자 없음 · 다음에서 000000</p>
               ) : null}
             </div>
@@ -221,7 +221,9 @@ export function LoginPage() {
                 <br />
                 {isSupabaseSmsPhoneAuth()
                   ? "문자로 인증번호를 보냈어요"
-                  : "연습 모드예요. 아래 코드만 입력하면 돼요"}
+                  : isPhoneAuthLiveMode()
+                    ? "문자로 인증번호를 보냈어요"
+                    : "연습 모드예요. 아래 코드만 입력하면 돼요"}
               </div>
 
               <label className="block text-sm font-bold mb-2 text-slate-700">
@@ -237,7 +239,7 @@ export function LoginPage() {
                 required
               />
               <p className="mt-2 text-center text-xs text-slate-500">
-                {isSupabaseSmsPhoneAuth() ? "문자로 온 숫자 6자리" : "데모: 000000"}
+                {isPhoneAuthLiveMode() ? "문자로 온 숫자 6자리" : "데모: 000000"}
               </p>
 
               <button
@@ -267,8 +269,10 @@ export function LoginPage() {
                 onClick={() => {
                   void (async () => {
                     if (!isSupabaseSmsPhoneAuth()) {
-                      alert("데모 모드에서는 문자를 다시 보내지 않아요. 000000을 입력해 주세요.");
-                      return;
+                      if (!isPhoneAuthLiveMode()) {
+                        alert("데모 모드에서는 문자를 다시 보내지 않아요. 000000을 입력해 주세요.");
+                        return;
+                      }
                     }
                     try {
                       setPhoneSendBusy(true);

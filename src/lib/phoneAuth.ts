@@ -1,6 +1,27 @@
-/** VITE_PHONE_AUTH=sms 이면 Supabase Phone(SMS) OTP. 그 외는 데모(문자 없음, 코드 000000·익명 등). */
+export type PhoneAuthMode = 'sms' | 'solapi' | 'demo';
+
+/** VITE_PHONE_AUTH 값: sms | solapi | (그 외 demo) */
+export function getPhoneAuthMode(): PhoneAuthMode {
+  const mode = import.meta.env.VITE_PHONE_AUTH?.trim().toLowerCase();
+  if (mode === 'sms') return 'sms';
+  if (mode === 'solapi') return 'solapi';
+  return 'demo';
+}
+
+/** Supabase 기본 Phone(SMS) OTP 모드 */
 export function isSupabaseSmsPhoneAuth(): boolean {
-  return import.meta.env.VITE_PHONE_AUTH?.trim().toLowerCase() === 'sms';
+  return getPhoneAuthMode() === 'sms';
+}
+
+/** Solapi 커스텀 OTP 모드 */
+export function isSolapiPhoneAuth(): boolean {
+  return getPhoneAuthMode() === 'solapi';
+}
+
+/** 실제 문자 발송이 일어나는 모드(sms/solapi) */
+export function isPhoneAuthLiveMode(): boolean {
+  const mode = getPhoneAuthMode();
+  return mode === 'sms' || mode === 'solapi';
 }
 
 /**
