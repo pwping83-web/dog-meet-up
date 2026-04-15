@@ -48,19 +48,24 @@ ALTER TABLE public.dog_profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "dog_profiles_select_all" ON public.dog_profiles;
 CREATE POLICY "dog_profiles_select_all"
-  ON public.dog_profiles FOR SELECT USING (true);
+  ON public.dog_profiles FOR SELECT TO anon, authenticated
+  USING (true);
 
 DROP POLICY IF EXISTS "dog_profiles_insert_own" ON public.dog_profiles;
 CREATE POLICY "dog_profiles_insert_own"
-  ON public.dog_profiles FOR INSERT WITH CHECK (auth.uid() = owner_id);
+  ON public.dog_profiles FOR INSERT TO authenticated
+  WITH CHECK (auth.uid() IS NOT NULL AND auth.uid() = owner_id);
 
 DROP POLICY IF EXISTS "dog_profiles_update_own" ON public.dog_profiles;
 CREATE POLICY "dog_profiles_update_own"
-  ON public.dog_profiles FOR UPDATE USING (auth.uid() = owner_id);
+  ON public.dog_profiles FOR UPDATE TO authenticated
+  USING (auth.uid() = owner_id)
+  WITH CHECK (auth.uid() = owner_id);
 
 DROP POLICY IF EXISTS "dog_profiles_delete_own" ON public.dog_profiles;
 CREATE POLICY "dog_profiles_delete_own"
-  ON public.dog_profiles FOR DELETE USING (auth.uid() = owner_id);
+  ON public.dog_profiles FOR DELETE TO authenticated
+  USING (auth.uid() = owner_id);
 
 -- ─── 3) Storage: dog-photos 버킷 (DogCreatePage 업로드) ───
 INSERT INTO storage.buckets (id, name, public)
@@ -80,7 +85,8 @@ CREATE POLICY "dog_photos_auth_insert"
 DROP POLICY IF EXISTS "dog_photos_auth_update" ON storage.objects;
 CREATE POLICY "dog_photos_auth_update"
   ON storage.objects FOR UPDATE TO authenticated
-  USING (bucket_id = 'dog-photos');
+  USING (bucket_id = 'dog-photos')
+  WITH CHECK (bucket_id = 'dog-photos');
 
 DROP POLICY IF EXISTS "dog_photos_auth_delete" ON storage.objects;
 CREATE POLICY "dog_photos_auth_delete"

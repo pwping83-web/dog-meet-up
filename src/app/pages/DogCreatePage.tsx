@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { ChevronLeft, Camera, Loader2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import { dogMbtiResults, DogMbtiType } from '../data/dogMbtiData';
 
 const CREATE_DOG_DRAFT_KEY = 'daeng-create-dog-draft-v1';
@@ -119,6 +120,7 @@ function clearDraft() {
 
 export function DogCreatePage() {
   const navigate = useNavigate();
+  const { user: sessionUser } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(false);
@@ -251,6 +253,14 @@ export function DogCreatePage() {
     setLoading(true);
 
     try {
+      const {
+        data: { user: fetchedUser },
+      } = await supabase.auth.getUser();
+      const user = fetchedUser ?? sessionUser;
+      if (!user?.id) {
+        throw new Error('로그인 후 등록할 수 있어요.');
+      }
+
       let publicUrl = '';
 
       let uploadBody: Blob | File | null = null;
@@ -268,7 +278,7 @@ export function DogCreatePage() {
           ? String(ext).toLowerCase()
           : 'jpg';
         const fileName = `${Math.random().toString(36).slice(2)}.${safeExt}`;
-        const filePath = `profiles/${fileName}`;
+        const filePath = `profiles/${user.id}/${fileName}`;
         const fileForUpload =
           uploadBody instanceof File
             ? uploadBody
@@ -282,13 +292,6 @@ export function DogCreatePage() {
 
         const { data } = supabase.storage.from('dog-photos').getPublicUrl(filePath);
         publicUrl = data.publicUrl;
-      }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user?.id) {
-        throw new Error('로그인 후 등록할 수 있어요.');
       }
 
       const { data: existingDog, error: existingDogError } = await supabase
@@ -331,7 +334,15 @@ export function DogCreatePage() {
       alert('🐶 우리 댕댕이가 성공적으로 등록되었습니다!');
       navigate('/explore');
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : String(error);
+      const msg =
+        error instanceof Error
+          ? error.message
+          : typeof error === 'object' &&
+              error &&
+              'message' in error &&
+              typeof (error as { message: unknown }).message === 'string'
+            ? (error as { message: string }).message
+            : String(error);
       alert('등록 중 오류 발생: ' + msg);
     } finally {
       setLoading(false);
