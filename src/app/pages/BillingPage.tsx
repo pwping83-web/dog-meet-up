@@ -150,7 +150,7 @@ export function BillingPage() {
         {/* 프로모 배너 */}
         {promoFree && (
           <div className="rounded-3xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50 to-white p-5 text-center shadow-sm">
-            <p className="text-xl font-black text-emerald-800">🎉 {PROMO_FREE_LAUNCH_TITLE}</p>
+            <p className="text-base font-extrabold leading-snug text-emerald-800">{PROMO_FREE_LAUNCH_TITLE}</p>
             <p className="mt-2 text-sm font-semibold text-emerald-700">{PROMO_FREE_LAUNCH_BLURB}</p>
           </div>
         )}
@@ -203,7 +203,7 @@ export function BillingPage() {
                   {guardMomProduct.description}
                 </p>
                 {promoFree ? (
-                  <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 py-4 text-center text-base font-extrabold text-emerald-800">
+                  <div className="rounded-2xl border-2 border-emerald-200 bg-emerald-50 px-3 py-3 text-center text-sm font-bold leading-snug text-emerald-800">
                     🎁 지금은 무료 — 인증만 받으면 목록에 올라가요
                   </div>
                 ) : (
@@ -255,7 +255,7 @@ export function BillingPage() {
                   {breedingProduct.description}
                 </p>
                 {promoFree ? (
-                  <div className="rounded-2xl border-2 border-pink-200 bg-pink-50 py-4 text-center text-base font-extrabold text-pink-800">
+                  <div className="rounded-2xl border-2 border-pink-200 bg-pink-50 px-3 py-3 text-center text-sm font-bold leading-snug text-pink-800">
                     🎁 지금은 무료 — 만나자에서 「교배」로 글을 올리세요
                   </div>
                 ) : (
