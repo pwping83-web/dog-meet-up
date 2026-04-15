@@ -213,6 +213,8 @@ export interface Database {
           description: string;
           location: string;
           district: string;
+          region_si: string | null;
+          region_gu: string | null;
           images: string[];
           estimated_cost: string | null;
           listing_visible_until: string | null;
@@ -229,6 +231,8 @@ export interface Database {
           description?: string;
           location?: string;
           district?: string;
+          region_si?: string | null;
+          region_gu?: string | null;
           images?: string[];
           estimated_cost?: string | null;
           listing_visible_until?: string | null;
@@ -245,6 +249,8 @@ export interface Database {
           description?: string;
           location?: string;
           district?: string;
+          region_si?: string | null;
+          region_gu?: string | null;
           images?: string[];
           estimated_cost?: string | null;
           listing_visible_until?: string | null;

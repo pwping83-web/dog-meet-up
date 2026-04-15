@@ -192,16 +192,37 @@ export function DogSittersPage() {
   const refetchGuardMoms = useCallback(async () => {
     setGuardLoading(true);
     setGuardMomsLoadError(null);
-    const { data, error } = await supabase
+    const regionGuFilters = Array.from(
+      new Set(referenceDistricts.map((d) => d.trim()).filter(Boolean)),
+    );
+    const preferredSi = location.city?.trim() || null;
+
+    let query = supabase
       .from('certified_guard_moms')
       .select('*')
       .order('listing_visible_until', { ascending: false, nullsFirst: false });
+
+    if (regionGuFilters.length > 0) {
+      // 하이퍼로컬 우선: region_gu(필수) + region_si(가능 시) 조건을 먼저 사용
+      query = query.in('region_gu', regionGuFilters);
+      if (preferredSi) query = query.eq('region_si', preferredSi);
+    }
+
+    const { data, error } = await query;
     if (error) {
       setGuardMoms([]);
       setDbDogSitters([]);
       setGuardMomsLoadError(error.message || '목록을 불러오지 못했어요.');
     } else {
-      const all = (data ?? []) as GuardMomRow[];
+      let all = (data ?? []) as GuardMomRow[];
+      if (regionGuFilters.length > 0 && all.length === 0) {
+        // 우선 지역에 데이터가 없으면 전체 목록으로 폴백
+        const { data: fallback } = await supabase
+          .from('certified_guard_moms')
+          .select('*')
+          .order('listing_visible_until', { ascending: false, nullsFirst: false });
+        all = (fallback ?? []) as GuardMomRow[];
+      }
       const userIds = Array.from(new Set(all.map((r) => String(r.user_id ?? '').trim()).filter(Boolean)));
       let nickByUserId = new Map<string, string>();
       if (userIds.length > 0) {
@@ -228,7 +249,7 @@ export function DogSittersPage() {
       setDbDogSitters(certifiedRows.filter((r) => kind(r) === 'dog_sitter'));
     }
     setGuardLoading(false);
-  }, []);
+  }, [location.city, referenceDistricts]);
 
   useEffect(() => {
     void refetchGuardMoms();

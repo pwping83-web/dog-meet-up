@@ -28,7 +28,7 @@ import type { Meetup } from '../types';
 import type { User } from '@supabase/supabase-js';
 import { persistMeetupForCrossDevice } from '../../lib/userMeetupsStore';
 import { AiDoumiButton } from '../components/AiDoumiButton';
-import { MEETUP_POST_LIABILITY_CHECKBOX_LABEL } from '../../lib/platformLegalCopy';
+import { MEETUP_POST_LIABILITY_CHECKBOX_LABEL, PLATFORM_LEGAL_FULL_ARTICLE } from '../../lib/platformLegalCopy';
 
 const MOIJA_CATEGORIES = [
   { name: '공원·장소 모임', emoji: '🌳' },
@@ -1054,6 +1054,15 @@ export function CreateRequestPage() {
               </Link>
             </span>
           </label>
+
+          <details className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+            <summary className="cursor-pointer text-xs font-extrabold text-slate-700">
+              법적 고지 전문 확인하기
+            </summary>
+            <p className="mt-3 whitespace-pre-line text-[11px] font-medium leading-relaxed text-slate-600">
+              {PLATFORM_LEGAL_FULL_ARTICLE}
+            </p>
+          </details>
 
           <button
             type="submit"

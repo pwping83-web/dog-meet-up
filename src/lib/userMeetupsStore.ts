@@ -2,6 +2,7 @@ import type { Meetup } from '../app/types';
 import { enrichMeetupWithVirtualDogCover } from '../app/data/virtualDogPhotos';
 import { supabase } from './supabase';
 import type { Database } from './supabase';
+import { inferRegionFromLocationAndDistrict, readPrimaryRegionFromUserStorage } from './hyperlocalRegion';
 
 const STORAGE_KEY = 'daeng-user-meetups-v1';
 const MAX_STORED = 50;
@@ -108,6 +109,7 @@ function fromDbRow(row: DbMeetupRow): Meetup {
 }
 
 function toDbInsertRow(meetup: Meetup): Database['public']['Tables']['meetups']['Insert'] {
+  const region = inferRegionFromLocationAndDistrict(meetup.location, meetup.district);
   return {
     id: meetup.id,
     user_id: meetup.userId,
@@ -117,6 +119,8 @@ function toDbInsertRow(meetup: Meetup): Database['public']['Tables']['meetups'][
     description: meetup.description,
     location: meetup.location,
     district: meetup.district,
+    region_si: region?.regionSi || null,
+    region_gu: region?.regionGu || null,
     images: meetup.images ?? [],
     estimated_cost: meetup.estimatedCost ?? null,
     listing_visible_until:
@@ -163,15 +167,28 @@ export type SyncMeetupsFromDbResult = { ok: true } | { ok: false; error: string 
 
 /** Supabase `meetups` → 로컬 DB 캐시. 앱 로드·주기적 갱신·글 작성 직후에 호출 */
 export async function syncMeetupsFromDb(): Promise<SyncMeetupsFromDbResult> {
-  const { data, error } = await supabase
-    .from('meetups')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(500);
+  const preferredRegion = readPrimaryRegionFromUserStorage();
+  let query = supabase.from('meetups').select('*');
+  if (preferredRegion) {
+    // 하이퍼로컬 우선: region 컬럼을 where 첫 축으로 사용
+    query = query
+      .eq('region_si', preferredRegion.regionSi)
+      .eq('region_gu', preferredRegion.regionGu);
+  }
+  const { data, error } = await query.order('created_at', { ascending: false }).limit(500);
   if (error) {
     return { ok: false, error: error.message || 'meetups 동기화 실패' };
   }
-  const rows = (data ?? []) as DbMeetupRow[];
+  let rows = (data ?? []) as DbMeetupRow[];
+  if (preferredRegion && rows.length === 0) {
+    // 지역 데이터가 아직 적은 초기 단계 폴백
+    const { data: fallback, error: fallbackError } = await supabase
+      .from('meetups')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(500);
+    if (!fallbackError) rows = (fallback ?? []) as DbMeetupRow[];
+  }
   const mapped = rows
     .map(fromDbRow)
     .filter((m) => m.id && m.title && m.category)
