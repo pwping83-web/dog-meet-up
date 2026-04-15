@@ -34,6 +34,7 @@ export function MeetupGroupChatPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -218,6 +219,24 @@ export function MeetupGroupChatPage() {
     void loadMessages(roomId, true);
   };
 
+  const handleLeaveRoom = async () => {
+    if (!user?.id || !roomId || leaving) return;
+    const ok = window.confirm('이 단톡방에서 나갈까요?');
+    if (!ok) return;
+    setLeaving(true);
+    const { error } = await supabase
+      .from('meetup_chat_members')
+      .delete()
+      .eq('room_id', roomId)
+      .eq('user_id', user.id);
+    setLeaving(false);
+    if (error) {
+      alert(error.message);
+      return;
+    }
+    navigate('/chats');
+  };
+
   if (!meetupId.trim()) {
     return <p className="p-6 text-sm text-slate-500">잘못된 주소예요.</p>;
   }
@@ -249,6 +268,14 @@ export function MeetupGroupChatPage() {
             <p className="truncate text-xs font-bold text-orange-600">모임 단톡</p>
             <h1 className="truncate text-sm font-extrabold text-slate-800">{meetupTitle || '…'}</h1>
           </div>
+          <button
+            type="button"
+            onClick={() => void handleLeaveRoom()}
+            disabled={!roomId || leaving}
+            className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-extrabold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+          >
+            {leaving ? '나가는 중…' : '나가기'}
+          </button>
           <span
             className={`inline-block h-2.5 w-2.5 rounded-full ${isRealtimeConnected ? 'bg-emerald-400' : 'bg-slate-300'}`}
             aria-label={isRealtimeConnected ? '실시간 연결됨' : '실시간 재연결 중'}

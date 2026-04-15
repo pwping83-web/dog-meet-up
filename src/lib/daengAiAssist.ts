@@ -82,6 +82,16 @@ function normalizeWeeklyKoreanOnly(input: string): string {
     .trim();
 }
 
+/** MBTI 확장 해석은 한국어만 노출 (영문/기타 외국어 토큰 제거) */
+function normalizeMbtiKoreanOnly(input: string): string {
+  return input
+    .replace(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
 function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
   if (!fields) return fields;
   const next: DaengAiFields = { ...fields };
@@ -236,7 +246,12 @@ export async function invokeDaengAiAssist(
 
   return {
     ok: true,
-    text: typeof d.text === 'string' ? stripHanChars(d.text) : '',
+    text:
+      typeof d.text === 'string'
+        ? task === 'mbti_expand'
+          ? normalizeMbtiKoreanOnly(stripHanChars(d.text))
+          : stripHanChars(d.text)
+        : '',
     fields: sanitizeAiFields(d.fields),
   };
 }
