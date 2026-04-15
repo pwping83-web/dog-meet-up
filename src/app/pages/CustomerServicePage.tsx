@@ -112,10 +112,10 @@ export function CustomerServicePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 pb-10 sm:px-5">
+    <div className="min-h-screen bg-slate-50">
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
-        <div className="mx-auto flex h-14 max-w-screen-md items-center px-0">
+        <div className="mx-auto flex h-14 max-w-screen-md items-center px-4">
           <button
             onClick={() => navigate('/my')}
             className="-ml-2 rounded-full p-2 text-white/90 transition-colors hover:bg-white/10"
@@ -131,140 +131,98 @@ export function CustomerServicePage() {
 
       {/* 탭 메뉴 */}
       <div className="sticky top-14 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide px-0 pb-0.5">
-          <button
-            type="button"
-            onClick={() => {
-              clearHash();
-              setActiveTab('faq');
-            }}
-            className={`min-w-[4.75rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
-              activeTab === 'faq'
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-400'
-            }`}
-          >
-            자주 묻는 질문
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              clearHash();
-              setActiveTab('inquiry');
-            }}
-            className={`min-w-[3.5rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
-              activeTab === 'inquiry'
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-400'
-            }`}
-          >
-            1:1 문의
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              clearHash();
-              setActiveTab('notice');
-            }}
-            className={`min-w-[3.5rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
-              activeTab === 'notice'
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-400'
-            }`}
-          >
-            공지사항
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              window.history.replaceState(null, '', `${location.pathname}${location.search}#legal`);
-              setActiveTab('legal');
-            }}
-            className={`min-w-[3.25rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
-              activeTab === 'legal'
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-400'
-            }`}
-          >
-            법적 고지
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              window.history.replaceState(null, '', `${location.pathname}${location.search}#feedback`);
-              setActiveTab('feedback');
-            }}
-            className={`min-w-[3.25rem] flex-1 shrink-0 border-b-2 py-2.5 text-[10px] font-bold transition-colors sm:min-w-0 sm:py-3 sm:text-xs md:text-sm ${
-              activeTab === 'feedback'
-                ? 'border-brand text-brand'
-                : 'border-transparent text-slate-400'
-            }`}
-          >
-            개선·의견
-          </button>
+        <div className="mx-auto flex max-w-screen-md overflow-x-auto scrollbar-hide px-2">
+          {(
+            [
+              { id: 'faq', label: '자주 묻는 질문' },
+              { id: 'inquiry', label: '1:1 문의' },
+              { id: 'notice', label: '공지사항' },
+              { id: 'legal', label: '법적 고지' },
+              { id: 'feedback', label: '개선·의견' },
+            ] as { id: CsTab; label: string }[]
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                if (tab.id === 'legal') {
+                  window.history.replaceState(null, '', `${location.pathname}${location.search}#legal`);
+                } else if (tab.id === 'feedback') {
+                  window.history.replaceState(null, '', `${location.pathname}${location.search}#feedback`);
+                } else {
+                  clearHash();
+                }
+                setActiveTab(tab.id);
+              }}
+              className={`shrink-0 border-b-2 px-3 py-3 text-xs font-bold transition-colors sm:px-4 sm:text-sm ${
+                activeTab === tab.id
+                  ? 'border-brand text-brand'
+                  : 'border-transparent text-slate-400 hover:text-slate-600'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* FAQ 탭 */}
-      {activeTab === 'faq' && (
-        <div className="mx-auto max-w-screen-md">
-          {/* 카테고리 필터 */}
-          <div className="border-b border-slate-100 py-4">
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`rounded-xl px-4 py-2.5 text-sm font-bold whitespace-nowrap transition-all ${
-                    selectedCategory === cat.id
-                      ? 'bg-market-cta text-white shadow-market'
-                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {cat.icon} {cat.name}
-                </button>
+      {/* 콘텐츠 영역 */}
+      <div className="mx-auto max-w-screen-md px-4 pb-16">
+
+        {/* FAQ 탭 */}
+        {activeTab === 'faq' && (
+          <div>
+            {/* 카테고리 필터 */}
+            <div className="border-b border-slate-100 py-4">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                      selectedCategory === cat.id
+                        ? 'bg-market-cta text-white shadow-market'
+                        : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {cat.icon} {cat.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* FAQ 리스트 */}
+            <div className="divide-y divide-slate-100">
+              {filteredFaqs.map((faq) => (
+                <details key={faq.id} className="group">
+                  <summary className="flex cursor-pointer items-start gap-3 py-4 transition-colors hover:bg-slate-50/60">
+                    <span className="mt-0.5 font-black text-brand">Q</span>
+                    <div className="min-w-0 flex-1 pr-2 font-bold text-slate-800">{faq.question}</div>
+                    <ChevronRight className="mt-0.5 h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-90" />
+                  </summary>
+                  <div className="rounded-2xl bg-slate-50 px-4 py-4 mb-2">
+                    <div className="flex gap-2">
+                      <span className="font-bold text-slate-400">A</span>
+                      <p className="text-sm font-medium leading-relaxed text-slate-600">{faq.answer}</p>
+                    </div>
+                  </div>
+                </details>
               ))}
             </div>
-          </div>
 
-          {/* FAQ 리스트 */}
-          <div className="divide-y divide-slate-100">
-            {filteredFaqs.map((faq) => (
-              <details key={faq.id} className="group bg-white">
-                <summary className="flex cursor-pointer items-start gap-3 py-4 transition-colors hover:bg-slate-50">
-                  <span className="mt-0.5 font-black text-brand">Q</span>
-                  <div className="flex-1">
-                    <div className="font-bold pr-6 text-slate-800">{faq.question}</div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-slate-400 group-open:rotate-90 transition-transform flex-shrink-0" />
-                </summary>
-                <div className="border-t border-slate-100 bg-slate-50 pb-4 pl-10 pr-0 pt-4 text-sm sm:pl-11">
-                  <div className="flex gap-2 pt-4">
-                    <span className="text-slate-400 font-bold">A</span>
-                    <div className="text-slate-600 font-medium leading-relaxed">{faq.answer}</div>
-                  </div>
-                </div>
-              </details>
-            ))}
-          </div>
-
-          {/* 도움말 */}
-          <div className="mt-4 py-4">
-            <div className="rounded-3xl border border-brand/20 bg-brand-soft p-5">
+            {/* 도움말 */}
+            <div className="mt-6 rounded-3xl border border-brand/20 bg-brand-soft p-5">
               <div className="flex items-start gap-3">
                 <span className="text-2xl">💡</span>
                 <div>
-                  <div className="mb-1 font-bold text-slate-800">원하는 답변을 찾지 못하셨나요?</div>
-                  <div className="mb-3 text-sm font-medium text-slate-600">
-                    1:1 문의 또는 「개선·의견」 탭으로도 보낼 수 있어요
-                  </div>
+                  <p className="mb-1 font-bold text-slate-800">원하는 답변을 찾지 못하셨나요?</p>
+                  <p className="mb-4 text-sm font-medium text-slate-600">
+                    1:1 문의 또는 「개선·의견」 탭으로 보내주세요
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => {
-                        clearHash();
-                        setActiveTab('inquiry');
-                      }}
+                      onClick={() => { clearHash(); setActiveTab('inquiry'); }}
                       className="rounded-xl bg-market-cta px-5 py-2.5 text-sm font-bold text-white shadow-market transition-all hover:opacity-90"
                     >
                       1:1 문의하기
@@ -272,11 +230,7 @@ export function CustomerServicePage() {
                     <button
                       type="button"
                       onClick={() => {
-                        window.history.replaceState(
-                          null,
-                          '',
-                          `${location.pathname}${location.search}#feedback`,
-                        );
+                        window.history.replaceState(null, '', `${location.pathname}${location.search}#feedback`);
                         setActiveTab('feedback');
                       }}
                       className="rounded-xl border border-brand/30 bg-white px-4 py-2.5 text-sm font-bold text-brand transition-colors hover:bg-brand/5"
@@ -288,185 +242,165 @@ export function CustomerServicePage() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* 1:1 문의 탭 */}
-      {activeTab === 'inquiry' && (
-        <div className="mx-auto max-w-md py-6 sm:py-8">
-          <div className="mb-6 text-center">
-            <div className="text-5xl mb-3">📨</div>
-            <h2 className="text-xl font-extrabold mb-2 text-slate-900">무엇을 도와드릴까요?</h2>
-            <p className="text-sm text-slate-500 font-medium">
-              문의 내용을 남겨주시면<br />
-              영업일 기준 1-2일 내에 답변드려요
-            </p>
-          </div>
+        {/* 1:1 문의 탭 */}
+        {activeTab === 'inquiry' && (
+          <div className="py-6">
+            <div className="mb-6 text-center">
+              <div className="mb-3 text-5xl">📨</div>
+              <h2 className="mb-2 text-xl font-extrabold text-slate-900">무엇을 도와드릴까요?</h2>
+              <p className="text-sm font-medium text-slate-500">
+                문의 내용을 남겨주시면<br />영업일 기준 1–2일 내에 답변드려요
+              </p>
+            </div>
 
-          <form onSubmit={handleInquirySubmit}>
-            {/* 문의 유형 */}
-            <div className="mb-4">
-              <label className="block text-sm font-bold mb-2 text-slate-700">
-                문의 유형 *
-              </label>
-              <select
-                value={inquiryCategory}
-                onChange={(e) => setInquiryCategory(e.target.value)}
-                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium text-slate-800 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
-                required
+            <form onSubmit={handleInquirySubmit} className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">문의 유형 *</label>
+                <select
+                  value={inquiryCategory}
+                  onChange={(e) => setInquiryCategory(e.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 font-medium text-slate-800 focus:border-brand focus:outline-none"
+                  required
+                >
+                  <option value="">선택해주세요</option>
+                  <option value="meeting">🐕 모임/산책 문의</option>
+                  <option value="training">🎓 훈련/교육 문의</option>
+                  <option value="account">계정 문제</option>
+                  <option value="bug">오류 신고</option>
+                  <option value="suggest">기능 제안</option>
+                  <option value="other">기타</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">제목 *</label>
+                <input
+                  type="text"
+                  value={inquiryTitle}
+                  onChange={(e) => setInquiryTitle(e.target.value)}
+                  placeholder="문의 제목을 입력해주세요"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">내용 *</label>
+                <textarea
+                  value={inquiryContent}
+                  onChange={(e) => setInquiryContent(e.target.value)}
+                  placeholder="문의 내용을 자세히 작성해주세요"
+                  rows={6}
+                  className="w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold text-slate-700">답변 받을 이메일 *</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="example@email.com"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full rounded-2xl bg-market-cta py-4 font-bold text-white shadow-market-lg transition-all hover:opacity-95 active:scale-[0.98]"
               >
-                <option value="">선택해주세요</option>
-                <option value="meeting">🐕 모임/산책 문의</option>
-                <option value="training">🎓 훈련/교육 문의</option>
-                <option value="account">계정 문제</option>
-                <option value="bug">오류 신고</option>
-                <option value="suggest">기능 제안</option>
-                <option value="other">기타</option>
-              </select>
-            </div>
+                문의하기
+              </button>
+            </form>
 
-            {/* 제목 */}
-            <div className="mb-4">
-              <label className="block text-sm font-bold mb-2 text-slate-700">
-                제목 *
-              </label>
-              <input
-                type="text"
-                value={inquiryTitle}
-                onChange={(e) => setInquiryTitle(e.target.value)}
-                placeholder="문의 제목을 입력해주세요"
-                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
-                required
-              />
-            </div>
-
-            {/* 내용 */}
-            <div className="mb-4">
-              <label className="block text-sm font-bold mb-2 text-slate-700">
-                내용 *
-              </label>
-              <textarea
-                value={inquiryContent}
-                onChange={(e) => setInquiryContent(e.target.value)}
-                placeholder="문의 내용을 자세히 작성해주세요"
-                rows={6}
-                className="w-full resize-none rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
-                required
-              />
-            </div>
-
-            {/* 답변 받을 이메일 */}
-            <div className="mb-6">
-              <label className="block text-sm font-bold mb-2 text-slate-700">
-                답변 받을 이메일 *
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="example@email.com"
-                className="w-full rounded-2xl border-2 border-slate-200 px-4 py-3.5 font-medium placeholder:text-slate-400 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-2xl bg-market-cta py-4 font-bold text-white shadow-market-lg transition-all hover:opacity-95 active:scale-[0.98]"
-            >
-              문의하기
-            </button>
-          </form>
-
-          {/* 빠른 연락처 */}
-          <div className="mt-8 space-y-3">
-            <div className="text-sm font-extrabold text-slate-700">빠른 연락처</div>
-            
-            <a
-              href="tel:1588-1234"
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
-            >
-              <span className="text-2xl">📞</span>
-              <div className="flex-1">
-                <div className="font-bold text-slate-800">전화 문의</div>
-                <div className="text-sm text-slate-500 font-medium">1588-1234</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </a>
-
-            <a
-              href="mailto:support@daengdaeng.com"
-              className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
-            >
-              <span className="text-2xl">✉️</span>
-              <div className="flex-1">
-                <div className="font-bold text-slate-800">이메일 문의</div>
-                <div className="text-sm text-slate-500 font-medium">support@daengdaeng.com</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </a>
-
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
-            >
-              <span className="text-2xl">💬</span>
-              <div className="flex-1 text-left">
-                <div className="font-bold text-slate-800">카카오톡 상담</div>
-                <div className="text-sm text-slate-500 font-medium">평일 09:00 - 18:00</div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 공지사항 탭 */}
-      {activeTab === 'notice' && (
-        <div className="mx-auto max-w-screen-md divide-y divide-slate-100">
-          {notices.map((notice) => (
-            <button
-              key={notice.id}
-              className="w-full bg-white py-4 text-left transition-colors hover:bg-slate-50"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <div className="font-bold mb-1 text-slate-800">{notice.title}</div>
-                  <div className="text-sm text-slate-500 font-medium">{notice.date}</div>
+            {/* 빠른 연락처 */}
+            <div className="mt-8 space-y-3">
+              <p className="text-sm font-extrabold text-slate-700">빠른 연락처</p>
+              {[
+                { href: 'tel:1588-1234', icon: '📞', title: '전화 문의', sub: '1588-1234' },
+                { href: 'mailto:support@daengdaeng.com', icon: '✉️', title: '이메일 문의', sub: 'support@daengdaeng.com' },
+              ].map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
+                >
+                  <span className="text-2xl">{item.icon}</span>
+                  <div className="flex-1">
+                    <p className="font-bold text-slate-800">{item.title}</p>
+                    <p className="text-sm font-medium text-slate-500">{item.sub}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-slate-400" />
+                </a>
+              ))}
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 transition-all hover:border-brand/20 hover:bg-slate-50"
+              >
+                <span className="text-2xl">💬</span>
+                <div className="flex-1 text-left">
+                  <p className="font-bold text-slate-800">카카오톡 상담</p>
+                  <p className="text-sm font-medium text-slate-500">평일 09:00 – 18:00</p>
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0 mt-1" />
-              </div>
-            </button>
-          ))}
-
-          {/* 더보기 */}
-          <div className="bg-white py-4 text-center">
-            <button type="button" className="text-sm font-bold text-slate-500 hover:text-brand">
-              더보기 +
-            </button>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'legal' && (
-        <div className="mx-auto max-w-screen-md py-6 sm:py-8">
-          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-extrabold text-slate-900">플랫폼 이용 범위 및 이용자 책임</h2>
-            <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
-              모이자·만나자(교배 포함)·돌봄·인증 보호맨 등 전 영역에 공통 적용됩니다.
-            </p>
-            <div className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-700">
-              {PLATFORM_LEGAL_FULL_ARTICLE}
+                <ChevronRight className="h-5 w-5 text-slate-400" />
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {activeTab === 'feedback' && (
-        <div className="mx-auto max-w-md py-6 sm:py-8">
-          <UserFeedbackForm embedded />
-        </div>
-      )}
+        {/* 공지사항 탭 */}
+        {activeTab === 'notice' && (
+          <div className="divide-y divide-slate-100 py-2">
+            {notices.map((notice) => (
+              <button
+                key={notice.id}
+                className="w-full py-4 text-left transition-colors hover:bg-slate-50/60"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <p className="mb-1 font-bold text-slate-800">{notice.title}</p>
+                    <p className="text-sm font-medium text-slate-500">{notice.date}</p>
+                  </div>
+                  <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-slate-400" />
+                </div>
+              </button>
+            ))}
+            <div className="py-4 text-center">
+              <button type="button" className="text-sm font-bold text-slate-500 hover:text-brand">
+                더보기 +
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 법적 고지 탭 */}
+        {activeTab === 'legal' && (
+          <div className="py-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h2 className="text-lg font-extrabold text-slate-900">플랫폼 이용 범위 및 이용자 책임</h2>
+              <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
+                모이자·만나자(교배 포함)·돌봄·인증 보호맨 등 전 영역에 공통 적용됩니다.
+              </p>
+              <div className="mt-4 whitespace-pre-wrap text-sm font-medium leading-relaxed text-slate-700">
+                {PLATFORM_LEGAL_FULL_ARTICLE}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 개선·의견 탭 */}
+        {activeTab === 'feedback' && (
+          <div className="py-6">
+            <UserFeedbackForm embedded />
+          </div>
+        )}
+
+      </div>
     </div>
   );
 }
