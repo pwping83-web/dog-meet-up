@@ -6,7 +6,6 @@ import {
   Shield,
   Home,
   Search,
-  Sparkles,
   LogOut,
   MapPin,
   ChevronDown,
@@ -15,7 +14,6 @@ import {
   CheckCircle2,
   Plus,
   PlusCircle,
-  PawPrint,
   BadgeCheck,
   PencilLine,
   Bell,
@@ -23,7 +21,6 @@ import {
 import { Link, useNavigate, useLocation } from 'react-router';
 import { useState, useEffect, useMemo } from 'react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
-import { dogMbtiResults, DogMbtiType } from '../data/dogMbtiData';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserLocation } from '../../contexts/UserLocationContext';
 import { LocationPickerModal } from '../components/LocationPickerModal';
@@ -64,7 +61,6 @@ export function MyPage() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [gpsBusy, setGpsBusy] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const [dogMbtiType, setDogMbtiType] = useState<DogMbtiType | null>(null);
   const [extraCareRegions, setExtraCareRegions] = useState(() => readExtraCareRegions());
   const [extraCity, setExtraCity] = useState('');
   const [extraDistrict, setExtraDistrict] = useState('');
@@ -73,9 +69,7 @@ export function MyPage() {
   const [profileNameFromProfile, setProfileNameFromProfile] = useState<string | null>(null);
   const [profilePhone, setProfilePhone] = useState('');
   const [phoneSaving, setPhoneSaving] = useState(false);
-  /** 첫 댕댕이 프로필 썸네일(마이 섹션 2) */
-  const [dogPreview, setDogPreview] = useState<{ photo: string | null; name: string } | null>(null);
-  /** 인증 보호맘·댕집사 프로필 (마이 섹션 3) */
+  /** 인증 보호맘·댕집사 프로필 */
   const [carePreview, setCarePreview] = useState<{
     providerKind: string;
     regionSi: string;
@@ -112,41 +106,11 @@ export function MyPage() {
     };
   }, [user?.id, user?.updated_at, location.key]);
 
-  useEffect(() => {
-    if (!user?.id) {
-      setDogPreview(null);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const { data } = await supabase
-        .from('dog_profiles')
-        .select('name, photo_url')
-        .eq('owner_id', user.id)
-        .limit(1)
-        .maybeSingle();
-      if (cancelled) return;
-      if (data) {
-        setDogPreview({
-          photo: typeof data.photo_url === 'string' ? data.photo_url.trim() || null : null,
-          name: typeof data.name === 'string' ? data.name.trim() : '',
-        });
-      } else {
-        setDogPreview(null);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, location.key]);
-
   const referenceDistrictsForExtras = useMemo(() => {
     const primary = userLoc.district?.trim();
     const fromExtras = extraCareRegions.map((e) => e.district.trim()).filter(Boolean);
     return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
   }, [userLoc.district, extraCareRegions]);
-
-  const dogMbtiNavState = useMemo(() => ({ mbtiReturn: location.pathname }), [location.pathname]);
 
   const addExtraCareRegion = () => {
     setExtraHint(null);
@@ -231,14 +195,6 @@ export function MyPage() {
       cancelled = true;
     };
   }, [user?.id, location.key, certifiedCareTick]);
-
-  // MBTI 로드
-  useEffect(() => {
-    const savedMbti = localStorage.getItem('dogMbtiType') as DogMbtiType | null;
-    if (savedMbti) {
-      setDogMbtiType(savedMbti);
-    }
-  }, []);
 
   const handleGpsRefresh = async () => {
     setGpsBusy(true);
@@ -450,78 +406,10 @@ export function MyPage() {
           </div>
         </div>
 
-        {/* 2 · 강아지 프로필(사진) · MBTI */}
-        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <div className="flex gap-4">
-            <Link
-              to="/create-dog"
-              className="relative block h-[5.5rem] w-[5.5rem] shrink-0 overflow-hidden rounded-2xl border border-brand/20 bg-gradient-to-br from-brand-soft to-brand-muted shadow-inner"
-            >
-              {dogPreview?.photo ? (
-                <ImageWithFallback
-                  src={dogPreview.photo}
-                  fallbackSrc={virtualDogPhotoForSeed(`my-dog-${user?.id ?? 'x'}`)}
-                  alt={dogPreview.name ? `${dogPreview.name} 사진` : '강아지 사진'}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-4xl" aria-hidden>
-                  🐕
-                </span>
-              )}
-            </Link>
-            <div className="min-w-0 flex-1 space-y-2">
-              <div>
-                <p className="text-[11px] font-extrabold text-slate-500">강아지 프로필</p>
-                <p className="truncate text-base font-extrabold text-slate-900">
-                  {dogPreview?.name || '사진·이름 등록'}
-                </p>
-              </div>
-              {dogMbtiType ? (
-                <div className="flex items-center gap-2 rounded-xl border border-brand/20 bg-brand/10 px-2.5 py-2">
-                  <span className="text-xl" aria-hidden>
-                    {dogMbtiResults[dogMbtiType].emoji}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-black text-slate-900">{dogMbtiResults[dogMbtiType].name}</p>
-                    <p className="text-[10px] font-bold text-brand">{dogMbtiType.toUpperCase()}</p>
-                  </div>
-                  <Link
-                    to="/dog-mbti-test"
-                    state={dogMbtiNavState}
-                    className="ml-auto shrink-0 rounded-lg bg-white/80 p-1.5 text-brand shadow-sm"
-                    aria-label="MBTI 다시 하기"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                  </Link>
-                </div>
-              ) : (
-                <p className="text-[11px] font-semibold text-slate-500">MBTI로 성격 타입을 맞춰 보세요.</p>
-              )}
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Link
-                  to="/create-dog"
-                  className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-extrabold text-slate-800"
-                >
-                  <PawPrint className="h-3.5 w-3.5 shrink-0 text-brand" aria-hidden />
-                  사진·프로필
-                </Link>
-                <Link
-                  to="/dog-mbti-test"
-                  state={dogMbtiNavState}
-                  className="inline-flex items-center gap-1 rounded-xl bg-market-cta px-3 py-2 text-xs font-extrabold text-white shadow-sm"
-                >
-                  MBTI {dogMbtiType ? '업데이트' : '시작'}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* 3+4 · 인증 보호맘 · 댕집사 + 추가 동네 — 하나의 카드 */}
+        {/* 2 · 인증 보호맘 · 댕집사 + 추가 동네 — 하나의 카드 */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
           {carePreview ? (
-            /* ── 등록 완료: 강아지 프로필과 같은 카드 레이아웃 ── */
+            /* ── 등록 완료 ── */
             <div className="flex gap-4">
               <Link
                 to="/guard-mom/register"
