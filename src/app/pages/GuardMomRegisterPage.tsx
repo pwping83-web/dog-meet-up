@@ -93,6 +93,15 @@ function clearSitterIntro(uid: string) {
   }
 }
 
+/** 숫자만 반영, 입력 중 상한 500,000 */
+function parseFeeDigits(raw: string): number {
+  const digits = raw.replace(/\D/g, '');
+  if (digits === '') return 0;
+  const n = Number.parseInt(digits, 10);
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(500_000, Math.max(0, n));
+}
+
 export function GuardMomRegisterPage() {
   const [searchParams] = useSearchParams();
   const promoFree = usePromoFreeListings();
@@ -695,16 +704,24 @@ export function GuardMomRegisterPage() {
                     </label>
                   </div>
                   <label className="mt-3 block text-xs font-extrabold text-slate-700">
-                    1일 돌봄 요금 (원, 1,000~500,000)
-                    <input
-                      type="number"
-                      min={1000}
-                      max={500000}
-                      step={1000}
-                      value={fee}
-                      onChange={(e) => setFee(Number(e.target.value) || 0)}
-                      className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-bold text-slate-900"
-                    />
+                    <span className="block">1일 돌봄 받을 요금</span>
+                    <span className="mt-0.5 block text-[11px] font-medium font-normal text-slate-500">
+                      맡기는 분에게 이렇게 표시돼요.
+                    </span>
+                    <div className="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={fee > 0 ? fee.toLocaleString('ko-KR') : ''}
+                        onChange={(e) => setFee(parseFeeDigits(e.target.value))}
+                        onBlur={() => {
+                          if (fee > 0 && fee < 1000) setFee(1000);
+                        }}
+                        className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-bold text-slate-900 outline-none ring-0"
+                      />
+                      <span className="shrink-0 text-sm font-extrabold text-slate-700">원</span>
+                    </div>
                   </label>
 
                   <label className="mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 px-3 py-3">
