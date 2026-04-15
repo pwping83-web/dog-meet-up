@@ -28,11 +28,7 @@ import type { Meetup } from '../types';
 import { isAuthUserUuid } from '../../lib/profileIds';
 import { displayNameFromUser } from '../../lib/ensurePublicProfile';
 import { supabase } from '../../lib/supabase';
-import {
-  certifiedProviderMatchesNeed,
-  parseCareNeedTargetFromEstimatedCost,
-  type CertifiedCareRole,
-} from '../utils/careNeedFromMeetup';
+import { parseCareNeedTargetFromEstimatedCost } from '../utils/careNeedFromMeetup';
 
 const ADMIN_MEETUP_CATEGORIES = [
   '공원·장소 모임',
@@ -100,8 +96,6 @@ export function MeetupDetailPage() {
     if (!meetup || !isCareMeetupCategory(meetup.category)) return null;
     return parseCareNeedTargetFromEstimatedCost(meetup.estimatedCost);
   }, [meetup]);
-  /** 돌봄 글: 인증 provider_kind (null=미인증·미등록, undefined=조회 전) */
-  const [myCareCertifiedRole, setMyCareCertifiedRole] = useState<CertifiedCareRole | null | undefined>(undefined);
   const joinRequests = mockJoinRequests.filter((q) => q.meetupId === id);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
@@ -138,40 +132,6 @@ export function MeetupDetailPage() {
     const map = readMeetupCommentsMap();
     setComments(Array.isArray(map[id]) ? map[id] : []);
   }, [id, location.key, meetupFeedTick]);
-
-  useEffect(() => {
-    if (!user?.id || careNeedTarget == null) {
-      setMyCareCertifiedRole(undefined);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      const { data, error } = await supabase
-        .from('certified_guard_moms')
-        .select('provider_kind, certified_at')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (cancelled) return;
-      if (error || !data) {
-        setMyCareCertifiedRole(null);
-        return;
-      }
-      const at = data.certified_at;
-      const certified =
-        at != null &&
-        String(at).trim() !== '' &&
-        !Number.isNaN(new Date(at as string).getTime());
-      if (!certified) {
-        setMyCareCertifiedRole(null);
-        return;
-      }
-      const pk = (data as { provider_kind?: string }).provider_kind;
-      setMyCareCertifiedRole(pk === 'dog_sitter' ? 'dog_sitter' : 'guard_mom');
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, careNeedTarget]);
 
   useEffect(() => {
     const ids = Array.from(new Set(comments.map((c) => c.authorId?.trim() ?? '').filter(Boolean)));
@@ -277,25 +237,6 @@ export function MeetupDetailPage() {
 
   const handleInvite = (_sitter: { id: string; name: string }) => {
     if (!requireLoginForAction()) return;
-    if (isCareMeetupCategory(meetup.category) && user && meetup.userId !== user.id) {
-      if (myCareCertifiedRole === undefined) {
-        alert('잠시만요… 인증 정보를 확인 중이에요.');
-        return;
-      }
-      if (
-        careNeedTarget == null ||
-        !certifiedProviderMatchesNeed(careNeedTarget, myCareCertifiedRole ?? null)
-      ) {
-        const msg =
-          careNeedTarget === 'dog_sitter'
-            ? '이 글은 인증 댕집사(방문)만 신청할 수 있어요.'
-            : careNeedTarget === 'guard_mom'
-              ? '이 글은 인증 보호맘(맡기기)만 신청할 수 있어요.'
-              : '인증 댕집사 또는 인증 보호맘만 신청할 수 있어요.';
-        alert(msg);
-        return;
-      }
-    }
     const authorId = meetup.userId?.trim() ?? '';
     if (!isAuthUserUuid(authorId)) {
       alert('이 글은 데모라 채팅을 열 수 없어요. 회원이 올린 글에서 다시 시도해 주세요.');
@@ -487,8 +428,21 @@ export function MeetupDetailPage() {
             {dolbomTitleShown}
           </h1>
 
-          <div className="flex items-center gap-4 text-sm text-slate-500 mb-6" style={{ fontWeight: 500 }}>
-            <div className="flex items-center gap-1.5"><User className="w-4 h-4" /><span>{meetup.userName}</span></div>
+          <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-slate-500" style={{ fontWeight: 500 }}>
+            {isAuthUserUuid(meetup.userId?.trim() ?? '') ? (
+              <Link
+                to={`/member/${meetup.userId}?meetup=${encodeURIComponent(meetup.title)}&mid=${encodeURIComponent(meetup.id)}`}
+                className="flex min-w-0 max-w-full items-center gap-1.5 rounded-xl py-1 pl-0.5 pr-2 text-slate-600 transition-colors hover:bg-orange-50/90 hover:text-orange-800 active:scale-[0.99]"
+              >
+                <User className="h-4 w-4 shrink-0" aria-hidden />
+                <span className="truncate font-bold">{meetup.userName}</span>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <User className="h-4 w-4 shrink-0" aria-hidden />
+                <span>{meetup.userName}</span>
+              </div>
+            )}
             <div className="flex items-center gap-1.5"><MapPin className="w-4 h-4" /><span>{meetup.district}</span></div>
             <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /><span>{timeAgo}</span></div>
           </div>
@@ -739,19 +693,19 @@ export function MeetupDetailPage() {
         {isCareMeetupCategory(meetup.category) && meetup.status === 'pending' && (
           <div className="mb-10">
             <h2 className="mb-3 text-xl text-slate-900" style={{ fontWeight: 800 }}>
-              인증 돌봄 연락
+              작성자와 연락
             </h2>
             <div className="rounded-3xl border border-sky-200 bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm">
               <p className="text-xs font-semibold leading-relaxed text-slate-600">
-                {careNeedTarget === 'dog_sitter' && '이 글은 인증 댕집사(방문)만 신청할 수 있어요.'}
-                {careNeedTarget === 'guard_mom' && '이 글은 인증 보호맘(맡기기)만 신청할 수 있어요.'}
-                {careNeedTarget === 'both' && '인증 댕집사 또는 인증 보호맘만 신청할 수 있어요.'}
+                {careNeedTarget === 'dog_sitter' && '방문 돌봄 문의는 채팅으로 주세요.'}
+                {careNeedTarget === 'guard_mom' && '맡기기 문의는 채팅으로 주세요.'}
+                {careNeedTarget === 'both' && '돌봄·맡기기 문의는 채팅으로 주세요.'}
               </p>
               {user && meetup.userId === user.id ? (
-                <p className="mt-3 text-sm font-bold text-slate-700">내가 올린 맡기기 글이에요.</p>
+                <p className="mt-3 text-sm font-bold text-slate-700">내가 올린 글이에요.</p>
               ) : !user ? (
                 <p className="mt-3 text-sm font-bold text-amber-800">
-                  로그인 후 신청할 수 있어요.{' '}
+                  로그인 후 채팅할 수 있어요.{' '}
                   <Link
                     to="/login"
                     onClick={() => setAuthReturnPath(`${location.pathname}${location.search}`)}
@@ -760,14 +714,6 @@ export function MeetupDetailPage() {
                     로그인
                   </Link>
                 </p>
-              ) : myCareCertifiedRole === undefined ? (
-                <p className="mt-3 text-sm font-medium text-slate-500">인증 정보 확인 중…</p>
-              ) : myCareCertifiedRole == null ? (
-                <p className="mt-3 text-sm font-bold text-slate-700">
-                  인증 댕집사·보호맘 등록 후 운영 인증이 완료되면 신청할 수 있어요.
-                </p>
-              ) : !certifiedProviderMatchesNeed(careNeedTarget ?? 'both', myCareCertifiedRole) ? (
-                <p className="mt-3 text-sm font-bold text-rose-700">맡기는 분이 고른 유형과 맞지 않아요.</p>
               ) : (
                 <button
                   type="button"
@@ -775,7 +721,7 @@ export function MeetupDetailPage() {
                   disabled={authLoading}
                   className="mt-4 w-full rounded-2xl bg-slate-900 py-3.5 text-sm font-extrabold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
                 >
-                  작성자에게 채팅(신청)
+                  작성자와 채팅
                 </button>
               )}
             </div>

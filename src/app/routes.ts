@@ -49,6 +49,7 @@ import { BillingPage } from './pages/BillingPage';
 import { GuardMomsPage } from './pages/GuardMomsPage';
 import { GuardMomDetailPage } from './pages/GuardMomDetailPage';
 import { GuardMomRegisterPage } from './pages/GuardMomRegisterPage';
+import { MemberProfilePage } from './pages/MemberProfilePage';
 
 export const router = createBrowserRouter([
   {
@@ -62,6 +63,7 @@ export const router = createBrowserRouter([
       { path: 'create-meetup', Component: CreateRequestPage },    // Create new meetup
       { path: 'sitter/:id', Component: DogSitterProfilePage },   // Dog sitter profile
       { path: 'meetup/:id', Component: MeetupDetailPage },        // Meetup detail + join requests
+      { path: 'member/:id', Component: MemberProfilePage },         // 공개 회원 프로필 → 채팅
       { path: 'my', Component: MyPage },                          // User profile
       { path: 'profile/edit', Component: MyPage },                // Legacy path -> MyPage
       { path: 'create-dog', Component: DogCreatePage },           // Dog profile registration

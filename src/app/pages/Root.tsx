@@ -26,6 +26,7 @@ export function Root() {
   const isAdminPage = location.pathname === '/admin';
   const isExplorePage = location.pathname === '/explore';
   const isMeetupDetailPage = location.pathname.startsWith('/meetup/');
+  const isMemberProfilePage = location.pathname.startsWith('/member/');
   const isCreateMeetupPage = location.pathname === '/create-meetup';
   /** 1:1 채팅방 — 하단 탭이 입력창을 가리지 않도록 숨김 (/chats 목록은 제외) */
   const isChatDetailPage = location.pathname.startsWith('/chat/');
@@ -40,6 +41,7 @@ export function Root() {
   const showCommunityBottom =
     isExplorePage ||
     isMeetupDetailPage ||
+    isMemberProfilePage ||
     isCreateMeetupPage ||
     isSittersCareFlow ||
     isDogPublicProfilePage;
@@ -48,6 +50,7 @@ export function Root() {
     isHomePage ||
     isExplorePage ||
     isMeetupDetailPage ||
+    isMemberProfilePage ||
     isCreateMeetupPage ||
     isSittersCareFlow ||
     isChatDetailPage ||
