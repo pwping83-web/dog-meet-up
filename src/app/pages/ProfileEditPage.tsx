@@ -390,10 +390,13 @@ export function ProfileEditPage() {
                   type="button"
                   onClick={() => void applyLatestDogPhoto()}
                   disabled={dogPhotoBusy}
-                  className="mb-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-extrabold text-orange-700 active:scale-[0.98] disabled:opacity-50"
+                  className="mb-2 flex min-h-12 w-full max-w-[19rem] items-center justify-center rounded-2xl bg-gradient-to-r from-orange-500 to-amber-400 px-4 py-3 text-sm font-black text-white shadow-[0_10px_24px_rgba(249,115,22,0.35)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
                 >
                   {dogPhotoBusy ? '강아지 사진 불러오는 중…' : '내 강아지 사진으로 설정'}
                 </button>
+                <p className="mb-3 text-center text-[11px] font-bold text-orange-600">
+                  우리 댕댕이 등록 사진을 바로 프로필에 적용해요
+                </p>
 
                 <div className="flex gap-3 justify-center rounded-2xl bg-slate-50 p-2.5">
                   {PROFILE_THEME_AVATARS.map((theme) => (
