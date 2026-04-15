@@ -15,6 +15,8 @@ import {
   LocateFixed,
   MapPin,
   Plus,
+  Clock,
+  Utensils,
 } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { supabase } from '../../lib/supabase';
@@ -458,7 +460,7 @@ export function GuardMomRegisterPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-screen-md space-y-4 px-4 pt-4">
+      <div className="mx-auto max-w-screen-md space-y-4 px-4 pb-6 pt-4">
         {authLoading || loading ? (
           <div className="flex justify-center py-20 text-slate-400">
             <Loader2 className="h-8 w-8 animate-spin" />
@@ -811,6 +813,58 @@ export function GuardMomRegisterPage() {
                 <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-3 py-2.5 text-center text-[11px] font-extrabold text-violet-950">
                   돌봄 목표가 댕집사(방문)로 저장됐어요.
                 </div>
+
+                {promoFree && (
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50/95 px-4 py-3 text-center text-sm font-extrabold leading-snug text-emerald-950">
+                    {PROMO_FREE_LAUNCH_TITLE}
+                  </div>
+                )}
+
+                <div className="rounded-2xl border border-violet-200 bg-violet-50/90 px-3 py-3 text-violet-950">
+                  <div className="mb-3 flex flex-wrap justify-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-extrabold shadow-sm">
+                      <BadgeCheck className="h-3.5 w-3.5 text-violet-600" aria-hidden />
+                      인증 후 뱃지
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-extrabold shadow-sm">
+                      <ListTree className="h-3.5 w-3.5 text-violet-600" aria-hidden />
+                      {promoFree ? '지금 무료 노출' : '목록 노출(유료)'}
+                    </span>
+                  </div>
+                  <p className="mb-2 text-center text-[11px] font-extrabold text-violet-900">댕집사는 이렇게 맞춰요</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                      <Home className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                      <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">강아지 있는 집으로 방문</p>
+                    </div>
+                    <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                      <Clock className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                      <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">몇 시간 돌봄</p>
+                    </div>
+                    <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                      <Utensils className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                      <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">식사·급수 챙기기</p>
+                    </div>
+                    <div className="rounded-xl bg-white/90 py-2 text-center shadow-sm">
+                      <PawPrint className="mx-auto h-4 w-4 text-violet-600" aria-hidden />
+                      <p className="mt-1 px-0.5 text-[10px] font-bold leading-tight">때로는 근처 산책</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 flex items-start justify-center gap-1.5 text-center text-[11px] font-medium leading-snug text-violet-900/90">
+                    <MessagesSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-600" aria-hidden />
+                    방문 시간·범위는 맡기는 분이랑 채팅으로 편한 대로 정해 주세요 ~~
+                  </p>
+                  {promoFree ? (
+                    <p className="mt-1.5 text-center text-[10px] font-semibold text-violet-800/90">
+                      운영 인증이 끝나면 뱃지 달리고, 지금은 무료로 목록에도 올라가요.
+                    </p>
+                  ) : (
+                    <p className="mt-1.5 text-center text-[10px] font-semibold text-violet-800/90">
+                      인증 전에는 7일 노출 신청만 잠깐 막혀 있어요. 프로필은 미리 저장해 두셔도 돼요.
+                    </p>
+                  )}
+                </div>
+
                 {row ? (
                   <div className="rounded-3xl border border-slate-100 bg-white p-5 shadow-sm">
                     <div className="mb-4 flex items-center gap-2">

@@ -7,8 +7,8 @@
  */
 
 :root {
-  /* 하단 고정 탭(Primary / Community) 위로 본문이 올라오도록 — Root `<main>` 패딩에 사용 */
-  --bottom-nav-height: calc(4rem + env(safe-area-inset-bottom, 0px));
+  /* 하단 고정 탭(Primary / Community) — nav 내부 h-16 등 + pb max(0.35rem, safe-area) 와 동일하게 */
+  --bottom-nav-height: calc(4rem + max(0.35rem, env(safe-area-inset-bottom, 0px)));
 
   /* 모바일 웹앱 가독성 (당근류 앱에 가깝게 16px 기준) */
   --font-size: 16px;
