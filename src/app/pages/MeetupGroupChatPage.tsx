@@ -34,6 +34,7 @@ export function MeetupGroupChatPage() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -151,10 +152,39 @@ export function MeetupGroupChatPage() {
           void loadMessages(roomId, true);
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setIsRealtimeConnected(true);
+          return;
+        }
+        if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setIsRealtimeConnected(false);
+          void loadMessages(roomId, true);
+        }
+      });
     return () => {
+      setIsRealtimeConnected(false);
       void supabase.removeChannel(ch);
     };
+  }, [user?.id, roomId, loadMessages]);
+
+  // Realtime 지연/끊김 대비: 짧은 주기 폴링 백업
+  useEffect(() => {
+    if (!user?.id || !roomId) return;
+    const timer = window.setInterval(() => {
+      void loadMessages(roomId, true);
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [user?.id, roomId, loadMessages]);
+
+  // 앱 복귀 시 최신 메시지 즉시 동기화
+  useEffect(() => {
+    if (!user?.id || !roomId) return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void loadMessages(roomId, true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [user?.id, roomId, loadMessages]);
 
   useEffect(() => {
@@ -210,6 +240,11 @@ export function MeetupGroupChatPage() {
             <p className="truncate text-xs font-bold text-orange-600">모임 단톡</p>
             <h1 className="truncate text-sm font-extrabold text-slate-800">{meetupTitle || '…'}</h1>
           </div>
+          <span
+            className={`inline-block h-2.5 w-2.5 rounded-full ${isRealtimeConnected ? 'bg-emerald-400' : 'bg-slate-300'}`}
+            aria-label={isRealtimeConnected ? '실시간 연결됨' : '실시간 재연결 중'}
+            title={isRealtimeConnected ? '실시간 연결됨' : '실시간 재연결 중'}
+          />
         </div>
       </header>
       {err && (
