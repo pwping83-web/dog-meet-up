@@ -75,7 +75,7 @@ export function DevPageNavigator() {
     <>
       {/* 떠다니는 버튼 */}
       <motion.button
-        className="fixed bottom-24 right-6 z-[9999] bg-gradient-to-br from-orange-500 to-yellow-500 text-white rounded-full shadow-2xl border-2 border-white/20"
+        className="fixed bottom-24 z-[9999] bg-gradient-to-br from-orange-500 to-yellow-500 text-white rounded-full shadow-2xl border-2 border-white/20"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
@@ -85,6 +85,7 @@ export function DevPageNavigator() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          right: 'max(1.5rem, calc(50vw - 240px + 1.5rem))',
         }}
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -108,7 +109,8 @@ export function DevPageNavigator() {
               initial={{ opacity: 0, y: 20, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.9 }}
-              className="fixed bottom-32 right-6 z-[9999] bg-white rounded-3xl shadow-2xl overflow-hidden max-w-sm w-80"
+              className="fixed bottom-32 z-[9999] bg-white rounded-3xl shadow-2xl overflow-hidden max-w-sm w-80"
+              style={{ right: 'max(1.5rem, calc(50vw - 240px + 1.5rem))' }}
               style={{ maxHeight: '70vh' }}
             >
               {/* 헤더 */}
