@@ -157,10 +157,10 @@ export function MyPage() {
   const headerAvatar = profileAvatarVisual(profileAvatarUrl);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="flex min-h-[100dvh] flex-col bg-slate-50">
       <LocationPickerModal open={locationOpen} onClose={() => setLocationOpen(false)} />
 
-      <header className="sticky top-0 z-50 bg-market-header shadow-market-lg">
+      <header className="sticky top-0 z-50 shrink-0 bg-market-header shadow-market-lg">
         <div className="mx-auto flex h-14 max-w-screen-md items-center justify-between gap-3 px-4">
           <h1 className="text-lg font-extrabold text-white">내댕댕</h1>
           <Link
@@ -174,8 +174,7 @@ export function MyPage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-screen-md space-y-5 px-4 py-6">
-        
+      <div className="mx-auto flex min-h-0 w-full max-w-screen-md flex-1 flex-col gap-5 px-4 py-6 pb-28">
         {/* 프로필 카드 — 읽기 전용 요약. 수정은 /profile/edit 에서 */}
         <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-4">
@@ -363,13 +362,12 @@ export function MyPage() {
             type="button"
             onClick={() => void handleLogout()}
             disabled={loggingOut}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-600 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+            className="mt-auto flex w-full shrink-0 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-600 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
           >
             <LogOut className="h-5 w-5 shrink-0" />
             {loggingOut ? '로그아웃 중…' : '로그아웃'}
           </button>
         )}
-        
       </div>
 
       {/* Bottom tab navigation */}

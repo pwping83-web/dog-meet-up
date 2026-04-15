@@ -1,5 +1,4 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { Link } from 'react-router';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { getFeedbackInboxEmail, sendUserFeedbackEmail, trySendEmail } from '../../lib/emailjs';
@@ -166,22 +165,6 @@ export function UserFeedbackForm({ embedded = false }: UserFeedbackFormProps) {
           )}
         </button>
       </form>
-
-      <p className="mt-6 text-center text-xs font-medium text-slate-500">
-        메일이 열리면{' '}
-        <a href={`mailto:${inbox}`} className="font-bold text-brand underline underline-offset-2">
-          {inbox}
-        </a>
-        로도 보내실 수 있어요.
-        {!embedded && (
-          <>
-            {' · '}
-            <Link to="/customer-service" className="font-bold text-slate-600 underline underline-offset-2">
-              고객센터
-            </Link>
-          </>
-        )}
-      </p>
     </div>
   );
 }

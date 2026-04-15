@@ -6,6 +6,8 @@ import { AiDoumiButton } from '../components/AiDoumiButton';
 import { supabase } from '../../lib/supabase';
 import { isAuthUserUuid } from '../../lib/profileIds';
 import { getHiddenChatPeerIds, hideChatPeerId, unhideChatPeerId } from '../../lib/chatHiddenPeers';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { resolveDogProfilePhotoUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 
 interface Chat {
   id: string;
@@ -13,7 +15,7 @@ interface Chat {
   lastMessage: string;
   timestamp: string;
   unreadCount: number;
-  avatar: string;
+  peerDogPhotoUrl: string;
 }
 
 interface Message {
@@ -31,6 +33,34 @@ type DbMessage = {
   content: string;
   read: boolean;
 };
+
+type DogProfilePhotoRow = {
+  id: string;
+  owner_id: string | null;
+  photo_url: string | null;
+  created_at: string;
+};
+
+/** owner_id당 가장 최근 등록된 강아지 1마리 사진 URL */
+async function fetchLatestDogPhotoUrlByOwnerIds(ownerIds: string[]): Promise<Record<string, string>> {
+  const unique = [...new Set(ownerIds.map((x) => x.trim()).filter(Boolean))];
+  if (unique.length === 0) return {};
+  const { data, error } = await supabase
+    .from('dog_profiles')
+    .select('id, owner_id, photo_url, created_at')
+    .in('owner_id', unique);
+  if (error || !data?.length) return {};
+  const sorted = [...(data as DogProfilePhotoRow[])].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+  const out: Record<string, string> = {};
+  for (const row of sorted) {
+    const oid = typeof row.owner_id === 'string' ? row.owner_id.trim() : '';
+    if (!oid || out[oid]) continue;
+    out[oid] = resolveDogProfilePhotoUrl({ id: row.id, photo_url: row.photo_url });
+  }
+  return out;
+}
 
 function formatTime(ts: string): string {
   const d = new Date(ts);
@@ -97,6 +127,7 @@ export function ChatsPage() {
       const { data: profiles } = await supabase.from('profiles').select('id,name').in('id', peerIds);
       nameById = Object.fromEntries((profiles ?? []).map((p) => [String(p.id), String(p.name ?? '').trim()]));
     }
+    const dogPhotoByOwner = await fetchLatestDogPhotoUrlByOwnerIds(peerIds);
     const nextChats: Chat[] = peerIds
       .map((peerId) => {
         const grouped = byPeer.get(peerId)!;
@@ -106,7 +137,7 @@ export function ChatsPage() {
           lastMessage: grouped.last.content || '대화를 시작해 보세요 🐾',
           timestamp: formatTime(grouped.last.created_at),
           unreadCount: grouped.unread,
-          avatar: '🐕',
+          peerDogPhotoUrl: dogPhotoByOwner[peerId] ?? virtualDogPhotoForSeed(`chat-peer-${peerId}`),
         };
       })
       .sort((a, b) => {
@@ -122,7 +153,8 @@ export function ChatsPage() {
             row.name === nextChats[i]?.name &&
             row.lastMessage === nextChats[i]?.lastMessage &&
             row.timestamp === nextChats[i]?.timestamp &&
-            row.unreadCount === nextChats[i]?.unreadCount,
+            row.unreadCount === nextChats[i]?.unreadCount &&
+            row.peerDogPhotoUrl === nextChats[i]?.peerDogPhotoUrl,
         );
         if (same) return prev;
       }
@@ -234,8 +266,13 @@ export function ChatsPage() {
               to={`/chat/${chat.id}?name=${encodeURIComponent(chat.name)}`}
               className="flex items-center gap-4 p-4 bg-white rounded-3xl border border-slate-100 hover:shadow-md hover:border-orange-100 active:scale-[0.98] transition-all group"
             >
-              <div className="w-14 h-14 bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-100 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 group-hover:from-orange-50 group-hover:to-yellow-50 transition-colors">
-                {chat.avatar}
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-slate-100 shadow-inner ring-1 ring-slate-100/80 transition-[box-shadow] group-hover:ring-orange-100">
+                <ImageWithFallback
+                  src={chat.peerDogPhotoUrl}
+                  fallbackSrc={virtualDogPhotoForSeed(`chat-list-fb-${chat.id}`)}
+                  alt=""
+                  className="h-full w-full object-cover"
+                />
               </div>
               <div className="flex-1 min-w-0 py-1">
                 <div className="flex items-center justify-between mb-1">
@@ -276,6 +313,8 @@ export function ChatDetailPage() {
   const [roomMenuOpen, setRoomMenuOpen] = useState(false);
   const [roomActionBusy, setRoomActionBusy] = useState(false);
   const roomMenuRef = useRef<HTMLDivElement | null>(null);
+  const [peerDogPhotoUrl, setPeerDogPhotoUrl] = useState(() => virtualDogPhotoForSeed('chat-detail-peer'));
+  const [myDogPhotoUrl, setMyDogPhotoUrl] = useState(() => virtualDogPhotoForSeed('chat-detail-me'));
 
   const peerDisplayName = useMemo(() => peerName || fallbackName || '댕친', [peerName, fallbackName]);
 
@@ -363,6 +402,21 @@ export function ChatDetailPage() {
       cancelled = true;
     };
   }, [id]);
+
+  useEffect(() => {
+    if (!user?.id || !id || !isAuthUserUuid(id.trim()) || user.id === id.trim()) return;
+    let cancelled = false;
+    const peerId = id.trim();
+    void (async () => {
+      const map = await fetchLatestDogPhotoUrlByOwnerIds([peerId, user.id]);
+      if (cancelled) return;
+      setPeerDogPhotoUrl(map[peerId] ?? virtualDogPhotoForSeed(`chat-peer-${peerId}`));
+      setMyDogPhotoUrl(map[user.id] ?? virtualDogPhotoForSeed(`chat-me-${user.id}`));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, id]);
 
   /** 프로필 등에서 다시 들어오면 목록에도 다시 보이도록 */
   useEffect(() => {
@@ -527,9 +581,30 @@ export function ChatDetailPage() {
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center text-sm flex-shrink-0">🐕</div>
-              <h1 className="font-extrabold text-slate-800 text-base truncate">{peerDisplayName}</h1>
+            <div className="flex min-w-0 items-center gap-2">
+              <div
+                className="flex shrink-0 items-center gap-1"
+                aria-label="내 강아지와 상대 강아지"
+                title="내 강아지 · 상대 강아지"
+              >
+                <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-orange-100 bg-orange-50 shadow-sm">
+                  <ImageWithFallback
+                    src={myDogPhotoUrl}
+                    fallbackSrc={virtualDogPhotoForSeed(`chat-h-my-${user?.id ?? 'x'}`)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <div className="relative h-8 w-8 overflow-hidden rounded-lg border border-slate-200 bg-slate-50 shadow-sm">
+                  <ImageWithFallback
+                    src={peerDogPhotoUrl}
+                    fallbackSrc={virtualDogPhotoForSeed(`chat-h-peer-${id}`)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </div>
+              <h1 className="truncate text-base font-extrabold text-slate-800">{peerDisplayName}</h1>
             </div>
           </div>
           <div className="relative" ref={roomMenuRef}>
@@ -592,19 +667,46 @@ export function ChatDetailPage() {
           <p className="text-center text-sm text-slate-400 py-10 font-medium">첫 메시지를 내보세요 🐾</p>
         ) : (
           messages.map((message) => (
-            <div key={message.id} className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}>
-              <div className="flex flex-col gap-1 max-w-[75%]">
-                <div className={`px-5 py-3 rounded-2xl ${
-                  message.isMine
-                    ? 'bg-gradient-to-br from-orange-500 to-yellow-500 text-white rounded-tr-sm shadow-sm shadow-orange-500/20'
-                    : 'bg-white text-slate-800 border border-slate-100 rounded-tl-sm shadow-sm'
-                }`}>
+            <div
+              key={message.id}
+              className={`flex gap-2 ${message.isMine ? 'justify-end' : 'justify-start'}`}
+            >
+              {!message.isMine && (
+                <div className="h-8 w-8 shrink-0 self-end overflow-hidden rounded-full border border-slate-100 bg-white shadow-sm">
+                  <ImageWithFallback
+                    src={peerDogPhotoUrl}
+                    fallbackSrc={virtualDogPhotoForSeed(`chat-b-peer-${id}`)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
+              <div className="flex max-w-[75%] flex-col gap-1">
+                <div
+                  className={`rounded-2xl px-5 py-3 ${
+                    message.isMine
+                      ? 'rounded-tr-sm bg-gradient-to-br from-orange-500 to-yellow-500 text-white shadow-sm shadow-orange-500/20'
+                      : 'rounded-tl-sm border border-slate-100 bg-white text-slate-800 shadow-sm'
+                  }`}
+                >
                   <p className="text-[15px] font-medium leading-relaxed">{message.text}</p>
                 </div>
-                <p className={`text-[11px] font-bold px-1 ${message.isMine ? 'text-slate-400 text-right' : 'text-slate-400 text-left'}`}>
+                <p
+                  className={`px-1 text-[11px] font-bold ${message.isMine ? 'text-right text-slate-400' : 'text-left text-slate-400'}`}
+                >
                   {message.timestamp}
                 </p>
               </div>
+              {message.isMine && (
+                <div className="h-8 w-8 shrink-0 self-end overflow-hidden rounded-full border border-orange-100 bg-orange-50 shadow-sm">
+                  <ImageWithFallback
+                    src={myDogPhotoUrl}
+                    fallbackSrc={virtualDogPhotoForSeed(`chat-b-my-${user?.id ?? 'x'}`)}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              )}
             </div>
           ))
         )}
