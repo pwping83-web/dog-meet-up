@@ -15,6 +15,7 @@ export type MoijaMannajaListProps = {
   onCategoryChange: (cat: string) => void;
   filteredMeetups: Meetup[];
   getJoinCount: (meetupId: string) => number;
+  getDistanceLabel?: (district: string) => string | null;
   /** 목록이 비었을 때 추가 안내(예: 거리 필터) */
   emptyExtraHint?: string;
 };
@@ -26,6 +27,7 @@ export function MoijaMannajaList({
   onCategoryChange,
   filteredMeetups,
   getJoinCount,
+  getDistanceLabel,
   emptyExtraHint,
 }: MoijaMannajaListProps) {
   return (
@@ -100,6 +102,12 @@ export function MoijaMannajaList({
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs text-slate-400" style={{ fontWeight: 700 }}>
                       <span>{meetup.district}</span>
+                      {getDistanceLabel ? (
+                        <>
+                          <span>·</span>
+                          <span className="text-orange-600">{getDistanceLabel(meetup.district) ?? '—'}</span>
+                        </>
+                      ) : null}
                       <span>·</span>
                       <span>{formatDistanceToNow(new Date(meetup.createdAt), { locale: ko })} 전</span>
                     </div>

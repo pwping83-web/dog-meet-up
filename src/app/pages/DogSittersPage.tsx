@@ -588,6 +588,10 @@ export function DogSittersPage() {
             onCategoryChange={setCategory}
             filteredMeetups={filteredMeetups}
             getJoinCount={getJoinCount}
+            getDistanceLabel={(district) => {
+              const km = distForDistrict(district);
+              return km < 900 ? formatDistance(km) : null;
+            }}
             emptyExtraHint={
               meetupRadiusKm < MEETUP_NEARBY_RADIUS_MAX && locationBasedEnabled && referenceDistricts.length > 0
                 ? '슬라이더로 거리를 넓혀 보세요.'
@@ -761,7 +765,14 @@ export function DogSittersPage() {
           )}
 
           {careFilter === 'need' ? (
-            <CareNeedList filteredCareNeedMeetups={filteredCareNeedMeetups} getJoinCount={getJoinCount} />
+            <CareNeedList
+              filteredCareNeedMeetups={filteredCareNeedMeetups}
+              getJoinCount={getJoinCount}
+              getDistanceLabel={(district) => {
+                const km = distForDistrict(district);
+                return km < 900 ? formatDistance(km) : null;
+              }}
+            />
           ) : (
             <GuardMomSitterList
               careFilter={careFilter}

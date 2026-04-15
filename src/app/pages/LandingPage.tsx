@@ -30,6 +30,8 @@ import { MOCK_IMG_HANGANG_HERO } from '../data/mockPromoImages';
 import { landingHeroDogImgChains } from '../data/landingHeroDogImages';
 import { OwnerWeeklyAiCard } from '../components/OwnerWeeklyAiCard';
 import { isCareMeetupCategory } from '../utils/meetupCategory';
+import { compactMeetupEstimatedCostLabel } from '../utils/meetupEstimatedCostLabel';
+import { ANYANG_MANAN_DISTANCE_ORIGIN, calculateDistance, formatDistance } from '../utils/distance';
 
 function uniqueImageUrls(...urls: (string | undefined)[]): string[] {
   const out: string[] = [];
@@ -172,6 +174,18 @@ export function LandingPage() {
   const dogMbtiNavState = useMemo(() => ({ mbtiReturn: location.pathname }), [location.pathname]);
 
   const getQuoteCount = (id: string) => mockQuotes.filter((q) => q.meetupId === id).length;
+  const getDistanceLabelForDistrict = useMemo(() => {
+    const refs = referenceDistricts.length > 0 ? referenceDistricts : [ANYANG_MANAN_DISTANCE_ORIGIN];
+    return (district: string) => {
+      const d = district?.trim();
+      if (!d) return null;
+      const km = Math.min(
+        ...refs.map((ref) => calculateDistance(ref, d)).filter((v) => v < 900),
+      );
+      if (!Number.isFinite(km) || km >= 900) return null;
+      return formatDistance(km);
+    };
+  }, [referenceDistricts]);
   const meetupFeedItems = mergedRequests
     .filter((r) => !isCareMeetupCategory(r.category) && meetupVisibleInPublicFeed(r, promoFree))
     .slice(0, 6);
@@ -588,11 +602,16 @@ export function LandingPage() {
                       {req.title}
                     </h3>
                     <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-                      {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
+                      {req.district}
+                      {getDistanceLabelForDistrict ? ` · ${getDistanceLabelForDistrict(req.district) ?? '—'}` : ''}
+                      {' · '}
+                      {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
                     </p>
                     <div className="flex items-center gap-3">
                       {req.estimatedCost && (
-                        <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>{req.estimatedCost}</span>
+                        <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>
+                          {compactMeetupEstimatedCostLabel(req.category, req.estimatedCost)}
+                        </span>
                       )}
                       {quoteCount > 0 && (
                         <span className="flex items-center gap-1 text-sm text-slate-400 max-md:text-xs md:text-[11px]" style={{ fontWeight: 700 }}>
@@ -671,12 +690,15 @@ export function LandingPage() {
                         </h3>
                       </div>
                       <p className="mb-2 text-sm text-slate-400 max-md:text-[13px] md:mb-1.5 md:text-[11px]" style={{ fontWeight: 600 }}>
-                        {req.district} · {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
+                        {req.district}
+                        {getDistanceLabelForDistrict ? ` · ${getDistanceLabelForDistrict(req.district) ?? '—'}` : ''}
+                        {' · '}
+                        {formatDistanceToNow(new Date(req.createdAt), { locale: ko })} 전
                       </p>
                       <div className="flex items-center gap-3">
                         {req.estimatedCost && (
                           <span className="text-base text-orange-600 max-md:text-[15px] md:text-xs" style={{ fontWeight: 900 }}>
-                            {req.estimatedCost}
+                            {compactMeetupEstimatedCostLabel(req.category, req.estimatedCost)}
                           </span>
                         )}
                         {quoteCount > 0 && (

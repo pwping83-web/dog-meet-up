@@ -5,6 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { meetupCoverImageUrl, virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
+import { compactMeetupEstimatedCostLabel } from '../utils/meetupEstimatedCostLabel';
 
 interface MeetupCardProps {
   meetup: Meetup;
@@ -106,7 +107,7 @@ export function MeetupCard({ meetup, joinCount = 0, userDistrict }: MeetupCardPr
           </div>
           {meetup.estimatedCost && (
             <span className="text-orange-600 whitespace-nowrap text-sm bg-orange-50 px-2.5 py-1 rounded-lg" style={{ fontWeight: 800 }}>
-              {meetup.estimatedCost}
+              {compactMeetupEstimatedCostLabel(meetup.category, meetup.estimatedCost)}
             </span>
           )}
         </div>

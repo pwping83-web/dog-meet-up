@@ -24,6 +24,7 @@ import { supabase } from '../../lib/supabase';
 import { interceptGuestNav } from '../../lib/guestNavGuard';
 import { useCachedDogs } from '../../hooks/useCachedDogs';
 import { AiDoumiButton } from '../components/AiDoumiButton';
+import { compactMeetupEstimatedCostLabel } from '../utils/meetupEstimatedCostLabel';
 
 const popularSearches = [
   '소형견', '중형견', '대형견', '산책',
@@ -546,7 +547,7 @@ export function SearchPage() {
                         <p className="text-xs font-medium text-slate-500 mb-2">{request.district} · 방금 전</p>
                         {request.estimatedCost && (
                           <p className="font-extrabold text-base text-brand tracking-tight">
-                            {request.estimatedCost}
+                            {compactMeetupEstimatedCostLabel(request.category, request.estimatedCost)}
                           </p>
                         )}
                       </div>

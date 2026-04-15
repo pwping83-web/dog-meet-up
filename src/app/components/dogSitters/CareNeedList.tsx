@@ -14,9 +14,10 @@ import {
 export type CareNeedListProps = {
   filteredCareNeedMeetups: Meetup[];
   getJoinCount: (meetupId: string) => number;
+  getDistanceLabel?: (district: string) => string | null;
 };
 
-export function CareNeedList({ filteredCareNeedMeetups, getJoinCount }: CareNeedListProps) {
+export function CareNeedList({ filteredCareNeedMeetups, getJoinCount, getDistanceLabel }: CareNeedListProps) {
   return (
     <div className="space-y-3">
       {filteredCareNeedMeetups.map((meetup) => {
@@ -48,6 +49,12 @@ export function CareNeedList({ filteredCareNeedMeetups, getJoinCount }: CareNeed
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-xs text-slate-400" style={{ fontWeight: 700 }}>
                     <span>{meetup.district}</span>
+                    {getDistanceLabel ? (
+                      <>
+                        <span>·</span>
+                        <span className="text-orange-600">{getDistanceLabel(meetup.district) ?? '—'}</span>
+                      </>
+                    ) : null}
                     <span>·</span>
                     <span>{formatDistanceToNow(new Date(meetup.createdAt), { locale: ko })} 전</span>
                   </div>
