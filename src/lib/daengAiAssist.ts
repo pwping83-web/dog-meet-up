@@ -92,15 +92,25 @@ function normalizeMbtiKoreanOnly(input: string): string {
     .trim();
 }
 
+/** 전 task 공통: 영문 토큰 제거 후 한글/숫자 중심으로 정리 */
+function normalizeKoreanOnlyCommon(input: string): string {
+  return input
+    .replace(/[A-Za-z]+(?:['’-][A-Za-z]+)*/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s+([,.!?])/g, '$1')
+    .trim();
+}
+
 function sanitizeAiFields(fields?: DaengAiFields): DaengAiFields | undefined {
   if (!fields) return fields;
   const next: DaengAiFields = { ...fields };
-  if (typeof next.title === 'string') next.title = stripHanChars(next.title);
-  if (typeof next.category === 'string') next.category = stripHanChars(next.category);
-  if (typeof next.description === 'string') next.description = stripHanChars(next.description);
-  if (typeof next.suggestedSearch === 'string') next.suggestedSearch = stripHanChars(next.suggestedSearch);
+  if (typeof next.title === 'string') next.title = normalizeKoreanOnlyCommon(stripHanChars(next.title));
+  if (typeof next.category === 'string') next.category = normalizeKoreanOnlyCommon(stripHanChars(next.category));
+  if (typeof next.description === 'string') next.description = normalizeKoreanOnlyCommon(stripHanChars(next.description));
+  if (typeof next.suggestedSearch === 'string') next.suggestedSearch = normalizeKoreanOnlyCommon(stripHanChars(next.suggestedSearch));
   if (Array.isArray(next.chips)) {
-    next.chips = next.chips.map((c) => stripHanChars(String(c)));
+    next.chips = next.chips.map((c) => normalizeKoreanOnlyCommon(stripHanChars(String(c))));
   }
   if (typeof next.weeklyIntro === 'string') {
     const cleaned = scrubOwnerWeeklyIntro(
@@ -250,7 +260,7 @@ export async function invokeDaengAiAssist(
       typeof d.text === 'string'
         ? task === 'mbti_expand'
           ? normalizeMbtiKoreanOnly(stripHanChars(d.text))
-          : stripHanChars(d.text)
+          : normalizeKoreanOnlyCommon(stripHanChars(d.text))
         : '',
     fields: sanitizeAiFields(d.fields),
   };
