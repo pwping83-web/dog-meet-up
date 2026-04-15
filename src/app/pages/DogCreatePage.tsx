@@ -149,6 +149,22 @@ export function DogCreatePage() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
+      const loadLatestDogPhotoUrl = async (): Promise<string | null> => {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return null;
+        const { data: row } = await supabase
+          .from('dog_profiles')
+          .select('photo_url')
+          .eq('owner_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        const pu = typeof row?.photo_url === 'string' ? row.photo_url.trim() : '';
+        return pu || null;
+      };
+
       const d = readDraft();
       if (d && draftHasMeaningfulFields(d)) {
         if (!cancelled) {
@@ -164,6 +180,13 @@ export function DogCreatePage() {
           } else if (d.photoPublicUrl) {
             setPreviewUrl(d.photoPublicUrl);
             setImageFile(null);
+          } else {
+            // 초안에 텍스트만 있고 사진이 비어 있으면, 기존 등록 사진으로 보강
+            const latestPhotoUrl = await loadLatestDogPhotoUrl();
+            if (!cancelled && latestPhotoUrl) {
+              setPreviewUrl(latestPhotoUrl);
+              setImageFile(null);
+            }
           }
         }
       } else {
