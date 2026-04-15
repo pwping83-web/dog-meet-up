@@ -1,6 +1,7 @@
 // src/app/pages/ProfileEditPage.tsx
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import type { ChangeEvent, MutableRefObject } from 'react';
+import { Link, useNavigate } from 'react-router';
 import {
   ArrowLeft,
   Camera,
@@ -9,8 +10,6 @@ import {
   ShieldCheck,
   ChevronDown,
   Loader2,
-  Home,
-  BadgeCheck,
   Bell,
 } from 'lucide-react';
 import { LocationPickerModal } from '../components/LocationPickerModal';
@@ -26,11 +25,6 @@ import {
   parseProfileAvatarUrl,
 } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
-import {
-  readCareProviderTrack,
-  writeCareProviderTrack,
-  type CareProviderTrack,
-} from '../../lib/careProviderTrack';
 import { formatKoreanMobileDigits } from '../../lib/phoneAuth';
 import { imageContentTypeForDogPhotosUpload, safeImageExtForDogPhotos } from '../../lib/storageImageMime';
 
@@ -87,66 +81,34 @@ function faceFromProfileRow(
 
 export function ProfileEditPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const { fullLabel, location: userLoc, locationBasedEnabled } = useUserLocation();
-  const [profileMode, setProfileMode] = useState<'general' | 'repairer'>('general');
-  const [careTrack, setCareTrack] = useState<CareProviderTrack>(() => readCareProviderTrack());
   const [locationOpen, setLocationOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saveBusy, setSaveBusy] = useState(false);
   const [phone, setPhone] = useState('');
-  const [careSpecialty, setCareSpecialty] = useState('산책 · 방문 돌봄');
   const [general, setGeneral] = useState<ProfileModeFace>(() => emptyFace());
-  const [care, setCare] = useState<ProfileModeFace>(() => emptyFace());
   const pendingGeneralRef = useRef<File | null>(null);
-  const pendingCareRef = useRef<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const careQuery = searchParams.get('care');
-  /** 링크로 들어온 경우: ?care=sitter → 댕집사만 + 돌봄 탭 */
-  useEffect(() => {
-    if (careQuery !== 'sitter') return;
-    writeCareProviderTrack('sitter_only');
-    setCareTrack('sitter_only');
-    setProfileMode('repairer');
-    setSearchParams(
-      (prev) => {
-        const p = new URLSearchParams(prev);
-        p.delete('care');
-        return p;
-      },
-      { replace: true },
-    );
-  }, [careQuery, setSearchParams]);
 
   useEffect(() => {
     return () => {
       if (general.localPreviewUrl) URL.revokeObjectURL(general.localPreviewUrl);
-      if (care.localPreviewUrl) URL.revokeObjectURL(care.localPreviewUrl);
     };
-  }, [general.localPreviewUrl, care.localPreviewUrl]);
-
-  const pickCareTrack = (v: CareProviderTrack) => {
-    setCareTrack(v);
-    writeCareProviderTrack(v);
-  };
+  }, [general.localPreviewUrl]);
 
   const loadProfile = useCallback(async () => {
     if (!user) {
       setGeneral(emptyFace());
-      setCare(emptyFace());
       setPhone('');
-      setCareSpecialty('산책 · 방문 돌봄');
       pendingGeneralRef.current = null;
-      pendingCareRef.current = null;
       setProfileLoading(false);
       return;
     }
     setProfileLoading(true);
     const { data, error } = await supabase
       .from('profiles')
-      .select('name, phone, avatar_url, care_display_name, care_avatar_url, care_specialty')
+      .select('name, phone, avatar_url')
       .eq('id', user.id)
       .maybeSingle();
     if (error) {
@@ -159,21 +121,7 @@ export function ProfileEditPage() {
     const g = faceFromProfileRow(data?.name, data?.avatar_url, fallback);
     setGeneral(g);
 
-    const hasCareInDb = Boolean(data?.care_display_name?.trim() || data?.care_avatar_url?.trim());
-    if (hasCareInDb) {
-      setCare(faceFromProfileRow(data?.care_display_name, data?.care_avatar_url, g.nickname));
-    } else {
-      setCare({
-        ...g,
-        localPreviewUrl: null,
-      });
-    }
-
-    const spec = typeof data?.care_specialty === 'string' && data.care_specialty.trim();
-    setCareSpecialty(spec || '산책 · 방문 돌봄');
-
     pendingGeneralRef.current = null;
-    pendingCareRef.current = null;
     setProfileLoading(false);
   }, [user]);
 
@@ -181,9 +129,9 @@ export function ProfileEditPage() {
     void loadProfile();
   }, [loadProfile]);
 
-  const activeFace = profileMode === 'general' ? general : care;
-  const setActiveFace = profileMode === 'general' ? setGeneral : setCare;
-  const pendingFileRef = profileMode === 'general' ? pendingGeneralRef : pendingCareRef;
+  const activeFace = general;
+  const setActiveFace = setGeneral;
+  const pendingFileRef = pendingGeneralRef;
 
   const locationVerified = userLoc.source === 'gps' || userLoc.source === 'map';
   const hasRegion = Boolean(userLoc.city && userLoc.district);
@@ -204,7 +152,7 @@ export function ProfileEditPage() {
   const buildAvatarUrlForSave = async (
     uid: string,
     face: ProfileModeFace,
-    pendingRef: React.MutableRefObject<File | null>,
+    pendingRef: MutableRefObject<File | null>,
   ): Promise<string | null> => {
     const pending = pendingRef.current;
     if (pending) {
@@ -272,100 +220,68 @@ export function ProfileEditPage() {
 
       const nickOut = nick.slice(0, 10);
 
-      if (profileMode === 'general') {
-        const { data: updated, error } = await supabase
-          .from('profiles')
-          .update({
+      const { data: updated, error } = await supabase
+        .from('profiles')
+        .update({
+          name: nickOut,
+          avatar_url: avatar_url,
+          phone: phoneOut,
+        })
+        .eq('id', user.id)
+        .select('id');
+      if (error) {
+        alert(error.message || '저장에 실패했습니다.');
+        return;
+      }
+      if (!updated?.length) {
+        const { error: insErr } = await supabase.from('profiles').upsert(
+          {
+            id: user.id,
             name: nickOut,
             avatar_url: avatar_url,
             phone: phoneOut,
-          })
-          .eq('id', user.id)
-          .select('id');
-        if (error) {
-          alert(error.message || '저장에 실패했습니다.');
+          },
+          { onConflict: 'id' },
+        );
+        if (insErr) {
+          alert(insErr.message || '저장에 실패했습니다.');
           return;
         }
-        if (!updated?.length) {
-          const { error: insErr } = await supabase.from('profiles').upsert(
-            {
-              id: user.id,
-              name: nickOut,
-              avatar_url: avatar_url,
-              phone: phoneOut,
-            },
-            { onConflict: 'id' },
-          );
-          if (insErr) {
-            alert(insErr.message || '저장에 실패했습니다.');
-            return;
-          }
-        }
-        const { error: metaErr } = await supabase.auth.updateUser({
-          data: { nickname: nickOut, name: nickOut, full_name: nickOut },
-        });
-        if (metaErr) {
-          console.warn('[프로필 수정] auth.user_metadata 동기화:', metaErr.message);
-        }
-        pendingGeneralRef.current = null;
-        setGeneral((prev) => {
-          if (prev.localPreviewUrl) URL.revokeObjectURL(prev.localPreviewUrl);
-          const parsed = parseProfileAvatarUrl(avatar_url);
-          const nextDraft: AvatarDraft =
-            avatar_url?.startsWith(DAENG_AVATAR_THEME_PREFIX) ? 'theme' : avatar_url && /^https?:\/\//i.test(avatar_url) ? 'custom' : 'theme';
-          return {
-            ...prev,
-            nickname: nickOut,
-            committedAvatarUrl: avatar_url,
-            localPreviewUrl: null,
-            avatarDraft: nextDraft,
-            avatarTheme: parsed.kind === 'theme' ? parsed.themeId : prev.avatarTheme,
-          };
-        });
-      } else {
-        const { data: updated, error } = await supabase
-          .from('profiles')
-          .update({
-            care_display_name: nickOut,
-            care_avatar_url: avatar_url,
-            care_specialty: careSpecialty.trim().slice(0, 300) || null,
-            phone: phoneOut,
-          })
-          .eq('id', user.id)
-          .select('id');
-        if (error) {
-          alert(error.message || '저장에 실패했습니다.');
-          return;
-        }
-        if (!updated?.length) {
-          alert('일반 프로필을 먼저 저장한 뒤 돌봄 프로필을 저장할 수 있어요.');
-          return;
-        }
-        pendingCareRef.current = null;
-        setCare((prev) => {
-          if (prev.localPreviewUrl) URL.revokeObjectURL(prev.localPreviewUrl);
-          const parsed = parseProfileAvatarUrl(avatar_url);
-          const nextDraft: AvatarDraft =
-            avatar_url?.startsWith(DAENG_AVATAR_THEME_PREFIX) ? 'theme' : avatar_url && /^https?:\/\//i.test(avatar_url) ? 'custom' : 'theme';
-          return {
-            ...prev,
-            nickname: nickOut,
-            committedAvatarUrl: avatar_url,
-            localPreviewUrl: null,
-            avatarDraft: nextDraft,
-            avatarTheme: parsed.kind === 'theme' ? parsed.themeId : prev.avatarTheme,
-          };
-        });
       }
+      const { error: metaErr } = await supabase.auth.updateUser({
+        data: { nickname: nickOut, name: nickOut, full_name: nickOut },
+      });
+      if (metaErr) {
+        console.warn('[프로필 수정] auth.user_metadata 동기화:', metaErr.message);
+      }
+      pendingGeneralRef.current = null;
+      setGeneral((prev) => {
+        if (prev.localPreviewUrl) URL.revokeObjectURL(prev.localPreviewUrl);
+        const parsed = parseProfileAvatarUrl(avatar_url);
+        const nextDraft: AvatarDraft =
+          avatar_url?.startsWith(DAENG_AVATAR_THEME_PREFIX)
+            ? 'theme'
+            : avatar_url && /^https?:\/\//i.test(avatar_url)
+              ? 'custom'
+              : 'theme';
+        return {
+          ...prev,
+          nickname: nickOut,
+          committedAvatarUrl: avatar_url,
+          localPreviewUrl: null,
+          avatarDraft: nextDraft,
+          avatarTheme: parsed.kind === 'theme' ? parsed.themeId : prev.avatarTheme,
+        };
+      });
 
-      alert(profileMode === 'general' ? '일반 프로필이 저장되었어요! 💾' : '돌봄 프로필이 저장되었어요! 💾');
+      alert('프로필이 저장되었어요! 💾');
       navigate('/my');
     } finally {
       setSaveBusy(false);
     }
   };
 
-  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
@@ -454,29 +370,7 @@ export function ProfileEditPage() {
               </div>
             ) : null}
 
-            {/* 일반회원 / 돌봄회원 탭 */}
-            <div className="bg-slate-100 p-1 rounded-2xl flex relative mb-2">
-              <button
-                type="button"
-                onClick={() => setProfileMode('general')}
-                className={`z-10 flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${profileMode === 'general' ? 'text-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                일반회원
-              </button>
-              <button
-                type="button"
-                onClick={() => setProfileMode('repairer')}
-                className={`z-10 flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${profileMode === 'repairer' ? 'text-brand shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              >
-                돌봄회원
-              </button>
-              <div
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl transition-transform duration-300 shadow-sm ${profileMode === 'repairer' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`}
-              />
-            </div>
-            <p className="text-center text-[11px] font-bold text-slate-400">
-              탭마다 따로 저장돼요. 돌봄은 미입력 시 일반과 같은 값으로 시작해요.
-            </p>
+            {/* 돌봄회원 프로필 버튼 제거(중복): 일반 프로필만 수정 */} 
 
             {/* 프로필 완성도 게이지 */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
@@ -506,9 +400,7 @@ export function ProfileEditPage() {
 
             {/* 프로필 사진 & 테마 선택 */}
             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-              <h3 className="text-sm font-extrabold text-slate-800 mb-4">
-                프로필 이미지 {profileMode === 'repairer' ? '(돌봄)' : '(일반)'}
-              </h3>
+              <h3 className="text-sm font-extrabold text-slate-800 mb-4">프로필 이미지</h3>
               {/*
                 모바일(iOS·인앱브라우저): `sr-only` 1px 파일 입력 + label 연결은 파일 피커가 안 뜨는 경우가 많음.
                 프리뷰 위에 실제 크기의 투명 input을 올려 터치 타깃을 확보함.
@@ -572,18 +464,14 @@ export function ProfileEditPage() {
             {/* 닉네임 수정 */}
             <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <label className="flex justify-between text-sm font-extrabold text-slate-800 mb-2">
-                닉네임 {profileMode === 'repairer' ? '(돌봄)' : '(일반)'}
+                닉네임
                 <span className="text-xs text-slate-400 font-medium">{activeFace.nickname.length}/10자</span>
               </label>
               <input
                 type="text"
                 value={activeFace.nickname}
                 maxLength={10}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (profileMode === 'general') setGeneral((p) => ({ ...p, nickname: v }));
-                  else setCare((p) => ({ ...p, nickname: v }));
-                }}
+                onChange={(e) => setGeneral((p) => ({ ...p, nickname: e.target.value }))}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3.5 font-bold text-slate-800 transition-all focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
               />
             </div>
@@ -633,86 +521,7 @@ export function ProfileEditPage() {
               </p>
             </div>
 
-            {/* 돌봄회원: 목표 선택 + 맡김 돌봄 안내 */}
-            {profileMode === 'repairer' && (
-              <div className="animate-fadeIn space-y-4">
-                <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <p className="mb-3 text-center text-xs font-extrabold text-slate-800">돌봄 목표를 골라 주세요</p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => pickCareTrack('sitter_only')}
-                      className={`rounded-2xl border-2 px-3 py-3 text-left transition-all active:scale-[0.99] ${
-                        careTrack === 'sitter_only'
-                          ? 'border-orange-400 bg-orange-50 shadow-sm'
-                          : 'border-slate-100 bg-slate-50/80 hover:border-orange-100'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5 text-sm font-black text-slate-900">
-                        <Home className="h-4 w-4 shrink-0 text-orange-500" aria-hidden />
-                        댕집사(방문)까지
-                      </span>
-                      <span className="mt-1 block text-[10px] font-semibold leading-snug text-slate-600">
-                        이웃 집 방문 돌봄·산책
-                      </span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => pickCareTrack('guard_mom')}
-                      className={`rounded-2xl border-2 px-3 py-3 text-left transition-all active:scale-[0.99] ${
-                        careTrack === 'guard_mom'
-                          ? 'border-violet-400 bg-violet-50 shadow-sm'
-                          : 'border-slate-100 bg-slate-50/80 hover:border-violet-100'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5 text-sm font-black text-slate-900">
-                        <BadgeCheck className="h-4 w-4 shrink-0 text-violet-600" aria-hidden />
-                        인증 보호맘
-                      </span>
-                      <span className="mt-1 block text-[10px] font-semibold leading-snug text-slate-600">
-                        교육·인증 후 맡기기
-                      </span>
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => pickCareTrack('unset')}
-                    className="mt-2 w-full py-1.5 text-[10px] font-bold text-slate-400 underline-offset-2 hover:text-slate-600"
-                  >
-                    아직 안 정했어요
-                  </button>
-                  {careTrack === 'guard_mom' && (
-                    <Link
-                      to="/guard-mom/register"
-                      className="mt-3 flex min-h-11 items-center justify-center rounded-2xl bg-violet-600 px-4 py-2.5 text-center text-xs font-extrabold text-white shadow-md active:scale-[0.99]"
-                    >
-                      보호맘 프로필 등록·이어하기
-                    </Link>
-                  )}
-                  {careTrack === 'sitter_only' && (
-                    <p className="mt-3 text-center text-[10px] font-semibold leading-snug text-slate-500">
-                      인증·목록은 정책에 따라 달라질 수 있어요. 예시는 인증 돌봄 탭의 댕집사에서 볼 수 있어요.
-                    </p>
-                  )}
-                </div>
-
-                <div className="rounded-3xl border-2 border-brand/20 bg-brand-soft p-5">
-                  <h3 className="mb-2 text-sm font-extrabold text-slate-900">🐕 도와드릴 수 있는 돌봄</h3>
-                  <p className="mb-3 text-xs font-medium leading-relaxed text-slate-700">
-                    모임 글과는 달리, <strong className="font-bold text-slate-900">주인 집에 찾아가 방문 돌봄·산책</strong>을
-                    도와주시는 활동이에요. 제공 가능한 일정·서비스를 적어 주세요.
-                  </p>
-                  <input
-                    type="text"
-                    value={careSpecialty}
-                    onChange={(e) => setCareSpecialty(e.target.value)}
-                    placeholder="예: 주간 방문 산책·배식, 당일 방문 돌봄"
-                    maxLength={300}
-                    className="w-full rounded-2xl border border-brand/25 bg-white px-4 py-3.5 font-bold text-slate-800 transition-all focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/15"
-                  />
-                </div>
-              </div>
-            )}
+            {/* 돌봄회원 프로필은 별도 페이지에서 설정 */} 
           </>
         )}
       </div>
