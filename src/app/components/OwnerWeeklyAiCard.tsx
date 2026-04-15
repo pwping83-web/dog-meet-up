@@ -71,21 +71,17 @@ export function OwnerWeeklyAiCard() {
   const { location: userLoc } = useUserLocation();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [intro, setIntro] = useState('');
   const [items, setItems] = useState<DaengAiWeeklyItem[]>([]);
   const [err, setErr] = useState<string | null>(null);
 
   const applyResult = (r: DaengAiAssistResult) => {
     if (!r.ok) {
       setErr(r.error);
-      setIntro('');
       setItems([]);
       setOpen(true);
       return;
     }
     setErr(null);
-    // 장황한 폴백(r.text) 금지 — 짧은 weeklyIntro만 표시
-    setIntro((r.fields?.weeklyIntro ?? '').trim());
     const rawItems = Array.isArray(r.fields?.weeklyItems) ? r.fields!.weeklyItems! : [];
     setItems(weeklyItemsWithValidMeetupLinks(rawItems));
     setOpen(true);
@@ -171,20 +167,17 @@ export function OwnerWeeklyAiCard() {
                 <p className="rounded-2xl bg-red-50 px-3 py-3 text-sm font-semibold text-red-800">{err}</p>
               ) : (
                 <>
-                  {intro ? (
-                    <p className="text-[13px] font-semibold leading-snug text-slate-700 whitespace-pre-wrap">
-                      {intro}
-                    </p>
-                  ) : null}
                   {items.length > 0 ? (
                     <div className="space-y-2.5">
                       {items.map((it, i) => (
                         <WeeklyItemRow key={`${it.kind}-${i}`} item={it} />
                       ))}
                     </div>
-                  ) : !err && intro ? (
-                    <p className="text-xs font-medium text-slate-500">추가로 바로가기 링크를 만들지 못했어요. 탐색에서 모임을 찾아보세요.</p>
-                  ) : null}
+                  ) : (
+                    <p className="text-xs font-medium text-slate-500">
+                      추천할 모임·댕친을 찾지 못했어요. 탐색에서 모임을 직접 찾아보세요.
+                    </p>
+                  )}
                   <div className="flex flex-wrap gap-2 pt-1">
                     <Link
                       to="/explore"

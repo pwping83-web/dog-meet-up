@@ -206,19 +206,21 @@ export function LandingPage() {
     <div className="flex min-h-dvh min-h-screen flex-col overflow-x-hidden bg-orange-50/30">
       <LocationPickerModal open={locationPickerOpen} onClose={() => setLocationPickerOpen(false)} />
 
-      {/* 우측 상단 고정 메뉴 버튼 — 스크롤과 무관하게 동일 위치 */}
+      {/* 우측 상단 고정 메뉴 버튼 — 앱 컨테이너(max-w-[430px]) 안 우측 끝에 고정 */}
       {user && (
-        <button
-          type="button"
-          onClick={() => setExploreMenuOpen(true)}
-          className={`fixed right-4 top-4 z-[100] p-2 transition-all active:scale-90 ${
-            scrolledPastHero ? 'text-slate-700' : 'text-white'
-          }`}
-          aria-label="메뉴·설정"
-          aria-expanded={exploreMenuOpen}
-        >
-          <Menu className="h-6 w-6" strokeWidth={2.5} aria-hidden />
-        </button>
+        <div className="pointer-events-none fixed inset-x-0 top-0 z-[100] mx-auto max-w-[430px]">
+          <button
+            type="button"
+            onClick={() => setExploreMenuOpen(true)}
+            className={`pointer-events-auto absolute right-2 top-3 p-2 transition-all active:scale-90 ${
+              scrolledPastHero ? 'text-slate-700' : 'text-white'
+            }`}
+            aria-label="메뉴·설정"
+            aria-expanded={exploreMenuOpen}
+          >
+            <Menu className="h-6 w-6" strokeWidth={2.5} aria-hidden />
+          </button>
+        </div>
       )}
 
       <main className="flex w-full min-h-0 flex-1 flex-col">
@@ -847,13 +849,16 @@ export function LandingPage() {
       </footer>
 
       {exploreMenuOpen && user && (
-        <div className="fixed inset-0 z-[200] flex justify-end" role="dialog" aria-modal="true" aria-labelledby="explore-menu-title">
+        <div className="fixed inset-0 z-[200]" role="dialog" aria-modal="true" aria-labelledby="explore-menu-title">
+          {/* 전체 화면 백드롭 */}
           <button
             type="button"
             className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
             onClick={closeExploreMenu}
             aria-label="닫기"
           />
+          {/* 앱 컨테이너(430px) 안 우측에서 열리는 드로어 */}
+          <div className="relative mx-auto flex h-full w-full max-w-[430px] justify-end">
           <div className="relative flex h-full w-[min(100%,288px)] flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
               <div className="min-w-0">
@@ -931,6 +936,7 @@ export function LandingPage() {
               </button>
             </div>
           </div>
+          </div>{/* 앱 컨테이너 끝 */}
         </div>
       )}
     </div>

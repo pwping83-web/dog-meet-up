@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import {
   ArrowLeft,
@@ -13,6 +13,8 @@ import {
   Eye,
   EyeOff,
   LocateFixed,
+  MapPin,
+  Plus,
 } from 'lucide-react';
 import { PawTabIcon } from '../components/icons/PawTabIcon';
 import { supabase } from '../../lib/supabase';
@@ -29,6 +31,9 @@ import { CareIntroPhotoPicker } from '../components/CareIntroPhotoPicker';
 import { broadcastCertifiedCareDataChanged } from '../../lib/certifiedCareSync';
 import { removeUserMeetupsByUserId, syncMeetupsFromDb } from '../../lib/userMeetupsStore';
 import { toast } from 'sonner';
+import { RegionSelector } from '../components/RegionSelector';
+import { formatRegion } from '../data/regions';
+import { readExtraCareRegions, writeExtraCareRegions } from '../../lib/extraCareRegions';
 
 type GuardMomRow = Database['public']['Tables']['certified_guard_moms']['Row'];
 
@@ -92,7 +97,7 @@ export function GuardMomRegisterPage() {
   const [searchParams] = useSearchParams();
   const promoFree = usePromoFreeListings();
   const { user, loading: authLoading } = useAuth();
-  const { applyGpsLocation, locationBasedEnabled, regionFullLabel } = useUserLocation();
+  const { applyGpsLocation, locationBasedEnabled, regionFullLabel, location: userLoc } = useUserLocation();
   const [careRole, setCareRole] = useState<'guard_mom' | 'sitter'>(() => {
     if (searchParams.get('role') === 'sitter') return 'sitter';
     if (readCareProviderTrack() === 'sitter_only') return 'sitter';
@@ -114,6 +119,43 @@ export function GuardMomRegisterPage() {
   const [sitterSaving, setSitterSaving] = useState(false);
   const [introPhotoUrls, setIntroPhotoUrls] = useState<string[]>([]);
   const [regionGpsBusy, setRegionGpsBusy] = useState(false);
+  const [extraCareRegions, setExtraCareRegions] = useState(() => readExtraCareRegions());
+  const [extraCity, setExtraCity] = useState('');
+  const [extraDistrict, setExtraDistrict] = useState('');
+  const [extraHint, setExtraHint] = useState<string | null>(null);
+
+  const referenceDistrictsForExtras = useMemo(() => {
+    const primary = userLoc.district?.trim();
+    const fromExtras = extraCareRegions.map((e) => e.district.trim()).filter(Boolean);
+    return Array.from(new Set([primary, ...fromExtras].filter(Boolean) as string[]));
+  }, [userLoc.district, extraCareRegions]);
+
+  const addExtraCareRegion = () => {
+    setExtraHint(null);
+    if (!extraCity.trim() || !extraDistrict.trim()) {
+      setExtraHint('추가할 시·구를 모두 선택해 주세요.');
+      return;
+    }
+    const d = extraDistrict.trim();
+    if (referenceDistrictsForExtras.includes(d)) {
+      setExtraHint('이미 기준에 포함된 동네예요.');
+      return;
+    }
+    const next = [
+      ...extraCareRegions,
+      { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, city: extraCity.trim(), district: d },
+    ];
+    writeExtraCareRegions(next);
+    setExtraCareRegions(next);
+    setExtraCity('');
+    setExtraDistrict('');
+  };
+
+  const removeExtraCareRegion = (id: string) => {
+    const next = extraCareRegions.filter((e) => e.id !== id);
+    writeExtraCareRegions(next);
+    setExtraCareRegions(next);
+  };
 
   const showApplySuccessToast = useCallback((role: 'guard_mom' | 'sitter') => {
     toast.success('신청서를 보냈어요! 🎉', {
@@ -844,6 +886,51 @@ export function GuardMomRegisterPage() {
             )}
           </>
         )}
+
+        {/* 추가 동네 — 기본 지역 외 활동 가능한 동네 */}
+        <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-sm">
+          <div className="mb-3 flex items-center gap-2">
+            <MapPin className="h-4 w-4 shrink-0 text-amber-600" aria-hidden />
+            <p className="text-sm font-extrabold text-slate-800">추가 동네</p>
+            <span className="ml-auto text-[11px] font-semibold text-slate-400">기본 지역 외 활동 가능한 곳</span>
+          </div>
+          <RegionSelector
+            selectedCity={extraCity}
+            selectedDistrict={extraDistrict}
+            onCityChange={setExtraCity}
+            onDistrictChange={setExtraDistrict}
+            placeholder="추가할 시·구 선택"
+          />
+          <button
+            type="button"
+            onClick={addExtraCareRegion}
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-amber-300 bg-amber-50/60 py-2.5 text-xs font-extrabold text-amber-950 active:scale-[0.99]"
+          >
+            <Plus className="h-4 w-4 shrink-0" aria-hidden />
+            이 동네 추가
+          </button>
+          {extraHint && <p className="mt-2 text-xs font-bold text-red-600">{extraHint}</p>}
+          {extraCareRegions.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {extraCareRegions.map((ex) => (
+                <li
+                  key={ex.id}
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50/50 py-1 pl-3 pr-1 text-[11px] font-bold text-slate-800"
+                >
+                  {formatRegion(ex.city, ex.district)}
+                  <button
+                    type="button"
+                    onClick={() => removeExtraCareRegion(ex.id)}
+                    className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-amber-900"
+                    aria-label={`${formatRegion(ex.city, ex.district)} 제거`}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </div>
   );
