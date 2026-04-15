@@ -74,7 +74,7 @@ export function GuardMomSitterList({
         row.kind === 'sitter' ? (
           <div key={`s-${row.sitter.id}`} className="relative">
             <DogSitterCard dogSitter={row.sitter} />
-            <div className="pointer-events-none absolute right-4 top-4 flex flex-col items-end gap-1" aria-hidden>
+            <div className="pointer-events-none absolute right-4 top-4 hidden flex-col items-end gap-1 sm:flex" aria-hidden>
               <div
                 className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
                   row.distance < 2
@@ -96,6 +96,25 @@ export function GuardMomSitterList({
                 </span>
               )}
             </div>
+            <div className="mt-2 flex justify-end gap-1 sm:hidden" aria-hidden>
+              {row.distance < 2 && (
+                <span className="rounded-lg bg-orange-50 px-2 py-0.5 text-xs font-extrabold text-orange-600">
+                  초근거리!
+                </span>
+              )}
+              <div
+                className={`rounded-xl px-3 py-1.5 text-xs shadow-sm ${
+                  row.distance < 2
+                    ? 'bg-orange-500 text-white'
+                    : row.distance < 5
+                      ? 'bg-orange-500 text-white'
+                      : 'bg-slate-300 text-slate-700'
+                }`}
+                style={{ fontWeight: 800 }}
+              >
+                {formatDistance(row.distance)}
+              </div>
+            </div>
           </div>
         ) : (
           <div key={`g-${row.mom.id}`} className="relative">
@@ -113,7 +132,24 @@ export function GuardMomSitterList({
                   />
                 </div>
                 <div className="min-w-0 flex-1 pt-0.5">
-                  <p className="text-sm font-extrabold leading-tight text-brand">{displayCertifiedGuardMomBrandName(row.mom)}</p>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <p className="text-sm font-extrabold leading-tight text-brand">
+                      {displayCertifiedGuardMomBrandName(row.mom)}
+                    </p>
+                    <span
+                      className={`rounded-xl px-2.5 py-1 text-[11px] font-extrabold shadow-sm ${
+                        row.distance < 2
+                          ? 'bg-orange-500 text-white'
+                          : row.distance < 5
+                            ? 'bg-orange-500 text-white'
+                            : 'bg-slate-300 text-slate-700'
+                      }`}
+                      aria-label={`거리 ${formatDistance(row.distance)}`}
+                      title={`거리 ${formatDistance(row.distance)}`}
+                    >
+                      {formatDistance(row.distance)}
+                    </span>
+                  </div>
                   <p className="mt-1 line-clamp-2 text-sm font-semibold text-slate-800">
                     {displayCertifiedGuardMomIntro(row.mom)}
                   </p>

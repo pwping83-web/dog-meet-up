@@ -271,44 +271,20 @@ export function DogSittersPage() {
     guardMoms.length === 0 &&
     showCertifiedGuardMomDemosWhenEmpty();
 
-  /** 보호맘 DB+데모: 동네 미설정·위치기반 끔 → 전부. 켜짐+동네 있음 → 저장 동네 기준 CERTIFIED_CARE_RADIUS_KM 이내만 */
+  /** 보호맘 DB+데모: 기기별 동네 차이로 목록이 달라지지 않게 전체 노출(정렬은 거리순 유지) */
   const guardMomsForList = useMemo((): GuardMomRow[] => {
     if (guardMomsLoadError) return [];
-    const filterKm = (rows: GuardMomRow[]) =>
-      rows.filter((m) => {
-        const km = distForDistrict(m.region_gu ?? '');
-        return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
-      });
     const listedRows =
       guardMomUiDemoFill && guardMoms.length === 0
         ? ([...mockCertifiedGuardMoms] as unknown as GuardMomRow[])
         : guardMoms;
     if (listedRows.length === 0) return [];
-    const nearbyRows = filterKm(listedRows);
-    // 모바일에서 근거리 0명으로 완전히 비는 케이스 방지: 전체 지역으로 폴백
-    if (locationBasedEnabled && referenceDistricts.length > 0 && nearbyRows.length === 0) {
-      return listedRows;
-    }
-    return nearbyRows;
+    return listedRows;
   }, [
     guardMomsLoadError,
     guardMomUiDemoFill,
     guardMoms,
-    locationBasedEnabled,
-    referenceDistricts,
-    distForDistrict,
   ]);
-
-  const guardFallbackToAllRegion =
-    careFilter === 'guard' &&
-    locationBasedEnabled &&
-    referenceDistricts.length > 0 &&
-    !guardMomsLoadError &&
-    guardMoms.length > 0 &&
-    guardMoms.filter((m) => {
-      const km = distForDistrict(m.region_gu ?? '');
-      return passesCertifiedCareRadiusFilter(locationBasedEnabled, referenceDistricts, km);
-    }).length === 0;
 
   /** DB에는 있는데 반경 안에 0명일 때 안내 */
   const certifiedGuardNobodyInRadius =
@@ -729,11 +705,6 @@ export function DogSittersPage() {
               {careFilter === 'guard' && certifiedGuardNobodyInRadius && (
                 <p className="mt-0.5 text-[11px] font-semibold text-amber-700">
                   저장된 동네 기준 {CERTIFIED_CARE_RADIUS_KM}km 안에 등록된 보호맘이 없어요.
-                </p>
-              )}
-              {guardFallbackToAllRegion && (
-                <p className="mt-0.5 text-[11px] font-semibold text-sky-700">
-                  근처 보호맘이 없어 전체 지역 결과를 함께 보여줘요.
                 </p>
               )}
               {careFilter === 'sitter' &&
