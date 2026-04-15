@@ -1,10 +1,8 @@
 // src/app/pages/ProfileEditPage.tsx
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import type { ChangeEvent, MutableRefObject } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
   ArrowLeft,
-  Camera,
   MapPin,
   CheckCircle2,
   ShieldCheck,
@@ -26,7 +24,6 @@ import {
 } from '../../lib/profileAvatar';
 import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { formatKoreanMobileDigits } from '../../lib/phoneAuth';
-import { imageContentTypeForDogPhotosUpload, safeImageExtForDogPhotos } from '../../lib/storageImageMime';
 
 function phoneDigitsOk(digits: string): boolean {
   if (digits.length === 0) return true;
@@ -79,48 +76,6 @@ function faceFromProfileRow(
   };
 }
 
-/** 모바일 원본 사진(대용량) 대비: 업로드 전 JPEG로 축소 */
-function resizeAvatarForUpload(file: File, maxW = 1280, quality = 0.86): Promise<File> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const src = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(src);
-      let { width, height } = img;
-      if (width > maxW) {
-        height = (height * maxW) / width;
-        width = maxW;
-      }
-      const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(width));
-      canvas.height = Math.max(1, Math.round(height));
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        reject(new Error('canvas'));
-        return;
-      }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error('blob'));
-            return;
-          }
-          const out = new File([blob], `avatar-${Date.now()}.jpg`, { type: 'image/jpeg' });
-          resolve(out);
-        },
-        'image/jpeg',
-        quality,
-      );
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(src);
-      reject(new Error('image-load'));
-    };
-    img.src = src;
-  });
-}
-
 export function ProfileEditPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
@@ -128,27 +83,14 @@ export function ProfileEditPage() {
   const [locationOpen, setLocationOpen] = useState(false);
   const [profileLoading, setProfileLoading] = useState(true);
   const [saveBusy, setSaveBusy] = useState(false);
+  const [dogPhotoBusy, setDogPhotoBusy] = useState(false);
   const [phone, setPhone] = useState('');
   const [general, setGeneral] = useState<ProfileModeFace>(() => emptyFace());
-  const pendingGeneralRef = useRef<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const latestPreviewUrlRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    latestPreviewUrlRef.current = general.localPreviewUrl;
-  }, [general.localPreviewUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (latestPreviewUrlRef.current) URL.revokeObjectURL(latestPreviewUrlRef.current);
-    };
-  }, []);
 
   const loadProfile = useCallback(async () => {
     if (!user) {
       setGeneral(emptyFace());
       setPhone('');
-      pendingGeneralRef.current = null;
       setProfileLoading(false);
       return;
     }
@@ -167,8 +109,6 @@ export function ProfileEditPage() {
 
     const g = faceFromProfileRow(data?.name, data?.avatar_url, fallback);
     setGeneral(g);
-
-    pendingGeneralRef.current = null;
     setProfileLoading(false);
   }, [user]);
 
@@ -178,7 +118,6 @@ export function ProfileEditPage() {
 
   const activeFace = general;
   const setActiveFace = setGeneral;
-  const pendingFileRef = pendingGeneralRef;
 
   const locationVerified = userLoc.source === 'gps' || userLoc.source === 'map';
   const hasRegion = Boolean(userLoc.city && userLoc.district);
@@ -196,39 +135,7 @@ export function ProfileEditPage() {
           ? 45
           : 35;
 
-  const buildAvatarUrlForSave = async (
-    uid: string,
-    face: ProfileModeFace,
-    pendingRef: MutableRefObject<File | null>,
-  ): Promise<string | null> => {
-    const pending = pendingRef.current;
-    if (pending) {
-      const { data: sess } = await supabase.auth.getSession();
-      if (!sess.session) {
-        throw new Error('로그인 세션이 만료되었어요. 다시 로그인 후 저장해 주세요.');
-      }
-
-      let uploadFile = pending;
-      try {
-        // 프로필 이미지도 강아지 등록처럼 모바일 원본을 JPG로 정규화해 업로드 안정성 확보
-        uploadFile = await resizeAvatarForUpload(pending);
-      } catch {
-        // 리사이즈 실패 시 원본으로 계속 진행 (최후 fallback)
-        uploadFile = pending;
-      }
-      const safeExt = safeImageExtForDogPhotos(uploadFile);
-      const path = `user-avatars/${uid}/${Date.now()}.${safeExt}`;
-      const { error: upErr } = await supabase.storage.from('dog-photos').upload(path, uploadFile, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: imageContentTypeForDogPhotosUpload(uploadFile, safeExt),
-      });
-      if (upErr) {
-        throw new Error(upErr.message || 'upload');
-      }
-      const { data: pub } = supabase.storage.from('dog-photos').getPublicUrl(path);
-      return pub.publicUrl;
-    }
+  const buildAvatarUrlForSave = async (face: ProfileModeFace): Promise<string | null> => {
     if (face.avatarDraft === 'theme') {
       return encodeProfileAvatarTheme(face.avatarTheme);
     }
@@ -260,14 +167,10 @@ export function ProfileEditPage() {
       const phoneOut = formatKoreanMobileDigits(phoneDigits);
       let avatar_url: string | null;
       try {
-        avatar_url = await buildAvatarUrlForSave(
-          user.id,
-          activeFace,
-          pendingFileRef,
-        );
+        avatar_url = await buildAvatarUrlForSave(activeFace);
       } catch (e) {
         const msg = (e as Error).message;
-        alert(msg.includes('upload') ? `프로필 사진 업로드에 실패했습니다.\n(${msg})` : msg);
+        alert(msg);
         return;
       }
 
@@ -307,9 +210,7 @@ export function ProfileEditPage() {
       if (metaErr) {
         console.warn('[프로필 수정] auth.user_metadata 동기화:', metaErr.message);
       }
-      pendingGeneralRef.current = null;
       setGeneral((prev) => {
-        if (prev.localPreviewUrl) URL.revokeObjectURL(prev.localPreviewUrl);
         const parsed = parseProfileAvatarUrl(avatar_url);
         const nextDraft: AvatarDraft =
           avatar_url?.startsWith(DAENG_AVATAR_THEME_PREFIX)
@@ -334,35 +235,41 @@ export function ProfileEditPage() {
     }
   };
 
-  const handleAvatarFile = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-    const imageOk =
-      file.type.startsWith('image/') || /\.(heic|heif|jpg|jpeg|png|webp|gif)$/i.test(file.name);
-    if (!imageOk) {
-      alert('이미지 파일만 선택할 수 있어요.');
+  const applyLatestDogPhoto = useCallback(async () => {
+    if (!user?.id) {
+      alert('로그인 후 사용할 수 있어요.');
       return;
     }
-    pendingFileRef.current = file;
-    setActiveFace((prev) => {
-      if (prev.localPreviewUrl) URL.revokeObjectURL(prev.localPreviewUrl);
-      return {
+    setDogPhotoBusy(true);
+    try {
+      const { data, error } = await supabase
+        .from('dog_profiles')
+        .select('photo_url')
+        .eq('owner_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      if (error) {
+        alert(error.message || '강아지 사진을 불러오지 못했어요.');
+        return;
+      }
+      const photo = (data?.[0]?.photo_url ?? '').trim();
+      if (!photo || !/^https?:\/\//i.test(photo)) {
+        alert('등록된 강아지 사진이 없어요. 먼저 우리 댕댕이 등록에서 사진을 올려 주세요.');
+        return;
+      }
+      setActiveFace((prev) => ({
         ...prev,
-        localPreviewUrl: URL.createObjectURL(file),
         avatarDraft: 'custom',
-      };
-    });
-  };
-
-  const openAvatarPicker = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
+        committedAvatarUrl: photo,
+        localPreviewUrl: null,
+      }));
+    } finally {
+      setDogPhotoBusy(false);
+    }
+  }, [setActiveFace, user?.id]);
 
   const selectThemeAvatar = (themeId: string) => {
-    pendingFileRef.current = null;
     setActiveFace((prev) => {
-      if (prev.localPreviewUrl) URL.revokeObjectURL(prev.localPreviewUrl);
       return {
         ...prev,
         localPreviewUrl: null,
@@ -458,34 +365,17 @@ export function ProfileEditPage() {
             {/* 프로필 사진 & 테마 선택 */}
             <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <h3 className="text-sm font-extrabold text-slate-800 mb-4">프로필 이미지</h3>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,.heic,.heif"
-                className="hidden"
-                aria-label="프로필 사진 올리기"
-                onChange={handleAvatarFile}
-              />
               <div className="flex flex-col items-center">
-                <button
-                  type="button"
-                  onClick={openAvatarPicker}
-                  className="relative mx-auto mb-2 flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center rounded-3xl focus:outline-none focus:ring-4 focus:ring-brand/20"
-                  aria-label="프로필 사진 선택"
-                >
+                <div className="relative mx-auto mb-3 flex h-[7.5rem] w-[7.5rem] shrink-0 items-center justify-center rounded-3xl">
                   <div className="relative z-10">
                     {avatarMain.kind === 'image' ? (
                       <div className="relative h-24 w-24 overflow-hidden rounded-3xl border-4 border-orange-200 shadow-inner">
-                        {avatarMain.src.startsWith('blob:') || avatarMain.src.startsWith('data:') ? (
-                          <img src={avatarMain.src} alt="프로필 사진 미리보기" className="h-full w-full object-cover" />
-                        ) : (
-                          <ImageWithFallback
-                            src={avatarMain.src}
-                            fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
-                            alt="프로필 사진"
-                            className="h-full w-full object-cover"
-                          />
-                        )}
+                        <ImageWithFallback
+                          src={avatarMain.src}
+                          fallbackSrc={virtualDogPhotoForSeed(`profile-edit-${user?.id ?? 'anon'}`)}
+                          alt="프로필 사진"
+                          className="h-full w-full object-cover"
+                        />
                       </div>
                     ) : (
                       <div
@@ -494,17 +384,15 @@ export function ProfileEditPage() {
                         {avatarMain.emoji}
                       </div>
                     )}
-                    <div className="absolute -bottom-2 -right-2 rounded-full border-2 border-white bg-slate-800 p-2 text-white shadow-lg">
-                      <Camera className="h-4 w-4" aria-hidden />
-                    </div>
                   </div>
-                </button>
+                </div>
                 <button
                   type="button"
-                  onClick={openAvatarPicker}
-                  className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-[11px] font-extrabold text-slate-700 active:scale-[0.98]"
+                  onClick={() => void applyLatestDogPhoto()}
+                  disabled={dogPhotoBusy}
+                  className="mb-3 rounded-xl border border-orange-200 bg-orange-50 px-3 py-1.5 text-[11px] font-extrabold text-orange-700 active:scale-[0.98] disabled:opacity-50"
                 >
-                  사진 선택
+                  {dogPhotoBusy ? '강아지 사진 불러오는 중…' : '내 강아지 사진으로 설정'}
                 </button>
 
                 <div className="flex gap-3 justify-center rounded-2xl bg-slate-50 p-2.5">
@@ -525,7 +413,7 @@ export function ProfileEditPage() {
                   ))}
                 </div>
                 <p className="mt-3 px-2 text-center text-[11px] font-bold text-slate-400">
-                  사진을 올리거나, 댕댕이 캐릭터(품종 느낌)를 골라보세요. 저장 후 내댕댕에 반영돼요.
+                  사람 사진 업로드는 빼고, 내 강아지 사진 또는 캐릭터만 사용해요.
                 </p>
               </div>
             </div>
