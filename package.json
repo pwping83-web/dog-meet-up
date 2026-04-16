@@ -18,11 +18,9 @@
   "scripts": {
     "build": "vite build",
     "build:app": "vite build && npx cap sync android",
-    "android:bundle": "vite build && npx cap sync android && cd android && gradlew.bat bundleRelease",
     "android:open": "npx cap open android",
     "android:sync": "npx cap sync android",
     "capture": "node scripts/capture-screenshots.js",
-    "capture:play-store": "node scripts/capture-screenshots.js --base https://daengdaengmarket.shop",
     "capture:browsers": "playwright install chromium",
     "dev": "vite",
     "preview": "vite preview",
