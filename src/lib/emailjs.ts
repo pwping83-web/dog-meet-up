@@ -423,6 +423,74 @@ export async function sendTrainingCourseApplicationEmail(params: {
   });
 }
 
+/** 탐색 배너「광고·모집」— 전문 업체의 배너·제휴 문의 → 운영 수신함 */
+export async function sendPartnerAdvertisementInquiryEmail(params: {
+  companyName: string;
+  contactEmail: string;
+  contactPhone: string;
+  note: string;
+  accountHint: string;
+  pageUrl: string;
+}): Promise<void> {
+  const to_email = getFeedbackInboxEmail();
+  const submittedAt = new Date().toLocaleString('ko-KR');
+  const companySafe = escapeHtml(params.companyName);
+  const emailSafe = escapeHtml(params.contactEmail);
+  const phoneDigits = params.contactPhone.replace(/\D/g, '');
+  const phoneSafe = escapeHtml(phoneDigits ? formatPhoneForDisplay(phoneDigits) : '(미입력)');
+  const noteSafe = escapeHtml(params.note.trim() || '(미입력)');
+  const accountSafe = escapeHtml(params.accountHint);
+  const pageSafe = escapeHtml(params.pageUrl || '(미기록)');
+
+  const lines = [
+    '[탐색 배너 · 광고·제휴 문의]',
+    '전문 업체에서 배너/광고 게재를 희망합니다.',
+    '',
+    `업체명: ${params.companyName}`,
+    `담당 이메일: ${params.contactEmail}`,
+  ];
+  if (phoneDigits) {
+    lines.push(`연락처: ${phoneDigits}`);
+  }
+  if (params.note.trim()) {
+    lines.push('', '문의 내용:', params.note.trim());
+  }
+  lines.push('', '---', `앱 계정 참고: ${params.accountHint}`, `접수 URL: ${params.pageUrl}`);
+
+  const html_message = `
+<div style="font-family:Arial,'Apple SD Gothic Neo','Noto Sans KR',sans-serif;background:#f6f3ff;padding:20px;">
+  <div style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e8dbff;border-radius:16px;overflow:hidden;">
+    <div style="background:linear-gradient(90deg,#6d28d9,#9333ea);padding:16px 20px;color:#fff;">
+      <div style="font-size:12px;font-weight:700;opacity:.9;">댕댕마켓</div>
+      <div style="margin-top:4px;font-size:18px;font-weight:800;">배너 광고·제휴 문의</div>
+    </div>
+    <div style="padding:18px 20px;">
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr><td style="width:130px;padding:8px 0;color:#6b7280;font-weight:700;">접수 시각</td><td style="padding:8px 0;color:#111827;">${escapeHtml(submittedAt)}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">업체명</td><td style="padding:8px 0;color:#111827;font-weight:700;">${companySafe}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">이메일</td><td style="padding:8px 0;color:#111827;">${emailSafe}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">연락처</td><td style="padding:8px 0;color:#111827;">${phoneSafe}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;vertical-align:top;">문의</td><td style="padding:8px 0;color:#111827;white-space:pre-wrap;">${noteSafe}</td></tr>
+      </table>
+      <div style="margin-top:14px;border-top:1px solid #ede9fe;padding-top:12px;font-size:12px;color:#6b7280;line-height:1.6;">
+        앱 계정: ${accountSafe}<br/>
+        접수 URL: ${pageSafe}
+      </div>
+    </div>
+  </div>
+</div>`.trim();
+
+  return sendEmail({
+    to_email,
+    to_name: '댕댕마켓 운영',
+    subject: `[광고·제휴 문의] ${params.companyName}`,
+    message: lines.join('\n'),
+    html_message,
+    from_name: '댕댕마켓 광고 문의',
+    reply_to: params.contactEmail.trim(),
+  });
+}
+
 /** 고객 의견·오류·불편 접수 → 운영 메일(EmailJS 템플릿 경유) */
 export async function sendUserFeedbackEmail(params: {
   kindLabel: string;

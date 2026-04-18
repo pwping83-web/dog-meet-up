@@ -6,9 +6,18 @@ import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getEmailJsRuntimeSummary,
+  getFeedbackInboxEmail,
   getTrainingPartnerInboxEmail,
+  sendPartnerAdvertisementInquiryEmail,
   sendTrainingCourseApplicationEmail,
 } from '../../lib/emailjs';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 
 type ExploreVirtualTrainingAdProps = {
   /** `compact`: 돌봄 블록 바로 위 — 동일 배너 스타일, 여백·썸네일만 축소 */
@@ -36,6 +45,11 @@ function isLikelyKrMobile(d: string) {
   return /^01[016789]\d{7,8}$/.test(d);
 }
 
+function isLikelyEmail(s: string) {
+  const t = s.trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t);
+}
+
 const GUARD_MOM_TITLE = '인증 보호맘이란?';
 
 const GUARD_MOM_BODY =
@@ -59,6 +73,13 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
   const [applicantEmail, setApplicantEmail] = useState('');
   const [applicantNote, setApplicantNote] = useState('');
   const [applySubmitting, setApplySubmitting] = useState(false);
+
+  const [adPartnerModalOpen, setAdPartnerModalOpen] = useState(false);
+  const [adCompanyName, setAdCompanyName] = useState('');
+  const [adContactEmail, setAdContactEmail] = useState('');
+  const [adContactPhone, setAdContactPhone] = useState('');
+  const [adPartnerNote, setAdPartnerNote] = useState('');
+  const [adPartnerSubmitting, setAdPartnerSubmitting] = useState(false);
 
   const cardPad = compact ? 'px-5 py-5 max-md:px-4 max-md:py-5' : 'px-6 py-7 max-md:px-5 max-md:py-6 md:px-8 md:py-8';
   const collapsedPad = compact ? 'px-4 py-3.5 max-md:px-3.5 max-md:py-3.5' : 'px-5 py-4 max-md:px-4 max-md:py-4';
@@ -142,6 +163,96 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
     }
   };
 
+  const handleAdPartnerModalOpenChange = (open: boolean) => {
+    setAdPartnerModalOpen(open);
+    if (!open) {
+      setAdCompanyName('');
+      setAdContactEmail('');
+      setAdContactPhone('');
+      setAdPartnerNote('');
+    }
+  };
+
+  const handlePartnerAdSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (adPartnerSubmitting) return;
+    const company = adCompanyName.trim();
+    const email = adContactEmail.trim();
+    const phoneDigits = digitsOnly(adContactPhone);
+    if (!company) {
+      alert('업체명을 입력해 주세요.');
+      return;
+    }
+    if (!isLikelyEmail(email)) {
+      alert('담당자 이메일을 확인해 주세요.');
+      return;
+    }
+    if (phoneDigits && !isLikelyKrMobile(phoneDigits)) {
+      alert('연락처 번호를 확인해 주세요. (예: 01012345678)');
+      return;
+    }
+    const accountHint = user?.email?.trim() || user?.id || '비로그인';
+    const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+    setAdPartnerSubmitting(true);
+    try {
+      await sendPartnerAdvertisementInquiryEmail({
+        companyName: company,
+        contactEmail: email,
+        contactPhone: phoneDigits,
+        note: adPartnerNote.trim(),
+        accountHint,
+        pageUrl,
+      });
+      alert('문의가 운영 메일로 전달되었어요. 확인 후 회신드릴게요.');
+      handleAdPartnerModalOpenChange(false);
+    } catch (err) {
+      const reason = (err as Error)?.message ?? '알 수 없는 오류';
+      const origin = typeof window !== 'undefined' ? window.location.origin : '(origin)';
+      const shouldOpenMailApp = window.confirm(
+        [
+          '이메일 자동 전송에 실패했어요.',
+          '',
+          reason,
+          '',
+          '[확인할 항목]',
+          '- EmailJS Service ID / Template ID / Public Key',
+          '- 템플릿 변수: to_email, subject, message, html_message',
+          `- EmailJS 도메인 허용 목록에 ${origin}`,
+          `- 현재 앱 설정: ${getEmailJsRuntimeSummary()}`,
+          '',
+          '메일 앱으로 직접 보내기 창을 열까요?',
+        ].join('\n'),
+      );
+      if (!shouldOpenMailApp) return;
+      const inbox = getFeedbackInboxEmail();
+      const body = [
+        '[탐색 배너 · 광고·제휴 문의]',
+        `업체명: ${company}`,
+        `담당 이메일: ${email}`,
+        phoneDigits ? `연락처: ${phoneDigits}` : '',
+        adPartnerNote.trim() ? `\n문의:\n${adPartnerNote.trim()}` : '',
+        '',
+        `계정: ${accountHint}`,
+      ]
+        .filter(Boolean)
+        .join('\n');
+      const mailto = `mailto:${inbox}?subject=${encodeURIComponent(`[광고·제휴 문의] ${company}`)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailto;
+      handleAdPartnerModalOpenChange(false);
+    } finally {
+      setAdPartnerSubmitting(false);
+    }
+  };
+
+  const adBadgeBtnBase =
+    'cursor-pointer border-0 outline-none transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-violet-300 focus-visible:ring-offset-2';
+  const adBadgeClassCollapsed = compact
+    ? `${adBadgeBtnBase} inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-2.5 py-1.5 text-[11px] font-black text-white shadow-sm max-md:text-xs`
+    : `${adBadgeBtnBase} inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm`;
+  const adBadgeClassExpanded = compact
+    ? `${adBadgeBtnBase} inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-2.5 py-1.5 text-[11px] font-black text-white shadow-sm max-md:text-xs`
+    : `${adBadgeBtnBase} inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm`;
+
   return (
     <article
       className={`relative overflow-hidden rounded-3xl border border-violet-200/80 bg-gradient-to-br from-indigo-50 via-violet-50 to-purple-50/90 shadow-md shadow-violet-200/25 max-md:rounded-2xl ${bannerOpen ? cardPad : collapsedPad}`}
@@ -151,51 +262,51 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
       <div className="pointer-events-none absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-indigo-300/15 blur-3xl" />
 
       {!bannerOpen ? (
-        <button
-          type="button"
-          onClick={() => setBannerOpen(true)}
-          className="relative flex w-full min-w-0 items-center gap-2.5 rounded-2xl text-left transition-colors hover:bg-violet-100/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 sm:gap-3"
-        >
-          <span
-            className={
-              compact
-                ? 'inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-violet-600 px-2.5 py-1.5 text-[11px] font-black text-white shadow-sm max-md:text-xs'
-                : 'inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm'
-            }
+        <div className="relative flex w-full min-w-0 items-center gap-2.5 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setAdPartnerModalOpen(true)}
+            className={adBadgeClassCollapsed}
+            aria-label="광고·제휴 문의 보내기"
           >
             <Megaphone className="h-4 w-4 shrink-0" aria-hidden />
             광고 · 모집
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-black leading-snug text-slate-900 max-md:text-[15px]">댕댕케어 직업훈련</p>
-            <p className="mt-0.5 text-xs font-semibold text-slate-500 max-md:text-[13px]">탭하면 요약·신청 안내</p>
-          </div>
-          <div className={collapsedThumbBox} aria-hidden>
-            <ImageWithFallback
-              src={AD_THUMB_SRC}
-              fallbackSrc={virtualDogPhotoForSeed('explore-virtual-training-ad-collapsed')}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-            <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-violet-900/25 to-transparent" />
-          </div>
-          <ChevronRight className="h-5 w-5 shrink-0 text-violet-600" aria-hidden />
-        </button>
+          </button>
+          <button
+            type="button"
+            onClick={() => setBannerOpen(true)}
+            className="relative flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl text-left transition-colors hover:bg-violet-100/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-400 sm:gap-3"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-black leading-snug text-slate-900 max-md:text-[15px]">댕댕케어 직업훈련</p>
+              <p className="mt-0.5 text-xs font-semibold text-slate-500 max-md:text-[13px]">탭하면 요약·신청 안내</p>
+            </div>
+            <div className={collapsedThumbBox} aria-hidden>
+              <ImageWithFallback
+                src={AD_THUMB_SRC}
+                fallbackSrc={virtualDogPhotoForSeed('explore-virtual-training-ad-collapsed')}
+                alt=""
+                className="h-full w-full object-cover"
+              />
+              <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-violet-900/25 to-transparent" />
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-violet-600" aria-hidden />
+          </button>
+        </div>
       ) : null}
 
       {bannerOpen ? (
       <div className="relative flex flex-col gap-5">
         <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={
-              compact
-                ? 'inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-2.5 py-1.5 text-[11px] font-black text-white shadow-sm max-md:text-xs'
-                : 'inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-white shadow-sm'
-            }
+          <button
+            type="button"
+            onClick={() => setAdPartnerModalOpen(true)}
+            className={adBadgeClassExpanded}
+            aria-label="광고·제휴 문의 보내기"
           >
             <Megaphone className="h-4 w-4 shrink-0" aria-hidden />
             광고 · 모집
-          </span>
+          </button>
         </div>
 
         <div
@@ -386,6 +497,87 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
         )}
       </div>
       ) : null}
+
+      <Dialog open={adPartnerModalOpen} onOpenChange={handleAdPartnerModalOpenChange}>
+        <DialogContent className="max-h-[min(90vh,640px)] gap-4 overflow-y-auto rounded-2xl border-violet-200 bg-white p-5 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-black text-slate-900">광고·제휴 문의</DialogTitle>
+            <DialogDescription className="text-left text-sm font-medium text-slate-600">
+              배너 노출을 원하시면 아래를 남겨 주세요. 운영 메일로 접수됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(ev) => void handlePartnerAdSubmit(ev)} className="space-y-3">
+            <div>
+              <label htmlFor="ad-partner-company" className="mb-1 block text-xs font-extrabold text-slate-700">
+                업체명 *
+              </label>
+              <input
+                id="ad-partner-company"
+                value={adCompanyName}
+                onChange={(ev) => setAdCompanyName(ev.target.value)}
+                autoComplete="organization"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                placeholder="예: ○○케어"
+              />
+            </div>
+            <div>
+              <label htmlFor="ad-partner-email" className="mb-1 block text-xs font-extrabold text-slate-700">
+                담당자 이메일 *
+              </label>
+              <input
+                id="ad-partner-email"
+                type="email"
+                value={adContactEmail}
+                onChange={(ev) => setAdContactEmail(ev.target.value)}
+                autoComplete="email"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                placeholder="회신 받을 주소"
+              />
+            </div>
+            <div>
+              <label htmlFor="ad-partner-phone" className="mb-1 block text-xs font-extrabold text-slate-500">
+                연락처 (선택)
+              </label>
+              <input
+                id="ad-partner-phone"
+                inputMode="numeric"
+                value={adContactPhone}
+                onChange={(ev) => setAdContactPhone(ev.target.value)}
+                autoComplete="tel"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                placeholder="01012345678"
+              />
+            </div>
+            <div>
+              <label htmlFor="ad-partner-note" className="mb-1 block text-xs font-extrabold text-slate-500">
+                문의 (선택)
+              </label>
+              <textarea
+                id="ad-partner-note"
+                value={adPartnerNote}
+                onChange={(ev) => setAdPartnerNote(ev.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                placeholder="노출 희망·업종 등 짧게"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={adPartnerSubmitting}
+              className="flex w-full min-h-[46px] items-center justify-center gap-2 rounded-xl bg-violet-700 py-3 text-sm font-extrabold text-white transition-opacity disabled:opacity-60"
+            >
+              {adPartnerSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin shrink-0" aria-hidden />
+                  전송 중…
+                </>
+              ) : (
+                '문의 보내기'
+              )}
+            </button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </article>
   );
 }
