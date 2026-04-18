@@ -6,7 +6,6 @@ import { virtualDogPhotoForSeed } from '../data/virtualDogPhotos';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   getEmailJsRuntimeSummary,
-  getFeedbackInboxEmail,
   getTrainingPartnerInboxEmail,
   sendPartnerAdvertisementInquiryEmail,
   sendTrainingCourseApplicationEmail,
@@ -203,7 +202,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
         accountHint,
         pageUrl,
       });
-      alert('문의가 운영 메일로 전달되었어요. 확인 후 회신드릴게요.');
+      alert('문의가 접수되었어요. 직업훈련 신청과 같은 메일함으로 전달되었어요.');
       handleAdPartnerModalOpenChange(false);
     } catch (err) {
       const reason = (err as Error)?.message ?? '알 수 없는 오류';
@@ -224,7 +223,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
         ].join('\n'),
       );
       if (!shouldOpenMailApp) return;
-      const inbox = getFeedbackInboxEmail();
+      const inbox = getTrainingPartnerInboxEmail();
       const body = [
         '[탐색 배너 · 광고·제휴 문의]',
         `업체명: ${company}`,
@@ -503,7 +502,7 @@ export function ExploreVirtualTrainingAd({ variant = 'default' }: ExploreVirtual
           <DialogHeader>
             <DialogTitle className="text-lg font-black text-slate-900">광고·제휴 문의</DialogTitle>
             <DialogDescription className="text-left text-sm font-medium text-slate-600">
-              배너 노출을 원하시면 아래를 남겨 주세요. 운영 메일로 접수됩니다.
+              배너 노출을 원하시면 아래를 남겨 주세요. 직업훈련 신청과 같은 메일로 접수됩니다.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={(ev) => void handlePartnerAdSubmit(ev)} className="space-y-3">

@@ -423,7 +423,7 @@ export async function sendTrainingCourseApplicationEmail(params: {
   });
 }
 
-/** 탐색 배너「광고·모집」— 전문 업체의 배너·제휴 문의 → 운영 수신함 */
+/** 탐색 배너「광고·모집」— 전문 업체의 배너·제휴 문의 → 직업훈련 신청과 동일 수신함(`VITE_TRAINING_PARTNER_INBOX_EMAIL` 등) */
 export async function sendPartnerAdvertisementInquiryEmail(params: {
   companyName: string;
   contactEmail: string;
@@ -432,7 +432,7 @@ export async function sendPartnerAdvertisementInquiryEmail(params: {
   accountHint: string;
   pageUrl: string;
 }): Promise<void> {
-  const to_email = getFeedbackInboxEmail();
+  const to_email = getTrainingPartnerInboxEmail();
   const submittedAt = new Date().toLocaleString('ko-KR');
   const companySafe = escapeHtml(params.companyName);
   const emailSafe = escapeHtml(params.contactEmail);
@@ -482,7 +482,7 @@ export async function sendPartnerAdvertisementInquiryEmail(params: {
 
   return sendEmail({
     to_email,
-    to_name: '댕댕마켓 운영',
+    to_name: '제휴 교육',
     subject: `[광고·제휴 문의] ${params.companyName}`,
     message: lines.join('\n'),
     html_message,
