@@ -4,6 +4,11 @@ import { supabase } from '../lib/supabase';
 import { getAuthRedirectUrl } from '../lib/site';
 import { ensurePublicProfile } from '../lib/ensurePublicProfile';
 import { isSolapiPhoneAuth, isSupabaseSmsPhoneAuth, koreanMobileDigitsToE164 } from '../lib/phoneAuth';
+import { withTimeout } from '../lib/withTimeout';
+
+const PHONE_VERIFY_TIMEOUT_MS = 45_000;
+const PHONE_VERIFY_TIMEOUT_MSG =
+  '서버 응답이 지연되고 있어요. 네트워크를 확인한 뒤 다시 시도해 주세요.';
 
 interface AuthContextType {
   user: User | null;
@@ -222,34 +227,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyPhoneOtp = async (rawPhone: string, code: string) => {
-    if (isSupabaseSmsPhoneAuth()) {
-      await verifyPhoneSms(rawPhone, code);
-    } else if (isSolapiPhoneAuth()) {
-      const e164 = koreanMobileDigitsToE164(rawPhone);
-      if (!e164) throw new Error('휴대폰 번호 형식을 확인해 주세요.');
-      const { data, error } = await supabase.functions.invoke('phone-otp-verify', {
-        body: { phone: e164, code: code.trim() },
-      });
-      if (error || !data?.ok) {
-        throw new Error(data?.error || error?.message || '인증번호를 확인해 주세요.');
+    const run = async () => {
+      if (isSupabaseSmsPhoneAuth()) {
+        await verifyPhoneSms(rawPhone, code);
+      } else if (isSolapiPhoneAuth()) {
+        const e164 = koreanMobileDigitsToE164(rawPhone);
+        if (!e164) throw new Error('휴대폰 번호 형식을 확인해 주세요.');
+        const { data, error } = await supabase.functions.invoke('phone-otp-verify', {
+          body: { phone: e164, code: code.trim() },
+        });
+        if (error || !data?.ok) {
+          throw new Error(data?.error || error?.message || '인증번호를 확인해 주세요.');
+        }
+        const loginEmail = String(data.loginEmail ?? '').trim();
+        const loginPassword = String(data.loginPassword ?? '').trim();
+        if (!loginEmail || !loginPassword) {
+          throw new Error('로그인 토큰을 받지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        }
+        const { error: pwError } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password: loginPassword,
+        });
+        if (pwError) {
+          throw new Error(`로그인 세션 생성에 실패했습니다.\n${pwError.message}`);
+        }
+        await syncPhoneUserMetadata(rawPhone);
+        await supabase.auth.refreshSession();
+      } else {
+        await verifyPhoneDemo(rawPhone, code);
       }
-      const loginEmail = String(data.loginEmail ?? '').trim();
-      const loginPassword = String(data.loginPassword ?? '').trim();
-      if (!loginEmail || !loginPassword) {
-        throw new Error('로그인 토큰을 받지 못했습니다. 잠시 후 다시 시도해 주세요.');
-      }
-      const { error: pwError } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
-      });
-      if (pwError) {
-        throw new Error(`로그인 세션 생성에 실패했습니다.\n${pwError.message}`);
-      }
-      await syncPhoneUserMetadata(rawPhone);
-      await supabase.auth.refreshSession();
-    } else {
-      await verifyPhoneDemo(rawPhone, code);
-    }
+    };
+    await withTimeout(run(), PHONE_VERIFY_TIMEOUT_MS, PHONE_VERIFY_TIMEOUT_MSG);
   };
 
   const signInWithPhoneDemo = verifyPhoneOtp;

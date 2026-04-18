@@ -52,8 +52,9 @@ export function LoginPage() {
           ? err.message
           : '전화 로그인에 실패했습니다. Supabase에서 익명 로그인(Anonymous)을 켜거나 카카오 로그인을 이용해 주세요.';
       alert(msg);
-      setLoading(false);
       return;
+    } finally {
+      setLoading(false);
     }
     try {
       sessionStorage.removeItem(DAENG_AUTH_RETURN_KEY);
@@ -62,7 +63,6 @@ export function LoginPage() {
       /* ignore */
     }
     navigate(to, { replace: true });
-    setLoading(false);
   };
 
   const handleKakaoLogin = async () => {
